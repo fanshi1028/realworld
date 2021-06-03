@@ -1,0 +1,12 @@
+cabal-version: 3.0
+name:          realworld-haskell
+version:       0.1.0.0
+license:       MIT
+copyright:     Francis Chan (c) 2020-2021
+maintainer:    jackychany321@gmail.com
+author:        Francis Chan
+homepage:      https://github.com/fanshi1028/realworld
+synopsis:      realworld
+description:   realworld
+category:      Web
+build-type:    Simple
