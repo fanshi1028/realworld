@@ -31,3 +31,7 @@ pids
 node_modules/
 
 
+/.direnv/
+/.envrc
+/dist-newstyle/
+/cabal.project.local

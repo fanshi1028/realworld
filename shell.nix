@@ -18,6 +18,9 @@ in project.shellFor {
     haskell-language-server = "latest";
     ormolu = "latest";
     ghcid = "latest";
+    doctest = "latest";
+    cabal-fmt = "latest";
+    stan = "latest";
   };
   # See overlays/tools.nix for more details
 
