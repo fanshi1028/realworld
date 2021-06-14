@@ -55,9 +55,20 @@ library backend-internal
   import:          prelude
   hs-source-dirs:  backend/src
   exposed-modules:
+    Domain.Util
+    Domain.User
+    Domain.Article
+    Domain.Comment
     Usecase
 
   build-depends:
+    , higgledy
+    , time
+    , aeson
+    , text
+    , uuid
+    , validation-selective
+    , generic-lens
 
 -- other-modules:
 -- other-extensions:
