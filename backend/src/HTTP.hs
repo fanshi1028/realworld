@@ -5,15 +5,13 @@
 -- |
 module HTTP (server, Api) where
 
-import Domain.User (UserR)
-import Domain.Util.Field (Tag)
-import Domain.Util.JSON.To (Out)
+import Control.Algebra (Algebra)
+import Control.Effect.Sum (Member)
 import HTTP.Authed (AuthedApi, authedServer)
 import HTTP.Public (PublicApi, publicServer)
-import HTTP.Public.Profile (ProfileServerEffect)
-import HTTP.Public.Tag (TagServerEffect)
-import HTTP.Util (EffRunner)
-import Servant (Get, JSON, Server, type (:<|>) ((:<|>)), type (:>))
+import Servant (Get, JSON, ServerT, type (:<|>) ((:<|>)), type (:>))
+import Tag.Effect (Tag)
+import VisitorAction.Effect (VisitorAction)
 
 type Api =
   "api"
@@ -24,10 +22,9 @@ type Api =
     :<|> Get '[JSON] Text
 
 server ::
-  ( ProfileServerEffect sig1 m,
-    TagServerEffect sig2 n
+  ( Algebra sig m,
+    Member (Tag []) sig,
+    Member VisitorAction sig
   ) =>
-  EffRunner m (Out (UserR "profile")) ->
-  EffRunner n (Out [Tag]) ->
-  Server Api
-server profileC tagC = (publicServer profileC tagC :<|> authedServer) :<|> pure "health-checked"
+  ServerT Api m
+server = (publicServer :<|> authedServer) :<|> pure "health-checked"

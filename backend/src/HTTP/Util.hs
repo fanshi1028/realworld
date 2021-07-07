@@ -2,7 +2,22 @@
 {-# LANGUAGE TypeFamilies #-}
 
 -- |
-module HTTP.Util (EffRunner, Limit (..), Offset (..), QP, CreateBody, UpdateBody, CreateApi, ReadApi, UpdateApi, DeleteApi, ReadManyApi, RUDApi, NoBodyUpdateApi, ToggleApi) where
+module HTTP.Util
+  ( Limit (..),
+    Offset (..),
+    QP,
+    CreateBody,
+    UpdateBody,
+    CreateApi,
+    ReadApi,
+    UpdateApi,
+    DeleteApi,
+    ReadManyApi,
+    RUDApi,
+    NoBodyUpdateApi,
+    ToggleApi,
+  )
+where
 
 import Domain.Util.Field (Tag, Username)
 import Domain.Util.JSON.From (In)
@@ -10,8 +25,6 @@ import Domain.Util.JSON.To (Out)
 import GHC.TypeLits (Symbol)
 import Servant (Delete, FromHttpApiData, Get, JSON, Post, Put, QueryParam, ReqBody, type (:<|>), type (:>))
 import Validation.Carrier.Selective (WithValidation)
-
-type EffRunner m a = m a -> a
 
 -- Paging
 newtype Limit = Limit Natural deriving (FromHttpApiData)

@@ -6,7 +6,7 @@ module HTTP.Authed.Article (ArticleApi, articleServer) where
 import Domain.Article (ArticleR)
 import Domain.Comment (CommentR)
 import HTTP.Util (CreateApi, DeleteApi, QP, RUDApi, ReadManyApi, ToggleApi)
-import Servant (Capture, Server, type (:<|>) ((:<|>)), type (:>))
+import Servant (Capture, type (:<|>) ((:<|>)), type (:>), ServerT)
 
 type CommentApi =
   Capture "id" (CommentR "id") :> DeleteApi CommentR "withAuthorProfile"
@@ -25,15 +25,15 @@ type ArticleApi =
          )
 
 -- FIXME
-mkCommentServer :: ArticleR "id" -> Server CommentApi
+mkCommentServer :: ArticleR "id" -> ServerT CommentApi m
 mkCommentServer = undefined
 
 -- FIXME
-mkFavoriteServer :: ArticleR "id" -> Server FavoriteApi
+mkFavoriteServer :: ArticleR "id" -> ServerT FavoriteApi m
 mkFavoriteServer = undefined
 
 -- FIXME
-articleServer :: Server ArticleApi
+articleServer :: ServerT ArticleApi m
 articleServer =
   undefined :<|> undefined
     :<|> (\aid -> (undefined :<|> undefined :<|> undefined) :<|> mkCommentServer aid :<|> mkFavoriteServer aid)

@@ -7,8 +7,7 @@ import Domain.User (UserR)
 import Domain.Util.JSON.From (In)
 import Domain.Util.JSON.To (Out)
 import HTTP.Util (CreateApi)
-import Servant (JSON, Post, ReqBody, type (:<|>), type (:>))
-import Servant.Server (Server)
+import Servant (JSON, Post, ReqBody, ServerT, type (:<|>), type (:>))
 import Validation.Carrier.Selective (WithValidation)
 
 type UserApi =
@@ -16,5 +15,5 @@ type UserApi =
     :<|> CreateApi UserR "auth"
 
 -- FIXME
-userServer :: Server UserApi
+userServer :: ServerT UserApi m
 userServer = undefined

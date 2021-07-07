@@ -6,7 +6,7 @@ module HTTP.Public.Article (ArticleApi, articleServer) where
 import Domain.Article (ArticleR)
 import Domain.Comment (CommentR)
 import HTTP.Util (QP, ReadManyApi)
-import Servant (Capture, Server, type (:<|>), type (:>))
+import Servant (Capture, Server, ServerT, type (:<|>), type (:>))
 
 type ArticleApi =
   Capture "slug" (ArticleR "id")
@@ -15,5 +15,5 @@ type ArticleApi =
        )
 
 -- FIXME
-articleServer :: Server ArticleApi
+articleServer :: ServerT ArticleApi m
 articleServer = undefined

@@ -1,14 +1,22 @@
 module Main where
 
-import Control.Algebra (run)
+import Control.Carrier.Lift (runM)
 import HTTP (Api, server)
 import qualified Network.Wai.Handler.Warp as W (run)
-import Servant (Application, serve)
+import Servant (Application, hoistServer, serve)
 import Tag.Carrier.Pure (runTagPure)
-import VisitorAction.Carrier.Pure (VisitorActionPure(runVisitorActionPure))
+import VisitorAction.Carrier.Pure (runVisitorActionPure)
 
 app :: Application
-app = serve (Proxy @Api) $ server (run . runVisitorActionPure) (run . runTagPure @[])
+app =
+  serve (Proxy @Api) $
+    hoistServer
+      (Proxy @Api)
+      ( runM
+          . runVisitorActionPure
+          . runTagPure @[]
+      )
+      server
 
 main :: IO ()
 main = do
