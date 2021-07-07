@@ -5,10 +5,11 @@
 -- |
 module HTTP.Public (PublicApi, publicServer) where
 
+import Domain.User (UserR)
 import Domain.Util.Field (Tag)
 import Domain.Util.JSON.To (Out)
 import HTTP.Public.Article (ArticleApi, articleServer)
-import HTTP.Public.Profile (ProfileApi, profileServer)
+import HTTP.Public.Profile (ProfileApi, ProfileServerEffect, profileServer)
 import HTTP.Public.Tag (TagApi, TagServerEffect, tagServer)
 import HTTP.Public.User (UserApi, userServer)
 import HTTP.Util (EffRunner)
@@ -21,7 +22,8 @@ type PublicApi =
     :<|> "tags" :> TagApi
 
 publicServer ::
-  (TagServerEffect sig m) =>
-  EffRunner m (Out [Tag]) ->
+  (ProfileServerEffect sig1 m, TagServerEffect sig2 n) =>
+  EffRunner m (Out (UserR "profile")) ->
+  EffRunner n (Out [Tag]) ->
   Server PublicApi
-publicServer tagC = userServer :<|> profileServer :<|> articleServer :<|> tagServer tagC
+publicServer profileC tagC = userServer :<|> profileServer profileC :<|> articleServer :<|> tagServer tagC

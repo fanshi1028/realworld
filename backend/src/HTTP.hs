@@ -5,10 +5,12 @@
 -- |
 module HTTP (server, Api) where
 
+import Domain.User (UserR)
 import Domain.Util.Field (Tag)
 import Domain.Util.JSON.To (Out)
 import HTTP.Authed (AuthedApi, authedServer)
 import HTTP.Public (PublicApi, publicServer)
+import HTTP.Public.Profile (ProfileServerEffect)
 import HTTP.Public.Tag (TagServerEffect)
 import HTTP.Util (EffRunner)
 import Servant (Get, JSON, Server, type (:<|>) ((:<|>)), type (:>))
@@ -22,8 +24,10 @@ type Api =
     :<|> Get '[JSON] Text
 
 server ::
-  (TagServerEffect sig m
+  ( ProfileServerEffect sig1 m,
+    TagServerEffect sig2 n
   ) =>
-  EffRunner m (Out [Tag]) ->
+  EffRunner m (Out (UserR "profile")) ->
+  EffRunner n (Out [Tag]) ->
   Server Api
-server tagC = (publicServer tagC :<|> authedServer) :<|> pure "health-checked"
+server profileC tagC = (publicServer profileC tagC :<|> authedServer) :<|> pure "health-checked"
