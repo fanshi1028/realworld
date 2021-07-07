@@ -1,0 +1,7 @@
+cradle:
+  cabal:
+    - path: "backend/src"
+      component: "lib:backend-internal"
+
+    - path: "backend/app/Main.hs"
+      component: "realworld-haskell:exe:realworld-haskell"
