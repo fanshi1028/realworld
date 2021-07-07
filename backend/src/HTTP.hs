@@ -1,13 +1,17 @@
+{-# LANGUAGE ConstraintKinds #-}
 {-# LANGUAGE DataKinds #-}
+{-# LANGUAGE FlexibleContexts #-}
 
 -- |
-module HTTP (app) where
+module HTTP (server, Api) where
 
+import Domain.Util.Field (Tag)
+import Domain.Util.JSON.To (Out)
 import HTTP.Authed (AuthedApi, authedServer)
 import HTTP.Public (PublicApi, publicServer)
-import Servant (Application, Get, JSON, Server, serve, type (:<|>) ((:<|>)), type (:>))
-import Tag.Carrier.Pure (TagPure (runTagPure))
-import Control.Algebra (run)
+import HTTP.Public.Tag (TagServerEffect)
+import HTTP.Util (EffRunner)
+import Servant (Get, JSON, Server, type (:<|>) ((:<|>)), type (:>))
 
 type Api =
   "api"
@@ -17,8 +21,9 @@ type Api =
        )
     :<|> Get '[JSON] Text
 
-server :: Server Api
-server = (publicServer :<|> authedServer) :<|> pure "health-checked"
-
-app :: Application
-app = serve (Proxy @Api) server
+server ::
+  (TagServerEffect sig m
+  ) =>
+  EffRunner m (Out [Tag]) ->
+  Server Api
+server tagC = (publicServer tagC :<|> authedServer) :<|> pure "health-checked"

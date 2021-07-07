@@ -1,11 +1,17 @@
 module Main where
 
-import HTTP (app)
-import Network.Wai.Handler.Warp (run)
+import Control.Algebra (run)
+import HTTP (Api, server)
+import qualified Network.Wai.Handler.Warp as W (run)
+import Servant (Application, serve)
+import Tag.Carrier.Pure (runTagPure)
+
+app :: Application
+app = serve (Proxy @Api) $ server (run . runTagPure @[])
 
 main :: IO ()
 main = do
   putStrLn $ "server running at port: " <> show port
-  run port app
+  W.run port app
   where
     port = 8080

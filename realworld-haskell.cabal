@@ -90,6 +90,8 @@ library backend-internal
     HTTP.Authed.User
     HTTP.Util
     Validation.Carrier.Selective
+    Tag.Effect
+    Tag.Carrier.Pure
 
 -- other-modules:
 -- other-extensions:
