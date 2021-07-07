@@ -21,6 +21,7 @@ import Domain.Util.JSON.From (In, insert', updatableParseJSON, wrappedParseJSON)
 import Domain.Util.JSON.To (Out (Out), multiWrappedWithCountToEncoding, wrappedToEncoding)
 import Domain.Util.Representation (Transform (transform))
 import GHC.TypeLits (Symbol)
+import Servant (FromHttpApiData (parseUrlPiece))
 import Validation.Carrier.Selective (WithUpdate, WithValidation)
 
 data family ArticleR (r :: Symbol)
@@ -136,6 +137,10 @@ instance FromJSON (ArticleR "update") where
 
 instance FromJSON (In (ArticleR "update")) where
   parseJSON = wrappedParseJSON "ArticleUpdate" "article"
+
+-- FIXME
+instance FromHttpApiData (ArticleR "id") where
+  parseUrlPiece = undefined
 
 ---------------------------------------------------------------------
 -- mmmmmmm                               m""                       --

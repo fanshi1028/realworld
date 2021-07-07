@@ -19,6 +19,7 @@ import Domain.Util.JSON.From (In, wrappedParseJSON)
 import Domain.Util.JSON.To (Out, wrappedToEncoding)
 import Domain.Util.Representation (Transform (transform), TransformM (transformM))
 import GHC.TypeLits (Symbol)
+import Servant (FromHttpApiData (parseUrlPiece))
 import Validation.Carrier.Selective (WithValidation)
 
 data family CommentR (r :: Symbol)
@@ -77,6 +78,10 @@ instance FromJSON (In (WithValidation (CommentR "create"))) where
 -- ^ >>> import Data.Aeson
 --  >>> eitherDecode @(In (WithValidation (CommentR "create"))) "{ \"comment\": { \"body\": \"\"} }"
 --  >>> eitherDecode @(WithValidation (CommentR "create")) "{ \"body\": \"\"}"
+
+-- FIXME
+instance FromHttpApiData (CommentR "id") where
+  parseUrlPiece = undefined
 
 ---------------------------------------------------------------------
 -- mmmmmmm                               m""                       --

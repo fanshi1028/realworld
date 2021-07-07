@@ -23,6 +23,7 @@ import Domain.Util.JSON.To (Out, wrappedToEncoding)
 import Domain.Util.Representation (Transform (transform), TransformM (transformM))
 import GHC.TypeLits (Symbol)
 import Relude.Extra (un)
+import Servant (FromHttpApiData (parseUrlPiece))
 import Validation.Carrier.Selective (WithUpdate, WithValidation)
 
 data family UserR (r :: Symbol)
@@ -115,6 +116,10 @@ instance FromJSON (WithValidation (UserR "login")) where
 -- Right (In (Success (UserLogin {email = "ejfowfow@", password = ********})))
 instance FromJSON (In (WithValidation (UserR "login"))) where
   parseJSON = wrappedParseJSON "UserLogin" "user"
+
+-- FIXME
+instance FromHttpApiData (UserR "id") where
+  parseUrlPiece = undefined
 
 data instance UserR "create" = UserRegister
   { username :: Username,
