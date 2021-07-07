@@ -3,6 +3,7 @@
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE DuplicateRecordFields #-}
 {-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE OverloadedLabels #-}
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE ViewPatterns #-}
@@ -18,6 +19,7 @@ import Domain.User (UserR)
 import Domain.Util.Field (Body, Description, Slug, Tag, Time, Title)
 import Domain.Util.JSON.From (In, insert', updatableParseJSON, wrappedParseJSON)
 import Domain.Util.JSON.To (Out (Out), multiWrappedWithCountToEncoding, wrappedToEncoding)
+import Domain.Util.Representation (Transform (transform))
 import GHC.TypeLits (Symbol)
 import Validation.Carrier.Selective (WithUpdate, WithValidation)
 
@@ -134,3 +136,19 @@ instance FromJSON (ArticleR "update") where
 
 instance FromJSON (In (ArticleR "update")) where
   parseJSON = wrappedParseJSON "ArticleUpdate" "article"
+
+---------------------------------------------------------------------
+-- mmmmmmm                               m""                       --
+--    #     m mm   mmm   m mm    mmm   mm#mm   mmm    m mm  mmmmm  --
+--    #     #"  " "   #  #"  #  #   "    #    #" "#   #"  " # # #  --
+--    #     #     m"""#  #   #   """m    #    #   #   #     # # #  --
+--    #     #     "mm"#  #   #  "mmm"    #    "#m#"   #     # # #  --
+---------------------------------------------------------------------
+
+-- FIXME
+instance Transform ArticleR "all" "withAuthorProfile" where
+  transform = undefined
+
+-- FIXME
+instance Transform ArticleR "create" "all" where
+  transform = undefined

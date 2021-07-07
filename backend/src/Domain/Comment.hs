@@ -4,6 +4,7 @@
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE DuplicateRecordFields #-}
 {-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE TypeFamilies #-}
 
 -- |
@@ -16,6 +17,7 @@ import Domain.User (UserR)
 import Domain.Util.Field (Time)
 import Domain.Util.JSON.From (In, wrappedParseJSON)
 import Domain.Util.JSON.To (Out, wrappedToEncoding)
+import Domain.Util.Representation (Transform (transform), TransformM (transformM))
 import GHC.TypeLits (Symbol)
 import Validation.Carrier.Selective (WithValidation)
 
@@ -75,3 +77,19 @@ instance FromJSON (In (WithValidation (CommentR "create"))) where
 -- ^ >>> import Data.Aeson
 --  >>> eitherDecode @(In (WithValidation (CommentR "create"))) "{ \"comment\": { \"body\": \"\"} }"
 --  >>> eitherDecode @(WithValidation (CommentR "create")) "{ \"body\": \"\"}"
+
+---------------------------------------------------------------------
+-- mmmmmmm                               m""                       --
+--    #     m mm   mmm   m mm    mmm   mm#mm   mmm    m mm  mmmmm  --
+--    #     #"  " "   #  #"  #  #   "    #    #" "#   #"  " # # #  --
+--    #     #     m"""#  #   #   """m    #    #   #   #     # # #  --
+--    #     #     "mm"#  #   #  "mmm"    #    "#m#"   #     # # #  --
+---------------------------------------------------------------------
+
+-- FIXME
+instance TransformM m CommentR "create" "all" where
+  transformM = undefined
+
+-- FIXME
+instance TransformM m CommentR "all" "withAuthorProfile" where
+  transformM = undefined

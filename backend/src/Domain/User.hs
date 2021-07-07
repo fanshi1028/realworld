@@ -4,6 +4,7 @@
 {-# LANGUAGE DerivingVia #-}
 {-# LANGUAGE DuplicateRecordFields #-}
 {-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE StandaloneDeriving #-}
 {-# LANGUAGE TypeFamilies #-}
@@ -19,6 +20,7 @@ import Data.HashMap.Strict (mapWithKey)
 import Domain.Util.Field (Bio, Email, Image, Password, Token, Username)
 import Domain.Util.JSON.From (In, updatableParseJSON, wrappedParseJSON)
 import Domain.Util.JSON.To (Out, wrappedToEncoding)
+import Domain.Util.Representation (Transform (transform), TransformM (transformM))
 import GHC.TypeLits (Symbol)
 import Relude.Extra (un)
 import Validation.Carrier.Selective (WithUpdate, WithValidation)
@@ -180,3 +182,25 @@ instance FromJSON (UserR "update") where
 
 instance FromJSON (In (UserR "update")) where
   parseJSON = wrappedParseJSON "UserUpdate" "user"
+
+---------------------------------------------------------------------
+-- mmmmmmm                               m""                       --
+--    #     m mm   mmm   m mm    mmm   mm#mm   mmm    m mm  mmmmm  --
+--    #     #"  " "   #  #"  #  #   "    #    #" "#   #"  " # # #  --
+--    #     #     m"""#  #   #   """m    #    #   #   #     # # #  --
+--    #     #     "mm"#  #   #  "mmm"    #    "#m#"   #     # # #  --
+---------------------------------------------------------------------
+
+instance Transform UserR "all" "auth" where
+  transform User {..} = UserAuth email token username bio image
+
+instance Transform UserR "auth" "id" where
+  transform UserAuth {..} = UserId username
+
+-- FIXME
+instance TransformM m UserR "create" "all" where
+  transformM = undefined
+
+-- FIXME
+instance TransformM m UserR "all" "profile" where
+  transformM = undefined
