@@ -14,15 +14,16 @@ import Data.Aeson (FromJSON (parseJSON), ToJSON (toEncoding), Value (Array), def
 import Data.Aeson.Types (Value (Object))
 import Data.Generic.HKD (construct)
 import Data.Generics.Labels ()
-import Data.UUID (UUID)
 import Domain.User (UserR)
-import Domain.Util (Body (..), Description, In, Out (..), Slug, Tag, Time, Title, insert', multiWrappedWithCountToEncoding, wrappedParseJSON, wrappedToEncoding)
+import Domain.Util.Field (Body, Description, Slug, Tag, Time, Title)
+import Domain.Util.JSON.From (In, insert', updatableParseJSON, wrappedParseJSON)
+import Domain.Util.JSON.To (Out (Out), multiWrappedWithCountToEncoding, wrappedToEncoding)
 import GHC.TypeLits (Symbol)
-import Validation.Adaptor (WithUpdate, WithValidation)
+import Validation.Carrier.Selective (WithUpdate, WithValidation)
 
 data family ArticleR (r :: Symbol)
 
-newtype instance ArticleR "id" = ArticleId UUID
+newtype instance ArticleR "id" = ArticleId Slug deriving (Show)
 
 -- | Articles
 data instance ArticleR "all" = Article
@@ -119,27 +120,17 @@ data instance ArticleR "create" = ArticleCreate
 instance FromJSON (WithValidation (ArticleR "create")) where
   parseJSON =
     withObject "CreateArticle" $
-      \( Object
-           . insert' "tagList" (Array mempty)
-           . insert' "body" "" ->
-           o
-         ) ->
-          construct <$> genericParseJSON defaultOptions o
+      \(Object . insert' "tagList" (Array mempty) -> o) -> construct <$> genericParseJSON defaultOptions o
 
 instance FromJSON (In (WithValidation (ArticleR "create"))) where
   parseJSON = wrappedParseJSON "ArticleCreate" "article"
 
-data instance ArticleR "update" = ArticleUpdate
-  { title :: Title, -- "How to train your dragon",
-    description :: Description, -- "Ever wonder how?",
-    body :: Body -- "You have to believe",
-  }
-  deriving (Generic, Show)
+newtype instance ArticleR "update" = ArticleUpdate (WithUpdate (ArticleR "all")) deriving (Generic)
 
-instance FromJSON (WithValidation (ArticleR "update")) where
-  parseJSON = construct <<$>> genericParseJSON defaultOptions
+instance FromJSON (ArticleR "update") where
+  parseJSON =
+    updatableParseJSON ["title", "description", "body"] $
+      genericParseJSON @(WithUpdate (ArticleR "all")) defaultOptions
 
-instance FromJSON (WithUpdate (ArticleR "update"))
-
-instance FromJSON (In (WithUpdate (ArticleR "update"))) where
+instance FromJSON (In (ArticleR "update")) where
   parseJSON = wrappedParseJSON "ArticleUpdate" "article"

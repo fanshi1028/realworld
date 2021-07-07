@@ -13,9 +13,11 @@ import Data.Aeson (FromJSON (parseJSON), ToJSON (toEncoding), defaultOptions, ge
 import Data.Generic.HKD (construct)
 import Data.UUID (UUID)
 import Domain.User (UserR)
-import Domain.Util (Out, Time, wrappedToEncoding, In, wrappedParseJSON)
+import Domain.Util.Field (Time)
+import Domain.Util.JSON.From (In, wrappedParseJSON)
+import Domain.Util.JSON.To (Out, wrappedToEncoding)
 import GHC.TypeLits (Symbol)
-import Validation.Adaptor (WithValidation)
+import Validation.Carrier.Selective (WithValidation)
 
 data family CommentR (r :: Symbol)
 
@@ -70,6 +72,6 @@ instance FromJSON (WithValidation (CommentR "create")) where
 
 instance FromJSON (In (WithValidation (CommentR "create"))) where
   parseJSON = wrappedParseJSON "CommentCreate" "comment"
--- ^>>> import Data.Aeson
--- >>> eitherDecode @(In (WithValidation (CommentR "create"))) "{ \"comment\": { \"body\": \"\"} }"
--- >>> eitherDecode @(WithValidation (CommentR "create")) "{ \"body\": \"\"}"
+-- ^ >>> import Data.Aeson
+--  >>> eitherDecode @(In (WithValidation (CommentR "create"))) "{ \"comment\": { \"body\": \"\"} }"
+--  >>> eitherDecode @(WithValidation (CommentR "create")) "{ \"body\": \"\"}"
