@@ -4,8 +4,8 @@ import Control.Carrier.Lift (runM)
 import HTTP (Api, server)
 import qualified Network.Wai.Handler.Warp as W (run)
 import Servant (Application, hoistServer, serve)
-import Tag.Carrier.Pure (runTagPure)
 import VisitorAction.Carrier.Pure (runVisitorActionPure)
+import qualified Tag.Pure (run)
 
 app :: Application
 app =
@@ -14,7 +14,7 @@ app =
       (Proxy @Api)
       ( runM
           . runVisitorActionPure
-          . runTagPure @[]
+          . Tag.Pure.run @[]
       )
       server
 

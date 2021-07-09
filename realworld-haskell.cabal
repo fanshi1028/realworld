@@ -92,8 +92,8 @@ library backend-internal
     Validation.Carrier.Selective
     VisitorAction.Carrier.Pure
     VisitorAction.Effect
-    Tag.Effect
-    Tag.Carrier.Pure
+    Tag
+    Tag.Pure
 
 -- other-modules:
 -- other-extensions:
