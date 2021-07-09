@@ -90,8 +90,8 @@ library backend-internal
     HTTP.Authed.User
     HTTP.Util
     Validation.Carrier.Selective
-    VisitorAction.Carrier.Pure
-    VisitorAction.Effect
+    VisitorAction
+    VisitorAction.Pure
     Tag
     Tag.Pure
 

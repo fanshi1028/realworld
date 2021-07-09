@@ -10,8 +10,8 @@ import Control.Effect.Sum (Member)
 import HTTP.Authed (AuthedApi, authedServer)
 import HTTP.Public (PublicApi, publicServer)
 import Servant (Get, JSON, ServerT, type (:<|>) ((:<|>)), type (:>))
-import VisitorAction.Effect (VisitorAction)
 import qualified Tag (E)
+import qualified VisitorAction (E)
 
 type Api =
   "api"
@@ -23,8 +23,8 @@ type Api =
 
 server ::
   ( Algebra sig m,
-    Member VisitorAction sig
-    Member (Tag.E []) sig
+    Member (Tag.E []) sig,
+    Member VisitorAction.E sig
   ) =>
   ServerT Api m
 server = (publicServer :<|> authedServer) :<|> pure "health-checked"
