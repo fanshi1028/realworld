@@ -12,8 +12,9 @@ import HTTP.Public.Profile (ProfileApi, profileServer)
 import HTTP.Public.Tag (TagApi, tagServer)
 import HTTP.Public.User (UserApi, userServer)
 import Servant (ServerT, type (:<|>) ((:<|>)), type (:>))
-import qualified VisitorAction (E)
 import qualified Tag (E)
+import qualified VisitorAction (E)
+import qualified VisitorAction.Batch (E)
 
 type PublicApi =
   "users" :> UserApi
@@ -24,7 +25,8 @@ type PublicApi =
 publicServer ::
   ( Algebra sig m,
     Member (Tag.E []) sig,
-    Member VisitorAction.E sig
+    Member VisitorAction.E sig,
+    Member (VisitorAction.Batch.E []) sig
   ) =>
   ServerT PublicApi m
 publicServer = userServer :<|> profileServer :<|> articleServer :<|> tagServer

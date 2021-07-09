@@ -12,6 +12,7 @@ import HTTP.Public (PublicApi, publicServer)
 import Servant (Get, JSON, ServerT, type (:<|>) ((:<|>)), type (:>))
 import qualified Tag (E)
 import qualified VisitorAction (E)
+import qualified VisitorAction.Batch (E)
 
 type Api =
   "api"
@@ -24,7 +25,8 @@ type Api =
 server ::
   ( Algebra sig m,
     Member (Tag.E []) sig,
-    Member VisitorAction.E sig
+    Member VisitorAction.E sig,
+    Member (VisitorAction.Batch.E []) sig
   ) =>
   ServerT Api m
 server = (publicServer :<|> authedServer) :<|> pure "health-checked"

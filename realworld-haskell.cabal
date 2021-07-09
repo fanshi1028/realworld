@@ -92,6 +92,8 @@ library backend-internal
     Validation.Carrier.Selective
     VisitorAction
     VisitorAction.Pure
+    VisitorAction.Batch
+    VisitorAction.Batch.Pure
     Tag
     Tag.Pure
 

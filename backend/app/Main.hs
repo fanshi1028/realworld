@@ -5,6 +5,7 @@ import HTTP (Api, server)
 import qualified Network.Wai.Handler.Warp as W (run)
 import Servant (Application, hoistServer, serve)
 import qualified VisitorAction.Pure (run)
+import qualified VisitorAction.Batch.Pure (run)
 import qualified Tag.Pure (run)
 
 app :: Application
@@ -15,6 +16,7 @@ app =
       ( runM
           . VisitorAction.Pure.run
           . Tag.Pure.run @[]
+          . VisitorAction.Batch.Pure.run @[]
       )
       server
 
