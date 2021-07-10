@@ -14,6 +14,7 @@ module Domain.Util.Error where
 import Data.Aeson (ToJSON (toEncoding))
 import Data.Aeson.Encoding.Internal (Encoding' (Encoding))
 import Domain.Util.JSON.To (Out, wrapEncoding, wrappedToEncoding)
+import GHC.TypeLits (Symbol)
 
 -- | TEMP: dangerous orphan instance
 instance Exception ValidationErr
@@ -35,9 +36,9 @@ instance (ToJSON a, Show a) => ToJSON (NotFound a) where
 
 data AlreadyExists a = AlreadyExists a | SomethingAlreadyExists deriving (Show, Generic, Exception)
 
-newtype NotAuthorized = NotAuthorized Text deriving (Show, Generic)
+data NotAuthorized (r :: Symbol -> Type) = NotAuthorized deriving (Show, Generic)
 
-deriving anyclass instance Exception NotAuthorized
+deriving anyclass instance Typeable r => Exception (NotAuthorized r)
 
 -- deriving anyclass instance (Typeable a, Show a) => Exception (NotAuthorized a)
 
