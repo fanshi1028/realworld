@@ -1,26 +1,32 @@
+{-# LANGUAGE DataKinds #-}
+
 module Main where
 
-import qualified Authorization.Pure (runFalse)
+import qualified Authentication.Pure (runFalse)
 import Control.Carrier.Lift (runM)
 import Control.Carrier.Throw.Either (runThrow)
 import Domain.User (UserR)
 import Domain.Util.Error (NotAuthorized, ValidationErr)
 import HTTP (Api, server)
 import qualified Network.Wai.Handler.Warp as W (run)
-import Servant (Application, ServerError (errBody), err400, err401, hoistServer, serve, throwError)
+import Servant (Application, Context (EmptyContext, (:.)), ServerError (errBody), err400, err401, hoistServerWithContext, serveWithContext, throwError)
+import Servant.Auth.Server (CookieSettings, JWTSettings, defaultCookieSettings, defaultJWTSettings, generateKey)
+import qualified StmContainers.Map as STM
+import Storage.InMem (TableInMem')
 import qualified Tag.Pure (run)
 import qualified VisitorAction.Batch.Pure (run)
 import qualified VisitorAction.Pure (run)
 
-app :: Application
-app =
-  serve (Proxy @Api) $
-    hoistServer
+app :: TableInMem' UserR "token" "id" -> CookieSettings -> JWTSettings -> Application
+app table cs jwts =
+  serveWithContext (Proxy @Api) (cs :. jwts :. table :. EmptyContext) $
+    hoistServerWithContext
       (Proxy @Api)
+      (Proxy @'[CookieSettings, JWTSettings, TableInMem' UserR "token" "id"])
       ( runM
           . runThrow @(NotAuthorized UserR)
           . runThrow @ValidationErr
-          . Authorization.Pure.runFalse @UserR
+          . Authentication.Pure.runFalse @UserR
           . VisitorAction.Pure.run
           . Tag.Pure.run @[]
           . VisitorAction.Batch.Pure.run @[]
@@ -36,6 +42,7 @@ app =
 main :: IO ()
 main = do
   putStrLn $ "server running at port: " <> show port
-  W.run port app
+  table <- STM.newIO
+  generateKey >>= W.run port . app table defaultCookieSettings . defaultJWTSettings
   where
     port = 8080

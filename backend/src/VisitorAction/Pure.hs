@@ -5,7 +5,7 @@
 -- |
 module VisitorAction.Pure (run) where
 
-import qualified Authorization as Auth (E (Login))
+import qualified Authentication as Auth (E (Login))
 import Control.Algebra (Algebra (alg), send, type (:+:) (L, R))
 import Control.Effect.Sum (Member)
 import Control.Effect.Throw (Throw, throwError)

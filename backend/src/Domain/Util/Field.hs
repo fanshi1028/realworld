@@ -13,9 +13,9 @@ import Data.Aeson (FromJSON (parseJSON), ToJSON (toEncoding), withText)
 import qualified Data.Text as T (null)
 import Data.Time (UTCTime)
 import Domain.Util.JSON.To (Out, wrappedToEncoding)
+import Servant (FromHttpApiData)
 import Text.Show (Show (showsPrec), showString)
 import Validation.Carrier.Selective (NoValidation, NoValidation' (..), WithValidation, validate)
-import Servant (FromHttpApiData)
 
 -- | some newtype
 
@@ -41,11 +41,6 @@ newtype Username = Username Text
 -- deriving (Generic)
 
 deriving via NoValidation instance FromJSON (WithValidation Username)
-
--- | Token
-newtype Token = Token Text deriving newtype (Show, Eq, ToJSON)
-
-deriving via NoValidation instance FromJSON (WithValidation Token)
 
 -- | Bio
 newtype Bio = Bio Text

@@ -13,31 +13,48 @@
 -- |
 module Domain.User where
 
-import Data.Aeson (FromJSON (parseJSON), ToJSON (toEncoding), Value (Null, Object), defaultOptions, genericParseJSON, withObject)
+import Data.Aeson (FromJSON (parseJSON), ToJSON (toEncoding), defaultOptions, genericParseJSON)
 import Data.Generic.HKD (Construct (construct), HKD (HKD))
 import Data.Generics.Labels ()
-import Data.HashMap.Strict (mapWithKey)
-import Domain.Util.Field (Bio, Email, Image, Password, Token, Username)
+import Domain.Util.Field (Bio, Email, Image, Password, Username)
 import Domain.Util.JSON.From (In, updatableParseJSON, wrappedParseJSON)
 import Domain.Util.JSON.To (Out, wrappedToEncoding)
 import Domain.Util.Representation (Transform (transform), TransformM (transformM))
 import GHC.TypeLits (Symbol)
-import Relude.Extra (un)
 import Servant (FromHttpApiData (parseUrlPiece))
-import Validation.Carrier.Selective (WithUpdate, WithValidation)
+import Servant.Auth.Server (ToJWT)
+import Validation.Carrier.Selective (NoValidation, NoValidation' (NoValidation'), WithUpdate, WithValidation)
 
 data family UserR (r :: Symbol)
 
 newtype instance UserR "id" = UserId Username
   deriving (Generic)
-  deriving newtype (Show, Eq, FromJSON, Hashable)
+  deriving newtype (Show, Eq, FromJSON, Hashable, ToJSON)
+
+instance ToJWT (UserR "id")
 
 instance FromJSON (WithValidation (UserR "id")) where
   parseJSON = fmap UserId <<$>> parseJSON
 
+newtype instance UserR "token" = Token Text
+  deriving newtype (Show, Eq, ToJSON, Hashable)
+  deriving (Generic)
+
+deriving via NoValidation instance FromJSON (WithValidation (UserR "token"))
+
+instance FromHttpApiData (UserR "token") where
+  parseUrlPiece =
+    ( >>=
+        \case
+          (words -> [prefix, token])
+            | (prefix == "Token") -> pure $ Token token
+          _ -> Left "Authentication Header should be in format: \"Authorization: Token jwt.token.here\""
+    )
+      <$> parseUrlPiece
+
 data instance UserR "all" = User
   { email :: Email, -- "jake@jake.jake",
-    token :: Token, -- "jwt.token.here",
+    token :: UserR "token", -- "jwt.token.here",
     password :: Password, -- "jakejake"
     username :: Username, -- "jake",
     bio :: Bio, -- "I work at statefarm",
@@ -58,7 +75,7 @@ data instance UserR "all" = User
 -- Users (for authentication)
 data instance UserR "auth" = UserAuth
   { email :: Email, -- "jake@jake.jake",
-    token :: Token, -- "jwt.token.here",
+    token :: UserR "token", -- "jwt.token.here",
     username :: Username, -- "jake",
     bio :: Bio, -- "I work at statefarm",
     image :: Image -- "https://static.productionready.io/images/smiley-cyrus.jpg",

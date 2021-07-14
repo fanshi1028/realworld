@@ -4,9 +4,9 @@
 {-# LANGUAGE UndecidableInstances #-}
 
 -- |
-module Authorization.Pure (runTrue, runFalse) where
+module Authentication.Pure (runTrue, runFalse) where
 
-import Authorization (E (GetAuthInfo, Login, Logout, Register))
+import Authentication (E (GetAuthInfo, Login, Logout, Register))
 import Control.Algebra (Algebra (alg), type (:+:) (L, R))
 import GHC.TypeLits (Symbol)
 

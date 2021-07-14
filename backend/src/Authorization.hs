@@ -1,10 +1,16 @@
 {-# LANGUAGE DataKinds #-}
+{-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE TypeFamilies #-}
+{-# LANGUAGE ViewPatterns #-}
 
 -- |
 module Authorization where
 
-data E r (m :: Type -> Type) a where
-  Register :: r "register" -> E r m (r "auth")
-  Login :: r "login" -> E r m (Maybe (r "auth"))
-  Logout :: E r m Bool
-  GetAuthInfo :: E r m (Maybe (r "auth"))
+import GHC.TypeLits (Symbol)
+import Network.Wai (Request)
+import Servant.Auth.Server (AuthResult)
+
+data E (r :: Symbol -> Type) (m :: Type -> Type) a where
+  AuthCheck :: Request -> E r m (AuthResult (r "id"))
+

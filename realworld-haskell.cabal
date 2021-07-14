@@ -60,6 +60,7 @@ common backend-internal
     , fused-effects         ^>=1.1.1
     , generic-lens          ^>=2.1.0
     , higgledy              ^>=0.4.1
+    , list-t                ^>=1.0.4
     , servant-server        ^>=0.18.3
     , stm-containers        ^>=1.2
     , text                  ^>=1.2.4
@@ -67,13 +68,17 @@ common backend-internal
     , unordered-containers  ^>=0.2.14
     , uuid                  ^>=1.3.15
     , validation-selective  ^>=0.1.0
+    , servant-auth-server   ^>=0.4.6
+    , wai                   ^>= 3.2.3
 
 library backend-internal
   import: prelude, backend-internal
 
   exposed-modules:
-    Authorization.Pure
+    Authentication
+    Authentication.Pure
     Authorization
+    Authorization.TokenAuth
     Domain.Article
     Domain.Comment
     Domain.User
@@ -129,6 +134,8 @@ executable realworld-haskell
   build-depends:  warp ^>=3.3.17
                 , fused-effects         ^>=1.1.1
                 , servant-server        ^>=0.18.3
+                , servant-auth-server   ^>=0.4.6
+                , stm-containers        ^>=1.2
 
 -- other-modules:
 -- other-extensions:
