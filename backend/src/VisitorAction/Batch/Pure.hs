@@ -13,7 +13,7 @@ import VisitorAction.Batch (E (GetComments, GetTags, ListArticles))
 newtype C (f :: Type -> Type) m a = C
   { run :: m a
   }
-  deriving (Functor, Applicative, Monad)
+  deriving (Functor, Applicative, Monad, MonadIO)
 
 instance (Member (Tag.E []) sig, Algebra sig m) => Algebra (VisitorAction.Batch.E [] :+: sig) (C [] m) where
   alg hdl sig ctx = case sig of

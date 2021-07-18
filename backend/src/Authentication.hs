@@ -4,7 +4,7 @@
 module Authentication where
 
 data E r (m :: Type -> Type) a where
-  Register :: r "register" -> E r m (r "auth")
-  Login :: r "login" -> E r m (Maybe (r "auth"))
-  Logout :: E r m Bool
+  Register :: r "register" -> E r m (r "id")
+  Login :: r "login" -> E r m (r "id")
+  Logout :: E r m ()
   GetAuthInfo :: E r m (Maybe (r "auth"))

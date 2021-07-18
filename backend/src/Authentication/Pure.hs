@@ -13,25 +13,25 @@ import GHC.TypeLits (Symbol)
 newtype CTrue (r :: Symbol -> Type) m a = CTrue
   { runTrue :: m a
   }
-  deriving (Functor, Applicative, Monad)
+  deriving (Functor, Applicative, Monad, MonadIO)
 
 instance Algebra sig m => Algebra (E r :+: sig) (CTrue r m) where
   -- FIXME
   alg _ (L GetAuthInfo) ctx = pure $ Just undefined <$ ctx
   alg _ (L (Register _)) ctx = pure $ undefined <$ ctx
-  alg _ (L (Login _)) ctx = pure $ Just undefined <$ ctx
-  alg _ (L Logout) ctx = pure $ False <$ ctx
+  alg _ (L (Login _)) ctx = pure $ undefined <$ ctx
+  alg _ (L Logout) ctx = pure $ () <$ ctx
   alg hdl (R other) ctx = CTrue $ alg (runTrue . hdl) other ctx
 
 newtype CFalse (r :: Symbol -> Type) m a = CFalse
   { runFalse :: m a
   }
-  deriving (Functor, Applicative, Monad)
+  deriving (Functor, Applicative, Monad, MonadIO)
 
 instance Algebra sig m => Algebra (E r :+: sig) (CFalse r m) where
   -- FIXME
   alg _ (L GetAuthInfo) ctx = pure $ Nothing <$ ctx
   alg _ (L (Register _)) ctx = pure $ undefined <$ ctx
-  alg _ (L (Login _)) ctx = pure $ Nothing <$ ctx
-  alg _ (L Logout) ctx = pure $ True <$ ctx
+  alg _ (L (Login _)) ctx = pure $ undefined <$ ctx
+  alg _ (L Logout) ctx = pure $ () <$ ctx
   alg hdl (R other) ctx = CFalse $ alg (runFalse . hdl) other ctx

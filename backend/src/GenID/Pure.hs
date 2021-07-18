@@ -14,7 +14,7 @@ import GenID (E (GenerateID))
 newtype C (r :: Symbol -> Type) m a = C
   { run :: m a
   }
-  deriving (Functor, Applicative, Monad)
+  deriving (Functor, Applicative, Monad, MonadIO)
 
 instance
   ( Algebra sig m,

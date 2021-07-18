@@ -11,6 +11,5 @@ import Servant (Capture, ServerT, type (:>))
 type FollowApi = Capture "username" (UserR "id") :> "follow" :> ToggleApi UserR "profile"
 
 -- FIXME
-followServer ::
-  ServerT FollowApi m
+followServer :: ServerT FollowApi m
 followServer = undefined

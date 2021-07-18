@@ -13,4 +13,3 @@ import Servant.Auth.Server (AuthResult)
 
 data E (r :: Symbol -> Type) (m :: Type -> Type) a where
   AuthCheck :: Request -> E r m (AuthResult (r "id"))
-

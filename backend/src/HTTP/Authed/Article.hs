@@ -6,7 +6,7 @@ module HTTP.Authed.Article (ArticleApi, articleServer) where
 import Domain.Article (ArticleR)
 import Domain.Comment (CommentR)
 import HTTP.Util (CreateApi, DeleteApi, QP, RUDApi, ReadManyApi, ToggleApi)
-import Servant (Capture, type (:<|>) ((:<|>)), type (:>), ServerT)
+import Servant (Capture, ServerT, type (:<|>) ((:<|>)), type (:>))
 
 type CommentApi =
   Capture "id" (CommentR "id") :> DeleteApi CommentR "withAuthorProfile"

@@ -8,7 +8,6 @@
 module Storage.STM.InMem where
 
 import Control.Algebra (Algebra (alg), type (:+:) (L, R))
-import Data.UUID (UUID)
 import qualified Focus as FC (Change (Leave, Remove, Set), cases)
 import GHC.TypeLits (Symbol)
 import qualified ListT (fold)
@@ -24,7 +23,6 @@ newtype C (r :: Symbol -> Type) m a = C
 instance
   ( Eq (r "id"),
     Show (r "id"),
-    Coercible UUID (r "id"),
     Hashable (r "id"),
     Algebra sig m
   ) =>

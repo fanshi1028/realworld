@@ -5,24 +5,31 @@
 {-# LANGUAGE DuplicateRecordFields #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE NamedFieldPuns #-}
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE StandaloneDeriving #-}
 {-# LANGUAGE TypeFamilies #-}
+{-# LANGUAGE UndecidableInstances #-}
 {-# LANGUAGE ViewPatterns #-}
 
 -- |
 module Domain.User where
 
-import Data.Aeson (FromJSON (parseJSON), ToJSON (toEncoding), defaultOptions, genericParseJSON)
+import Data.Aeson (FromJSON (parseJSON), ToJSON (toEncoding, toJSON), Value (Object), defaultOptions, genericParseJSON, genericToJSON)
+-- import Data.Generics.Labels ()
+
+import Data.Aeson.Encoding (value)
+import Data.ByteString.Base64.Type (ByteString64)
 import Data.Generic.HKD (Construct (construct), HKD (HKD))
-import Data.Generics.Labels ()
+import qualified Data.HashMap.Strict as HM
 import Domain.Util.Field (Bio, Email, Image, Password, Username)
 import Domain.Util.JSON.From (In, updatableParseJSON, wrappedParseJSON)
-import Domain.Util.JSON.To (Out, wrappedToEncoding)
-import Domain.Util.Representation (Transform (transform), TransformM (transformM))
+import Domain.Util.JSON.To (Out (Out), wrapEncoding, wrappedToEncoding)
+import Domain.Util.Representation (Transform (transform))
+import GHC.Records (HasField (getField))
 import GHC.TypeLits (Symbol)
 import Servant (FromHttpApiData (parseUrlPiece))
-import Servant.Auth.Server (ToJWT)
+import Servant.Auth.Server (FromJWT, ToJWT)
 import Validation.Carrier.Selective (NoValidation, NoValidation' (NoValidation'), WithUpdate, WithValidation)
 
 data family UserR (r :: Symbol)
@@ -33,28 +40,31 @@ newtype instance UserR "id" = UserId Username
 
 instance ToJWT (UserR "id")
 
+instance FromJWT (UserR "id")
+
 instance FromJSON (WithValidation (UserR "id")) where
   parseJSON = fmap UserId <<$>> parseJSON
 
-newtype instance UserR "token" = Token Text
-  deriving newtype (Show, Eq, ToJSON, Hashable)
+newtype instance UserR "token" = Token ByteString64
+  deriving newtype (Show, Eq, ToJSON, FromJSON, Hashable, IsString)
   deriving (Generic)
 
-deriving via NoValidation instance FromJSON (WithValidation (UserR "token"))
+instance FromJSON (WithValidation (UserR "token")) where
+  parseJSON = pure <<$>> genericParseJSON defaultOptions
 
 instance FromHttpApiData (UserR "token") where
   parseUrlPiece =
     ( >>=
         \case
-          (words -> [prefix, token])
-            | (prefix == "Token") -> pure $ Token token
+          (words . show -> [prefix, token])
+            | (prefix == "Token") -> pure $ Token $ show token
           _ -> Left "Authentication Header should be in format: \"Authorization: Token jwt.token.here\""
     )
-      <$> parseUrlPiece
+      <$> parseUrlPiece @ByteString64
 
 data instance UserR "all" = User
   { email :: Email, -- "jake@jake.jake",
-    token :: UserR "token", -- "jwt.token.here",
+  -- token :: UserR "token", -- "jwt.token.here",
     password :: Password, -- "jakejake"
     username :: Username, -- "jake",
     bio :: Bio, -- "I work at statefarm",
@@ -63,6 +73,17 @@ data instance UserR "all" = User
     followBy :: HashSet (UserR "id") -- empty,
   }
   deriving (Generic, Show, Eq)
+
+data instance UserR "auth" = UserAuth
+  { email :: Email, -- "jake@jake.jake",
+  -- token :: UserR "token", -- "jwt.token.here",
+    username :: Username, -- "jake",
+    bio :: Bio, -- "I work at statefarm",
+    image :: Image -- "https://static.productionready.io/images/smiley-cyrus.jpg",
+  }
+  deriving (Generic, Show, Eq, ToJSON)
+
+instance ToJWT (UserR "auth")
 
 --------------------------
 --                 m    --
@@ -73,22 +94,25 @@ data instance UserR "all" = User
 --------------------------
 
 -- Users (for authentication)
-data instance UserR "auth" = UserAuth
-  { email :: Email, -- "jake@jake.jake",
-    token :: UserR "token", -- "jwt.token.here",
-    username :: Username, -- "jake",
-    bio :: Bio, -- "I work at statefarm",
-    image :: Image -- "https://static.productionready.io/images/smiley-cyrus.jpg",
-  }
-  deriving (Generic, Show, Eq, ToJSON)
+data instance UserR "authWithToken" = UserAuthWithToken (UserR "auth") (UserR "token") deriving (Generic, Show, Eq)
 
--- >>> import Domain.Util
+-- FIXME Why is this instance needed for the instance Out instance below
+instance ToJSON (UserR "authWithToken") where
+  toEncoding (UserAuthWithToken auth token) =
+    case genericToJSON defaultOptions auth of
+      Object hm -> value $ Object $ HM.insert "token" (toJSON token) hm
+      -- FIXME
+      _ -> undefined -- impossible case
+
+-- >>> import Domain.Util.Field
 -- >>> import Data.Aeson
--- >>> user = UserAuth (Email "jake@jake.jake") (Token "jwt.token.here") (Username "jake") (Just $ Bio "I work at statefarm") (Just $ Image "https://static.productionready.io/images/smiley-cyrus.jpg")
+-- >>> user = UserAuthWithToken (UserAuth (Email "jake@jake.jake") (Username "jake") (Bio "I work at statefarm") (Image "https://static.productionready.io/images/smiley-cyrus.jpg")) (Token "jwt.token.here")
 -- >>> encode $ Out user
--- "{\"user\":{\"image\":\"https://static.productionready.io/images/smiley-cyrus.jpg\",\"bio\":\"I work at statefarm\",\"email\":\"jake@jake.jake\",\"username\":\"jake\",\"token\":\"jwt.token.here\"}}"
-instance ToJSON (Out (UserR "auth")) where
-  toEncoding = wrappedToEncoding "user"
+instance ToJSON (Out (UserR "authWithToken")) where
+  toEncoding (Out (UserAuthWithToken auth token)) = case genericToJSON defaultOptions auth of
+    Object hm -> wrapEncoding "user" $ value $ Object $ HM.insert "token" (toJSON token) hm
+    -- FIXME
+    _ -> undefined -- impossible case
 
 -- Profile
 data instance UserR "profile" = UserProfile
@@ -214,15 +238,7 @@ instance FromJSON (In (UserR "update")) where
 ---------------------------------------------------------------------
 
 instance Transform UserR "all" "auth" where
-  transform User {..} = UserAuth email token username bio image
+  transform User {..} = UserAuth email username bio image
 
-instance Transform UserR "auth" "id" where
-  transform UserAuth {..} = UserId username
-
--- FIXME
-instance TransformM m UserR "create" "all" where
-  transformM = undefined
-
--- FIXME
-instance TransformM m UserR "all" "profile" where
-  transformM = undefined
+instance (HasField "username" (UserR s) Username) => Transform UserR s "id" where
+  transform = UserId . getField @"username"

@@ -8,12 +8,12 @@ module Storage.InMem where
 
 import Control.Algebra (Algebra (alg), send, type (:+:) (L, R))
 import Control.Effect.Sum (Member)
-import Domain.Util.Representation (Transform (transform))
 import GHC.TypeLits (Symbol)
 import qualified GenID (E (GenerateID))
 import qualified StmContainers.Map as STM (Map)
 import Storage (E (DeleteById, GetAll, GetById, Insert, UpdateById))
 import qualified Storage.STM as STM (E (DeleteById, GetAll, GetById, Insert, UpdateById))
+import qualified Transform (E (Transform))
 
 type TableInMem' r (k :: Symbol) (v :: Symbol) = STM.Map (r k) (r v)
 
@@ -25,14 +25,15 @@ newtype C (r :: Symbol -> Type) m a = C
   deriving (Functor, Applicative, Monad, MonadIO, MonadReader (TableInMem r))
 
 instance
-  ( MonadIO m,
-    Show (r "id"),
+  ( Show (r "id"),
     Eq (r "id"),
     Hashable (r "id"),
-    Transform r "create" "all",
+    Member (Transform.E r "create" "all") sig,
     Member (GenID.E r) sig,
     Member (STM.E r) sig,
-    Algebra sig m
+    Member (Transform.E r "create" "all") sig,
+    Algebra sig m,
+    MonadIO m
   ) =>
   Algebra (E r :+: sig) (C r m)
   where
@@ -42,9 +43,7 @@ instance
         <$> ( ( case action of
                   GetById id' -> send STM.GetById <*> pure id'
                   GetAll -> send STM.GetAll
-                  Insert create -> do
-                    key <- send $ GenID.GenerateID create
-                    send STM.Insert <*> pure key <*> pure (transform create)
+                  Insert create -> send STM.Insert <*> send (GenID.GenerateID create) <*> send (Transform.Transform @_ create)
                   UpdateById id' updateF -> send STM.UpdateById <*> pure id' <*> pure updateF
                   DeleteById id' -> send STM.DeleteById <*> pure id'
               )

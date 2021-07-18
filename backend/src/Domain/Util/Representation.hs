@@ -17,12 +17,6 @@ import Validation.Carrier.Selective (WithUpdate, WithValidation)
 class Transform (r :: Symbol -> Type) s1 s2 where
   transform :: r s1 -> r s2
 
-class TransformM (m :: Type -> Type) (r :: Symbol -> Type) s1 s2 where
-  transformM :: r s1 -> m (r s2)
-
-instance Transform r s1 s2 => TransformM Identity (r :: Symbol -> Type) s1 s2 where
-  transformM = Identity . transform
-
 type Patchable r =
   ( Coercible (WithUpdate (r "all")) (r "update"),
     Construct WithValidation (r "all"),

@@ -141,19 +141,3 @@ instance FromJSON (In (ArticleR "update")) where
 -- FIXME
 instance FromHttpApiData (ArticleR "id") where
   parseUrlPiece = undefined
-
----------------------------------------------------------------------
--- mmmmmmm                               m""                       --
---    #     m mm   mmm   m mm    mmm   mm#mm   mmm    m mm  mmmmm  --
---    #     #"  " "   #  #"  #  #   "    #    #" "#   #"  " # # #  --
---    #     #     m"""#  #   #   """m    #    #   #   #     # # #  --
---    #     #     "mm"#  #   #  "mmm"    #    "#m#"   #     # # #  --
----------------------------------------------------------------------
-
--- FIXME
-instance Transform ArticleR "all" "withAuthorProfile" where
-  transform = undefined
-
--- FIXME
-instance Transform ArticleR "create" "all" where
-  transform = undefined
