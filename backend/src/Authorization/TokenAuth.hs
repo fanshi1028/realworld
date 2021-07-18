@@ -13,8 +13,9 @@ import Control.Algebra (Algebra (alg), send, type (:+:) (L, R))
 import Control.Carrier.Lift (runM)
 import qualified Control.Carrier.Reader as R
 import Control.Effect.Sum (Member)
+import Data.ByteString.Base64.Type (getBS64)
 import qualified Data.List as List
-import Domain.User (UserR)
+import Domain.User (UserR (Token, UserAuthWithToken))
 import GHC.TypeLits (Symbol)
 import Network.Wai (requestHeaders)
 import Servant (FromHttpApiData (parseHeader))
@@ -35,17 +36,19 @@ instance
   Algebra (E UserR :+: sig) (C r m)
   where
   alg _ (L (AuthCheck req)) ctx = do
-    mAuth <- case List.lookup "authorization" $ requestHeaders req of
-      Just (parseHeader @(UserR "token") -> Right token) -> do
+    auth <- case List.lookup "authorization" $ requestHeaders req of
+      Just (parseHeader @(UserR "token") -> Right t@(Token token)) -> do
         jwts <- R.ask
-        liftIO $ verifyJWT jwts $ show token
-      _ -> pure Nothing
-    pure $ maybe mempty pure mAuth <$ ctx
+        liftIO (verifyJWT jwts $ getBS64 token) >>= \case
+          Nothing -> pure mempty
+          Just auth -> pure $ pure $ UserAuthWithToken auth t
+      _ -> pure mempty
+    pure $ auth <$ ctx
   alg hdl (R other) ctx = C $ alg (run . hdl) other ctx
 
 data TokenAuth
 
-instance IsAuth TokenAuth (UserR "id") where
+instance IsAuth TokenAuth (UserR "authWithToken") where
   type AuthArgs TokenAuth = '[CookieSettings, JWTSettings]
   runAuth _ _ cs jwts =
     Auth.AuthCheck $

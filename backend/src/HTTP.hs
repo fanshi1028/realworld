@@ -25,7 +25,7 @@ import qualified VisitorAction.Batch (E)
 
 type Api =
   "api"
-    :> (PublicApi :<|> Auth '[TokenAuth] (UserR "id") :> AuthedApi)
+    :> (PublicApi :<|> Auth '[TokenAuth] (UserR "authWithToken") :> AuthedApi)
     :<|> Get '[JSON] Text
 
 server ::

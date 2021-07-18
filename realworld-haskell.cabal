@@ -81,7 +81,6 @@ library backend-internal
     Authentication.Pure
     Authorization
     Authorization.TokenAuth
-    Authorization.TokenAuth.InMem
     Domain.Article
     Domain.Comment
     Domain.User

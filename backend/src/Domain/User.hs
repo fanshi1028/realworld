@@ -29,18 +29,14 @@ import Domain.Util.Representation (Transform (transform))
 import GHC.Records (HasField (getField))
 import GHC.TypeLits (Symbol)
 import Servant (FromHttpApiData (parseUrlPiece))
-import Servant.Auth.Server (FromJWT, ToJWT)
-import Validation.Carrier.Selective (NoValidation, NoValidation' (NoValidation'), WithUpdate, WithValidation)
+import Servant.Auth.Server (FromJWT, ToJWT (encodeJWT))
+import Validation.Carrier.Selective (WithUpdate, WithValidation)
 
 data family UserR (r :: Symbol)
 
 newtype instance UserR "id" = UserId Username
   deriving (Generic)
-  deriving newtype (Show, Eq, FromJSON, Hashable, ToJSON)
-
-instance ToJWT (UserR "id")
-
-instance FromJWT (UserR "id")
+  deriving newtype (Show, Eq, Hashable, ToJSON)
 
 instance FromJSON (WithValidation (UserR "id")) where
   parseJSON = fmap UserId <<$>> parseJSON
@@ -81,9 +77,11 @@ data instance UserR "auth" = UserAuth
     bio :: Bio, -- "I work at statefarm",
     image :: Image -- "https://static.productionready.io/images/smiley-cyrus.jpg",
   }
-  deriving (Generic, Show, Eq, ToJSON)
+  deriving (Generic, Show, Eq, ToJSON, FromJSON)
 
 instance ToJWT (UserR "auth")
+
+instance FromJWT (UserR "auth")
 
 --------------------------
 --                 m    --
@@ -103,6 +101,9 @@ instance ToJSON (UserR "authWithToken") where
       Object hm -> value $ Object $ HM.insert "token" (toJSON token) hm
       -- FIXME
       _ -> undefined -- impossible case
+
+instance ToJWT (UserR "authWithToken") where
+  encodeJWT (UserAuthWithToken auth _) = encodeJWT auth
 
 -- >>> import Domain.Util.Field
 -- >>> import Data.Aeson

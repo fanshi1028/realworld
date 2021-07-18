@@ -20,7 +20,7 @@ import Validation.Carrier.Selective (NoValidation, NoValidation' (..), WithValid
 -- | some newtype
 
 -- | Email
-newtype Email = Email Text deriving newtype (Show, Eq, ToJSON)
+newtype Email = Email Text deriving newtype (Show, Eq, ToJSON, FromJSON)
 
 instance FromJSON (WithValidation Email) where
   parseJSON = withText "email" $ pure <$> (Email <<$>> validate (not . T.null) "null email")
@@ -44,7 +44,7 @@ deriving via NoValidation instance FromJSON (WithValidation Username)
 
 -- | Bio
 newtype Bio = Bio Text
-  deriving newtype (Show, Eq, ToJSON)
+  deriving newtype (Show, Eq, ToJSON, FromJSON)
 
 -- deriving (Generic)
 
@@ -52,7 +52,7 @@ deriving via NoValidation instance FromJSON (WithValidation Bio)
 
 -- | Image
 newtype Image = Image Text
-  deriving newtype (Show, Eq, ToJSON)
+  deriving newtype (Show, Eq, ToJSON, FromJSON)
 
 -- deriving (Generic)
 

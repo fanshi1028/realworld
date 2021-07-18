@@ -56,15 +56,13 @@ userServer ::
   ) =>
   ServerT UserApi m
 userServer =
-  -- FIXME
   let validateThen action = validation (throwError @ValidationErr) (send . action) . un
-   in ( \a -> do
-          authInfo <- validateThen Login a
+   in ( validateThen Login >=> \authInfo -> do
           cs <- R.ask
           jwts <- R.ask
           liftIO (acceptLogin cs jwts authInfo) >>= \case
             Nothing -> undefined
-            Just u' -> case u' authInfo of
+            Just f -> case f authInfo of
               Headers auth hs@(HCons h _) -> case h of
                 Header (Token . mkBS64 . setCookieValue -> jwt) ->
                   pure $ Headers (Out $ UserAuthWithToken auth jwt) hs
@@ -75,6 +73,7 @@ userServer =
       )
         :<|> ( validateThen Register >=> \auth -> do
                  jwts <- R.ask
+                 -- FIXME what should the expiry be?
                  liftIO (makeJWT auth jwts Nothing) >>= \case
                    Right (Token . mkBS64 . toStrict -> token) -> pure $ Out $ UserAuthWithToken auth token
                    -- FIXME
