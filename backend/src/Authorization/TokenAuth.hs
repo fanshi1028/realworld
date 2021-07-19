@@ -50,10 +50,9 @@ data TokenAuth
 
 instance IsAuth TokenAuth (UserR "authWithToken") where
   type AuthArgs TokenAuth = '[CookieSettings, JWTSettings]
-  runAuth _ _ cs jwts =
+  runAuth _ _ _ jwts =
     Auth.AuthCheck $
       runM
-        . R.runReader cs
         . R.runReader jwts
         . run
         . send
