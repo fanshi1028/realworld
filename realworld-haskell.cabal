@@ -80,7 +80,6 @@ library backend-internal
     Authentication
     Authentication.Pure
     Authorization
-    Authorization.TokenAuth
     Domain.Article
     Domain.Comment
     Domain.User

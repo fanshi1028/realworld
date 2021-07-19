@@ -6,7 +6,7 @@
 -- |
 module HTTP (server, Api) where
 
-import Authorization.TokenAuth (TokenAuth)
+import Authorization (TokenAuth)
 import Control.Algebra (Algebra)
 import qualified Control.Carrier.Reader as R (Reader, runReader)
 import Control.Effect.Sum (Member)
