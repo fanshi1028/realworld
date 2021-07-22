@@ -7,11 +7,11 @@
 -- |
 module VisitorAction.Pure (run) where
 
-import qualified Authentication as Auth (E (GetAuthInfo, Login))
+import qualified Authentication as Auth (E (Login))
 import Control.Algebra (Algebra (alg), send, type (:+:) (L, R))
 import Control.Effect.Sum (Member)
 import Control.Effect.Throw (Throw, throwError)
-import Domain.User (UserR)
+import Domain.User (UserR (..))
 import Domain.Util.Error (NotAuthorized (NotAuthorized))
 import Domain.Util.Representation (Transform (transform))
 import qualified Storage (E (GetById))

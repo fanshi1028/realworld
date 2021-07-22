@@ -40,10 +40,6 @@ data NotAuthorized (r :: Symbol -> Type) = NotAuthorized deriving (Show, Generic
 
 deriving anyclass instance Typeable r => Exception (NotAuthorized r)
 
--- deriving anyclass instance (Typeable a, Show a) => Exception (NotAuthorized a)
-
-type OtherErr = Text
-
 type ValidationErr = NonEmpty Text
 
 -- >>> show $ NotFound @Text "hi"

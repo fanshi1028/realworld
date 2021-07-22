@@ -47,7 +47,8 @@ server =
                hoistServer
                  (Proxy @AuthedApi)
                  ( case auth of
-                     Authenticated userId -> R.runReader userId
+                     Authenticated user -> R.runReader user
+                     -- FIXME is this undefined ok?
                      _ -> R.runReader undefined . (throwError (NotAuthorized @UserR) >>)
                  )
                  authedServer

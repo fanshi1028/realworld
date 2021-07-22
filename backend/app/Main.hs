@@ -2,7 +2,8 @@
 
 module Main where
 
-import qualified Authentication.Pure (runFalse)
+import Authentication.Pure (SomeNotLogin)
+import qualified Authentication.Pure (run)
 import Control.Carrier.Lift (runM)
 import qualified Control.Carrier.Reader as R (runReader)
 import Control.Carrier.Throw.Either (runThrow)
@@ -27,6 +28,7 @@ app cs jwts =
       (Proxy @Api)
       (Proxy @'[CookieSettings, JWTSettings])
       ( runM
+          . runThrow @SomeNotLogin
           . runThrow @(NotAuthorized UserR)
           . runThrow @ValidationErr
           . Transform.run @UserR @"auth" @"authWithToken"
@@ -36,20 +38,20 @@ app cs jwts =
           . (usingReaderT undefined . Storage.STM.InMem.run @UserR)
           -- FIXME
           . (usingReaderT undefined . Storage.InMem.run @UserR)
-          . Authentication.Pure.runFalse @UserR
+          . Authentication.Pure.run @UserR @False
           . VisitorAction.Pure.run
           . Tag.Pure.run @[]
           . VisitorAction.Batch.Pure.run @[]
           . R.runReader jwts
           . R.runReader cs
-          >=> either
-            (\err -> throwError $ err401 {errBody = show err})
-            ( either
-                (\err -> throwError $ err400 {errBody = show err})
-                pure
-            )
+          >=> handlerErr (\err -> throwError $ err400 {errBody = "fuck"})
+          >=> handlerErr (\err -> throwError $ err401 {errBody = "fuck"})
+          >=> handlerErr (\err -> throwError $ err400 {errBody = "fuck"})
       )
       server
+  where
+    -- NOTE: Helpers for handle errors in form of nested either
+    handlerErr handler = either handler pure
 
 main :: IO ()
 main = do

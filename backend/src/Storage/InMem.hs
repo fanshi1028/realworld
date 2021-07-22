@@ -43,7 +43,7 @@ instance
         <$> ( ( case action of
                   GetById id' -> send STM.GetById <*> pure id'
                   GetAll -> send STM.GetAll
-                  Insert create -> send STM.Insert <*> send (GenID.GenerateID create) <*> send (Transform.Transform @_ create)
+                  Insert create -> send STM.Insert <*> send (GenID.GenerateID create) <*> send (Transform.Transform create)
                   UpdateById id' updateF -> send STM.UpdateById <*> pure id' <*> pure updateF
                   DeleteById id' -> send STM.DeleteById <*> pure id'
               )
