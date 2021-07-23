@@ -72,6 +72,7 @@ common backend-internal
     , wai                   ^>=3.2.3
     , cookie                ^>=0.4.5
     , base64-bytestring-type
+    , safe-exceptions
 
 library backend-internal
   import: prelude, backend-internal
@@ -80,6 +81,9 @@ library backend-internal
     Authentication
     Authentication.Pure
     Authorization
+    CurrentTime.IO
+    CurrentTime.Pure
+    CurrentTime
     Domain.Article
     Domain.Comment
     Domain.User
@@ -110,6 +114,8 @@ library backend-internal
     Storage.Index.InMem
     Storage.InMem
     Storage
+    UserAction
+    UserAction.Pure
     Validation.Carrier.Selective
     VisitorAction
     VisitorAction.Pure
