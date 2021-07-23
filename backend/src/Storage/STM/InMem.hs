@@ -29,11 +29,16 @@ instance
   Algebra (E r :+: sig) (C r m)
   where
   alg hdl sig ctx = case sig of
-    (L GetById) -> asks $ (<$ ctx) . flip _getById
-    (L GetAll) -> asks $ (<$ ctx) . _getAll
-    (L Insert) -> asks $ (<$ ctx) . (\db key value -> STM.insert value key db >>= const (pure value))
-    (L UpdateById) -> asks $ (<$ ctx) . \db id' updateF -> join $ STM.focus (_lookupAndUpdate id' updateF) id' db
-    (L DeleteById) -> asks $ (<$ ctx) . \db id' -> join $ STM.focus (_lookupAndDelete id') id' db
+    (L action) ->
+      asks $
+        (<$ ctx)
+          . ( case action of
+                GetById -> flip _getById
+                GetAll -> _getAll
+                Insert -> \db key value -> STM.insert value key db >>= const (pure value)
+                UpdateById -> \db id' updateF -> join $ STM.focus (_lookupAndUpdate id' updateF) id' db
+                DeleteById -> \db id' -> join $ STM.focus (_lookupAndDelete id') id' db
+            )
     (R other) -> C $ alg (run . hdl) (R other) ctx
     where
       _notFound id' = throwSTM $ show @Text id' <> "not found" :| []

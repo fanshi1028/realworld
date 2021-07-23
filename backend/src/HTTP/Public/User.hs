@@ -12,7 +12,7 @@ import Control.Effect.Error (Throw, throwError)
 import qualified Control.Effect.Reader as R
 import Control.Effect.Sum (Member)
 import Data.ByteString.Base64.Type (mkBS64)
-import Domain.User (UserR (Token, UserAuth, UserAuthWithToken))
+import Domain.User (UserR (..))
 import Domain.Util.Error (ValidationErr)
 import Domain.Util.JSON.From (In (In))
 import Domain.Util.JSON.To (Out (Out))
