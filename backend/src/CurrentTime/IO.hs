@@ -6,13 +6,14 @@
 module CurrentTime.IO where
 
 import Control.Algebra (Algebra (alg), type (:+:) (L, R))
+import Control.Exception.Safe (MonadCatch, MonadThrow)
 import CurrentTime (E (GetCurrentTime))
 import Data.Time (getCurrentTime)
 
 newtype C m a = C
   { run :: m a
   }
-  deriving (Functor, Applicative, Monad, MonadIO)
+  deriving (Functor, Applicative, Monad, MonadIO, MonadThrow, MonadCatch)
 
 instance (Algebra sig m, MonadIO m) => Algebra (E :+: sig) (C m) where
   alg _ (L GetCurrentTime) ctx = (<$ ctx) <$> liftIO getCurrentTime

@@ -8,17 +8,18 @@
 module Storage.STM.InMem where
 
 import Control.Algebra (Algebra (alg), type (:+:) (L, R))
+import Control.Exception.Safe (MonadCatch, MonadThrow)
 import qualified Focus as FC (Change (Leave, Remove, Set), cases)
 import GHC.TypeLits (Symbol)
 import qualified ListT (fold)
-import Storage.STM (E (DeleteById, GetAll, GetById, Insert, UpdateById))
 import qualified StmContainers.Map as STM (focus, insert, listT, lookup)
 import Storage.InMem (TableInMem)
+import Storage.STM (E (DeleteById, GetAll, GetById, Insert, UpdateById))
 
 newtype C (r :: Symbol -> Type) m a = C
   { run :: ReaderT (TableInMem r) m a
   }
-  deriving (Functor, Applicative, Monad, MonadIO, MonadReader (TableInMem r))
+  deriving (Functor, Applicative, Monad, MonadIO, MonadThrow, MonadCatch, MonadReader (TableInMem r))
 
 instance
   ( Eq (r "id"),

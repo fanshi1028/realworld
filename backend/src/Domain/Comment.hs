@@ -23,7 +23,7 @@ import Validation.Carrier.Selective (WithValidation)
 
 data family CommentR (r :: Symbol)
 
-newtype instance CommentR "id" = CommentId UUID deriving newtype (Show, ToJSON)
+newtype instance CommentR "id" = CommentId UUID deriving newtype (Show, Eq, Hashable, ToJSON)
 
 data instance CommentR "all" = Comment
   { id :: CommentR "id",

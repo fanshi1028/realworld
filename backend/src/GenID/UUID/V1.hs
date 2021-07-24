@@ -13,11 +13,12 @@ import Data.UUID.V1 (nextUUID)
 import GHC.TypeLits (Symbol)
 import GenID (E (GenerateID))
 import Data.UUID (UUID)
+import Control.Exception.Safe (MonadThrow, MonadCatch)
 
 newtype C (r :: Symbol -> Type) m a = C
   { run :: m a
   }
-  deriving (Functor, Applicative, Monad, MonadIO)
+  deriving (Functor, Applicative, Monad, MonadIO, MonadThrow, MonadCatch)
 
 instance
   ( MonadIO m,

@@ -7,6 +7,7 @@
 module GenID.UUID.V4 where
 
 import Control.Algebra (Algebra (alg), type (:+:) (L, R))
+import Control.Exception.Safe (MonadCatch, MonadThrow)
 import Data.UUID (UUID)
 import Data.UUID.V4 (nextRandom)
 import GHC.TypeLits (Symbol)
@@ -15,7 +16,7 @@ import GenID (E (GenerateID))
 newtype C (r :: Symbol -> Type) m a = C
   { run :: m a
   }
-  deriving (Functor, Applicative, Monad, MonadIO)
+  deriving (Functor, Applicative, Monad, MonadIO, MonadThrow, MonadCatch)
 
 instance
   ( MonadIO m,

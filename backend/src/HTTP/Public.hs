@@ -6,7 +6,6 @@
 module HTTP.Public (PublicApi, publicServer) where
 
 import Control.Algebra (Algebra)
-import Control.Effect.Lift (Lift)
 import qualified Control.Effect.Reader as R
 import Control.Effect.Sum (Member)
 import Control.Effect.Throw (Throw)
@@ -15,13 +14,11 @@ import HTTP.Public.Article (ArticleApi, articleServer)
 import HTTP.Public.Profile (ProfileApi, profileServer)
 import HTTP.Public.Tag (TagApi, tagServer)
 import HTTP.Public.User (UserApi, userServer)
-import Servant (Handler, ServerT, type (:<|>) ((:<|>)), type (:>))
+import Servant (ServerT, type (:<|>) ((:<|>)), type (:>))
 import Servant.Auth.Server (CookieSettings, JWTSettings)
 import qualified Tag (E)
 import qualified VisitorAction (E)
 import qualified VisitorAction.Batch (E)
-import qualified Transform
-import Domain.User (UserR)
 
 type PublicApi =
   "users" :> UserApi
@@ -37,7 +34,6 @@ publicServer ::
     Member (Throw ValidationErr) sig,
     Member (R.Reader JWTSettings) sig,
     Member (R.Reader CookieSettings) sig,
-    Member (Transform.E UserR "auth" "authWithToken") sig,
     MonadIO m
   ) =>
   ServerT PublicApi m

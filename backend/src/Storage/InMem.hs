@@ -8,6 +8,7 @@ module Storage.InMem where
 
 import Control.Algebra (Algebra (alg), send, type (:+:) (L, R))
 import Control.Effect.Sum (Member)
+import Control.Exception.Safe (MonadCatch, MonadThrow)
 import GHC.TypeLits (Symbol)
 import qualified GenID (E (GenerateID))
 import qualified StmContainers.Map as STM (Map)
@@ -22,7 +23,7 @@ type TableInMem r = TableInMem' r "id" "all"
 newtype C (r :: Symbol -> Type) m a = C
   { run :: ReaderT (TableInMem r) m a
   }
-  deriving (Functor, Applicative, Monad, MonadIO, MonadReader (TableInMem r))
+  deriving (Functor, Applicative, Monad, MonadIO, MonadThrow, MonadCatch, MonadReader (TableInMem r))
 
 instance
   ( Show (r "id"),

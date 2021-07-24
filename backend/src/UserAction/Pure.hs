@@ -10,9 +10,9 @@
 module UserAction.Pure where
 
 import qualified Authentication (E)
+import Authentication.Token (E (CreateToken))
 import Control.Algebra (Algebra (alg), send, type (:+:) (L, R))
-import Control.Effect.Reader (Reader)
-import qualified Control.Effect.Reader as R
+-- import qualified Control.Effect.Reader as R (Reader, ask, asks)
 import Control.Effect.Sum (Member)
 import Control.Effect.Throw (Throw, throwError)
 import Control.Exception.Safe (MonadCatch, MonadThrow, catch)
@@ -28,17 +28,17 @@ import Domain.Util.Representation (Transform (transform), applyPatch)
 import qualified GenID (E (GenerateID))
 import qualified Storage.STM as STM (E (DeleteById, GetById, Insert, UpdateById))
 import qualified Transform (E (Transform))
-import UserAction (E (AddCommentToArticle, CreateArticle, DeleteArticle, DeleteComment, FavoriteArticle, FollowUser, UnfavoriteArticle, UnfollowUser, UpdateArticle, UpdateUser))
+import UserAction (E (AddCommentToArticle, CreateArticle, DeleteArticle, DeleteComment, FavoriteArticle, FollowUser, GetCurrentUser, UnfavoriteArticle, UnfollowUser, UpdateArticle, UpdateUser))
 import qualified Validation as V (Validation (Failure, Success))
-import Prelude hiding (Reader, ask)
 
 newtype C m a = C
-  { run :: m a
+  { run :: ReaderT (UserR "authWithToken") m a
   }
-  deriving (Functor, Applicative, Monad, MonadIO, MonadThrow, MonadCatch)
+  deriving (Functor, Applicative, Monad, MonadIO, MonadThrow, MonadCatch, MonadReader (UserR "authWithToken"))
 
 instance
-  ( Member (Reader (UserR "auth")) sig,
+  ( -- Member (R.Reader (UserR "authWithToken")) sig,
+    Member (Authentication.Token.E UserR) sig,
     Member (STM.E UserR) sig,
     Member (STM.E ArticleR) sig,
     Member (GenID.E ArticleR) sig,
@@ -60,9 +60,11 @@ instance
   Algebra (UserAction.E :+: sig) (C m)
   where
   alg hdl sig ctx = do
+    auth <- ask
     let (%~) = over
-    authUserId <- R.asks (transform @UserR @"auth" @"id")
+        authUserId = case auth of UserAuthWithToken auth' _ -> transform @UserR @"auth" @"id" auth'
     case sig of
+      (L GetCurrentUser) -> pure $ auth <$ ctx
       (L (UpdateUser update)) -> do
         getById <- send STM.GetById <*> pure authUserId
         updateById <- send STM.UpdateById <*> pure authUserId
@@ -72,11 +74,13 @@ instance
                 Just (applyPatch update -> user) -> case user of
                   (V.Failure err) -> throwSTM err
                   (V.Success new) -> updateById $ const new
-        (<$ ctx) . transform
-          <$> ( liftIO (atomically stm)
-                  `catch` throwError @(NotFound (UserR "id"))
-                  `catch` throwError @ValidationErr
-              )
+        ( liftIO (atomically stm)
+            `catch` throwError @(NotFound (UserR "id"))
+            `catch` throwError @ValidationErr
+          )
+          >>= \(transform -> newAuth) ->
+            (<$ ctx) . UserAuthWithToken newAuth
+              <$> send (CreateToken newAuth)
       (L (FollowUser userId)) -> do
         getTargetUser <- send STM.GetById <*> pure userId
         updatCurrentUser <- send STM.UpdateById <*> pure authUserId
@@ -167,4 +171,4 @@ instance
       (L (FavoriteArticle articleId)) -> undefined
       -- FIXME
       (L (UnfavoriteArticle articleId)) -> undefined
-      (R other) -> C $ alg (run . hdl) other ctx
+      (R other) -> C $ alg (run . hdl) (R other) ctx

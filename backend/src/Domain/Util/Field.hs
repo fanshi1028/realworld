@@ -58,7 +58,7 @@ newtype Image = Image Text
 
 deriving via NoValidation instance FromJSON (WithValidation Image)
 
-newtype Slug = Slug Text deriving newtype (Show, Eq, ToJSON)
+newtype Slug = Slug Text deriving newtype (Show, Eq, ToJSON, Hashable)
 
 deriving via NoValidation instance FromJSON (WithValidation Slug)
 

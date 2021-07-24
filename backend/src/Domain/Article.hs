@@ -1,8 +1,10 @@
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE DuplicateRecordFields #-}
 {-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE OverloadedLabels #-}
 {-# LANGUAGE TypeFamilies #-}
@@ -26,7 +28,9 @@ import Validation.Carrier.Selective (WithUpdate, WithValidation)
 
 data family ArticleR (r :: Symbol)
 
-newtype instance ArticleR "id" = ArticleId Slug deriving (Show)
+newtype instance ArticleR "id" = ArticleId Slug
+  deriving (Show, Eq)
+  deriving newtype (Hashable)
 
 -- | Articles
 data instance ArticleR "all" = Article
@@ -141,3 +145,7 @@ instance FromJSON (In (ArticleR "update")) where
 -- FIXME
 instance FromHttpApiData (ArticleR "id") where
   parseUrlPiece = undefined
+
+-- FIXME
+instance Transform ArticleR "create" "id" where
+  transform = undefined

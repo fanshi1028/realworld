@@ -1,16 +1,17 @@
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
-{-# LANGUAGE UndecidableInstances #-}
 {-# LANGUAGE RecordWildCards #-}
+{-# LANGUAGE UndecidableInstances #-}
 
 -- |
 module Transform where
 
 import Control.Algebra (Algebra (alg), type (:+:) (L, R))
+import Control.Exception.Safe (MonadCatch, MonadThrow)
 import Domain.Article (ArticleR)
 import Domain.Comment (CommentR)
-import Domain.User (UserR (UserRegister, User))
+import Domain.User (UserR (User, UserRegister))
 import GHC.TypeLits (Symbol)
 
 data E (r :: Symbol -> Type) (s1 :: Symbol) (s2 :: Symbol) (m :: Type -> Type) a where
@@ -19,7 +20,7 @@ data E (r :: Symbol -> Type) (s1 :: Symbol) (s2 :: Symbol) (m :: Type -> Type) a
 newtype C (r :: Symbol -> Type) (s1 :: Symbol) (s2 :: Symbol) m a = C
   { run :: m a
   }
-  deriving (Functor, Applicative, Monad, MonadIO)
+  deriving (Functor, Applicative, Monad, MonadIO, MonadThrow, MonadCatch)
 
 -- FIXME
 instance (Algebra sig m) => Algebra (E UserR "create" "all" :+: sig) (C UserR "create" "all" m) where

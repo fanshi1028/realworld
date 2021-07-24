@@ -7,12 +7,22 @@
 -- |
 module Authorization (TokenAuth, TokenAuthInMem) where
 
+import Authentication.Pure (SomeNotAuthorized)
+import Authentication.Token (E (CheckToken))
+import Authentication.Token.JWT (run)
+import Authentication.Token.JWT.Invalidate.Pure (run)
+import Control.Algebra (send)
+import Control.Carrier.Lift (runM)
+import qualified Control.Carrier.Reader as R
+import Control.Carrier.Throw.Either (runThrow)
+import Crypto.JOSE (Error)
 import Data.ByteString.Base64.Type (getBS64)
 import qualified Data.List as List
 import Domain.User (UserR (Token, UserAuthWithToken))
+import Domain.Util.Error (NotAuthorized (NotAuthorized))
 import Domain.Util.Representation (Transform (transform))
 import Network.Wai (requestHeaders)
-import Servant (FromHttpApiData (parseHeader))
+import Servant (FromHttpApiData (parseHeader), throwError)
 import Servant.Auth.Server (CookieSettings, JWTSettings, verifyJWT)
 import qualified Servant.Auth.Server as Auth (AuthCheck (AuthCheck))
 import Servant.Auth.Server.Internal.Class (IsAuth (AuthArgs, runAuth))
@@ -23,11 +33,23 @@ data TokenAuth
 
 instance IsAuth TokenAuth (UserR "authWithToken") where
   type AuthArgs TokenAuth = '[CookieSettings, JWTSettings]
-  runAuth _ _ _ jwts = Auth.AuthCheck $
+  runAuth _ _ cs jwts = Auth.AuthCheck $
     \case
       ( List.lookup "authorization" . requestHeaders ->
-          Just (parseHeader @(UserR "token") -> Right t@(Token token))
-        ) -> maybe mempty (pure . flip UserAuthWithToken t) <$> liftIO (verifyJWT jwts $ getBS64 token)
+          Just (parseHeader @(UserR "token") -> Right token)
+        ) ->
+          runM
+            ( runThrow @Error $
+                runThrow @SomeNotAuthorized $
+                  R.runReader cs $
+                    R.runReader jwts $
+                      Authentication.Token.JWT.Invalidate.Pure.run @UserR $
+                        Authentication.Token.JWT.run @UserR $
+                          send $ CheckToken token
+            )
+            >>= \case
+              Right (Right auth) -> pure $ pure $ UserAuthWithToken auth token
+              _ -> pure mempty
       _ -> pure mempty
 
 data TokenAuthInMem

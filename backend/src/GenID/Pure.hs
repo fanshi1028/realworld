@@ -7,6 +7,7 @@
 module GenID.Pure where
 
 import Control.Algebra (Algebra (alg), type (:+:) (L, R))
+import Control.Exception.Safe (MonadCatch, MonadThrow)
 import Domain.Util.Representation (Transform (transform))
 import GHC.TypeLits (Symbol)
 import GenID (E (GenerateID))
@@ -14,7 +15,7 @@ import GenID (E (GenerateID))
 newtype C (r :: Symbol -> Type) m a = C
   { run :: m a
   }
-  deriving (Functor, Applicative, Monad, MonadIO)
+  deriving (Functor, Applicative, Monad, MonadIO, MonadThrow, MonadCatch)
 
 instance
   ( Algebra sig m,

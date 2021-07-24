@@ -7,6 +7,7 @@
 module Storage.Index.InMem where
 
 import Control.Algebra (Algebra (alg), type (:+:) (L, R))
+import Control.Exception.Safe (MonadCatch, MonadThrow)
 import qualified Focus as FC (Change (Leave, Set), cases, unitCases)
 import GHC.TypeLits (Symbol)
 import qualified StmContainers.Map as STM (focus, lookup)
@@ -16,7 +17,7 @@ import Storage.Index (E (AddIndex, GetByIndex))
 newtype C (r :: Symbol -> Type) (idx :: Symbol) (f :: Type -> Type) m a = C
   { run :: ReaderT (TableInMem' r idx "id") m a
   }
-  deriving (Functor, Applicative, Monad, MonadIO, MonadReader (TableInMem' r idx "id"))
+  deriving (Functor, Applicative, Monad, MonadIO, MonadThrow, MonadCatch, MonadReader (TableInMem' r idx "id"))
 
 instance
   ( Show (r idx),

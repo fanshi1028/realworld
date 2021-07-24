@@ -51,25 +51,24 @@ userServer ::
     Member VisitorAction.E sig,
     Member (R.Reader CookieSettings) sig,
     Member (R.Reader JWTSettings) sig,
-    Member (Transform.E UserR "auth" "authWithToken") sig,
     MonadIO m
   ) =>
   ServerT UserApi m
 userServer =
   let validateThen action = validation (throwError @ValidationErr) (send . action) . un
    in ( validateThen Login >=> \authInfo -> do
-          cs <- R.ask
-          jwts <- R.ask
-          liftIO (acceptLogin cs jwts authInfo) >>= \case
-            Nothing -> undefined
-            Just f -> case f authInfo of
-              Headers auth hs@(HCons h _) -> case h of
-                Header (Token . mkBS64 . setCookieValue -> jwt) ->
-                  pure $ Headers (Out $ UserAuthWithToken auth jwt) hs
-                -- FIXME
-                MissingHeader -> undefined
-                -- FIXME
-                UndecodableHeader _ -> undefined
+          acceptLogin <$> R.ask <*> R.ask <*> pure authInfo
+            >>= liftIO
+            >>= \case
+              Nothing -> undefined
+              Just f -> case f authInfo of
+                Headers auth hs@(HCons h _) -> case h of
+                  Header (Token . mkBS64 . setCookieValue -> jwt) ->
+                    pure $ Headers (Out $ UserAuthWithToken auth jwt) hs
+                  -- FIXME
+                  MissingHeader -> undefined
+                  -- FIXME
+                  UndecodableHeader _ -> undefined
       )
         :<|> ( validateThen Register >=> \auth -> do
                  jwts <- R.ask
