@@ -21,9 +21,9 @@ type TableInMem' r (k :: Symbol) (v :: Symbol) = STM.Map (r k) (r v)
 type TableInMem r = TableInMem' r "id" "all"
 
 newtype C (r :: Symbol -> Type) m a = C
-  { run :: ReaderT (TableInMem r) m a
+  { run :: m a
   }
-  deriving (Functor, Applicative, Monad, MonadIO, MonadThrow, MonadCatch, MonadReader (TableInMem r))
+  deriving (Functor, Applicative, Monad, MonadIO, MonadThrow, MonadCatch)
 
 instance
   ( Show (r "id"),
@@ -32,7 +32,6 @@ instance
     Member (Transform.E r "create" "all") sig,
     Member (GenID.E r) sig,
     Member (STM.E r) sig,
-    Member (Transform.E r "create" "all") sig,
     Algebra sig m,
     MonadIO m
   ) =>
@@ -50,4 +49,4 @@ instance
               )
                 >>= liftIO . atomically
             )
-    (R other) -> C $ alg (run . hdl) (R other) ctx
+    (R other) -> C $ alg (run . hdl) other ctx

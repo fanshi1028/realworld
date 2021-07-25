@@ -21,6 +21,8 @@ import HTTP (Api, server)
 import qualified Network.Wai.Handler.Warp as W (run)
 import Servant (Application, Context (EmptyContext, (:.)), ServerError (errBody), err400, err401, err404, hoistServerWithContext, serveWithContext, throwError)
 import Servant.Auth.Server (CookieSettings, JWTSettings, defaultCookieSettings, defaultJWTSettings, generateKey)
+import StmContainers.Map (newIO)
+import Storage.InMem (TableInMem)
 import qualified Storage.InMem (run)
 import qualified Storage.STM.InMem (run)
 import qualified Tag.Pure (run)
@@ -29,8 +31,8 @@ import Util.Orphan ()
 import qualified VisitorAction.Batch.Pure (run)
 import qualified VisitorAction.Pure (run)
 
-app :: CookieSettings -> JWTSettings -> Application
-app cs jwts =
+app :: CookieSettings -> JWTSettings -> TableInMem UserR -> TableInMem ArticleR -> TableInMem CommentR -> Application
+app cs jwts userDb articleDb commentDb =
   serveWithContext (Proxy @Api) (cs :. jwts :. EmptyContext) $
     hoistServerWithContext
       (Proxy @Api)
@@ -46,6 +48,9 @@ app cs jwts =
           . runThrow @(AlreadyExists (ArticleR "id"))
           . R.runReader jwts
           . R.runReader cs
+          . (usingReaderT userDb . Storage.STM.InMem.run @UserR)
+          . (usingReaderT articleDb . Storage.STM.InMem.run @ArticleR)
+          . (usingReaderT commentDb . Storage.STM.InMem.run @CommentR)
           . Transform.run @ArticleR @"all" @"withAuthorProfile"
           . Transform.run @ArticleR @"create" @"all"
           . Transform.run @UserR @"auth" @"authWithToken"
@@ -54,26 +59,21 @@ app cs jwts =
           . GenID.Pure.run @UserR
           . GenID.Pure.run @ArticleR
           . GenID.UUID.Pure.run @CommentR
-          -- FIXME
-          . (usingReaderT undefined . Storage.STM.InMem.run @CommentR)
-          . (usingReaderT undefined . Storage.STM.InMem.run @ArticleR)
-          . (usingReaderT undefined . Storage.STM.InMem.run @UserR)
-          -- FIXME
-          . (usingReaderT undefined . Storage.InMem.run @UserR)
+          . Storage.InMem.run @UserR
           . Authentication.Token.JWT.Invalidate.Pure.run @UserR
           . Authentication.Token.JWT.run @UserR
           . Authentication.Pure.run @UserR @'False
           . VisitorAction.Pure.run
           . Tag.Pure.run @[]
           . VisitorAction.Batch.Pure.run @[]
-          >=> handlerErr (\err -> throwError $ err400 {errBody = "fuck"})
-          >=> handlerErr (\err -> throwError $ err400 {errBody = "fuck"})
-          >=> handlerErr (\err -> throwError $ err400 {errBody = "fuck"})
-          >=> handlerErr (\err -> throwError $ err401 {errBody = "fuck"})
-          >=> handlerErr (\err -> throwError $ err401 {errBody = "fuck"})
-          >=> handlerErr (\err -> throwError $ err404 {errBody = "fuck"})
-          >=> handlerErr (\err -> throwError $ err404 {errBody = "fuck"})
-          >=> handlerErr (\err -> throwError $ err400 {errBody = "fuck"})
+          >=> handlerErr (const $ throwError $ err400 {errBody = "fuck"})
+          >=> handlerErr (const $ throwError $ err400 {errBody = "fuck"})
+          >=> handlerErr (const $ throwError $ err400 {errBody = "fuck"})
+          >=> handlerErr (const $ throwError $ err401 {errBody = "fuck"})
+          >=> handlerErr (const $ throwError $ err401 {errBody = "fuck"})
+          >=> handlerErr (const $ throwError $ err404 {errBody = "fuck"})
+          >=> handlerErr (const $ throwError $ err404 {errBody = "fuck"})
+          >=> handlerErr (const $ throwError $ err400 {errBody = "fuck"})
       )
       server
   where
@@ -83,6 +83,11 @@ app cs jwts =
 main :: IO ()
 main = do
   putStrLn $ "server running at port: " <> show port
-  generateKey >>= W.run port . app defaultCookieSettings . defaultJWTSettings
+  app defaultCookieSettings . defaultJWTSettings
+    <$> generateKey
+    <*> newIO
+    <*> newIO
+    <*> newIO
+    >>= W.run port
   where
     port = 8080

@@ -151,7 +151,7 @@ executable realworld-haskell
                 , servant-auth-server   ^>=0.4.6
                 , jose                  ^>=0.8.4
                 , safe-exceptions
-                -- , stm-containers        ^>=1.2
+                , stm-containers        ^>=1.2
 
 -- other-modules:
 -- other-extensions:
