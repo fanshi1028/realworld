@@ -24,7 +24,7 @@ import Servant.Auth.Server (CookieSettings, JWTSettings, defaultCookieSettings, 
 import StmContainers.Map (newIO)
 import Storage.InMem (TableInMem)
 import qualified Storage.InMem (run)
-import qualified Storage.STM.InMem (run)
+import qualified Storage.InMem.STM.Pure (run)
 import qualified Tag.Pure (run)
 import qualified Transform (run)
 import Util.Orphan ()
@@ -48,9 +48,9 @@ app cs jwts userDb articleDb commentDb =
           . runThrow @(AlreadyExists (ArticleR "id"))
           . R.runReader jwts
           . R.runReader cs
-          . (usingReaderT userDb . Storage.STM.InMem.run @UserR)
-          . (usingReaderT articleDb . Storage.STM.InMem.run @ArticleR)
-          . (usingReaderT commentDb . Storage.STM.InMem.run @CommentR)
+          . (usingReaderT userDb . Storage.InMem.STM.Pure.run @UserR)
+          . (usingReaderT articleDb . Storage.InMem.STM.Pure.run @ArticleR)
+          . (usingReaderT commentDb . Storage.InMem.STM.Pure.run @CommentR)
           . Transform.run @ArticleR @"all" @"withAuthorProfile"
           . Transform.run @ArticleR @"create" @"all"
           . Transform.run @UserR @"auth" @"authWithToken"

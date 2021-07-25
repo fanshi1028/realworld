@@ -5,7 +5,7 @@
 {-# LANGUAGE UndecidableInstances #-}
 
 -- |
-module Storage.STM.InMem where
+module Storage.InMem.STM.Pure where
 
 import Control.Algebra (Algebra (alg), type (:+:) (L, R))
 import Control.Exception.Safe (MonadCatch, MonadThrow)
@@ -14,7 +14,7 @@ import GHC.TypeLits (Symbol)
 import qualified ListT (fold)
 import qualified StmContainers.Map as STM (focus, insert, listT, lookup)
 import Storage.InMem (TableInMem)
-import Storage.STM (E (DeleteById, GetAll, GetById, Insert, UpdateById))
+import Storage.InMem.STM (E (DeleteById, GetAll, GetById, Insert, UpdateById))
 
 newtype C (r :: Symbol -> Type) m a = C
   { run :: ReaderT (TableInMem r) m a

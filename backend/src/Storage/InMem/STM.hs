@@ -1,7 +1,7 @@
 {-# LANGUAGE DataKinds #-}
 
--- k
-module Storage.STM where
+--
+module Storage.InMem.STM where
 
 import GHC.TypeLits (Symbol)
 

@@ -123,11 +123,11 @@ library backend-internal
     Relation.Batch.InMem
     Relation.Batch.InMem.STM
     Relation.Batch.InMem.STM.Pure
-    Storage.STM
-    Storage.STM.InMem
+    Storage.InMem
+    Storage.InMem.STM
+    Storage.InMem.STM.Pure
     Storage.Index
     Storage.Index.InMem
-    Storage.InMem
     Storage
     UserAction
     UserAction.Pure

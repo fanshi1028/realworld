@@ -13,7 +13,7 @@ import GHC.TypeLits (Symbol)
 import qualified GenID (E (GenerateID))
 import qualified StmContainers.Map as STM (Map)
 import Storage (E (DeleteById, GetAll, GetById, Insert, UpdateById))
-import qualified Storage.STM as STM (E (DeleteById, GetAll, GetById, Insert, UpdateById))
+import qualified Storage.InMem.STM as STM (E (DeleteById, GetAll, GetById, Insert, UpdateById))
 import qualified Transform (E (Transform))
 
 type TableInMem' r (k :: Symbol) (v :: Symbol) = STM.Map (r k) (r v)

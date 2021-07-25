@@ -26,7 +26,7 @@ import Domain.User (UserR (..), bio, email, image, username)
 import Domain.Util.Error (AlreadyExists, NotFound (NotFound), ValidationErr)
 import Domain.Util.Representation (Transform (transform), applyPatch)
 import qualified GenID (E (GenerateID))
-import qualified Storage.STM as STM (E (DeleteById, GetById, Insert, UpdateById))
+import qualified Storage.InMem.STM as STM (E (DeleteById, GetById, Insert, UpdateById))
 import qualified Transform (E (Transform))
 import UserAction (E (AddCommentToArticle, CreateArticle, DeleteArticle, DeleteComment, FavoriteArticle, FollowUser, GetCurrentUser, UnfavoriteArticle, UnfollowUser, UpdateArticle, UpdateUser))
 import qualified Validation as V (Validation (Failure, Success))
@@ -37,8 +37,7 @@ newtype C m a = C
   deriving (Functor, Applicative, Monad, MonadIO, MonadThrow, MonadCatch, MonadReader (UserR "authWithToken"))
 
 instance
-  ( -- Member (R.Reader (UserR "authWithToken")) sig,
-    Member (Authentication.Token.E UserR) sig,
+  ( Member (Authentication.Token.E UserR) sig,
     Member (STM.E UserR) sig,
     Member (STM.E ArticleR) sig,
     Member (GenID.E ArticleR) sig,
