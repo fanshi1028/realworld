@@ -113,6 +113,16 @@ library backend-internal
     HTTP.Authed.Follow
     HTTP.Authed.User
     HTTP.Util
+    Relation
+    Relation.Pure
+    Relation.InMem
+    Relation.InMem.STM
+    Relation.InMem.STM.Pure
+    Relation.Batch
+    Relation.Batch.Pure
+    Relation.Batch.InMem
+    Relation.Batch.InMem.STM
+    Relation.Batch.InMem.STM.Pure
     Storage.STM
     Storage.STM.InMem
     Storage.Index
