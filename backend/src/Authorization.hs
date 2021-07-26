@@ -39,17 +39,16 @@ instance IsAuth TokenAuth (UserR "authWithToken") where
           Just (parseHeader @(UserR "token") -> Right token)
         ) ->
           runM
-            ( runThrow @Error $
-                runThrow @SomeNotAuthorized $
-                  R.runReader cs $
-                    R.runReader jwts $
-                      Authentication.Token.JWT.Invalidate.Pure.run @UserR $
-                        Authentication.Token.JWT.run @UserR $
-                          send $ CheckToken token
-            )
-            >>= \case
+            . runThrow @Error
+            . runThrow @SomeNotAuthorized
+            . R.runReader cs
+            . R.runReader jwts
+            . Authentication.Token.JWT.Invalidate.Pure.run @UserR
+            . Authentication.Token.JWT.run @UserR
+            >=> \case
               Right (Right auth) -> pure $ pure $ UserAuthWithToken auth token
               _ -> pure mempty
+            $ send (CheckToken token)
       _ -> pure mempty
 
 data TokenAuthInMem

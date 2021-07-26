@@ -29,7 +29,7 @@ instance
   Algebra (E r idx Maybe :+: sig) (C r idx Maybe m)
   where
   alg _ (L action) ctx =
-    ((<$ ctx) <$>) . liftIO . atomically =<< case action of
+    fmap (<$ ctx) . liftIO . atomically =<< case action of
       GetByIndex idx -> asks $ STM.lookup idx
       AddIndex idx r ->
         asks $
@@ -44,6 +44,6 @@ instance
 
 -- FIXME
 instance (Algebra sig m) => Algebra (E r idx [] :+: sig) (C r idx [] m) where
-  alg hdl (L (AddIndex idx r)) ctx = undefined
-  alg hdl (L (GetByIndex idx)) ctx = undefined
+  alg _ (L (AddIndex idx r)) ctx = undefined
+  alg _ (L (GetByIndex idx)) ctx = undefined
   alg hdl (R other) ctx = C $ alg (run . hdl) (R other) ctx
