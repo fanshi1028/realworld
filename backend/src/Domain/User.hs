@@ -16,8 +16,6 @@
 module Domain.User where
 
 import Data.Aeson (FromJSON (parseJSON), ToJSON (toEncoding, toJSON), Value (Object), defaultOptions, genericParseJSON, genericToJSON)
--- import Data.Generics.Labels ()
-
 import Data.Aeson.Encoding (value)
 import Data.ByteString.Base64.Type (ByteString64)
 import Data.Generic.HKD (Construct (construct), HKD (HKD))
@@ -25,8 +23,6 @@ import qualified Data.HashMap.Strict as HM
 import Domain.Util.Field (Bio, Email, Image, Password, Username)
 import Domain.Util.JSON.From (In, updatableParseJSON, wrappedParseJSON)
 import Domain.Util.JSON.To (Out (Out), wrapEncoding, wrappedToEncoding)
-import Domain.Util.Representation (Transform (transform))
-import GHC.Records (HasField (getField))
 import GHC.TypeLits (Symbol)
 import Servant (FromHttpApiData (parseUrlPiece))
 import Servant.Auth.Server (FromJWT, ToJWT (encodeJWT))
@@ -229,17 +225,3 @@ instance FromJSON (UserR "update") where
 
 instance FromJSON (In (UserR "update")) where
   parseJSON = wrappedParseJSON "UserUpdate" "user"
-
----------------------------------------------------------------------
--- mmmmmmm                               m""                       --
---    #     m mm   mmm   m mm    mmm   mm#mm   mmm    m mm  mmmmm  --
---    #     #"  " "   #  #"  #  #   "    #    #" "#   #"  " # # #  --
---    #     #     m"""#  #   #   """m    #    #   #   #     # # #  --
---    #     #     "mm"#  #   #  "mmm"    #    "#m#"   #     # # #  --
----------------------------------------------------------------------
-
-instance Transform UserR "all" "auth" where
-  transform User {..} = UserAuth email username bio image
-
-instance (HasField "username" (UserR s) Username) => Transform UserR s "id" where
-  transform = UserId . getField @"username"

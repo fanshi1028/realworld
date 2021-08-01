@@ -115,19 +115,9 @@ library backend-internal
     HTTP.Util
     Relation
     Relation.Pure
-    Relation.InMem
-    Relation.InMem.STM
-    Relation.InMem.STM.Pure
-    Relation.Batch
-    Relation.Batch.Pure
-    Relation.Batch.InMem
-    Relation.Batch.InMem.STM
-    Relation.Batch.InMem.STM.Pure
+    Relation.InMem.OneToMany
+    Relation.InMem.OneToOne
     Storage.InMem
-    Storage.InMem.STM
-    Storage.InMem.STM.Pure
-    Storage.Index
-    Storage.Index.InMem
     Storage
     UserAction
     UserAction.Pure
@@ -138,7 +128,6 @@ library backend-internal
     VisitorAction.Batch.Pure
     Tag
     Tag.Pure
-    Transform
     Util.Orphan
 
 -- other-modules:

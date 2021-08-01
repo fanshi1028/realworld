@@ -11,7 +11,6 @@ import Authentication (E (Login, Logout))
 import Control.Algebra (Algebra (alg), type (:+:) (L, R))
 import Control.Effect.Sum (Member)
 import Control.Effect.Throw (Throw, throwError)
-import Control.Exception.Safe (MonadCatch, MonadThrow)
 import GHC.TypeLits (Symbol)
 
 -- FIXME: not yet used
@@ -24,7 +23,7 @@ data SomeNotLogin = SomeNotLogin deriving (Show, Generic)
 newtype C (r :: Symbol -> Type) (b :: Bool) m a = C
   { run :: m a
   }
-  deriving (Functor, Applicative, Monad, MonadIO, MonadThrow, MonadCatch)
+  deriving (Functor, Applicative, Monad)
 
 instance (Algebra sig m, Member (Throw SomeAlreadyLogin) sig) => Algebra (E r :+: sig) (C r 'True m) where
   alg _ (L (Login _)) _ = throwError SomeAlreadyLogin

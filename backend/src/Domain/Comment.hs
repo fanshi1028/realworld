@@ -20,6 +20,7 @@ import Domain.Util.JSON.To (Out, wrappedToEncoding)
 import GHC.TypeLits (Symbol)
 import Servant (FromHttpApiData (parseUrlPiece))
 import Validation.Carrier.Selective (WithValidation)
+import Domain.Article (ArticleR)
 
 data family CommentR (r :: Symbol)
 
@@ -30,7 +31,8 @@ data instance CommentR "all" = Comment
     createdAt :: Time, -- "2016-02-18T03:22:56.637Z",
     updatedAt :: Time, -- "2016-02-18T03:22:56.637Z",
     body :: Text, -- "It takes a Jacobian",
-    author :: UserR "id"
+    author :: UserR "id",
+    article :: ArticleR "id"
   }
 
 --------------------------

@@ -21,7 +21,6 @@ import Domain.User (UserR)
 import Domain.Util.Field (Body, Description, Slug, Tag, Time, Title)
 import Domain.Util.JSON.From (In, insert', updatableParseJSON, wrappedParseJSON)
 import Domain.Util.JSON.To (Out (Out), multiWrappedWithCountToEncoding, wrappedToEncoding)
-import Domain.Util.Representation (Transform (transform))
 import GHC.TypeLits (Symbol)
 import Servant (FromHttpApiData (parseUrlPiece))
 import Validation.Carrier.Selective (WithUpdate, WithValidation)
@@ -146,6 +145,3 @@ instance FromJSON (In (ArticleR "update")) where
 instance FromHttpApiData (ArticleR "id") where
   parseUrlPiece = undefined
 
--- FIXME
-instance Transform ArticleR "create" "id" where
-  transform = undefined

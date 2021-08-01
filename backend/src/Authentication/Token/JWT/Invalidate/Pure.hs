@@ -8,13 +8,12 @@ module Authentication.Token.JWT.Invalidate.Pure where
 
 import Authentication.Token.JWT.Invalidate (E (Invalidate))
 import Control.Algebra (Algebra (alg), type (:+:) (L, R))
-import Control.Exception.Safe (MonadCatch, MonadThrow)
 import GHC.TypeLits (Symbol)
 
 newtype C (r :: Symbol -> Type) (m :: Type -> Type) a = C
   { run :: m a
   }
-  deriving (Functor, Applicative, Monad, MonadIO, MonadThrow, MonadCatch)
+  deriving (Functor, Applicative, Monad)
 
 instance (Algebra sig m) => Algebra (E r :+: sig) (C r m) where
   alg _ (L (Invalidate _)) ctx = pure $ () <$ ctx

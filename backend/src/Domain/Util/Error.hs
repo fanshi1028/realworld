@@ -17,7 +17,7 @@ import Domain.Util.JSON.To (Out, wrapEncoding, wrappedToEncoding)
 import GHC.TypeLits (Symbol)
 
 -- | TEMP: dangerous orphan instance
-instance Exception ValidationErr
+-- instance Exception ValidationErr
 
 -- data Err a = SpecificErr a | AnyErr deriving (Show, Typeable, Generic, Functor, Exception)
 
@@ -29,16 +29,20 @@ instance (Foldable t, ToJSON (t (Err a))) => ToJSON (Out (t (Err a))) where
   toEncoding = wrapEncoding "error" . wrappedToEncoding "body"
 
 -- | Common Error
-data NotFound a = NotFound a | SomethingNotFound deriving (Show, Generic, Exception)
+newtype NotFound a = NotFound a deriving (Show, Generic)
+
+data SomethingNotFound = SomethingNotFound deriving (Show)
 
 instance (ToJSON a, Show a) => ToJSON (NotFound a) where
   toEncoding = Encoding . show
 
-data AlreadyExists a = AlreadyExists a | SomethingAlreadyExists deriving (Show, Generic, Exception)
+newtype AlreadyExists a = AlreadyExists a deriving (Show)
 
-data NotAuthorized (r :: Symbol -> Type) = NotAuthorized deriving (Show, Generic)
+data SomethingAlreadyExists = SomethingAlreadyExists deriving (Show)
 
-deriving anyclass instance Typeable r => Exception (NotAuthorized r)
+data NotAuthorized (r :: Symbol -> Type) = NotAuthorized deriving (Show)
+
+-- deriving anyclass instance Typeable r => Exception (NotAuthorized r)
 
 type ValidationErr = NonEmpty Text
 

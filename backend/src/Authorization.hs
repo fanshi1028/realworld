@@ -62,6 +62,6 @@ instance IsAuth TokenAuthInMem (UserR "auth") where
         atomically
           ( STM.lookup token tokenDb
               >>= traverse (`STM.lookup` userDb)
-              <&> maybe mempty (pure . transform @_ @_ @"auth") . join
+              <&> maybe mempty (transform @_ @_ @"auth") . join
           )
     _ -> pure mempty

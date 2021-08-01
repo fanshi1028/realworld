@@ -6,6 +6,7 @@
 module HTTP.Public (PublicApi, publicServer) where
 
 import Control.Algebra (Algebra)
+import Control.Effect.Lift (Lift)
 import qualified Control.Effect.Reader as R
 import Control.Effect.Sum (Member)
 import Control.Effect.Throw (Throw)
@@ -34,7 +35,7 @@ publicServer ::
     Member (Throw ValidationErr) sig,
     Member (R.Reader JWTSettings) sig,
     Member (R.Reader CookieSettings) sig,
-    MonadIO m
+    Member (Lift STM) sig
   ) =>
   ServerT PublicApi m
 publicServer = userServer :<|> profileServer :<|> articleServer :<|> tagServer

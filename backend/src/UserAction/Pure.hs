@@ -12,10 +12,9 @@ module UserAction.Pure where
 import qualified Authentication (E)
 import Authentication.Token (E (CreateToken))
 import Control.Algebra (Algebra (alg), send, type (:+:) (L, R))
--- import qualified Control.Effect.Reader as R (Reader, ask, asks)
+import qualified Control.Effect.Reader as R
 import Control.Effect.Sum (Member)
 import Control.Effect.Throw (Throw, throwError)
-import Control.Exception.Safe (MonadCatch, MonadThrow, catch)
 import qualified CurrentTime (E (GetCurrentTime))
 import Data.Generics.Internal.VL (over)
 import Data.Generics.Product (HasField' (field'), getField)
@@ -26,148 +25,100 @@ import Domain.User (UserR (..), bio, email, image, username)
 import Domain.Util.Error (AlreadyExists, NotFound (NotFound), ValidationErr)
 import Domain.Util.Representation (Transform (transform), applyPatch)
 import qualified GenID (E (GenerateID))
-import qualified Storage.InMem.STM as STM (E (DeleteById, GetById, Insert, UpdateById))
-import qualified Transform (E (Transform))
+import qualified Relation
+import qualified Storage
 import UserAction (E (AddCommentToArticle, CreateArticle, DeleteArticle, DeleteComment, FavoriteArticle, FollowUser, GetCurrentUser, UnfavoriteArticle, UnfollowUser, UpdateArticle, UpdateUser))
 import qualified Validation as V (Validation (Failure, Success))
 
 newtype C m a = C
-  { run :: ReaderT (UserR "authWithToken") m a
+  { run :: m a
   }
-  deriving (Functor, Applicative, Monad, MonadIO, MonadThrow, MonadCatch, MonadReader (UserR "authWithToken"))
+  deriving (Functor, Applicative, Monad)
 
 instance
   ( Member (Authentication.Token.E UserR) sig,
-    Member (STM.E UserR) sig,
-    Member (STM.E ArticleR) sig,
+    Member (Storage.E UserR) sig,
+    Member (Storage.E ArticleR) sig,
     Member (GenID.E ArticleR) sig,
-    Member (STM.E CommentR) sig,
+    Member (Storage.E CommentR) sig,
     Member (GenID.E CommentR) sig,
     Member (Throw ValidationErr) sig,
     Member (Throw (NotFound (UserR "id"))) sig,
     Member (Authentication.E UserR) sig,
     Member (Throw (AlreadyExists (ArticleR "id"))) sig,
     Member (Throw (NotFound (ArticleR "id"))) sig,
-    Member (Transform.E ArticleR "all" "withAuthorProfile") sig,
-    Member (Transform.E ArticleR "create" "all") sig,
+    Member (Throw (NotFound (CommentR "id"))) sig,
     Member CurrentTime.E sig,
-    Algebra sig m,
-    MonadIO m,
-    MonadCatch m,
-    MonadThrow m
+    Member (Relation.E ArticleR "id" CommentR "id" HashSet) sig,
+    Member (R.Reader (UserR "authWithToken")) sig,
+    Algebra sig m
   ) =>
   Algebra (UserAction.E :+: sig) (C m)
   where
   alg hdl sig ctx = do
-    auth <- ask
+    auth <- R.ask
+    authUserId <- case auth of UserAuthWithToken auth' _ -> transform @UserR @"auth" @"id" auth'
     let (%~) = over
-        authUserId = case auth of UserAuthWithToken auth' _ -> transform @UserR @"auth" @"id" auth'
     case sig of
-      (L GetCurrentUser) -> pure $ auth <$ ctx
-      (L (UpdateUser update)) -> do
-        getById <- send STM.GetById <*> pure authUserId
-        updateById <- send STM.UpdateById <*> pure authUserId
-        let stm =
-              getById >>= \case
-                Nothing -> throwSTM $ NotFound authUserId
-                Just (applyPatch update -> user) -> case user of
-                  (V.Failure err) -> throwSTM err
-                  (V.Success new) -> updateById $ const new
-        ( liftIO (atomically stm)
-            `catch` throwError @(NotFound (UserR "id"))
-            `catch` throwError @ValidationErr
-          )
-          >>= \(transform -> newAuth) ->
-            (<$ ctx) . UserAuthWithToken newAuth
-              <$> send (CreateToken newAuth)
-      (L (FollowUser userId)) -> do
-        getTargetUser <- send STM.GetById <*> pure userId
-        updatCurrentUser <- send STM.UpdateById <*> pure authUserId
-        updateTargetUser <- send STM.UpdateById <*> pure userId
-        let stm =
-              getTargetUser >>= \case
-                Nothing -> throwSTM $ NotFound userId
-                Just _ ->
-                  updatCurrentUser (field' @"following" %~ HS.insert userId)
-                    *> updateTargetUser (field' @"followBy" %~ HS.insert authUserId)
-        User {..} <-
-          liftIO (atomically stm)
-            `catch` throwError @(NotFound (UserR "id"))
-        pure $ UserProfile email username bio image True <$ ctx
-      (L (UnfollowUser userId)) -> do
-        getTargetUser <- send STM.GetById <*> pure userId
-        updatCurrentUser <- send STM.UpdateById <*> pure authUserId
-        updateTargetUser <- send STM.UpdateById <*> pure userId
-        let stm =
-              getTargetUser >>= \case
-                Nothing -> throwSTM $ NotFound userId
-                Just _ ->
-                  updatCurrentUser (field' @"following" %~ HS.delete userId)
-                    *> updateTargetUser (field' @"followBy" %~ HS.delete authUserId)
-        User {..} <-
-          liftIO (atomically stm)
-            `catch` throwError @(NotFound (UserR "id"))
-        pure $ UserProfile email username bio image False <$ ctx
-      (L (CreateArticle create)) -> do
-        stm <-
-          send STM.Insert <*> send (GenID.GenerateID create) <*> send (Transform.Transform create)
-        liftIO (atomically stm)
-          `catch` throwError @(AlreadyExists (ArticleR "id"))
-          >>= ((<$ ctx) <$>) . send . Transform.Transform @_ @_ @"withAuthorProfile"
-      (L (UpdateArticle articleId update)) -> do
-        getById <- send STM.GetById <*> pure articleId
-        updateById <- send STM.UpdateById <*> pure articleId
-        let stm =
-              getById >>= \case
-                Nothing -> throwSTM $ NotFound articleId
-                Just (applyPatch update -> article) -> case article of
-                  (V.Failure err) -> throwSTM err
-                  (V.Success new) -> updateById $ const new
-        liftIO (atomically stm)
-          `catch` throwError @(NotFound (ArticleR "id"))
-          `catch` throwError @ValidationErr
-          >>= ((<$ ctx) <$>) . send . Transform.Transform @_ @_ @"withAuthorProfile"
-      (L (DeleteArticle articleId)) -> do
-        getById <- send STM.GetById <*> pure articleId
-        deleteById <- send STM.DeleteById <*> pure articleId
-        let stm =
-              getById >>= \case
-                Nothing -> throwSTM $ NotFound articleId
-                Just _ -> deleteById
-        (<$ ctx) <$> liftIO (atomically stm) `catch` throwError @(NotFound (ArticleR "id"))
-      (L (AddCommentToArticle articleId cc@(CommentCreate comment))) -> do
-        time <- send CurrentTime.GetCurrentTime
-        getById <- send STM.GetById <*> pure articleId
-        commentId <- send $ GenID.GenerateID cc
-        insert <- send STM.Insert <*> pure commentId
-        findAuthor <- send STM.GetById
-        let stm =
-              getById >>= \case
-                Nothing -> throwSTM $ NotFound articleId
-                Just article -> do
-                  let authorId = getField @"author" article
-                  findAuthor authorId >>= \case
-                    Nothing -> throwSTM $ NotFound authorId
-                    Just User {..} -> do
-                      -- FIXME
-                      let profile = UserProfile email username bio image undefined
-                      insert (Comment commentId time time comment authorId)
-                        >> pure (CommentWithAuthorProfile commentId time time comment profile <$ ctx)
-        liftIO (atomically stm) `catch` throwError @(NotFound (ArticleR "id"))
-      -- FIXME
-      (L (DeleteComment articleId commentId)) -> do
-        getComment <- send STM.GetById <*> pure commentId
-        deleteComment <- send STM.DeleteById <*> pure commentId
-        let stm =
-              getComment >>= \case
-                Nothing -> throwSTM $ NotFound commentId
-                (Just cm) -> do
-                  -- FIXME
-                  pure undefined
-        -- FIXME
-        pure undefined
-      -- FIXME
-      (L (FavoriteArticle articleId)) -> undefined
-      -- FIXME
-      (L (UnfavoriteArticle articleId)) -> undefined
-      (R other) -> C $ alg (run . hdl) (R other) ctx
+      (L action) ->
+        (<$ ctx) <$> case action of
+          GetCurrentUser -> pure auth
+          UpdateUser update ->
+            send (Storage.GetById authUserId) >>= \case
+              Nothing -> throwError $ NotFound authUserId
+              Just (applyPatch update -> user) -> case user of
+                V.Failure err -> throwError err
+                V.Success new ->
+                  send (Storage.UpdateById authUserId $ const new)
+                    >>= transform
+                    >>= \newAuth -> UserAuthWithToken newAuth <$> send (CreateToken newAuth)
+          FollowUser userId ->
+            send (Storage.GetById userId) >>= \case
+              Nothing -> throwError $ NotFound userId
+              Just _ -> do
+                void $ send $ Storage.UpdateById authUserId (field' @"following" %~ HS.insert userId)
+                User {..} <- send $ Storage.UpdateById userId (field' @"followBy" %~ HS.insert authUserId)
+                pure $ UserProfile email username bio image True
+          UnfollowUser userId ->
+            send (Storage.GetById userId) >>= \case
+              Nothing -> throwError $ NotFound userId
+              Just _ -> do
+                void $ send $ Storage.UpdateById authUserId (field' @"following" %~ HS.delete userId)
+                User {..} <- send $ Storage.UpdateById userId (field' @"followBy" %~ HS.delete authUserId)
+                pure $ UserProfile email username bio image False
+          CreateArticle create -> transform create >>= send . Storage.Insert >>= transform
+          UpdateArticle articleId update ->
+            send (Storage.GetById articleId) >>= \case
+              Nothing -> throwError $ NotFound articleId
+              Just (applyPatch update -> article) -> case article of
+                V.Failure err -> throwError err
+                V.Success new -> send (Storage.UpdateById articleId $ const new) >>= transform @_ @_ @"withAuthorProfile"
+          DeleteArticle articleId ->
+            send (Storage.GetById articleId) >>= \case
+              Nothing -> throwError $ NotFound articleId
+              Just _ -> send $ Storage.DeleteById articleId
+          AddCommentToArticle articleId cc@(CommentCreate comment) ->
+            send (Storage.GetById articleId) >>= \case
+              Nothing -> throwError $ NotFound articleId
+              Just article -> do
+                let authorId = getField @"author" article
+                send (Storage.GetById authorId) >>= \case
+                  Nothing -> throwError $ NotFound authorId
+                  Just User {..} -> do
+                    -- FIXME
+                    let profile = UserProfile email username bio image undefined
+                    commentId <- send $ GenID.GenerateID cc
+                    time <- send CurrentTime.GetCurrentTime
+                    void $ send $ Storage.Insert $ Comment commentId time time comment authorId articleId
+                    pure $ CommentWithAuthorProfile commentId time time comment profile
+          DeleteComment articleId commentId ->
+            send (Storage.GetById commentId) >>= \case
+              Nothing -> throwError $ NotFound commentId
+              Just _ -> do
+                void $ send $ Storage.DeleteById commentId
+                send $ (Relation.Unrelate @ArticleR @"id" @CommentR @"id" @HashSet) articleId commentId
+          -- FIXME
+          (FavoriteArticle articleId) -> undefined
+          -- FIXME
+          (UnfavoriteArticle articleId) -> undefined
+      (R other) -> C $ alg (run . hdl) other ctx
