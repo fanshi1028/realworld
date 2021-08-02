@@ -97,11 +97,10 @@ library backend-internal
     Domain.Util.JSON.From
     Domain.Util.JSON.To
     Domain.Util.Representation
-    GenID
-    GenID.Pure
-    GenID.UUID.Pure
-    GenID.UUID.V1
-    GenID.UUID.V4
+    GenUUID
+    GenUUID.Pure
+    GenUUID.V1
+    GenUUID.V4
     HTTP
     HTTP.Public
     HTTP.Public.User

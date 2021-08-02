@@ -19,14 +19,14 @@ import Domain.Article (ArticleR)
 import Domain.Comment (CommentR)
 import Domain.User (UserR)
 import Domain.Util.Error (AlreadyExists, NotAuthorized (NotAuthorized), NotFound, ValidationErr)
-import qualified GenID
+import qualified GenUUID (E)
 import HTTP.Authed (AuthedApi, authedServer)
 import HTTP.Public (PublicApi, publicServer)
-import qualified Relation
+import qualified Relation (E)
 import Servant (Get, JSON, ServerT, type (:<|>) ((:<|>)), type (:>))
 import Servant.Auth.Server (Auth, AuthResult (Authenticated), CookieSettings, JWTSettings)
 import Servant.Server (hoistServer)
-import qualified Storage
+import qualified Storage (E)
 import qualified Tag (E)
 import qualified UserAction.Pure
 import qualified VisitorAction (E)
@@ -40,6 +40,7 @@ type Api =
 server ::
   ( Algebra sig m,
     Member (Tag.E []) sig,
+    Member GenUUID.E sig,
     Member VisitorAction.E sig,
     Member (VisitorAction.Batch.E []) sig,
     Member (Throw ValidationErr) sig,
@@ -47,8 +48,6 @@ server ::
     Member (R.Reader JWTSettings) sig,
     Member (R.Reader CookieSettings) sig,
     Member (Authentication.Token.E UserR) sig,
-    Member (GenID.E ArticleR) sig,
-    Member (GenID.E CommentR) sig,
     Member (Authentication.E UserR) sig,
     Member (Throw (AlreadyExists (ArticleR "id"))) sig,
     Member (Throw (NotFound (UserR "id"))) sig,

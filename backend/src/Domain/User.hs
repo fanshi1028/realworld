@@ -15,14 +15,19 @@
 -- |
 module Domain.User where
 
+import Control.Algebra (Algebra, send)
+import Control.Effect.Sum (Member)
+import qualified CurrentTime (E (GetCurrentTime))
 import Data.Aeson (FromJSON (parseJSON), ToJSON (toEncoding, toJSON), Value (Object), defaultOptions, genericParseJSON, genericToJSON)
 import Data.Aeson.Encoding (value)
 import Data.ByteString.Base64.Type (ByteString64)
 import Data.Generic.HKD (Construct (construct), HKD (HKD))
-import qualified Data.HashMap.Strict as HM
+import qualified Data.HashMap.Strict as HM (insert)
 import Domain.Util.Field (Bio, Email, Image, Password, Username)
 import Domain.Util.JSON.From (In, updatableParseJSON, wrappedParseJSON)
 import Domain.Util.JSON.To (Out (Out), wrapEncoding, wrappedToEncoding)
+import Domain.Util.Representation (Transform (transform))
+import GHC.Records (HasField (getField))
 import GHC.TypeLits (Symbol)
 import Servant (FromHttpApiData (parseUrlPiece))
 import Servant.Auth.Server (FromJWT, ToJWT (encodeJWT))
@@ -225,3 +230,29 @@ instance FromJSON (UserR "update") where
 
 instance FromJSON (In (UserR "update")) where
   parseJSON = wrappedParseJSON "UserUpdate" "user"
+
+-- NOTE: Transform
+
+instance (HasField "username" (UserR s) Username) => Transform UserR s "id" m where
+  transform = pure . UserId . getField @"username"
+
+-- FIXME
+instance (Algebra sig m, Member CurrentTime.E sig) => Transform UserR "create" "all" m where
+  transform _ = do
+    void $ send CurrentTime.GetCurrentTime
+    pure undefined
+
+-- FIXME
+instance Transform UserR "all" "authWithToken" m where
+  transform _ = pure undefined
+
+instance Transform UserR "all" "auth" m where
+  transform (User email _ name bio image _ _) = pure $ UserAuth email name bio image
+
+-- FIXME
+instance Transform UserR "all" "profile" m where
+  transform _ = pure undefined
+
+-- FIXME
+instance Transform UserR "auth" "authWithToken" m where
+  transform _ = pure undefined

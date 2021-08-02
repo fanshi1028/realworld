@@ -3,11 +3,13 @@
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE DuplicateRecordFields #-}
+{-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE OverloadedLabels #-}
 {-# LANGUAGE TypeFamilies #-}
+{-# LANGUAGE UndecidableInstances #-}
 {-# LANGUAGE ViewPatterns #-}
 
 -- |
@@ -16,12 +18,15 @@ module Domain.Article where
 import Data.Aeson (FromJSON (parseJSON), ToJSON (toEncoding), Value (Array), defaultOptions, genericParseJSON, withObject)
 import Data.Aeson.Types (Value (Object))
 import Data.Generic.HKD (construct)
-import Data.Generics.Labels ()
+import qualified Data.Text as Text (intercalate, toLower)
 import Domain.User (UserR)
-import Domain.Util.Field (Body, Description, Slug, Tag, Time, Title)
+import Domain.Util.Field (Body, Description, Slug (Slug), Tag, Time, Title (Title))
 import Domain.Util.JSON.From (In, insert', updatableParseJSON, wrappedParseJSON)
 import Domain.Util.JSON.To (Out (Out), multiWrappedWithCountToEncoding, wrappedToEncoding)
+import Domain.Util.Representation (Transform (transform))
+import GHC.Records (HasField (getField))
 import GHC.TypeLits (Symbol)
+import Relude.Extra (un)
 import Servant (FromHttpApiData (parseUrlPiece))
 import Validation.Carrier.Selective (WithUpdate, WithValidation)
 
@@ -145,3 +150,18 @@ instance FromJSON (In (ArticleR "update")) where
 instance FromHttpApiData (ArticleR "id") where
   parseUrlPiece = undefined
 
+-- NOTE: Transform
+
+instance (HasField "slug" (ArticleR s) Slug) => Transform ArticleR s "id" m where
+  transform = pure . ArticleId . getField @"slug"
+
+instance Transform ArticleR "create" "id" m where
+  transform = pure . ArticleId . Slug . Text.intercalate "=" . words . Text.toLower . un . getField @"title"
+
+-- FIXME
+instance Transform ArticleR "create" "all" m where
+  transform _ = pure undefined
+
+-- FIXME
+instance Transform ArticleR "all" "withAuthorProfile" m where
+  transform _ = pure undefined

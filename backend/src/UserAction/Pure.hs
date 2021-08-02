@@ -24,24 +24,21 @@ import Domain.Comment (CommentR (..))
 import Domain.User (UserR (..), bio, email, image, username)
 import Domain.Util.Error (AlreadyExists, NotFound (NotFound), ValidationErr)
 import Domain.Util.Representation (Transform (transform), applyPatch)
-import qualified GenID (E (GenerateID))
-import qualified Relation
-import qualified Storage
+import qualified Relation (E (Unrelate))
+import qualified Storage (E (GetById, UpdateById, Insert, DeleteById))
 import UserAction (E (AddCommentToArticle, CreateArticle, DeleteArticle, DeleteComment, FavoriteArticle, FollowUser, GetCurrentUser, UnfavoriteArticle, UnfollowUser, UpdateArticle, UpdateUser))
 import qualified Validation as V (Validation (Failure, Success))
+import qualified GenUUID (E)
 
 newtype C m a = C
   { run :: m a
   }
   deriving (Functor, Applicative, Monad)
-
 instance
   ( Member (Authentication.Token.E UserR) sig,
     Member (Storage.E UserR) sig,
     Member (Storage.E ArticleR) sig,
-    Member (GenID.E ArticleR) sig,
     Member (Storage.E CommentR) sig,
-    Member (GenID.E CommentR) sig,
     Member (Throw ValidationErr) sig,
     Member (Throw (NotFound (UserR "id"))) sig,
     Member (Authentication.E UserR) sig,
@@ -49,6 +46,7 @@ instance
     Member (Throw (NotFound (ArticleR "id"))) sig,
     Member (Throw (NotFound (CommentR "id"))) sig,
     Member CurrentTime.E sig,
+    Member GenUUID.E sig,
     Member (Relation.E ArticleR "id" CommentR "id" HashSet) sig,
     Member (R.Reader (UserR "authWithToken")) sig,
     Algebra sig m
@@ -107,7 +105,7 @@ instance
                   Just User {..} -> do
                     -- FIXME
                     let profile = UserProfile email username bio image undefined
-                    commentId <- send $ GenID.GenerateID cc
+                    commentId <- transform cc
                     time <- send CurrentTime.GetCurrentTime
                     void $ send $ Storage.Insert $ Comment commentId time time comment authorId articleId
                     pure $ CommentWithAuthorProfile commentId time time comment profile

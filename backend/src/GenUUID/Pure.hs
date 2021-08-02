@@ -4,23 +4,17 @@
 {-# LANGUAGE UndecidableInstances #-}
 
 -- |
-module GenID.UUID.Pure where
+module GenUUID.Pure where
 
 import Control.Algebra (Algebra (alg), type (:+:) (L, R))
-import Data.UUID (UUID, nil)
-import GHC.TypeLits (Symbol)
-import GenID (E (GenerateID))
+import Data.UUID (nil)
+import GenUUID (E (Generate))
 
-newtype C (r :: Symbol -> Type) m a = C
+newtype C m a = C
   { run :: m a
   }
   deriving (Functor, Applicative, Monad)
 
-instance
-  ( Algebra sig m,
-    Coercible (r "id") UUID
-  ) =>
-  Algebra (E r :+: sig) (C r m)
-  where
-  alg _ (L (GenerateID _)) ctx = pure $ coerce nil <$ ctx
+instance (Algebra sig m) => Algebra (E :+: sig) (C m) where
+  alg _ (L Generate) ctx = pure $ nil <$ ctx
   alg hdl (R other) ctx = C $ alg (run . hdl) other ctx

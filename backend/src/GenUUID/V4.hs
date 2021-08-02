@@ -4,23 +4,24 @@
 {-# LANGUAGE UndecidableInstances #-}
 
 -- |
-module GenID.Pure where
+module GenUUID.V4 where
 
 import Control.Algebra (Algebra (alg), type (:+:) (L, R))
-import Domain.Util.Representation (Transform (transform))
-import GHC.TypeLits (Symbol)
-import GenID (E (GenerateID))
+import Control.Effect.Lift (Lift, sendIO)
+import Control.Effect.Sum (Member)
+import Data.UUID.V4 (nextRandom)
+import GenUUID (E (Generate))
 
-newtype C (r :: Symbol -> Type) m a = C
+newtype C m a = C
   { run :: m a
   }
   deriving (Functor, Applicative, Monad)
 
 instance
-  ( Algebra sig m,
-    Transform r "create" "id" (C r m)
+  ( Member (Lift IO) sig,
+    Algebra sig m
   ) =>
-  Algebra (E r :+: sig) (C r m)
+  Algebra (E :+: sig) (C m)
   where
-  alg _ (L (GenerateID create)) ctx = (<$ ctx) <$> transform create
+  alg _ (L Generate) ctx = (<$ ctx) <$> sendIO nextRandom
   alg hdl (R other) ctx = C $ alg (run . hdl) other ctx
