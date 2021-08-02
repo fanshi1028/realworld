@@ -59,7 +59,7 @@ server ::
     Member (Storage.E ArticleR) sig,
     Member (Storage.E CommentR) sig,
     Member (Throw (NotFound (CommentR "id"))) sig,
-    Member (Lift STM) sig
+    Member (Lift IO) sig
   ) =>
   ServerT Api m
 server =

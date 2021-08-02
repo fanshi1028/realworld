@@ -6,6 +6,8 @@
 module CurrentTime.IO where
 
 import Control.Algebra (Algebra (alg), type (:+:) (L, R))
+import Control.Effect.Lift (Lift, sendIO)
+import Control.Effect.Sum (Member)
 import CurrentTime (E (GetCurrentTime))
 import Data.Time (getCurrentTime)
 
@@ -14,8 +16,6 @@ newtype C m a = C
   }
   deriving (Functor, Applicative, Monad)
 
--- FIXME
-instance (Algebra sig m) => Algebra (E :+: sig) (C m) where
-  -- alg _ (L GetCurrentTime) ctx = (<$ ctx) <$> liftIO getCurrentTime
-  alg _ (L GetCurrentTime) ctx = pure $ undefined <$ ctx
+instance (Algebra sig m, Member (Lift IO) sig) => Algebra (E :+: sig) (C m) where
+  alg _ (L GetCurrentTime) ctx = (<$ ctx) <$> sendIO getCurrentTime
   alg hdl (R other) ctx = C $ alg (run . hdl) other ctx

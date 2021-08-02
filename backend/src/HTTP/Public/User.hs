@@ -9,7 +9,7 @@ module HTTP.Public.User (UserApi, userServer) where
 
 import Control.Algebra (Algebra, send)
 import Control.Effect.Error (Throw, throwError)
-import Control.Effect.Lift (Lift, sendM)
+import Control.Effect.Lift (Lift, sendIO)
 import qualified Control.Effect.Reader as R
 import Control.Effect.Sum (Member)
 import Data.ByteString.Base64.Type (mkBS64)
@@ -17,7 +17,6 @@ import Domain.User (UserR (..))
 import Domain.Util.Error (ValidationErr)
 import Domain.Util.JSON.From (In (In))
 import Domain.Util.JSON.To (Out (Out))
-import GHC.Conc (unsafeIOToSTM)
 import HTTP.Util (CreateApi)
 import Relude.Extra (un)
 import Servant
@@ -50,7 +49,7 @@ userServer ::
   ( Algebra sig m,
     Member (Throw ValidationErr) sig,
     Member VisitorAction.E sig,
-    Member (Lift STM) sig,
+    Member (Lift IO) sig,
     Member (R.Reader CookieSettings) sig,
     Member (R.Reader JWTSettings) sig
   ) =>
@@ -59,8 +58,7 @@ userServer =
   let validateThen action = validation (throwError @ValidationErr) (send . action) . un
    in ( validateThen Login >=> \authInfo -> do
           acceptLogin <$> R.ask <*> R.ask <*> pure authInfo
-            -- FIXME HACK: IO in STM
-            >>= sendM . unsafeIOToSTM
+            >>= sendIO
             >>= \case
               Nothing -> undefined
               Just f -> case f authInfo of
@@ -75,8 +73,7 @@ userServer =
         :<|> ( validateThen Register >=> \auth -> do
                  jwts <- R.ask
                  -- FIXME what should the expiry be?
-                 -- FIXME HACK: IO in STM
-                 sendM (unsafeIOToSTM $ makeJWT auth jwts Nothing) >>= \case
+                 sendIO (makeJWT auth jwts Nothing) >>= \case
                    Right (Token . mkBS64 . toStrict -> token) -> pure $ Out $ UserAuthWithToken auth token
                    -- FIXME
                    _ -> undefined

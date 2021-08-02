@@ -6,28 +6,26 @@ import Authentication.Pure (SomeNotAuthorized, SomeNotLogin)
 import qualified Authentication.Pure (run)
 import qualified Authentication.Token.JWT
 import qualified Authentication.Token.JWT.Invalidate.Pure
-import Control.Carrier.Lift (runM)
 import qualified Control.Carrier.Reader as R (runReader)
 import Control.Carrier.Throw.Either (runThrow)
 import Crypto.JOSE (Error)
-import qualified CurrentTime.IO
-import qualified CurrentTime.Pure
+import qualified CurrentTime.IO (run)
 import Domain.Article (ArticleR)
 import Domain.Comment (CommentR (..))
 import Domain.User (UserR (..))
 import Domain.Util.Error (AlreadyExists, NotAuthorized, NotFound, ValidationErr)
 import qualified GenID.Pure (run)
-import qualified GenID.UUID.Pure
+import qualified GenID.UUID.Pure (run)
 import HTTP (Api, server)
 import qualified Network.Wai.Handler.Warp as W (run)
-import qualified Relation.Pure
+import qualified Relation.Pure (run)
+import qualified STMWithUnsafeIO (run)
 import Servant (Application, Context (EmptyContext, (:.)), ServerError (errBody), err400, err401, err404, hoistServerWithContext, serveWithContext, throwError)
 import Servant.Auth.Server (CookieSettings, JWTSettings, defaultCookieSettings, defaultJWTSettings, generateKey)
 import StmContainers.Map (newIO)
 import Storage.InMem (TableInMem)
 import qualified Storage.InMem (run)
 import qualified Tag.Pure (run)
-import Util.Orphan ()
 import qualified VisitorAction.Batch.Pure (run)
 import qualified VisitorAction.Pure (run)
 
@@ -38,7 +36,7 @@ app cs jwts userDb articleDb commentDb =
       (Proxy @Api)
       (Proxy @'[CookieSettings, JWTSettings])
       ( atomically
-          . runM
+          . STMWithUnsafeIO.run
           . runThrow @Error
           . runThrow @SomeNotLogin
           . runThrow @SomeNotAuthorized
@@ -54,7 +52,7 @@ app cs jwts userDb articleDb commentDb =
           . (usingReaderT userDb . Storage.InMem.run @UserR)
           . (usingReaderT articleDb . Storage.InMem.run @ArticleR)
           . (usingReaderT commentDb . Storage.InMem.run @CommentR)
-          . CurrentTime.Pure.run
+          . CurrentTime.IO.run
           . GenID.Pure.run @UserR
           . GenID.Pure.run @ArticleR
           . GenID.UUID.Pure.run @CommentR

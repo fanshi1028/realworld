@@ -128,7 +128,7 @@ library backend-internal
     VisitorAction.Batch.Pure
     Tag
     Tag.Pure
-    Util.Orphan
+    STMWithUnsafeIO
 
 -- other-modules:
 -- other-extensions:

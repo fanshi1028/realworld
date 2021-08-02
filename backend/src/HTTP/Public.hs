@@ -35,7 +35,7 @@ publicServer ::
     Member (Throw ValidationErr) sig,
     Member (R.Reader JWTSettings) sig,
     Member (R.Reader CookieSettings) sig,
-    Member (Lift STM) sig
+    Member (Lift IO) sig
   ) =>
   ServerT PublicApi m
 publicServer = userServer :<|> profileServer :<|> articleServer :<|> tagServer
