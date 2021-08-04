@@ -15,6 +15,7 @@
 -- |
 module Domain.User where
 
+import Authentication.Token (E (CreateToken))
 import Control.Algebra (Algebra, send)
 import Control.Effect.Sum (Member)
 import qualified CurrentTime (E (GetCurrentTime))
@@ -242,9 +243,10 @@ instance (Algebra sig m, Member CurrentTime.E sig) => Transform UserR "create" "
     void $ send CurrentTime.GetCurrentTime
     pure undefined
 
--- FIXME
-instance Transform UserR "all" "authWithToken" m where
-  transform _ = pure undefined
+instance (Algebra sig m, Member (Authentication.Token.E UserR) sig) => Transform UserR "all" "authWithToken" m where
+  transform u = do
+    auth <- transform u
+    UserAuthWithToken auth <$> send (CreateToken auth)
 
 instance Transform UserR "all" "auth" m where
   transform (User email _ name bio image _ _) = pure $ UserAuth email name bio image

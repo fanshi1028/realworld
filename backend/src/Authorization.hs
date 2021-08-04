@@ -16,14 +16,12 @@ import Control.Carrier.Lift (runM)
 import qualified Control.Carrier.Reader as R
 import Control.Carrier.Throw.Either (runThrow)
 import Crypto.JOSE (Error)
-import Data.ByteString.Base64.Type (getBS64)
 import qualified Data.List as List
 import Domain.User (UserR (Token, UserAuthWithToken))
-import Domain.Util.Error (NotAuthorized (NotAuthorized))
 import Domain.Util.Representation (Transform (transform))
 import Network.Wai (requestHeaders)
-import Servant (FromHttpApiData (parseHeader), throwError)
-import Servant.Auth.Server (CookieSettings, JWTSettings, verifyJWT)
+import Servant (FromHttpApiData (parseHeader))
+import Servant.Auth.Server (CookieSettings, JWTSettings)
 import qualified Servant.Auth.Server as Auth (AuthCheck (AuthCheck))
 import Servant.Auth.Server.Internal.Class (IsAuth (AuthArgs, runAuth))
 import qualified StmContainers.Map as STM

@@ -24,16 +24,17 @@ import Domain.Comment (CommentR (..))
 import Domain.User (UserR (..), bio, email, image, username)
 import Domain.Util.Error (AlreadyExists, NotFound (NotFound), ValidationErr)
 import Domain.Util.Representation (Transform (transform), applyPatch)
+import qualified GenUUID (E)
 import qualified Relation (E (Unrelate))
 import qualified Storage (E (GetById, UpdateById, Insert, DeleteById))
 import UserAction (E (AddCommentToArticle, CreateArticle, DeleteArticle, DeleteComment, FavoriteArticle, FollowUser, GetCurrentUser, UnfavoriteArticle, UnfollowUser, UpdateArticle, UpdateUser))
 import qualified Validation as V (Validation (Failure, Success))
-import qualified GenUUID (E)
 
 newtype C m a = C
   { run :: m a
   }
   deriving (Functor, Applicative, Monad)
+
 instance
   ( Member (Authentication.Token.E UserR) sig,
     Member (Storage.E UserR) sig,
