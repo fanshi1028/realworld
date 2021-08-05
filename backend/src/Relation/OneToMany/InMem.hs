@@ -4,23 +4,21 @@
 {-# LANGUAGE UndecidableInstances #-}
 
 -- |
-module Relation.Batch.InMem.OneToMany where
+module Relation.OneToMany.InMem where
 
 import Control.Algebra (Algebra (alg), type (:+:) (L, R))
 import Control.Effect.Lift (Lift, sendM)
 import Control.Effect.Sum (Member)
-import Data.HashSet (insert)
 import GHC.TypeLits (Symbol)
-import qualified ListT
-import Relation.Batch (E (GetRelated))
-import qualified StmContainers.Multimap as STM
+import qualified ListT (toList)
+import Relation.OneToMany (E (GetRelated, IsRelated, Relate, Unrelate))
+import qualified StmContainers.Multimap as STM (Multimap, delete, insert, listTByKey, lookup)
 
 newtype
   C
     (r1 :: Type)
     (r :: Symbol)
     (r2 :: Type)
-    (f :: Type -> Type)
     (m :: Type -> Type)
     a = C
   { run :: ReaderT (STM.Multimap r1 r2) m a
@@ -35,9 +33,13 @@ instance
     Hashable r1,
     Hashable r2
   ) =>
-  Algebra (E r1 r r2 HashSet :+: sig) (C r1 r r2 HashSet m)
+  Algebra (E r1 r r2 :+: sig) (C r1 r r2 m)
   where
-  alg _ (L (GetRelated _ k)) ctx =
+  alg _ (L action) ctx =
     ask
-      >>= fmap (<$ ctx) . sendM @STM . ListT.fold (pure <<$>> flip insert) mempty . STM.listTByKey k
+      >>= fmap (<$ ctx) . sendM @STM . case action of
+        Relate _ k v -> STM.insert v k
+        Unrelate _ k v -> STM.delete v k
+        IsRelated _ k v -> STM.lookup v k
+        GetRelated _ k -> ListT.toList . STM.listTByKey k
   alg hdl (R other) ctx = C $ alg (run . hdl) (R other) ctx

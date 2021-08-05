@@ -4,15 +4,15 @@
 {-# LANGUAGE UndecidableInstances #-}
 
 -- |
-module Relation.InMem.OneToOne where
+module Relation.OneToOne.InMem where
 
 import Control.Algebra (Algebra (alg), type (:+:) (L, R))
 import Control.Effect.Lift (Lift, sendM)
 import Control.Effect.Sum (Member)
-import qualified Focus as FC
+import qualified Focus as FC (Change (Leave, Remove, Set), unitCases)
 import GHC.TypeLits (Symbol)
-import Relation (E (IsRelated, Relate, Unrelate))
-import qualified StmContainers.Map as STM
+import Relation.OneToOne (E (GetRelated, IsRelated, Relate, Unrelate))
+import qualified StmContainers.Map as STM (Map, focus, lookup)
 
 data ExistAction = UpdateIfExist | IgnoreIfExist
 
@@ -58,6 +58,7 @@ instance
         Relate _ r1 r2 -> relateFocus IgnoreIfExist r1 r2
         Unrelate _ r1 r2 -> unrelateFocus r1 r2
         IsRelated _ r1 r2 -> (== Just r2) <<$>> STM.lookup r1
+        GetRelated _ r1 -> STM.lookup r1
   alg hdl (R other) ctx = C $ alg (run . hdl) (R other) ctx
 
 instance
@@ -75,4 +76,5 @@ instance
         Relate _ r1 r2 -> relateFocus UpdateIfExist r1 r2
         Unrelate _ r1 r2 -> unrelateFocus r1 r2
         IsRelated _ r1 r2 -> (== Just r2) <<$>> STM.lookup r1
+        GetRelated _ r1 -> STM.lookup r1
   alg hdl (R other) ctx = C $ alg (run . hdl) (R other) ctx

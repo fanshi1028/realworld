@@ -18,7 +18,7 @@ import GenUUID.V1 (RequestedUUIDsTooQuickly)
 import qualified GenUUID.V1 (run)
 import HTTP (Api, server)
 import qualified Network.Wai.Handler.Warp as W (run)
-import qualified Relation.Pure (run)
+import qualified Relation.OneToMany.Pure (run)
 import qualified STMWithUnsafeIO (run)
 import Servant (Application, Context (EmptyContext, (:.)), ServerError (errBody), err400, err401, err404, err500, hoistServerWithContext, serveWithContext, throwError)
 import Servant.Auth.Server (CookieSettings, JWTSettings, defaultCookieSettings, defaultJWTSettings, generateKey)
@@ -48,7 +48,7 @@ app cs jwts userDb articleDb commentDb =
           . runThrow @(AlreadyExists (ArticleR "id"))
           . R.runReader jwts
           . R.runReader cs
-          . Relation.Pure.run @(ArticleR "id") @"has" @(CommentR "id") @'True
+          . Relation.OneToMany.Pure.run @(ArticleR "id") @"has" @(CommentR "id") @'True
           . (usingReaderT userDb . Storage.InMem.run @UserR)
           . (usingReaderT articleDb . Storage.InMem.run @ArticleR)
           . (usingReaderT commentDb . Storage.InMem.run @CommentR)

@@ -25,7 +25,7 @@ import Domain.User (UserR (..), bio, email, image, username)
 import Domain.Util.Error (AlreadyExists, NotFound (NotFound), ValidationErr)
 import Domain.Util.Representation (Transform (transform), applyPatch)
 import qualified GenUUID (E)
-import qualified Relation (E (Unrelate))
+import qualified Relation.OneToMany (E (Unrelate))
 import qualified Storage (E (DeleteById, GetById, Insert, UpdateById))
 import UserAction (E (AddCommentToArticle, CreateArticle, DeleteArticle, DeleteComment, FavoriteArticle, FollowUser, GetCurrentUser, UnfavoriteArticle, UnfollowUser, UpdateArticle, UpdateUser))
 import qualified Validation as V (Validation (Failure, Success))
@@ -48,7 +48,7 @@ instance
     Member (Throw (NotFound (CommentR "id"))) sig,
     Member CurrentTime.E sig,
     Member GenUUID.E sig,
-    Member (Relation.E (ArticleR "id") "has" (CommentR "id")) sig,
+    Member (Relation.OneToMany.E (ArticleR "id") "has" (CommentR "id")) sig,
     Member (R.Reader (UserR "authWithToken")) sig,
     Algebra sig m
   ) =>
@@ -115,7 +115,7 @@ instance
               Nothing -> throwError $ NotFound commentId
               Just _ -> do
                 void $ send $ Storage.DeleteById commentId
-                send $ Relation.Unrelate (Proxy @"has") articleId commentId
+                send $ Relation.OneToMany.Unrelate (Proxy @"has") articleId commentId
           -- FIXME
           (FavoriteArticle articleId) -> undefined
           -- FIXME

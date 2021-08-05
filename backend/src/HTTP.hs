@@ -22,7 +22,7 @@ import Domain.Util.Error (AlreadyExists, NotAuthorized (NotAuthorized), NotFound
 import qualified GenUUID (E)
 import HTTP.Authed (AuthedApi, authedServer)
 import HTTP.Public (PublicApi, publicServer)
-import qualified Relation (E)
+import qualified Relation.OneToMany (E)
 import Servant (Get, JSON, ServerT, type (:<|>) ((:<|>)), type (:>))
 import Servant.Auth.Server (Auth, AuthResult (Authenticated), CookieSettings, JWTSettings)
 import Servant.Server (hoistServer)
@@ -51,7 +51,7 @@ server ::
     Member (Throw (NotFound (UserR "id"))) sig,
     Member (Throw (NotFound (ArticleR "id"))) sig,
     Member CurrentTime.E sig,
-    Member (Relation.E (ArticleR "id") "has" (CommentR "id")) sig,
+    Member (Relation.OneToMany.E (ArticleR "id") "has" (CommentR "id")) sig,
     Member (Storage.E UserR) sig,
     Member (Storage.E ArticleR) sig,
     Member (Storage.E CommentR) sig,

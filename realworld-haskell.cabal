@@ -112,14 +112,12 @@ library backend-internal
     HTTP.Authed.Follow
     HTTP.Authed.User
     HTTP.Util
-    Relation
-    Relation.Pure
-    Relation.InMem.OneToMany
-    Relation.InMem.OneToOne
-    Relation.Batch
-    Relation.Batch.Pure
-    Relation.Batch.InMem.OneToMany
-    Relation.Batch.InMem.OneToOne
+    Relation.OneToOne
+    Relation.OneToOne.Pure
+    Relation.OneToOne.InMem
+    Relation.OneToMany
+    Relation.OneToMany.Pure
+    Relation.OneToMany.InMem
     Storage.InMem
     Storage
     UserAction
