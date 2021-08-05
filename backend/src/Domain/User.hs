@@ -184,7 +184,6 @@ instance FromJSON (WithValidation (UserR "create")) where
 instance FromJSON (In (WithValidation (UserR "create"))) where
   parseJSON = wrappedParseJSON "UserRegister" "user"
 
--- newtype instance UserR "update" = UserUpdate (UserR "all")
 newtype instance UserR "update" = UserUpdate (WithUpdate (UserR "all"))
   -- { email :: Email, -- "jake@jake.jake",
   --   password :: Password, -- "jakejake"
@@ -243,18 +242,35 @@ instance (Algebra sig m, Member CurrentTime.E sig) => Transform UserR "create" "
     void $ send CurrentTime.GetCurrentTime
     pure undefined
 
-instance (Algebra sig m, Member (Authentication.Token.E UserR) sig) => Transform UserR "all" "authWithToken" m where
-  transform u = do
-    auth <- transform u
-    UserAuthWithToken auth <$> send (CreateToken auth)
-
 instance Transform UserR "all" "auth" m where
   transform (User email _ name bio image _ _) = pure $ UserAuth email name bio image
 
--- FIXME
-instance Transform UserR "all" "profile" m where
-  transform _ = pure undefined
+instance (Algebra sig m, Member (Authentication.Token.E UserR) sig) => Transform UserR "auth" "authWithToken" m where
+  transform auth = UserAuthWithToken auth <$> send (CreateToken auth)
+
+instance (Algebra sig m, Member (Authentication.Token.E UserR) sig) => Transform UserR "all" "authWithToken" m where
+  transform = transform >=> (transform @_ @"auth")
 
 -- FIXME
-instance Transform UserR "auth" "authWithToken" m where
+instance (Algebra sig m) => Transform UserR "all" "profile" m where
   transform _ = pure undefined
+  -- transform (User em _ user bio im _ _) = UserProfile em user bio im <$> do
+  --   cUser <- send GetCurrentUser
+  --   send (IsRelated user)
+
+  -- { email :: Email, -- "jake@jake.jake",
+  -- -- token :: UserR "token", -- "jwt.token.here",
+  --   password :: Password, -- "jakejake"
+  --   username :: Username, -- "jake",
+  --   bio :: Bio, -- "I work at statefarm",
+  --   image :: Image, -- "https://static.productionready.io/images/smiley-cyrus.jpg",
+  --   following :: HashSet (UserR "id"), -- empty,
+  --   followBy :: HashSet (UserR "id") -- empty,
+  -- }
+
+  -- { email :: Email, -- "jake@jake.jake",
+  --   username :: Username, -- "jake",
+  --   bio :: Bio, -- "I work at statefarm",
+  --   image :: Image, -- "https://static.productionready.io/images/smiley-cyrus.jpg",
+  --   following :: Bool -- false
+  -- }
