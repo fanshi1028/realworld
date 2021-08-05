@@ -49,7 +49,7 @@ app cs jwts userDb articleDb commentDb =
           . runThrow @(AlreadyExists (ArticleR "id"))
           . R.runReader jwts
           . R.runReader cs
-          . Relation.Pure.run @ArticleR @"id" @CommentR @"id" @HashSet @'True
+          . Relation.Pure.run @(ArticleR "id") @"has" @(CommentR "id") @'True
           . (usingReaderT userDb . Storage.InMem.run @UserR)
           . (usingReaderT articleDb . Storage.InMem.run @ArticleR)
           . (usingReaderT commentDb . Storage.InMem.run @CommentR)

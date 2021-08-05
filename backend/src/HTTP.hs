@@ -53,7 +53,7 @@ server ::
     Member (Throw (NotFound (UserR "id"))) sig,
     Member (Throw (NotFound (ArticleR "id"))) sig,
     Member CurrentTime.E sig,
-    Member (Relation.E ArticleR "id" CommentR "id" HashSet) sig,
+    Member (Relation.E (ArticleR "id") "has" (CommentR "id")) sig,
     Member (Storage.E UserR) sig,
     Member (Storage.E ArticleR) sig,
     Member (Storage.E CommentR) sig,

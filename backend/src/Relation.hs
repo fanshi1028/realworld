@@ -5,8 +5,8 @@ module Relation where
 
 import GHC.TypeLits (Symbol)
 
-data E (r1 :: Symbol -> Type) (idx1 :: Symbol) (r2 :: Symbol -> Type) (idx2 :: Symbol) (f :: Type -> Type) (m :: Type -> Type) a where
-  Relate :: r1 idx1 -> r2 idx2 -> E r1 idx1 r2 idx2 f m ()
-  Unrelate :: r1 idx1 -> r2 idx2 -> E r1 idx1 r2 idx2 f m ()
-  IsRelated :: r1 idx1 -> r2 idx2 -> E r1 idx1 r2 idx2 f m Bool
-  GetRelated :: r1 idx1 -> E r1 idx1 r2 idx2 f m (f (r2 idx2))
+data E (r1 :: Type) (r :: Symbol) (r2 :: Type) (m :: Type -> Type) a where
+  Relate :: Proxy r -> r1 -> r2 -> E r1 r r2 m ()
+  Unrelate :: Proxy r -> r1 -> r2 -> E r1 r r2 m ()
+  IsRelated :: Proxy r -> r1 -> r2 -> E r1 r r2 m Bool
+  -- GetRelated :: Proxy r -> r1 -> E r1 r r2 m (f r2)

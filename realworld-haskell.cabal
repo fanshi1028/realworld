@@ -116,6 +116,10 @@ library backend-internal
     Relation.Pure
     Relation.InMem.OneToMany
     Relation.InMem.OneToOne
+    Relation.Batch
+    Relation.Batch.Pure
+    Relation.Batch.InMem.OneToMany
+    Relation.Batch.InMem.OneToOne
     Storage.InMem
     Storage
     UserAction
