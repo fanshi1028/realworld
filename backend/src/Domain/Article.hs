@@ -28,7 +28,7 @@ import GHC.Records (HasField (getField))
 import GHC.TypeLits (Symbol)
 import Relude.Extra (un)
 import Servant (FromHttpApiData (parseUrlPiece))
-import Validation.Carrier.Selective (WithUpdate, WithValidation)
+import Domain.Util.Validation (WithUpdate, WithValidation)
 
 data family ArticleR (r :: Symbol)
 

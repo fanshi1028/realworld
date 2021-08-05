@@ -24,7 +24,7 @@ import Domain.Util.JSON.From (In)
 import Domain.Util.JSON.To (Out)
 import GHC.TypeLits (Symbol)
 import Servant (Delete, FromHttpApiData, Get, JSON, Post, Put, QueryParam, ReqBody, type (:<|>), type (:>))
-import Validation.Carrier.Selective (WithValidation)
+import Domain.Util.Validation (WithValidation)
 
 -- Paging
 newtype Limit = Limit Natural deriving (FromHttpApiData)

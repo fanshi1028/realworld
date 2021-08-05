@@ -27,7 +27,7 @@ import GHC.Records (HasField (getField))
 import GHC.TypeLits (Symbol)
 import qualified GenUUID (E (Generate))
 import Servant (FromHttpApiData (parseUrlPiece))
-import Validation.Carrier.Selective (WithValidation)
+import Domain.Util.Validation (WithValidation)
 
 data family CommentR (r :: Symbol)
 

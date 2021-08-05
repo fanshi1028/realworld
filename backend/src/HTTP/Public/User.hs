@@ -36,7 +36,7 @@ import Servant
   )
 import Servant.Auth.Server (CookieSettings, JWTSettings, SetCookie, acceptLogin, makeJWT)
 import Validation (validation)
-import Validation.Carrier.Selective (WithValidation)
+import Domain.Util.Validation (WithValidation)
 import VisitorAction (E (Login, Register))
 import Web.Cookie (setCookieValue)
 

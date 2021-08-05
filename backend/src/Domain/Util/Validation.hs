@@ -6,7 +6,7 @@
 {-# LANGUAGE StandaloneDeriving #-}
 
 -- |
-module Validation.Carrier.Selective where
+module Domain.Util.Validation where
 
 import Data.Aeson (FromJSON (parseJSON), defaultOptions, genericParseJSON, withArray)
 import Data.Generic.HKD (HKD)

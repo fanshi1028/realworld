@@ -32,7 +32,7 @@ import GHC.Records (HasField (getField))
 import GHC.TypeLits (Symbol)
 import Servant (FromHttpApiData (parseUrlPiece))
 import Servant.Auth.Server (FromJWT, ToJWT (encodeJWT))
-import Validation.Carrier.Selective (WithUpdate, WithValidation)
+import Domain.Util.Validation (WithUpdate, WithValidation)
 
 data family UserR (r :: Symbol)
 

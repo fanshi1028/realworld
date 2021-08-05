@@ -14,7 +14,7 @@ import qualified Data.Semigroup as SG
 import GHC.TypeLits (Symbol)
 import Relude.Extra (un)
 import Validation (Validation (Failure))
-import Validation.Carrier.Selective (WithUpdate, WithValidation)
+import Domain.Util.Validation (WithUpdate, WithValidation)
 
 type Patchable r =
   ( Coercible (WithUpdate (r "all")) (r "update"),

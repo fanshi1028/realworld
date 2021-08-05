@@ -15,7 +15,7 @@ import Data.Time (UTCTime)
 import Domain.Util.JSON.To (Out, wrappedToEncoding)
 import Servant (FromHttpApiData)
 import Text.Show (Show (showsPrec), showString)
-import Validation.Carrier.Selective (NoValidation, NoValidation' (..), WithValidation, validate)
+import Domain.Util.Validation (NoValidation, NoValidation' (..), WithValidation, validate)
 
 -- | some newtype
 
