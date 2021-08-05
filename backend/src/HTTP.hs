@@ -30,7 +30,6 @@ import qualified Storage (E)
 import qualified Tag (E)
 import qualified UserAction.Pure
 import qualified VisitorAction (E)
-import qualified VisitorAction.Batch (E)
 
 type Api =
   "api"
@@ -42,7 +41,6 @@ server ::
     Member (Tag.E []) sig,
     Member GenUUID.E sig,
     Member VisitorAction.E sig,
-    Member (VisitorAction.Batch.E []) sig,
     Member (Throw ValidationErr) sig,
     Member (Throw (NotAuthorized UserR)) sig,
     Member (R.Reader JWTSettings) sig,

@@ -26,8 +26,7 @@ import StmContainers.Map (newIO)
 import Storage.InMem (TableInMem)
 import qualified Storage.InMem (run)
 import qualified Tag.Pure (run)
-import qualified VisitorAction.Batch.Pure (run)
-import qualified VisitorAction.Pure (run)
+import qualified VisitorAction (run)
 
 app :: CookieSettings -> JWTSettings -> TableInMem UserR -> TableInMem ArticleR -> TableInMem CommentR -> Application
 app cs jwts userDb articleDb commentDb =
@@ -58,9 +57,8 @@ app cs jwts userDb articleDb commentDb =
           . Authentication.Token.JWT.Invalidate.Pure.run @UserR
           . Authentication.Token.JWT.run @UserR
           . Authentication.Pure.run @UserR @'False
-          . VisitorAction.Pure.run
           . Tag.Pure.run @[]
-          . VisitorAction.Batch.Pure.run @[]
+          . VisitorAction.run
           >=> handlerErr (const $ throwError $ err500 {errBody = "fuck"})
           >=> handlerErr (const $ throwError $ err400 {errBody = "fuck"})
           >=> handlerErr (const $ throwError $ err400 {errBody = "fuck"})

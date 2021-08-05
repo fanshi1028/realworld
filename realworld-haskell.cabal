@@ -126,9 +126,6 @@ library backend-internal
     UserAction.Pure
     Validation.Carrier.Selective
     VisitorAction
-    VisitorAction.Pure
-    VisitorAction.Batch
-    VisitorAction.Batch.Pure
     Tag
     Tag.Pure
     STMWithUnsafeIO

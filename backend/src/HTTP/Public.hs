@@ -19,7 +19,6 @@ import Servant (ServerT, type (:<|>) ((:<|>)), type (:>))
 import Servant.Auth.Server (CookieSettings, JWTSettings)
 import qualified Tag (E)
 import qualified VisitorAction (E)
-import qualified VisitorAction.Batch (E)
 
 type PublicApi =
   "users" :> UserApi
@@ -31,7 +30,6 @@ publicServer ::
   ( Algebra sig m,
     Member (Tag.E []) sig,
     Member VisitorAction.E sig,
-    Member (VisitorAction.Batch.E []) sig,
     Member (Throw ValidationErr) sig,
     Member (R.Reader JWTSettings) sig,
     Member (R.Reader CookieSettings) sig,
