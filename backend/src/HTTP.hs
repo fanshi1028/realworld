@@ -28,7 +28,7 @@ import Servant.Auth.Server (Auth, AuthResult (Authenticated), CookieSettings, JW
 import Servant.Server (hoistServer)
 import qualified Storage (E)
 import qualified Tag (E)
-import qualified UserAction.Pure
+import qualified UserAction (run)
 import qualified VisitorAction (E)
 
 type Api =
@@ -65,9 +65,9 @@ server =
                hoistServer
                  (Proxy @AuthedApi)
                  ( case auth of
-                     Authenticated user -> usingReaderT user . UserAction.Pure.run
+                     Authenticated user -> usingReaderT user . UserAction.run
                      -- HACK FIXME is this undefined ok?
-                     _ -> usingReaderT undefined . UserAction.Pure.run . (throwError (NotAuthorized @UserR) >>)
+                     _ -> usingReaderT undefined . UserAction.run . (throwError (NotAuthorized @UserR) >>)
                  )
                  authedServer
            )
