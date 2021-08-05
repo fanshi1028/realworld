@@ -121,7 +121,6 @@ library backend-internal
     Storage.InMem
     Storage
     UserAction
-    UserAction.Pure
     Validation.Carrier.Selective
     VisitorAction
     Tag
