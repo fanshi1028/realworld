@@ -9,12 +9,12 @@ import qualified Authentication.Token.JWT.Invalidate.Pure
 import qualified Control.Carrier.Reader as R (runReader)
 import Control.Carrier.Throw.Either (runThrow)
 import Crypto.JOSE (Error)
-import qualified CurrentTime.IO (run)
+import qualified Current.IO (run)
 import Domain.Article (ArticleR (..))
 import Domain.Comment (CommentR (..))
 import Domain.User (UserR (..))
 import Domain.Util.Error (AlreadyExists, NotAuthorized, NotFound, ValidationErr)
-import Domain.Util.Field (Tag)
+import Domain.Util.Field (Tag, Time)
 import GenUUID.V1 (RequestedUUIDsTooQuickly)
 import qualified GenUUID.V1 (run)
 import HTTP (Api, server)
@@ -56,7 +56,7 @@ app cs jwts userDb articleDb commentDb tagDb =
           . (usingReaderT articleDb . Storage.Map.InMem.run @ArticleR)
           . (usingReaderT commentDb . Storage.Map.InMem.run @CommentR)
           . (usingReaderT tagDb . Storage.Set.InMem.run @Tag)
-          . CurrentTime.IO.run
+          . Current.IO.run @Time
           . GenUUID.V1.run
           . Authentication.Token.JWT.Invalidate.Pure.run @UserR
           . Authentication.Token.JWT.run @UserR

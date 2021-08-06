@@ -12,10 +12,9 @@ module UserAction where
 import qualified Authentication (E)
 import qualified Authentication.Token (E (CreateToken))
 import Control.Algebra (Algebra (alg), send, type (:+:) (L, R))
-import qualified Control.Effect.Reader as R
 import Control.Effect.Sum (Member)
 import Control.Effect.Throw (Throw, throwError)
-import qualified CurrentTime (E (GetCurrentTime))
+import qualified Current (E (GetCurrent))
 import Data.Generics.Internal.VL (over)
 import Data.Generics.Product (HasField' (field'), getField)
 import qualified Data.HashSet as HS (delete, insert)
@@ -23,6 +22,7 @@ import Domain.Article (ArticleR (..))
 import Domain.Comment (CommentR (..))
 import Domain.User (UserR (..), bio, email, image, username)
 import Domain.Util.Error (AlreadyExists, NotFound (NotFound), ValidationErr)
+import Domain.Util.Field (Time)
 import Domain.Util.Representation (Transform (transform), applyPatch)
 import qualified GenUUID (E)
 import qualified Relation.OneToMany (E (Unrelate))
@@ -60,16 +60,16 @@ instance
     Member (Throw (AlreadyExists (ArticleR "id"))) sig,
     Member (Throw (NotFound (ArticleR "id"))) sig,
     Member (Throw (NotFound (CommentR "id"))) sig,
-    Member CurrentTime.E sig,
+    Member (Current.E Time) sig,
     Member GenUUID.E sig,
     Member (Relation.OneToMany.E (ArticleR "id") "has" (CommentR "id")) sig,
-    Member (R.Reader (UserR "authWithToken")) sig,
+    Member (Current.E (UserR "authWithToken")) sig,
     Algebra sig m
   ) =>
   Algebra (UserAction.E :+: sig) (C m)
   where
   alg hdl sig ctx = do
-    auth <- R.ask
+    auth <- send $ Current.GetCurrent @(UserR "authWithToken")
     authUserId <- case auth of UserAuthWithToken auth' _ -> transform @UserR @"auth" @"id" auth'
     let (%~) = over
     case sig of
@@ -123,7 +123,7 @@ instance
                     -- FIXME
                     let profile = UserProfile email username bio image undefined
                     commentId <- transform cc
-                    time <- send CurrentTime.GetCurrentTime
+                    time <- send $ Current.GetCurrent @Time
                     void $ send $ Storage.Map.Insert $ Comment commentId time time comment authorId articleId
                     pure $ CommentWithAuthorProfile commentId time time comment profile
           DeleteComment articleId commentId ->

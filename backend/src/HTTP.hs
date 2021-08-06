@@ -14,7 +14,7 @@ import qualified Control.Carrier.Reader as R (Reader)
 import Control.Effect.Lift (Lift)
 import Control.Effect.Sum (Member)
 import Control.Effect.Throw (Throw, throwError)
-import qualified CurrentTime
+import qualified Current
 import Domain.Article (ArticleR)
 import Domain.Comment (CommentR)
 import Domain.User (UserR)
@@ -29,6 +29,8 @@ import Servant.Server (hoistServer)
 import qualified Storage.Map (E)
 import qualified UserAction (run)
 import qualified VisitorAction (E)
+import Domain.Util.Field (Time)
+import qualified Current.Reader
 
 type Api =
   "api"
@@ -48,7 +50,7 @@ server ::
     Member (Throw (AlreadyExists (ArticleR "id"))) sig,
     Member (Throw (NotFound (UserR "id"))) sig,
     Member (Throw (NotFound (ArticleR "id"))) sig,
-    Member CurrentTime.E sig,
+    Member (Current.E Time) sig,
     Member (Relation.OneToMany.E (ArticleR "id") "has" (CommentR "id")) sig,
     Member (Storage.Map.E UserR) sig,
     Member (Storage.Map.E ArticleR) sig,
@@ -63,9 +65,9 @@ server =
                hoistServer
                  (Proxy @AuthedApi)
                  ( case auth of
-                     Authenticated user -> usingReaderT user . UserAction.run
+                     Authenticated user -> usingReaderT user . Current.Reader.run . UserAction.run
                      -- HACK FIXME is this undefined ok?
-                     _ -> usingReaderT undefined . UserAction.run . (throwError (NotAuthorized @UserR) >>)
+                     _ -> usingReaderT undefined . Current.Reader.run  . UserAction.run . (throwError (NotAuthorized @UserR) >>)
                  )
                  authedServer
            )

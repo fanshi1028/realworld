@@ -86,9 +86,9 @@ library backend-internal
     Authentication.Token.JWT.Invalidate
     Authentication.Token.JWT.Invalidate.Pure
     Authorization
-    CurrentTime.IO
-    CurrentTime.Pure
-    CurrentTime
+    Current.IO
+    Current.Pure
+    Current
     Domain.Article
     Domain.Comment
     Domain.User

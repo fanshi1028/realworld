@@ -18,7 +18,6 @@ module Domain.User where
 import Authentication.Token (E (CreateToken))
 import Control.Algebra (Algebra, send)
 import Control.Effect.Sum (Member)
-import qualified CurrentTime (E (GetCurrentTime))
 import Data.Aeson (FromJSON (parseJSON), ToJSON (toEncoding, toJSON), Value (Object), defaultOptions, genericParseJSON, genericToJSON)
 import Data.Aeson.Encoding (value)
 import Data.ByteString.Base64.Type (ByteString64)
@@ -237,10 +236,8 @@ instance (HasField "username" (UserR s) Username) => Transform UserR s "id" m wh
   transform = pure . UserId . getField @"username"
 
 -- FIXME
-instance (Algebra sig m, Member CurrentTime.E sig) => Transform UserR "create" "all" m where
-  transform _ = do
-    void $ send CurrentTime.GetCurrentTime
-    pure undefined
+instance (Algebra sig m) => Transform UserR "create" "all" m where
+  transform _ = pure undefined
 
 instance Transform UserR "all" "auth" m where
   transform (User email _ name bio image _ _) = pure $ UserAuth email name bio image
