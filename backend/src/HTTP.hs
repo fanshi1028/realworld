@@ -27,7 +27,6 @@ import Servant (Get, JSON, ServerT, type (:<|>) ((:<|>)), type (:>))
 import Servant.Auth.Server (Auth, AuthResult (Authenticated), CookieSettings, JWTSettings)
 import Servant.Server (hoistServer)
 import qualified Storage.Map (E)
-import qualified Tag (E)
 import qualified UserAction (run)
 import qualified VisitorAction (E)
 
@@ -55,7 +54,6 @@ server ::
     Member (Storage.Map.E ArticleR) sig,
     Member (Storage.Map.E CommentR) sig,
     Member (Throw (NotFound (CommentR "id"))) sig,
-    Member Tag.E sig,
     Member (Lift IO) sig
   ) =>
   ServerT Api m

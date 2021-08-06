@@ -125,8 +125,6 @@ library backend-internal
     UserAction
     Domain.Util.Validation
     VisitorAction
-    Tag
-    Tag.Pure
     STMWithUnsafeIO
 
 -- other-modules:

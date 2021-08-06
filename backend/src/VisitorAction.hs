@@ -1,7 +1,7 @@
 {-# LANGUAGE DataKinds #-}
-{-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE UndecidableInstances #-}
 
 -- |
@@ -18,7 +18,7 @@ import Domain.Util.Error (NotAuthorized (NotAuthorized))
 import Domain.Util.Field (Tag)
 import Domain.Util.Representation (Transform (transform))
 import qualified Storage.Map (E (GetById))
-import qualified Tag
+import qualified Storage.Set
 
 data E (m :: Type -> Type) a where
   Register :: UserR "create" -> E m (UserR "auth")
@@ -39,7 +39,7 @@ instance
   ( Member (Throw (NotAuthorized UserR)) sig,
     Member (Auth.E UserR) sig,
     Member (Storage.Map.E UserR) sig,
-    Member Tag.E sig,
+    Member (Storage.Set.E Tag) sig,
     Algebra sig m
   ) =>
   Algebra (E :+: sig) (C m)
@@ -55,5 +55,5 @@ instance
   alg hdl (L (GetAritcle ar)) ctx = pure $ undefined <$ ctx
   alg hdl (L ListArticles) ctx = pure $ undefined <$ ctx
   alg hdl (L (GetComments _)) ctx = pure $ undefined <$ ctx
-  alg hdl (L GetTags) ctx = (<$ ctx) <$> send Tag.GetTags
+  alg hdl (L GetTags) ctx = (<$ ctx) <$> send (Storage.Set.GetAll @Tag)
   alg hdl (R other) ctx = C $ alg (run . hdl) other ctx

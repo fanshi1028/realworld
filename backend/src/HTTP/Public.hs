@@ -17,7 +17,6 @@ import HTTP.Public.Tag (TagApi, tagServer)
 import HTTP.Public.User (UserApi, userServer)
 import Servant (ServerT, type (:<|>) ((:<|>)), type (:>))
 import Servant.Auth.Server (CookieSettings, JWTSettings)
-import qualified Tag (E)
 import qualified VisitorAction (E)
 
 type PublicApi =
@@ -32,7 +31,6 @@ publicServer ::
     Member (Throw ValidationErr) sig,
     Member (R.Reader JWTSettings) sig,
     Member (R.Reader CookieSettings) sig,
-    Member Tag.E sig,
     Member (Lift IO) sig
   ) =>
   ServerT PublicApi m

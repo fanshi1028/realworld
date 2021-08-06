@@ -28,7 +28,6 @@ import StmContainers.Set as STM.Set (Set, newIO)
 import Storage.Map.InMem (TableInMem)
 import qualified Storage.Map.InMem (run)
 import qualified Storage.Set.InMem
-import qualified Tag.InMem (run)
 import qualified VisitorAction (run)
 
 app :: CookieSettings -> JWTSettings -> TableInMem UserR -> TableInMem ArticleR -> TableInMem CommentR -> STM.Set.Set Tag -> Application
@@ -62,7 +61,6 @@ app cs jwts userDb articleDb commentDb tagDb =
           . Authentication.Token.JWT.Invalidate.Pure.run @UserR
           . Authentication.Token.JWT.run @UserR
           . Authentication.Pure.run @UserR @'False
-          . Tag.InMem.run
           . VisitorAction.run
           >=> handlerErr (const $ throwError $ err500 {errBody = "fuck"})
           >=> handlerErr (const $ throwError $ err400 {errBody = "fuck"})
