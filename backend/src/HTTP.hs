@@ -38,7 +38,6 @@ type Api =
 
 server ::
   ( Algebra sig m,
-    Member (Tag.E []) sig,
     Member GenUUID.E sig,
     Member VisitorAction.E sig,
     Member (Throw ValidationErr) sig,
@@ -56,6 +55,7 @@ server ::
     Member (Storage.Map.E ArticleR) sig,
     Member (Storage.Map.E CommentR) sig,
     Member (Throw (NotFound (CommentR "id"))) sig,
+    Member Tag.E sig,
     Member (Lift IO) sig
   ) =>
   ServerT Api m

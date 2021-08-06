@@ -1,7 +1,7 @@
 {-# LANGUAGE DataKinds #-}
+{-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
-{-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE UndecidableInstances #-}
 
 -- |
@@ -39,7 +39,7 @@ instance
   ( Member (Throw (NotAuthorized UserR)) sig,
     Member (Auth.E UserR) sig,
     Member (Storage.Map.E UserR) sig,
-    Member (Tag.E []) sig,
+    Member Tag.E sig,
     Algebra sig m
   ) =>
   Algebra (E :+: sig) (C m)

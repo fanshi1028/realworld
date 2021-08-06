@@ -14,5 +14,5 @@ import qualified Tag (E (GetTags))
 
 type TagApi = Get '[JSON] (Out [F.Tag])
 
-tagServer :: (Member (Tag.E []) sig, Algebra sig m) => ServerT TagApi m
+tagServer :: (Member Tag.E sig, Algebra sig m) => ServerT TagApi m
 tagServer = Out <$> send Tag.GetTags

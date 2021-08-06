@@ -28,11 +28,11 @@ type PublicApi =
 
 publicServer ::
   ( Algebra sig m,
-    Member (Tag.E []) sig,
     Member VisitorAction.E sig,
     Member (Throw ValidationErr) sig,
     Member (R.Reader JWTSettings) sig,
     Member (R.Reader CookieSettings) sig,
+    Member Tag.E sig,
     Member (Lift IO) sig
   ) =>
   ServerT PublicApi m

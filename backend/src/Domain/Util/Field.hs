@@ -78,7 +78,7 @@ newtype Body = Body Text deriving newtype (Show, Eq, ToJSON)
 
 deriving via NoValidation instance FromJSON (WithValidation Body)
 
-newtype Tag = Tag Text deriving newtype (Show, Eq, ToJSON, FromHttpApiData)
+newtype Tag = Tag Text deriving newtype (Show, Eq, Hashable,ToJSON, FromHttpApiData)
 
 deriving via NoValidation instance FromJSON (WithValidation Tag)
 
