@@ -118,8 +118,10 @@ library backend-internal
     Relation.OneToMany
     Relation.OneToMany.Pure
     Relation.OneToMany.InMem
-    Storage.InMem
-    Storage
+    Storage.Map.InMem
+    Storage.Map
+    Storage.Set.InMem
+    Storage.Set
     UserAction
     Domain.Util.Validation
     VisitorAction

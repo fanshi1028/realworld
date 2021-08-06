@@ -17,7 +17,7 @@ import Domain.User (UserR (..))
 import Domain.Util.Error (NotAuthorized (NotAuthorized))
 import Domain.Util.Field (Tag)
 import Domain.Util.Representation (Transform (transform))
-import qualified Storage (E (GetById))
+import qualified Storage.Map (E (GetById))
 import qualified Tag
 
 data E (m :: Type -> Type) a where
@@ -38,16 +38,16 @@ newtype C m a = C
 instance
   ( Member (Throw (NotAuthorized UserR)) sig,
     Member (Auth.E UserR) sig,
-    Member (Storage.E UserR) sig,
+    Member (Storage.Map.E UserR) sig,
     Member (Tag.E []) sig,
     Algebra sig m
   ) =>
   Algebra (E :+: sig) (C m)
   where
   alg hdl (L (Register user)) ctx = pure $ undefined <$ ctx
-  alg hdl (L (Login user)) ctx =
+  alg _ (L (Login user)) ctx =
     send (Auth.Login user)
-      >>= send . Storage.GetById @UserR
+      >>= send . Storage.Map.GetById @UserR
       >>= \case
         Nothing -> throwError $ NotAuthorized @UserR
         Just user' -> (<$ ctx) <$> transform user'

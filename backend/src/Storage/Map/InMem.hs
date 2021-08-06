@@ -5,7 +5,7 @@
 {-# LANGUAGE UndecidableInstances #-}
 
 -- |
-module Storage.InMem where
+module Storage.Map.InMem where
 
 import Control.Algebra (Algebra (alg), type (:+:) (L, R))
 import Control.Effect.Error (Throw, throwError)
@@ -17,7 +17,7 @@ import qualified Focus as FC
 import GHC.TypeLits (Symbol)
 import qualified ListT
 import qualified StmContainers.Map as STM (Map, focus, insert, listT, lookup)
-import Storage (E (DeleteById, GetAll, GetById, Insert, UpdateById))
+import Storage.Map (E (DeleteById, GetAll, GetById, Insert, UpdateById))
 
 type TableInMem' r (k :: Symbol) (v :: Symbol) = STM.Map (r k) (r v)
 
@@ -47,7 +47,7 @@ instance
           GetAll -> sendM . _getAll
           Insert value -> \db -> do
             key <- transform value
-            sendM (STM.insert value key db) $> value
+            sendM $ STM.insert value key db
           UpdateById id' updateF -> _tryUpdate updateF id'
           DeleteById id' -> _tryDelete id'
     R other -> C $ alg (run . hdl) (R other) ctx

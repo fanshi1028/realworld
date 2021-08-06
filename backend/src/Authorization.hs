@@ -25,7 +25,7 @@ import Servant.Auth.Server (CookieSettings, JWTSettings)
 import qualified Servant.Auth.Server as Auth (AuthCheck (AuthCheck))
 import Servant.Auth.Server.Internal.Class (IsAuth (AuthArgs, runAuth))
 import qualified StmContainers.Map as STM
-import Storage.InMem (TableInMem, TableInMem')
+import Storage.Map.InMem (TableInMem, TableInMem')
 
 data TokenAuth
 

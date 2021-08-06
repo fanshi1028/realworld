@@ -23,8 +23,8 @@ import qualified STMWithUnsafeIO (run)
 import Servant (Application, Context (EmptyContext, (:.)), ServerError (errBody), err400, err401, err404, err500, hoistServerWithContext, serveWithContext, throwError)
 import Servant.Auth.Server (CookieSettings, JWTSettings, defaultCookieSettings, defaultJWTSettings, generateKey)
 import StmContainers.Map (newIO)
-import Storage.InMem (TableInMem)
-import qualified Storage.InMem (run)
+import Storage.Map.InMem (TableInMem)
+import qualified Storage.Map.InMem (run)
 import qualified Tag.Pure (run)
 import qualified VisitorAction (run)
 
@@ -49,9 +49,9 @@ app cs jwts userDb articleDb commentDb =
           . R.runReader jwts
           . R.runReader cs
           . Relation.OneToMany.Pure.run @(ArticleR "id") @"has" @(CommentR "id") @'True
-          . (usingReaderT userDb . Storage.InMem.run @UserR)
-          . (usingReaderT articleDb . Storage.InMem.run @ArticleR)
-          . (usingReaderT commentDb . Storage.InMem.run @CommentR)
+          . (usingReaderT userDb . Storage.Map.InMem.run @UserR)
+          . (usingReaderT articleDb . Storage.Map.InMem.run @ArticleR)
+          . (usingReaderT commentDb . Storage.Map.InMem.run @CommentR)
           . CurrentTime.IO.run
           . GenUUID.V1.run
           . Authentication.Token.JWT.Invalidate.Pure.run @UserR

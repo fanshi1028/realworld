@@ -26,7 +26,7 @@ import Domain.Util.Error (AlreadyExists, NotFound (NotFound), ValidationErr)
 import Domain.Util.Representation (Transform (transform), applyPatch)
 import qualified GenUUID (E)
 import qualified Relation.OneToMany (E (Unrelate))
-import qualified Storage (E (DeleteById, GetById, Insert, UpdateById))
+import qualified Storage.Map (E (DeleteById, GetById, Insert, UpdateById))
 import qualified Validation as V (Validation (Failure, Success))
 
 data E (m :: Type -> Type) a where
@@ -51,9 +51,9 @@ newtype C m a = C
 
 instance
   ( Member (Authentication.Token.E UserR) sig,
-    Member (Storage.E UserR) sig,
-    Member (Storage.E ArticleR) sig,
-    Member (Storage.E CommentR) sig,
+    Member (Storage.Map.E UserR) sig,
+    Member (Storage.Map.E ArticleR) sig,
+    Member (Storage.Map.E CommentR) sig,
     Member (Throw ValidationErr) sig,
     Member (Throw (NotFound (UserR "id"))) sig,
     Member (Authentication.E UserR) sig,
@@ -77,58 +77,60 @@ instance
         (<$ ctx) <$> case action of
           GetCurrentUser -> pure auth
           UpdateUser update ->
-            send (Storage.GetById authUserId) >>= \case
+            send (Storage.Map.GetById authUserId) >>= \case
               Nothing -> throwError $ NotFound authUserId
               Just (applyPatch update -> user) -> case user of
                 V.Failure err -> throwError err
                 V.Success new ->
-                  send (Storage.UpdateById authUserId $ const new)
+                  send (Storage.Map.UpdateById authUserId $ const new)
                     >>= transform
                     >>= \newAuth -> UserAuthWithToken newAuth <$> send (Authentication.Token.CreateToken newAuth)
           FollowUser userId ->
-            send (Storage.GetById userId) >>= \case
+            send (Storage.Map.GetById userId) >>= \case
               Nothing -> throwError $ NotFound userId
               Just _ -> do
-                void $ send $ Storage.UpdateById authUserId (field' @"following" %~ HS.insert userId)
-                User {..} <- send $ Storage.UpdateById userId (field' @"followBy" %~ HS.insert authUserId)
+                void $ send $ Storage.Map.UpdateById authUserId (field' @"following" %~ HS.insert userId)
+                User {..} <- send $ Storage.Map.UpdateById userId (field' @"followBy" %~ HS.insert authUserId)
                 pure $ UserProfile email username bio image True
           UnfollowUser userId ->
-            send (Storage.GetById userId) >>= \case
+            send (Storage.Map.GetById userId) >>= \case
               Nothing -> throwError $ NotFound userId
               Just _ -> do
-                void $ send $ Storage.UpdateById authUserId (field' @"following" %~ HS.delete userId)
-                User {..} <- send $ Storage.UpdateById userId (field' @"followBy" %~ HS.delete authUserId)
+                void $ send $ Storage.Map.UpdateById authUserId (field' @"following" %~ HS.delete userId)
+                User {..} <- send $ Storage.Map.UpdateById userId (field' @"followBy" %~ HS.delete authUserId)
                 pure $ UserProfile email username bio image False
-          CreateArticle create -> transform create >>= send . Storage.Insert >>= transform
+          CreateArticle create -> do
+            a <- transform create
+            send (Storage.Map.Insert a) >> transform a
           UpdateArticle articleId update ->
-            send (Storage.GetById articleId) >>= \case
+            send (Storage.Map.GetById articleId) >>= \case
               Nothing -> throwError $ NotFound articleId
               Just (applyPatch update -> article) -> case article of
                 V.Failure err -> throwError err
-                V.Success new -> send (Storage.UpdateById articleId $ const new) >>= transform @_ @_ @"withAuthorProfile"
+                V.Success new -> send (Storage.Map.UpdateById articleId $ const new) >>= transform @_ @_ @"withAuthorProfile"
           DeleteArticle articleId ->
-            send (Storage.GetById articleId) >>= \case
+            send (Storage.Map.GetById articleId) >>= \case
               Nothing -> throwError $ NotFound articleId
-              Just _ -> send $ Storage.DeleteById articleId
+              Just _ -> send $ Storage.Map.DeleteById articleId
           AddCommentToArticle articleId cc@(CommentCreate comment) ->
-            send (Storage.GetById articleId) >>= \case
+            send (Storage.Map.GetById articleId) >>= \case
               Nothing -> throwError $ NotFound articleId
               Just article -> do
                 let authorId = getField @"author" article
-                send (Storage.GetById authorId) >>= \case
+                send (Storage.Map.GetById authorId) >>= \case
                   Nothing -> throwError $ NotFound authorId
                   Just User {..} -> do
                     -- FIXME
                     let profile = UserProfile email username bio image undefined
                     commentId <- transform cc
                     time <- send CurrentTime.GetCurrentTime
-                    void $ send $ Storage.Insert $ Comment commentId time time comment authorId articleId
+                    void $ send $ Storage.Map.Insert $ Comment commentId time time comment authorId articleId
                     pure $ CommentWithAuthorProfile commentId time time comment profile
           DeleteComment articleId commentId ->
-            send (Storage.GetById commentId) >>= \case
+            send (Storage.Map.GetById commentId) >>= \case
               Nothing -> throwError $ NotFound commentId
               Just _ -> do
-                void $ send $ Storage.DeleteById commentId
+                void $ send $ Storage.Map.DeleteById commentId
                 send $ Relation.OneToMany.Unrelate (Proxy @"has") articleId commentId
           -- FIXME
           FavoriteArticle articleId -> undefined
