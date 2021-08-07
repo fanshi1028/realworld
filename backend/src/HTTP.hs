@@ -30,7 +30,7 @@ import qualified Storage.Map (E)
 import qualified UserAction (run)
 import qualified VisitorAction (E)
 import Domain.Util.Field (Time)
-import qualified Current.Reader
+import qualified Current.Reader (run)
 
 type Api =
   "api"
