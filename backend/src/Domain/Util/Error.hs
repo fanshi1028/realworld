@@ -42,6 +42,8 @@ data SomethingAlreadyExists = SomethingAlreadyExists deriving (Show)
 
 data NotAuthorized (r :: Symbol -> Type) = NotAuthorized deriving (Show)
 
+newtype Impossible = Impossible Text deriving (Show)
+
 -- deriving anyclass instance Typeable r => Exception (NotAuthorized r)
 
 type ValidationErr = NonEmpty Text
