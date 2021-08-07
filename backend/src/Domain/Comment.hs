@@ -22,12 +22,11 @@ import Domain.User (UserR)
 import Domain.Util.Field (Time)
 import Domain.Util.JSON.From (In, wrappedParseJSON)
 import Domain.Util.JSON.To (Out, wrappedToEncoding)
-import Domain.Util.Representation (Transform (transform))
+import Domain.Util.Validation (WithValidation)
 import GHC.Records (HasField (getField))
 import GHC.TypeLits (Symbol)
 import qualified GenUUID (E (Generate))
 import Servant (FromHttpApiData (parseUrlPiece))
-import Domain.Util.Validation (WithValidation)
 
 data family CommentR (r :: Symbol)
 
@@ -90,20 +89,3 @@ instance FromJSON (In (WithValidation (CommentR "create"))) where
 -- FIXME
 instance FromHttpApiData (CommentR "id") where
   parseUrlPiece = undefined
-
--- NOTE: Transform
-
-instance {-# OVERLAPPABLE #-} (HasField "id" (CommentR s) (CommentR "id")) => Transform CommentR s "id" m where
-  transform = pure . getField @"id"
-
--- FIXME
-instance {-# OVERLAPPING #-} (Algebra sig m, Member GenUUID.E sig) => Transform CommentR "create" "id" m where
-  transform _ = CommentId <$> send GenUUID.Generate
-
--- FIXME
-instance Transform CommentR "create" "all" m where
-  transform _ = pure undefined
-
--- FIXME
-instance Transform CommentR "all" "withAuthorProfile" m where
-  transform _ = pure undefined

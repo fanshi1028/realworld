@@ -15,9 +15,6 @@
 -- |
 module Domain.User where
 
-import Authentication.Token (E (CreateToken))
-import Control.Algebra (Algebra, send)
-import Control.Effect.Sum (Member)
 import Data.Aeson (FromJSON (parseJSON), ToJSON (toEncoding, toJSON), Value (Object), defaultOptions, genericParseJSON, genericToJSON)
 import Data.Aeson.Encoding (value)
 import Data.ByteString.Base64.Type (ByteString64)
@@ -26,12 +23,10 @@ import qualified Data.HashMap.Strict as HM (insert)
 import Domain.Util.Field (Bio, Email, Image, Password, Username)
 import Domain.Util.JSON.From (In, updatableParseJSON, wrappedParseJSON)
 import Domain.Util.JSON.To (Out (Out), wrapEncoding, wrappedToEncoding)
-import Domain.Util.Representation (Transform (transform))
-import GHC.Records (HasField (getField))
+import Domain.Util.Validation (WithUpdate, WithValidation)
 import GHC.TypeLits (Symbol)
 import Servant (FromHttpApiData (parseUrlPiece))
 import Servant.Auth.Server (FromJWT, ToJWT (encodeJWT))
-import Domain.Util.Validation (WithUpdate, WithValidation)
 
 data family UserR (r :: Symbol)
 
@@ -65,9 +60,7 @@ data instance UserR "all" = User
     password :: Password, -- "jakejake"
     username :: Username, -- "jake",
     bio :: Bio, -- "I work at statefarm",
-    image :: Image, -- "https://static.productionready.io/images/smiley-cyrus.jpg",
-    following :: HashSet (UserR "id"), -- empty,
-    followBy :: HashSet (UserR "id") -- empty,
+    image :: Image -- "https://static.productionready.io/images/smiley-cyrus.jpg",
   }
   deriving (Generic, Show, Eq)
 
@@ -117,22 +110,32 @@ instance ToJSON (Out (UserR "authWithToken")) where
     _ -> undefined -- impossible case
 
 -- Profile
+-- data instance UserR "profile" = UserProfile
+--   { email :: Email, -- "jake@jake.jake",
+--     username :: Username, -- "jake",
+--     bio :: Bio, -- "I work at statefarm",
+--     image :: Image, -- "https://static.productionready.io/images/smiley-cyrus.jpg",
+--     following :: Bool -- false
+--   }
+--   deriving (Generic, ToJSON)
+
 data instance UserR "profile" = UserProfile
-  { email :: Email, -- "jake@jake.jake",
-    username :: Username, -- "jake",
-    bio :: Bio, -- "I work at statefarm",
-    image :: Image, -- "https://static.productionready.io/images/smiley-cyrus.jpg",
-    following :: Bool -- false
+  { profile :: UserR "auth",
+    following :: Bool
   }
   deriving (Generic, ToJSON)
 
--- >>> import Domain.Util
+-- >>> import Domain.Util.Field
 -- >>> import Data.Aeson
--- >>> profile = UserProfile (Email "jake@jake.jake") (Username "jake") (Just $ Bio "I work at statefarm") (Just $ Image "https://static.productionready.io/images/smiley-cyrus.jpg") False
+-- >>> profile = UserProfile (UserAuth (Email "jake@jake.jake") (Username "jake") (Bio "I work at statefarm") (Image "https://static.productionready.io/images/smiley-cyrus.jpg")) False
 -- >>> encode $ Out profile
 -- "{\"profile\":{\"image\":\"https://static.productionready.io/images/smiley-cyrus.jpg\",\"bio\":\"I work at statefarm\",\"email\":\"jake@jake.jake\",\"following\":false,\"username\":\"jake\"}}"
 instance ToJSON (Out (UserR "profile")) where
-  toEncoding = wrappedToEncoding "profile"
+  toEncoding (Out (UserProfile auth following)) = wrapEncoding "profile" $
+    case genericToJSON defaultOptions auth of
+      Object hm -> value $ Object $ HM.insert "following" (toJSON following) hm
+      -- FIXME
+      _ -> undefined -- impossible case
 
 -------------------
 --   "           --
@@ -229,45 +232,3 @@ instance FromJSON (UserR "update") where
 
 instance FromJSON (In (UserR "update")) where
   parseJSON = wrappedParseJSON "UserUpdate" "user"
-
--- NOTE: Transform
-
-instance (HasField "username" (UserR s) Username) => Transform UserR s "id" m where
-  transform = pure . UserId . getField @"username"
-
--- FIXME
-instance (Algebra sig m) => Transform UserR "create" "all" m where
-  transform _ = pure undefined
-
-instance Transform UserR "all" "auth" m where
-  transform (User email _ name bio image _ _) = pure $ UserAuth email name bio image
-
-instance (Algebra sig m, Member (Authentication.Token.E UserR) sig) => Transform UserR "auth" "authWithToken" m where
-  transform auth = UserAuthWithToken auth <$> send (CreateToken auth)
-
-instance (Algebra sig m, Member (Authentication.Token.E UserR) sig) => Transform UserR "all" "authWithToken" m where
-  transform = transform >=> (transform @_ @"auth")
-
--- FIXME
-instance (Algebra sig m) => Transform UserR "all" "profile" m where
-  transform _ = pure undefined
-  -- transform (User em _ user bio im _ _) = UserProfile em user bio im <$> do
-  --   cUser <- send GetCurrentUser
-  --   send (IsRelated user)
-
-  -- { email :: Email, -- "jake@jake.jake",
-  -- -- token :: UserR "token", -- "jwt.token.here",
-  --   password :: Password, -- "jakejake"
-  --   username :: Username, -- "jake",
-  --   bio :: Bio, -- "I work at statefarm",
-  --   image :: Image, -- "https://static.productionready.io/images/smiley-cyrus.jpg",
-  --   following :: HashSet (UserR "id"), -- empty,
-  --   followBy :: HashSet (UserR "id") -- empty,
-  -- }
-
-  -- { email :: Email, -- "jake@jake.jake",
-  --   username :: Username, -- "jake",
-  --   bio :: Bio, -- "I work at statefarm",
-  --   image :: Image, -- "https://static.productionready.io/images/smiley-cyrus.jpg",
-  --   following :: Bool -- false
-  -- }
