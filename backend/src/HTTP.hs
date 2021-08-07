@@ -15,10 +15,12 @@ import Control.Effect.Lift (Lift)
 import Control.Effect.Sum (Member)
 import Control.Effect.Throw (Throw, throwError)
 import qualified Current
+import qualified Current.Reader (run)
 import Domain.Article (ArticleR)
 import Domain.Comment (CommentR)
 import Domain.User (UserR)
 import Domain.Util.Error (AlreadyExists, NotAuthorized (NotAuthorized), NotFound, ValidationErr)
+import Domain.Util.Field (Time)
 import qualified GenUUID (E)
 import HTTP.Authed (AuthedApi, authedServer)
 import HTTP.Public (PublicApi, publicServer)
@@ -29,8 +31,6 @@ import Servant.Server (hoistServer)
 import qualified Storage.Map (E)
 import qualified UserAction (run)
 import qualified VisitorAction (E)
-import Domain.Util.Field (Time)
-import qualified Current.Reader (run)
 
 type Api =
   "api"
@@ -67,7 +67,7 @@ server =
                  ( case auth of
                      Authenticated user -> usingReaderT user . Current.Reader.run . UserAction.run
                      -- HACK FIXME is this undefined ok?
-                     _ -> usingReaderT undefined . Current.Reader.run  . UserAction.run . (throwError (NotAuthorized @UserR) >>)
+                     _ -> usingReaderT undefined . Current.Reader.run . UserAction.run . (throwError (NotAuthorized @UserR) >>)
                  )
                  authedServer
            )
