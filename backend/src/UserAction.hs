@@ -158,8 +158,7 @@ instance
               >>= send . Relation.OneToMany.GetRelated @(UserR "id") @"create"
               >>= oneOf
               >>= send . Storage.Map.GetById @ArticleR
-              >>= maybe (throwError $ Impossible "article id not found") pure
-              >>= transform
+              >>= maybe (throwError $ Impossible "article id not found") transform
           GetCommentsFromArticle articleId ->
             send (Storage.Map.GetById articleId) >>= \case
               Nothing -> throwError $ NotFound articleId
@@ -167,6 +166,5 @@ instance
                 send (Relation.OneToMany.GetRelated @_ @"has" articleId)
                   >>= oneOf
                   >>= send . Storage.Map.GetById @CommentR
-                  >>= maybe (throwError $ Impossible "comment id not found") pure
-                  >>= transform
+                  >>= maybe (throwError $ Impossible "comment id not found") transform
       R other -> C $ alg (run . hdl) other ctx
