@@ -55,10 +55,10 @@ instance
   alg _ (L action) ctx =
     ask
       >>= fmap (<$ ctx) . sendM @STM . case action of
-        Relate _ r1 r2 -> relateFocus IgnoreIfExist r1 r2
-        Unrelate _ r1 r2 -> unrelateFocus r1 r2
-        IsRelated _ r1 r2 -> (== Just r2) <<$>> STM.lookup r1
-        GetRelated _ r1 -> STM.lookup r1
+        Relate r1 r2 -> relateFocus IgnoreIfExist r1 r2
+        Unrelate r1 r2 -> unrelateFocus r1 r2
+        IsRelated r1 r2 -> (== Just r2) <<$>> STM.lookup r1
+        GetRelated r1 -> STM.lookup r1
   alg hdl (R other) ctx = C $ alg (run . hdl) (R other) ctx
 
 instance
@@ -73,8 +73,8 @@ instance
   alg _ (L action) ctx =
     ask
       >>= fmap (<$ ctx) . sendM @STM . case action of
-        Relate _ r1 r2 -> relateFocus UpdateIfExist r1 r2
-        Unrelate _ r1 r2 -> unrelateFocus r1 r2
-        IsRelated _ r1 r2 -> (== Just r2) <<$>> STM.lookup r1
-        GetRelated _ r1 -> STM.lookup r1
+        Relate r1 r2 -> relateFocus UpdateIfExist r1 r2
+        Unrelate r1 r2 -> unrelateFocus r1 r2
+        IsRelated r1 r2 -> (== Just r2) <<$>> STM.lookup r1
+        GetRelated r1 -> STM.lookup r1
   alg hdl (R other) ctx = C $ alg (run . hdl) (R other) ctx

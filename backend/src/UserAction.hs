@@ -95,15 +95,15 @@ instance
             send (Storage.Map.GetById targetUserId) >>= \case
               Nothing -> throwError $ NotFound targetUserId
               Just targetUser -> do
-                send $ Relation.OneToMany.Relate @"following" Proxy authUserId targetUserId
-                send $ Relation.OneToMany.Relate @"followedBy" Proxy targetUserId authUserId
+                send $ Relation.OneToMany.Relate @_ @_ @"following" authUserId targetUserId
+                send $ Relation.OneToMany.Relate @_ @_ @"followedBy" targetUserId authUserId
                 UserProfile <$> transform targetUser <*> pure True
           UnfollowUser targetUserId ->
             send (Storage.Map.GetById targetUserId) >>= \case
               Nothing -> throwError $ NotFound targetUserId
               Just targetUser -> do
-                send $ Relation.OneToMany.Unrelate @"following" Proxy authUserId targetUserId
-                send $ Relation.OneToMany.Unrelate @"followedBy" Proxy targetUserId authUserId
+                send $ Relation.OneToMany.Unrelate @_ @_ @"following" authUserId targetUserId
+                send $ Relation.OneToMany.Unrelate @_ @_ @"followedBy" targetUserId authUserId
                 UserProfile <$> transform targetUser <*> pure False
           CreateArticle create -> do
             a <- transform create
@@ -119,7 +119,7 @@ instance
               Nothing -> throwError $ NotFound articleId
               Just _ -> do
                 send $ Storage.Map.DeleteById articleId
-                send $ Relation.OneToMany.UnrelateByKey @"has" @_ @(CommentR "id") Proxy articleId
+                send $ Relation.OneToMany.UnrelateByKey @_ @"has" @(CommentR "id") articleId
           AddCommentToArticle articleId cc@(CommentCreate comment) ->
             send (Storage.Map.GetById articleId) >>= \case
               Nothing -> throwError $ NotFound articleId
@@ -131,33 +131,33 @@ instance
                     commentId <- transform cc
                     time <- send $ Current.GetCurrent @Time
                     send $ Storage.Map.Insert $ Comment commentId time time comment authorId articleId
-                    send $ Relation.OneToMany.Relate @"has" Proxy articleId commentId
+                    send $ Relation.OneToMany.Relate @_ @_ @"has" articleId commentId
                     CommentWithAuthorProfile commentId time time comment <$> transform auth
           DeleteComment articleId commentId ->
             send (Storage.Map.GetById commentId) >>= \case
               Nothing -> throwError $ NotFound commentId
               Just _ -> do
                 send $ Storage.Map.DeleteById commentId
-                send $ Relation.OneToMany.Unrelate @"has" Proxy articleId commentId
+                send $ Relation.OneToMany.Unrelate @_ @_ @"has" articleId commentId
           FavoriteArticle articleId ->
             send (Storage.Map.GetById articleId) >>= \case
               Nothing -> throwError $ NotFound articleId
               Just a -> do
-                send $ Relation.OneToMany.Relate @"favorite" Proxy authUserId articleId
-                send $ Relation.OneToMany.Relate @"favoritedBy" Proxy articleId authUserId
+                send $ Relation.OneToMany.Relate @_ @_ @"favorite" authUserId articleId
+                send $ Relation.OneToMany.Relate @_ @_ @"favoritedBy" articleId authUserId
                 transform a
           UnfavoriteArticle articleId ->
             send (Storage.Map.GetById articleId) >>= \case
               Nothing -> throwError $ NotFound articleId
               Just a -> do
-                send $ Relation.OneToMany.Unrelate @"favorite" Proxy authUserId articleId
-                send $ Relation.OneToMany.Unrelate @"favoritedBy" Proxy articleId authUserId
+                send $ Relation.OneToMany.Unrelate @_ @_ @"favorite" authUserId articleId
+                send $ Relation.OneToMany.Unrelate @_ @_ @"favoritedBy" articleId authUserId
                 transform a
           -- FIXME feed order
           FeedArticles -> runNonDetA @[] $ do
-            send (Relation.OneToMany.GetRelated @"following" Proxy authUserId)
+            send (Relation.OneToMany.GetRelated @_ @"following" authUserId)
               >>= oneOf
-              >>= send . Relation.OneToMany.GetRelated @"create" @(UserR "id") Proxy
+              >>= send . Relation.OneToMany.GetRelated @(UserR "id") @"create"
               >>= oneOf
               >>= send . Storage.Map.GetById @ArticleR
               >>= maybe (throwError $ Impossible "article id not found") pure
@@ -166,7 +166,7 @@ instance
             send (Storage.Map.GetById articleId) >>= \case
               Nothing -> throwError $ NotFound articleId
               Just _ -> runNonDetA @[] $ do
-                send (Relation.OneToMany.GetRelated @"has" Proxy articleId)
+                send (Relation.OneToMany.GetRelated @_ @"has" articleId)
                   >>= oneOf
                   >>= send . Storage.Map.GetById @CommentR
                   >>= maybe (throwError $ Impossible "comment id not found") pure

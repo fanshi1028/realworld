@@ -38,9 +38,9 @@ instance
   alg _ (L action) ctx =
     ask
       >>= fmap (<$ ctx) . sendM @STM . case action of
-        Relate _ k v -> STM.insert v k
-        Unrelate _ k v -> STM.delete v k
-        UnrelateByKey _ k -> STM.deleteByKey k
-        IsRelated _ k v -> STM.lookup v k
-        GetRelated _ k -> ListT.toList . STM.listTByKey k
+        Relate k v -> STM.insert v k
+        Unrelate k v -> STM.delete v k
+        UnrelateByKey k -> STM.deleteByKey k
+        IsRelated k v -> STM.lookup v k
+        GetRelated k -> ListT.toList . STM.listTByKey k
   alg hdl (R other) ctx = C $ alg (run . hdl) (R other) ctx

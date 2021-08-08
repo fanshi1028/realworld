@@ -72,7 +72,7 @@ instance
   where
   transform (UserRegister user email pw) = do
     void $ send $ GetCurrent @Time
-    send (Relation.OneToOne.GetRelated (Proxy @"of") email) >>= \case
+    send (Relation.OneToOne.GetRelated @_ @"of" email) >>= \case
       Just (_ :: UserR "id") -> throwError $ AlreadyExists email
       Nothing ->
         send (Storage.Map.GetById @UserR $ UserId user) >>= \case
@@ -100,7 +100,7 @@ instance
     cUserId <-
       send (GetCurrent @(UserR "authWithToken"))
         >>= \(UserAuthWithToken auth' _) -> transform @_ @_ @"id" auth'
-    following <- send $ Relation.OneToMany.IsRelated (Proxy @"following") cUserId userId
+    following <- send $ Relation.OneToMany.IsRelated @_ @_ @"following" cUserId userId
     pure $ UserProfile auth following
 
 -- NOTE: Article
