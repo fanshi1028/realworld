@@ -119,6 +119,7 @@ library backend-internal
     Relation.OneToMany
     Relation.OneToMany.Pure
     Relation.OneToMany.InMem
+    Relation.ManyToMany
     Storage.Map.InMem
     Storage.Map
     Storage.Set.InMem

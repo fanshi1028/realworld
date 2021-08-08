@@ -6,24 +6,25 @@
 -- |
 module HTTP (server, Api) where
 
-import qualified Authentication
-import qualified Authentication.Token
+import qualified Authentication (E)
+import qualified Authentication.Token (E)
 import Authorization (TokenAuth)
 import Control.Algebra (Algebra)
 import qualified Control.Carrier.Reader as R (Reader)
 import Control.Effect.Lift (Lift)
 import Control.Effect.Sum (Member)
 import Control.Effect.Throw (Throw, throwError)
-import qualified Current
+import qualified Current (E)
 import qualified Current.Reader (run)
 import Domain.Article (ArticleR)
 import Domain.Comment (CommentR)
 import Domain.User (UserR)
-import Domain.Util.Error (AlreadyExists, Impossible (Impossible), NotAuthorized (NotAuthorized), NotFound, ValidationErr)
+import Domain.Util.Error (AlreadyExists, Impossible, NotAuthorized (NotAuthorized), NotFound, ValidationErr)
 import Domain.Util.Field (Time)
 import qualified GenUUID (E)
 import HTTP.Authed (AuthedApi, authedServer)
 import HTTP.Public (PublicApi, publicServer)
+import qualified Relation.ManyToMany (E)
 import qualified Relation.OneToMany (E)
 import Servant (Get, JSON, ServerT, type (:<|>) ((:<|>)), type (:>))
 import Servant.Auth.Server (Auth, AuthResult (Authenticated), CookieSettings, JWTSettings)
@@ -39,30 +40,28 @@ type Api =
 
 server ::
   ( Algebra sig m,
+    Member (Lift IO) sig,
     Member GenUUID.E sig,
     Member VisitorAction.E sig,
     Member (Throw ValidationErr) sig,
     Member (Throw (NotAuthorized UserR)) sig,
+    Member (Throw (AlreadyExists (ArticleR "id"))) sig,
+    Member (Throw (NotFound (UserR "id"))) sig,
+    Member (Throw (NotFound (ArticleR "id"))) sig,
+    Member (Throw (NotFound (CommentR "id"))) sig,
     Member (Throw Impossible) sig,
     Member (R.Reader JWTSettings) sig,
     Member (R.Reader CookieSettings) sig,
     Member (Authentication.Token.E UserR) sig,
     Member (Authentication.E UserR) sig,
-    Member (Throw (AlreadyExists (ArticleR "id"))) sig,
-    Member (Throw (NotFound (UserR "id"))) sig,
-    Member (Throw (NotFound (ArticleR "id"))) sig,
     Member (Current.E Time) sig,
-    Member (Relation.OneToMany.E (ArticleR "id") "has" (CommentR "id")) sig,
     Member (Storage.Map.E UserR) sig,
     Member (Storage.Map.E ArticleR) sig,
     Member (Storage.Map.E CommentR) sig,
-    Member (Throw (NotFound (CommentR "id"))) sig,
-    Member (Relation.OneToMany.E (UserR "id") "followedBy" (UserR "id")) sig,
-    Member (Relation.OneToMany.E (UserR "id") "following" (UserR "id")) sig,
-    Member (Relation.OneToMany.E (UserR "id") "favorite" (ArticleR "id")) sig,
-    Member (Relation.OneToMany.E (ArticleR "id") "favoritedBy" (UserR "id")) sig,
-    Member (Relation.OneToMany.E (UserR "id") "create" (ArticleR "id")) sig,
-    Member (Lift IO) sig
+    Member (Relation.ManyToMany.E (UserR "id") "favorite" (ArticleR "id")) sig,
+    Member (Relation.ManyToMany.E (UserR "id") "follow" (UserR "id")) sig,
+    Member (Relation.OneToMany.E (ArticleR "id") "has" (CommentR "id")) sig,
+    Member (Relation.OneToMany.E (UserR "id") "create" (ArticleR "id")) sig
   ) =>
   ServerT Api m
 server =

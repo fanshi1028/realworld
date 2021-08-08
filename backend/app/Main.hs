@@ -19,6 +19,7 @@ import GenUUID.V1 (RequestedUUIDsTooQuickly)
 import qualified GenUUID.V1 (run)
 import HTTP (Api, server)
 import qualified Network.Wai.Handler.Warp as W (run)
+import qualified Relation.ManyToMany (run)
 import qualified Relation.OneToMany.Pure (run)
 import qualified STMWithUnsafeIO (run)
 import Servant (Application, Context (EmptyContext, (:.)), ServerError (errBody), err400, err401, err404, err500, hoistServerWithContext, serveWithContext, throwError)
@@ -27,7 +28,7 @@ import StmContainers.Map as STM.Map (newIO)
 import StmContainers.Set as STM.Set (Set, newIO)
 import Storage.Map.InMem (TableInMem)
 import qualified Storage.Map.InMem (run)
-import qualified Storage.Set.InMem
+import qualified Storage.Set.InMem (run)
 import qualified VisitorAction (run)
 
 app :: CookieSettings -> JWTSettings -> TableInMem UserR -> TableInMem ArticleR -> TableInMem CommentR -> STM.Set.Set Tag -> Application
@@ -53,14 +54,18 @@ app cs jwts userDb articleDb commentDb tagDb =
           . R.runReader jwts
           . R.runReader cs
           . Relation.OneToMany.Pure.run @(ArticleR "id") @"has" @(CommentR "id") @'True
-          . Relation.OneToMany.Pure.run @(UserR "id") @"following" @(UserR "id") @'True
-          . Relation.OneToMany.Pure.run @(UserR "id") @"followedBy" @(UserR "id") @'True
-          . Relation.OneToMany.Pure.run @(UserR "id") @"favorite" @(ArticleR "id") @'True
-          . Relation.OneToMany.Pure.run @(ArticleR "id") @"favoritedBy" @(UserR "id") @'True
           . Relation.OneToMany.Pure.run @(UserR "id") @"create" @(ArticleR "id") @'True
-          . (usingReaderT userDb . Storage.Map.InMem.run @UserR)
-          . (usingReaderT articleDb . Storage.Map.InMem.run @ArticleR)
-          . (usingReaderT commentDb . Storage.Map.InMem.run @CommentR)
+          . ( Relation.ManyToMany.run @(UserR "id") @"follow" @(UserR "id")
+                >>> Relation.OneToMany.Pure.run @(UserR "id") @"following" @(UserR "id") @'True
+                >>> Relation.OneToMany.Pure.run @(UserR "id") @"followedBy" @(UserR "id") @'True
+            )
+          . ( Relation.ManyToMany.run @(UserR "id") @"favorite" @(ArticleR "id")
+                >>> Relation.OneToMany.Pure.run @(ArticleR "id") @"favoritedBy" @(UserR "id") @'True
+                >>> Relation.OneToMany.Pure.run @(UserR "id") @"favorite" @(ArticleR "id") @'True
+            )
+          . (Storage.Map.InMem.run @UserR >>> usingReaderT userDb)
+          . (Storage.Map.InMem.run @ArticleR >>> usingReaderT articleDb)
+          . (Storage.Map.InMem.run @CommentR >>> usingReaderT commentDb)
           . (usingReaderT tagDb . Storage.Set.InMem.run @Tag)
           . Current.IO.run @Time
           . GenUUID.V1.run

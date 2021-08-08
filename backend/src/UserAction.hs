@@ -26,6 +26,7 @@ import Domain.Util.Error (AlreadyExists, Impossible (Impossible), NotFound (NotF
 import Domain.Util.Field (Time)
 import Domain.Util.Representation (Transform (transform), applyPatch)
 import qualified GenUUID (E)
+import qualified Relation.ManyToMany (E (GetRelatedLeft, Relate, Unrelate, UnrelateByKeyRight))
 import qualified Relation.OneToMany (E (GetRelated, Relate, Unrelate, UnrelateByKey))
 import qualified Storage.Map (E (DeleteById, GetById, Insert, UpdateById))
 import qualified Validation as V (Validation (Failure, Success))
@@ -64,11 +65,9 @@ instance
     Member (Throw Impossible) sig,
     Member (Current.E Time) sig,
     Member GenUUID.E sig,
+    Member (Relation.ManyToMany.E (UserR "id") "follow" (UserR "id")) sig,
+    Member (Relation.ManyToMany.E (UserR "id") "favorite" (ArticleR "id")) sig,
     Member (Relation.OneToMany.E (ArticleR "id") "has" (CommentR "id")) sig,
-    Member (Relation.OneToMany.E (UserR "id") "following" (UserR "id")) sig,
-    Member (Relation.OneToMany.E (UserR "id") "followedBy" (UserR "id")) sig,
-    Member (Relation.OneToMany.E (UserR "id") "favorite" (ArticleR "id")) sig,
-    Member (Relation.OneToMany.E (ArticleR "id") "favoritedBy" (UserR "id")) sig,
     Member (Relation.OneToMany.E (UserR "id") "create" (ArticleR "id")) sig,
     Member (Current.E (UserR "authWithToken")) sig,
     Algebra sig m
@@ -95,17 +94,16 @@ instance
             send (Storage.Map.GetById targetUserId) >>= \case
               Nothing -> throwError $ NotFound targetUserId
               Just targetUser -> do
-                send $ Relation.OneToMany.Relate @_ @_ @"following" authUserId targetUserId
-                send $ Relation.OneToMany.Relate @_ @_ @"followedBy" targetUserId authUserId
+                send $ Relation.ManyToMany.Relate @_ @_ @"follow" authUserId targetUserId
                 UserProfile <$> transform targetUser <*> pure True
           UnfollowUser targetUserId ->
             send (Storage.Map.GetById targetUserId) >>= \case
               Nothing -> throwError $ NotFound targetUserId
               Just targetUser -> do
-                send $ Relation.OneToMany.Unrelate @_ @_ @"following" authUserId targetUserId
-                send $ Relation.OneToMany.Unrelate @_ @_ @"followedBy" targetUserId authUserId
+                send $ Relation.ManyToMany.Unrelate @_ @_ @"follow" authUserId targetUserId
                 UserProfile <$> transform targetUser <*> pure False
           CreateArticle create -> do
+            transform create >>= send . Relation.OneToMany.Relate @_ @(ArticleR "id") @"create" authUserId
             a <- transform create
             send (Storage.Map.Insert a) >> transform a
           UpdateArticle articleId update ->
@@ -119,7 +117,9 @@ instance
               Nothing -> throwError $ NotFound articleId
               Just _ -> do
                 send $ Storage.Map.DeleteById articleId
+                send $ Relation.OneToMany.Unrelate @_ @_ @"create" authUserId articleId
                 send $ Relation.OneToMany.UnrelateByKey @_ @"has" @(CommentR "id") articleId
+                send $ Relation.ManyToMany.UnrelateByKeyRight @_ @(UserR "id") @"favorite" articleId
           AddCommentToArticle articleId cc@(CommentCreate comment) ->
             send (Storage.Map.GetById articleId) >>= \case
               Nothing -> throwError $ NotFound articleId
@@ -143,19 +143,17 @@ instance
             send (Storage.Map.GetById articleId) >>= \case
               Nothing -> throwError $ NotFound articleId
               Just a -> do
-                send $ Relation.OneToMany.Relate @_ @_ @"favorite" authUserId articleId
-                send $ Relation.OneToMany.Relate @_ @_ @"favoritedBy" articleId authUserId
+                send $ Relation.ManyToMany.Relate @_ @_ @"favorite" authUserId articleId
                 transform a
           UnfavoriteArticle articleId ->
             send (Storage.Map.GetById articleId) >>= \case
               Nothing -> throwError $ NotFound articleId
               Just a -> do
-                send $ Relation.OneToMany.Unrelate @_ @_ @"favorite" authUserId articleId
-                send $ Relation.OneToMany.Unrelate @_ @_ @"favoritedBy" articleId authUserId
+                send $ Relation.ManyToMany.Unrelate @_ @_ @"favorite" authUserId articleId
                 transform a
           -- FIXME feed order
           FeedArticles -> runNonDetA @[] $ do
-            send (Relation.OneToMany.GetRelated @_ @"following" authUserId)
+            send (Relation.ManyToMany.GetRelatedLeft @_ @"follow" authUserId)
               >>= oneOf
               >>= send . Relation.OneToMany.GetRelated @(UserR "id") @"create"
               >>= oneOf

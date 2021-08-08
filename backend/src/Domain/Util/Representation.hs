@@ -16,7 +16,7 @@ import Control.Effect.Sum (Member)
 import Control.Effect.Throw (Throw, throwError)
 import Current (E (GetCurrent))
 import Data.Generic.HKD (Construct (construct, deconstruct), HKD)
-import qualified Data.Semigroup as SG
+import qualified Data.Semigroup as SG (Last (getLast))
 import qualified Data.Text as Text (intercalate, toLower)
 import Domain.Article (ArticleR (..))
 import Domain.Comment (CommentR (..))
@@ -26,11 +26,11 @@ import Domain.Util.Field (Bio (Bio), Email, Image (Image), Slug (Slug), Time, Ti
 import Domain.Util.Validation (WithUpdate, WithValidation)
 import GHC.Records (HasField (getField))
 import GHC.TypeLits (Symbol)
-import qualified GenUUID
-import Relation.OneToMany (E (IsRelated))
-import qualified Relation.OneToOne
+import qualified GenUUID (E (Generate))
+import qualified Relation.ManyToMany (E (IsRelated))
+import qualified Relation.OneToOne (E (GetRelated))
 import Relude.Extra (un)
-import qualified Storage.Map
+import qualified Storage.Map (E (GetById))
 import Validation (Validation (Failure))
 
 type Patchable r =
@@ -90,7 +90,7 @@ instance (Algebra sig m, Member (Authentication.Token.E UserR) sig) => Transform
 
 instance
   ( Algebra sig m,
-    Member (Relation.OneToMany.E (UserR "id") "following" (UserR "id")) sig,
+    Member (Relation.ManyToMany.E (UserR "id") "follow" (UserR "id")) sig,
     Member (Current.E (UserR "authWithToken")) sig
   ) =>
   Transform UserR "auth" "profile" m
@@ -100,16 +100,16 @@ instance
     cUserId <-
       send (GetCurrent @(UserR "authWithToken"))
         >>= \(UserAuthWithToken auth' _) -> transform @_ @_ @"id" auth'
-    following <- send $ Relation.OneToMany.IsRelated @_ @_ @"following" cUserId userId
+    following <- send $ Relation.ManyToMany.IsRelated @_ @_ @"follow" cUserId userId
     pure $ UserProfile auth following
 
 -- NOTE: Article
 
-instance (HasField "slug" (ArticleR s) Slug) => Transform ArticleR s "id" m where
+instance {-# OVERLAPPABLE #-} (HasField "slug" (ArticleR s) Slug) => Transform ArticleR s "id" m where
   transform = pure . ArticleId . getField @"slug"
 
-instance Transform ArticleR "create" "id" m where
   transform = pure . ArticleId . Slug . Text.intercalate "=" . words . Text.toLower . un . getField @"title"
+instance {-# OVERLAPPING #-} Transform ArticleR "create" "id" m where
 
 -- FIXME
 instance Transform ArticleR "create" "all" m where
