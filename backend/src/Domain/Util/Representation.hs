@@ -108,8 +108,8 @@ instance
 instance {-# OVERLAPPABLE #-} (HasField "slug" (ArticleR s) Slug) => Transform ArticleR s "id" m where
   transform = pure . ArticleId . getField @"slug"
 
-  transform = pure . ArticleId . Slug . Text.intercalate "=" . words . Text.toLower . un . getField @"title"
 instance {-# OVERLAPPING #-} Transform ArticleR "create" "id" m where
+  transform = pure . ArticleId . Slug . Text.intercalate "-" . words . Text.toLower . un . getField @"title"
 
 -- FIXME
 instance Transform ArticleR "create" "all" m where
