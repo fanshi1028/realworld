@@ -13,7 +13,7 @@ import qualified Current.IO (run)
 import Domain.Article (ArticleR (..))
 import Domain.Comment (CommentR (..))
 import Domain.User (UserR (..))
-import Domain.Util.Error (AlreadyExists, NotAuthorized, NotFound, ValidationErr)
+import Domain.Util.Error (AlreadyExists, Impossible, NotAuthorized, NotFound, ValidationErr)
 import Domain.Util.Field (Tag, Time)
 import GenUUID.V1 (RequestedUUIDsTooQuickly)
 import qualified GenUUID.V1 (run)
@@ -38,6 +38,7 @@ app cs jwts userDb articleDb commentDb tagDb =
       (Proxy @'[CookieSettings, JWTSettings])
       ( atomically
           . STMWithUnsafeIO.run
+          . runThrow @Impossible
           . runThrow @RequestedUUIDsTooQuickly
           . runThrow @Error
           . runThrow @SomeNotLogin
@@ -52,6 +53,11 @@ app cs jwts userDb articleDb commentDb tagDb =
           . R.runReader jwts
           . R.runReader cs
           . Relation.OneToMany.Pure.run @(ArticleR "id") @"has" @(CommentR "id") @'True
+          . Relation.OneToMany.Pure.run @(UserR "id") @"following" @(UserR "id") @'True
+          . Relation.OneToMany.Pure.run @(UserR "id") @"followedBy" @(UserR "id") @'True
+          . Relation.OneToMany.Pure.run @(UserR "id") @"favorite" @(ArticleR "id") @'True
+          . Relation.OneToMany.Pure.run @(ArticleR "id") @"favoritedBy" @(UserR "id") @'True
+          . Relation.OneToMany.Pure.run @(UserR "id") @"create" @(ArticleR "id") @'True
           . (usingReaderT userDb . Storage.Map.InMem.run @UserR)
           . (usingReaderT articleDb . Storage.Map.InMem.run @ArticleR)
           . (usingReaderT commentDb . Storage.Map.InMem.run @CommentR)
@@ -62,6 +68,7 @@ app cs jwts userDb articleDb commentDb tagDb =
           . Authentication.Token.JWT.run @UserR
           . Authentication.Pure.run @UserR @'False
           . VisitorAction.run
+          >=> handlerErr (const $ throwError $ err500 {errBody = "fuck"})
           >=> handlerErr (const $ throwError $ err500 {errBody = "fuck"})
           >=> handlerErr (const $ throwError $ err400 {errBody = "fuck"})
           >=> handlerErr (const $ throwError $ err400 {errBody = "fuck"})

@@ -8,7 +8,7 @@ module Relation.OneToMany.Pure where
 
 import Control.Algebra (Algebra (alg), type (:+:) (L, R))
 import GHC.TypeLits (Symbol)
-import Relation.OneToMany (E (GetRelated, IsRelated, Relate, Unrelate))
+import Relation.OneToMany (E (GetRelated, IsRelated, Relate, Unrelate, UnrelateByKey))
 
 newtype
   C
@@ -25,6 +25,7 @@ newtype
 instance (Algebra sig m) => Algebra (E r1 r r2 :+: sig) (C r1 r r2 'False m) where
   alg _ (L Relate {}) ctx = pure $ () <$ ctx
   alg _ (L Unrelate {}) ctx = pure $ () <$ ctx
+  alg _ (L UnrelateByKey {}) ctx = pure $ () <$ ctx
   alg _ (L IsRelated {}) ctx = pure $ False <$ ctx
   alg _ (L GetRelated {}) ctx = pure $ mempty <$ ctx
   alg hdl (R other) ctx = C $ alg (run . hdl) other ctx
@@ -32,6 +33,7 @@ instance (Algebra sig m) => Algebra (E r1 r r2 :+: sig) (C r1 r r2 'False m) whe
 instance (Algebra sig m) => Algebra (E r1 r r2 :+: sig) (C r1 r r2 'True m) where
   alg _ (L Relate {}) ctx = pure $ () <$ ctx
   alg _ (L Unrelate {}) ctx = pure $ () <$ ctx
+  alg _ (L UnrelateByKey {}) ctx = pure $ () <$ ctx
   alg _ (L IsRelated {}) ctx = pure $ True <$ ctx
   alg _ (L GetRelated {}) ctx = pure $ mempty <$ ctx
   alg hdl (R other) ctx = C $ alg (run . hdl) other ctx

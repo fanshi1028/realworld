@@ -3,6 +3,7 @@
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE RecordWildCards #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE UndecidableInstances #-}
 {-# LANGUAGE ViewPatterns #-}
 
@@ -12,20 +13,20 @@ module UserAction where
 import qualified Authentication (E)
 import qualified Authentication.Token (E (CreateToken))
 import Control.Algebra (Algebra (alg), send, type (:+:) (L, R))
+import Control.Carrier.NonDet.Church (runNonDetA)
+import Control.Effect.NonDet (oneOf)
 import Control.Effect.Sum (Member)
 import Control.Effect.Throw (Throw, throwError)
 import qualified Current (E (GetCurrent))
-import Data.Generics.Internal.VL (over)
-import Data.Generics.Product (HasField' (field'), getField)
-import qualified Data.HashSet as HS (delete, insert)
+import Data.Generics.Product (getField)
 import Domain.Article (ArticleR (..))
 import Domain.Comment (CommentR (..))
-import Domain.User (UserR (..), bio, email, image, username)
-import Domain.Util.Error (AlreadyExists, NotFound (NotFound), ValidationErr)
+import Domain.User (UserR (..))
+import Domain.Util.Error (AlreadyExists, Impossible (Impossible), NotFound (NotFound), ValidationErr)
 import Domain.Util.Field (Time)
 import Domain.Util.Representation (Transform (transform), applyPatch)
 import qualified GenUUID (E)
-import qualified Relation.OneToMany (E (Unrelate))
+import qualified Relation.OneToMany (E (GetRelated, Relate, Unrelate, UnrelateByKey))
 import qualified Storage.Map (E (DeleteById, GetById, Insert, UpdateById))
 import qualified Validation as V (Validation (Failure, Success))
 
@@ -60,22 +61,27 @@ instance
     Member (Throw (AlreadyExists (ArticleR "id"))) sig,
     Member (Throw (NotFound (ArticleR "id"))) sig,
     Member (Throw (NotFound (CommentR "id"))) sig,
+    Member (Throw Impossible) sig,
     Member (Current.E Time) sig,
     Member GenUUID.E sig,
     Member (Relation.OneToMany.E (ArticleR "id") "has" (CommentR "id")) sig,
+    Member (Relation.OneToMany.E (UserR "id") "following" (UserR "id")) sig,
+    Member (Relation.OneToMany.E (UserR "id") "followedBy" (UserR "id")) sig,
+    Member (Relation.OneToMany.E (UserR "id") "favorite" (ArticleR "id")) sig,
+    Member (Relation.OneToMany.E (ArticleR "id") "favoritedBy" (UserR "id")) sig,
+    Member (Relation.OneToMany.E (UserR "id") "create" (ArticleR "id")) sig,
     Member (Current.E (UserR "authWithToken")) sig,
     Algebra sig m
   ) =>
   Algebra (UserAction.E :+: sig) (C m)
   where
   alg hdl sig ctx = do
-    auth <- send $ Current.GetCurrent @(UserR "authWithToken")
-    authUserId <- case auth of UserAuthWithToken auth' _ -> transform @UserR @"auth" @"id" auth'
-    let (%~) = over
+    authOut@(UserAuthWithToken auth _) <- send $ Current.GetCurrent @(UserR "authWithToken")
+    authUserId <- transform @UserR @"auth" @"id" auth
     case sig of
       (L action) ->
         (<$ ctx) <$> case action of
-          GetCurrentUser -> pure auth
+          GetCurrentUser -> pure authOut
           UpdateUser update ->
             send (Storage.Map.GetById authUserId) >>= \case
               Nothing -> throwError $ NotFound authUserId
@@ -85,20 +91,20 @@ instance
                   send (Storage.Map.UpdateById authUserId $ const new)
                     >>= transform
                     >>= \newAuth -> UserAuthWithToken newAuth <$> send (Authentication.Token.CreateToken newAuth)
-          FollowUser userId ->
-            send (Storage.Map.GetById userId) >>= \case
-              Nothing -> throwError $ NotFound userId
-              Just _ -> do
-                void $ send $ Storage.Map.UpdateById authUserId (field' @"following" %~ HS.insert userId)
-                User {..} <- send $ Storage.Map.UpdateById userId (field' @"followBy" %~ HS.insert authUserId)
-                pure $ UserProfile email username bio image True
-          UnfollowUser userId ->
-            send (Storage.Map.GetById userId) >>= \case
-              Nothing -> throwError $ NotFound userId
-              Just _ -> do
-                void $ send $ Storage.Map.UpdateById authUserId (field' @"following" %~ HS.delete userId)
-                User {..} <- send $ Storage.Map.UpdateById userId (field' @"followBy" %~ HS.delete authUserId)
-                pure $ UserProfile email username bio image False
+          FollowUser targetUserId ->
+            send (Storage.Map.GetById targetUserId) >>= \case
+              Nothing -> throwError $ NotFound targetUserId
+              Just targetUser -> do
+                send $ Relation.OneToMany.Relate @"following" Proxy authUserId targetUserId
+                send $ Relation.OneToMany.Relate @"followedBy" Proxy targetUserId authUserId
+                UserProfile <$> transform targetUser <*> pure True
+          UnfollowUser targetUserId ->
+            send (Storage.Map.GetById targetUserId) >>= \case
+              Nothing -> throwError $ NotFound targetUserId
+              Just targetUser -> do
+                send $ Relation.OneToMany.Unrelate @"following" Proxy authUserId targetUserId
+                send $ Relation.OneToMany.Unrelate @"followedBy" Proxy targetUserId authUserId
+                UserProfile <$> transform targetUser <*> pure False
           CreateArticle create -> do
             a <- transform create
             send (Storage.Map.Insert a) >> transform a
@@ -111,7 +117,9 @@ instance
           DeleteArticle articleId ->
             send (Storage.Map.GetById articleId) >>= \case
               Nothing -> throwError $ NotFound articleId
-              Just _ -> send $ Storage.Map.DeleteById articleId
+              Just _ -> do
+                send $ Storage.Map.DeleteById articleId
+                send $ Relation.OneToMany.UnrelateByKey @"has" @_ @(CommentR "id") Proxy articleId
           AddCommentToArticle articleId cc@(CommentCreate comment) ->
             send (Storage.Map.GetById articleId) >>= \case
               Nothing -> throwError $ NotFound articleId
@@ -119,25 +127,48 @@ instance
                 let authorId = getField @"author" article
                 send (Storage.Map.GetById authorId) >>= \case
                   Nothing -> throwError $ NotFound authorId
-                  Just User {..} -> do
-                    -- FIXME
-                    let profile = UserProfile email username bio image undefined
+                  Just _ -> do
                     commentId <- transform cc
                     time <- send $ Current.GetCurrent @Time
-                    void $ send $ Storage.Map.Insert $ Comment commentId time time comment authorId articleId
-                    pure $ CommentWithAuthorProfile commentId time time comment profile
+                    send $ Storage.Map.Insert $ Comment commentId time time comment authorId articleId
+                    send $ Relation.OneToMany.Relate @"has" Proxy articleId commentId
+                    CommentWithAuthorProfile commentId time time comment <$> transform auth
           DeleteComment articleId commentId ->
             send (Storage.Map.GetById commentId) >>= \case
               Nothing -> throwError $ NotFound commentId
               Just _ -> do
-                void $ send $ Storage.Map.DeleteById commentId
-                send $ Relation.OneToMany.Unrelate (Proxy @"has") articleId commentId
-          -- FIXME
-          FavoriteArticle articleId -> undefined
-          -- FIXME
-          UnfavoriteArticle articleId -> undefined
-          -- FIXME
-          FeedArticles -> undefined
-          -- FIXME
-          GetCommentsFromArticle articleId -> undefined
+                send $ Storage.Map.DeleteById commentId
+                send $ Relation.OneToMany.Unrelate @"has" Proxy articleId commentId
+          FavoriteArticle articleId ->
+            send (Storage.Map.GetById articleId) >>= \case
+              Nothing -> throwError $ NotFound articleId
+              Just a -> do
+                send $ Relation.OneToMany.Relate @"favorite" Proxy authUserId articleId
+                send $ Relation.OneToMany.Relate @"favoritedBy" Proxy articleId authUserId
+                transform a
+          UnfavoriteArticle articleId ->
+            send (Storage.Map.GetById articleId) >>= \case
+              Nothing -> throwError $ NotFound articleId
+              Just a -> do
+                send $ Relation.OneToMany.Unrelate @"favorite" Proxy authUserId articleId
+                send $ Relation.OneToMany.Unrelate @"favoritedBy" Proxy articleId authUserId
+                transform a
+          -- FIXME feed order
+          FeedArticles -> runNonDetA @[] $ do
+            send (Relation.OneToMany.GetRelated @"following" Proxy authUserId)
+              >>= oneOf
+              >>= send . Relation.OneToMany.GetRelated @"create" @(UserR "id") Proxy
+              >>= oneOf
+              >>= send . Storage.Map.GetById @ArticleR
+              >>= maybe (throwError $ Impossible "article id not found") pure
+              >>= transform
+          GetCommentsFromArticle articleId ->
+            send (Storage.Map.GetById articleId) >>= \case
+              Nothing -> throwError $ NotFound articleId
+              Just _ -> runNonDetA @[] $ do
+                send (Relation.OneToMany.GetRelated @"has" Proxy articleId)
+                  >>= oneOf
+                  >>= send . Storage.Map.GetById @CommentR
+                  >>= maybe (throwError $ Impossible "comment id not found") pure
+                  >>= transform
       R other -> C $ alg (run . hdl) other ctx

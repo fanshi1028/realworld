@@ -11,8 +11,8 @@ import Control.Effect.Lift (Lift, sendM)
 import Control.Effect.Sum (Member)
 import GHC.TypeLits (Symbol)
 import qualified ListT (toList)
-import Relation.OneToMany (E (GetRelated, IsRelated, Relate, Unrelate))
-import qualified StmContainers.Multimap as STM (Multimap, delete, insert, listTByKey, lookup)
+import Relation.OneToMany (E (GetRelated, IsRelated, Relate, Unrelate, UnrelateByKey))
+import qualified StmContainers.Multimap as STM (Multimap, delete, insert, listTByKey, lookup, deleteByKey)
 
 newtype
   C
@@ -40,6 +40,7 @@ instance
       >>= fmap (<$ ctx) . sendM @STM . case action of
         Relate _ k v -> STM.insert v k
         Unrelate _ k v -> STM.delete v k
+        UnrelateByKey _ k -> STM.deleteByKey k
         IsRelated _ k v -> STM.lookup v k
         GetRelated _ k -> ListT.toList . STM.listTByKey k
   alg hdl (R other) ctx = C $ alg (run . hdl) (R other) ctx

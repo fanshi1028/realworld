@@ -19,7 +19,7 @@ import qualified Current.Reader (run)
 import Domain.Article (ArticleR)
 import Domain.Comment (CommentR)
 import Domain.User (UserR)
-import Domain.Util.Error (AlreadyExists, NotAuthorized (NotAuthorized), NotFound, ValidationErr)
+import Domain.Util.Error (AlreadyExists, Impossible (Impossible), NotAuthorized (NotAuthorized), NotFound, ValidationErr)
 import Domain.Util.Field (Time)
 import qualified GenUUID (E)
 import HTTP.Authed (AuthedApi, authedServer)
@@ -43,6 +43,7 @@ server ::
     Member VisitorAction.E sig,
     Member (Throw ValidationErr) sig,
     Member (Throw (NotAuthorized UserR)) sig,
+    Member (Throw Impossible) sig,
     Member (R.Reader JWTSettings) sig,
     Member (R.Reader CookieSettings) sig,
     Member (Authentication.Token.E UserR) sig,
@@ -56,6 +57,11 @@ server ::
     Member (Storage.Map.E ArticleR) sig,
     Member (Storage.Map.E CommentR) sig,
     Member (Throw (NotFound (CommentR "id"))) sig,
+    Member (Relation.OneToMany.E (UserR "id") "followedBy" (UserR "id")) sig,
+    Member (Relation.OneToMany.E (UserR "id") "following" (UserR "id")) sig,
+    Member (Relation.OneToMany.E (UserR "id") "favorite" (ArticleR "id")) sig,
+    Member (Relation.OneToMany.E (ArticleR "id") "favoritedBy" (UserR "id")) sig,
+    Member (Relation.OneToMany.E (UserR "id") "create" (ArticleR "id")) sig,
     Member (Lift IO) sig
   ) =>
   ServerT Api m
