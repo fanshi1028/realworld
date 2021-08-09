@@ -88,7 +88,7 @@ library backend-internal
     Authorization
     Current.IO
     Current.Pure
-    Current.Reader
+    Current.State
     Current
     Domain.Article
     Domain.Comment

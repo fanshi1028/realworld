@@ -4,7 +4,6 @@
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE RecordWildCards #-}
-{-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE UndecidableInstances #-}
 
 -- |
@@ -12,6 +11,7 @@ module Domain.Util.Representation where
 
 import Authentication.Token (E (CreateToken))
 import Control.Algebra (Algebra, send)
+import Control.Effect.Catch (Catch (Catch), catchError)
 import Control.Effect.Sum (Member)
 import Control.Effect.Throw (Throw, throwError)
 import Current (E (GetCurrent))
@@ -21,7 +21,7 @@ import qualified Data.Text as Text (intercalate, toLower)
 import Domain.Article (ArticleR (..))
 import Domain.Comment (CommentR (..))
 import Domain.User (UserR (..))
-import Domain.Util.Error (AlreadyExists (AlreadyExists))
+import Domain.Util.Error (AlreadyExists (AlreadyExists), NotAuthorized)
 import Domain.Util.Field (Bio (Bio), Email, Image (Image), Slug (Slug), Time, Title (..), Username)
 import Domain.Util.Validation (WithUpdate, WithValidation)
 import GHC.Records (HasField (getField))
@@ -72,8 +72,8 @@ instance
   where
   transform (UserRegister user email pw) = do
     void $ send $ GetCurrent @Time
-    send (Relation.OneToOne.GetRelated @_ @"of" email) >>= \case
-      Just (_ :: UserR "id") -> throwError $ AlreadyExists email
+    send (Relation.OneToOne.GetRelated @_ @"of" @(UserR "id") email) >>= \case
+      Just _ -> throwError $ AlreadyExists email
       Nothing ->
         send (Storage.Map.GetById @UserR $ UserId user) >>= \case
           Just _ -> throwError $ AlreadyExists user
@@ -85,23 +85,38 @@ instance Transform UserR "all" "auth" m where
 instance (Algebra sig m, Member (Authentication.Token.E UserR) sig) => Transform UserR "auth" "authWithToken" m where
   transform auth = UserAuthWithToken auth <$> send (CreateToken auth)
 
-instance (Algebra sig m, Member (Authentication.Token.E UserR) sig) => Transform UserR "all" "authWithToken" m where
+instance
+  ( Algebra sig m,
+    Transform UserR "all" "auth" m,
+    Transform UserR "auth" "authWithToken" m
+  ) =>
+  Transform UserR "all" "authWithToken" m
+  where
   transform = transform >=> (transform @_ @"auth")
 
 instance
   ( Algebra sig m,
+    Transform UserR "auth" "id" m,
     Member (Relation.ManyToMany.E (UserR "id") "follow" (UserR "id")) sig,
-    Member (Current.E (UserR "authWithToken")) sig
+    Member (Current.E (UserR "authWithToken")) sig,
+    Member (Catch (NotAuthorized UserR)) sig
   ) =>
   Transform UserR "auth" "profile" m
   where
-  transform auth = do
-    userId <- transform @_ @_ @"id" auth
-    cUserId <-
-      send (GetCurrent @(UserR "authWithToken"))
-        >>= \(UserAuthWithToken auth' _) -> transform @_ @_ @"id" auth'
-    following <- send $ Relation.ManyToMany.IsRelated @_ @_ @"follow" cUserId userId
-    pure $ UserProfile auth following
+  transform auth =
+    UserProfile auth <$> do
+      catchError @(NotAuthorized UserR)
+        ( do
+            userId <- transform @_ @_ @"id" auth
+            cUserId <-
+              send (GetCurrent @(UserR "authWithToken"))
+                >>= \(UserAuthWithToken auth' _) -> transform @_ @_ @"id" auth'
+            send (Relation.ManyToMany.IsRelated @_ @_ @"follow" cUserId userId)
+        )
+        $ const $ pure False
+
+instance (Algebra sig m, Transform UserR "auth" "profile" m, Transform UserR "all" "auth" m) => Transform UserR "all" "profile" m where
+  transform = transform >=> transform @_ @"auth"
 
 -- NOTE: Article
 
