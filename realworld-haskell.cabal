@@ -74,6 +74,7 @@ common backend-internal
     , base64-bytestring-type
     , safe-exceptions
     , jose                  ^>=0.8.4
+    , singleton-bool
 
 library backend-internal
   import: prelude, backend-internal
