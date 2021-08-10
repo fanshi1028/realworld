@@ -9,7 +9,7 @@ import Control.Carrier.Error.Either (runError)
 import qualified Control.Carrier.Reader as R (runReader)
 import qualified Control.Carrier.State.Strict as S (evalState)
 import Control.Carrier.Throw.Either (runThrow)
-import Crypto.JOSE (Error)
+import qualified Crypto.JOSE (Error)
 import qualified Current.IO (run)
 import qualified Current.State (run)
 import Domain.Article (ArticleR (..))
@@ -46,7 +46,7 @@ app cs jwts userDb articleDb commentDb tagDb =
           . runError @(NotAuthorized UserR)
           . runThrow @Impossible
           . runThrow @RequestedUUIDsTooQuickly
-          . runThrow @Error
+          . runThrow @Crypto.JOSE.Error
           . runThrow @(NotLogin UserR)
           . runThrow @(NotAuthorized UserR)
           . runThrow @ValidationErr
