@@ -2,7 +2,7 @@
 {-# LANGUAGE FlexibleContexts #-}
 
 -- |
-module Domain.Util.JSON.From where
+module Domain.Util.JSON.From (In (..), insert', wrappedParseJSON, updatableParseJSON) where
 
 import Data.Aeson (FromJSON (parseJSON), Value (Null, Object), withObject, (.:), (<?>))
 import Data.Aeson.Types (JSONPathElement (Key), Object, Parser)
@@ -11,7 +11,7 @@ import Relude.Extra (insertWith, wrap)
 
 -- | helper to override and provide default value when writing FromJSON instance
 insert' :: Text -> Value -> Object -> Object
-insert' = insertWith @Object (\ _ x -> x)
+insert' = insertWith @Object (\_ x -> x)
 
 -- | wrapping type to make an "in" JSON representation
 newtype In a = In a deriving (Show, Generic)

@@ -3,17 +3,12 @@
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE DuplicateRecordFields #-}
-{-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE FlexibleInstances #-}
-{-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE TypeFamilies #-}
-{-# LANGUAGE UndecidableInstances #-}
 
 -- |
-module Domain.Comment where
+module Domain.Comment (CommentR (..)) where
 
-import Control.Algebra (Algebra, send)
-import Control.Effect.Sum (Member)
 import Data.Aeson (FromJSON (parseJSON), ToJSON (toEncoding), defaultOptions, genericParseJSON)
 import Data.Generic.HKD (construct)
 import Data.UUID (UUID)
@@ -23,9 +18,7 @@ import Domain.Util.Field (Time)
 import Domain.Util.JSON.From (In, wrappedParseJSON)
 import Domain.Util.JSON.To (Out, wrappedToEncoding)
 import Domain.Util.Validation (WithValidation)
-import GHC.Records (HasField (getField))
 import GHC.TypeLits (Symbol)
-import qualified GenUUID (E (Generate))
 import Servant (FromHttpApiData (parseUrlPiece))
 
 data family CommentR (r :: Symbol)

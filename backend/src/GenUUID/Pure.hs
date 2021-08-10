@@ -4,7 +4,7 @@
 {-# LANGUAGE UndecidableInstances #-}
 
 -- |
-module GenUUID.Pure where
+module GenUUID.Pure (run) where
 
 import Control.Algebra (Algebra (alg), type (:+:) (L, R))
 import Data.UUID (nil)

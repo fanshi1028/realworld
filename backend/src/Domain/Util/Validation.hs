@@ -6,15 +6,15 @@
 {-# LANGUAGE StandaloneDeriving #-}
 
 -- |
-module Domain.Util.Validation where
+module Domain.Util.Validation (validate, WithValidation, NoValidation' (..), NoValidation, WithUpdate) where
 
 import Data.Aeson (FromJSON (parseJSON), defaultOptions, genericParseJSON, withArray)
 import Data.Generic.HKD (HKD)
 import qualified Data.HashSet as HS (fromList)
-import qualified Data.Semigroup as SG
-import qualified Validation as V (Validation (Success), failure)
-import Domain.Util.Error (ValidationErr)
+import qualified Data.Semigroup as SG (Last)
 import Data.Time (UTCTime)
+import Domain.Util.Error (ValidationErr)
+import qualified Validation as V (Validation (Success), failure)
 
 -- | TEMP: dangerous orphan instance
 instance FromJSON (WithValidation a) => FromJSON (WithValidation [a]) where

@@ -3,17 +3,12 @@
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE DuplicateRecordFields #-}
-{-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE FlexibleInstances #-}
-{-# LANGUAGE GeneralizedNewtypeDeriving #-}
-{-# LANGUAGE MultiParamTypeClasses #-}
-{-# LANGUAGE OverloadedLabels #-}
 {-# LANGUAGE TypeFamilies #-}
-{-# LANGUAGE UndecidableInstances #-}
 {-# LANGUAGE ViewPatterns #-}
 
 -- |
-module Domain.Article where
+module Domain.Article (ArticleR (..)) where
 
 import Data.Aeson (FromJSON (parseJSON), ToJSON (toEncoding), Value (Array), defaultOptions, genericParseJSON, withObject)
 import Data.Aeson.Types (Value (Object))

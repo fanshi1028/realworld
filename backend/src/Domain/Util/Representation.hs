@@ -3,15 +3,14 @@
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
-{-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE UndecidableInstances #-}
 
 -- |
-module Domain.Util.Representation where
+module Domain.Util.Representation (applyPatch, Transform (transform)) where
 
 import Authentication.Token (E (CreateToken))
 import Control.Algebra (Algebra, send)
-import Control.Effect.Catch (Catch (Catch), catchError)
+import Control.Effect.Catch (Catch, catchError)
 import Control.Effect.Sum (Member)
 import Control.Effect.Throw (Throw, throwError)
 import Current (E (GetCurrent))
@@ -70,17 +69,17 @@ instance
   ) =>
   Transform UserR "create" "all" m
   where
-  transform (UserRegister user email pw) = do
+  transform (UserRegister user em pw) = do
     void $ send $ GetCurrent @Time
-    send (Relation.OneToOne.GetRelated @_ @"of" @(UserR "id") email) >>= \case
-      Just _ -> throwError $ AlreadyExists email
+    send (Relation.OneToOne.GetRelated @_ @"of" @(UserR "id") em) >>= \case
+      Just _ -> throwError $ AlreadyExists em
       Nothing ->
         send (Storage.Map.GetById @UserR $ UserId user) >>= \case
           Just _ -> throwError $ AlreadyExists user
-          Nothing -> pure $ User email pw user (Bio "") (Image "")
+          Nothing -> pure $ User em pw user (Bio "") (Image "")
 
 instance Transform UserR "all" "auth" m where
-  transform (User email _ name bio image) = pure $ UserAuth email name bio image
+  transform (User em _ name bio' img) = pure $ UserAuth em name bio' img
 
 instance (Algebra sig m, Member (Authentication.Token.E UserR) sig) => Transform UserR "auth" "authWithToken" m where
   transform auth = UserAuthWithToken auth <$> send (CreateToken auth)

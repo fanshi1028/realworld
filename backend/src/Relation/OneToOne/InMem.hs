@@ -4,7 +4,7 @@
 {-# LANGUAGE UndecidableInstances #-}
 
 -- |
-module Relation.OneToOne.InMem where
+module Relation.OneToOne.InMem (ExistAction (..), run) where
 
 import Control.Algebra (Algebra (alg), type (:+:) (L, R))
 import Control.Effect.Lift (Lift, sendM)

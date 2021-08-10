@@ -4,15 +4,15 @@
 {-# LANGUAGE UndecidableInstances #-}
 
 -- |
-module Storage.Set.InMem where
+module Storage.Set.InMem (run) where
 
 import Control.Algebra (Algebra (alg), type (:+:) (L, R))
 import Control.Effect.Error (Throw, throwError)
 import Control.Effect.Lift (Lift, sendM)
 import Control.Effect.Sum (Member)
 import Domain.Util.Error (NotFound (NotFound))
-import qualified Focus as FC
-import qualified ListT
+import qualified Focus as FC (Change (Leave, Remove), cases)
+import qualified ListT (fold)
 import qualified StmContainers.Set as STM (Set, focus, insert, listT, lookup)
 import Storage.Set (E (Delete, GetAll, Insert, IsMember))
 

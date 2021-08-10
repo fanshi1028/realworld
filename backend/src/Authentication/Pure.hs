@@ -6,7 +6,7 @@
 {-# LANGUAGE UndecidableInstances #-}
 
 -- |
-module Authentication.Pure where
+module Authentication.Pure (run) where
 
 import Authentication (E (Login, Logout))
 import Control.Algebra (Algebra (alg), type (:+:) (L, R))

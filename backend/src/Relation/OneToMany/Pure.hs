@@ -5,7 +5,7 @@
 {-# LANGUAGE UndecidableInstances #-}
 
 -- |
-module Relation.OneToMany.Pure where
+module Relation.OneToMany.Pure (run) where
 
 import Control.Algebra (Algebra (alg), type (:+:) (L, R))
 import Data.Singletons.Bool (SBoolI (sbool), fromSBool)

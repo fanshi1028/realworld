@@ -1,21 +1,33 @@
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE DerivingVia #-}
-{-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE StandaloneDeriving #-}
 {-# LANGUAGE TypeSynonymInstances #-}
 
 -- |
-module Domain.Util.Field where
+module Domain.Util.Field
+  ( Email (..),
+    Password (..),
+    Tag (..),
+    Title (..),
+    Slug (..),
+    Username (..),
+    Image (..),
+    Bio (..),
+    Body (..),
+    Description (..),
+    Time,
+  )
+where
 
 import Data.Aeson (FromJSON (parseJSON), ToJSON (toEncoding), withText)
 import qualified Data.Text as T (null)
 import Data.Time (UTCTime)
 import Domain.Util.JSON.To (Out, wrappedToEncoding)
+import Domain.Util.Validation (NoValidation, NoValidation' (..), WithValidation, validate)
 import Servant (FromHttpApiData)
 import Text.Show (Show (showsPrec), showString)
-import Domain.Util.Validation (NoValidation, NoValidation' (..), WithValidation, validate)
 
 -- | some newtype
 
@@ -78,7 +90,7 @@ newtype Body = Body Text deriving newtype (Show, Eq, ToJSON)
 
 deriving via NoValidation instance FromJSON (WithValidation Body)
 
-newtype Tag = Tag Text deriving newtype (Show, Eq, Hashable,ToJSON, FromHttpApiData)
+newtype Tag = Tag Text deriving newtype (Show, Eq, Hashable, ToJSON, FromHttpApiData)
 
 deriving via NoValidation instance FromJSON (WithValidation Tag)
 

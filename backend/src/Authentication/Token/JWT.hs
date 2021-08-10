@@ -6,13 +6,13 @@
 {-# LANGUAGE UndecidableInstances #-}
 
 -- |
-module Authentication.Token.JWT where
+module Authentication.Token.JWT (run) where
 
 import Authentication.Token (E (CheckToken, CreateToken, InvalidateToken))
 import Authentication.Token.JWT.Invalidate (E (Invalidate))
 import Control.Algebra (Algebra (alg), send, type (:+:) (L, R))
 import Control.Effect.Lift (Lift, sendIO)
-import qualified Control.Effect.Reader as R
+import qualified Control.Effect.Reader as R (Reader, ask, asks)
 import Control.Effect.Sum (Member)
 import Control.Effect.Throw (Throw, throwError)
 import Crypto.JOSE (Error)

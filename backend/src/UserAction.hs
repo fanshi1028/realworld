@@ -8,7 +8,7 @@
 {-# LANGUAGE ViewPatterns #-}
 
 -- |
-module UserAction where
+module UserAction (E (..), run) where
 
 import qualified Authentication (E)
 import qualified Authentication.Token (E (CreateToken))
@@ -23,7 +23,7 @@ import Data.Generics.Product (getField)
 import Domain.Article (ArticleR (..))
 import Domain.Comment (CommentR (..))
 import Domain.User (UserR (..))
-import Domain.Util.Error (AlreadyExists, Impossible (Impossible), NotAuthorized (NotAuthorized), NotFound (NotFound), ValidationErr)
+import Domain.Util.Error (AlreadyExists, Impossible (Impossible), NotAuthorized, NotFound (NotFound), ValidationErr)
 import Domain.Util.Field (Time)
 import Domain.Util.Representation (Transform (transform), applyPatch)
 import qualified GenUUID (E)

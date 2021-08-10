@@ -4,7 +4,7 @@
 {-# LANGUAGE UndecidableInstances #-}
 
 -- |
-module GenUUID.V1 where
+module GenUUID.V1 (run, RequestedUUIDsTooQuickly) where
 
 import Control.Algebra (Algebra (alg), type (:+:) (L, R))
 import Control.Effect.Lift (Lift, sendIO)

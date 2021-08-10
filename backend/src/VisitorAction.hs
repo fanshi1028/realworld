@@ -5,7 +5,7 @@
 {-# LANGUAGE UndecidableInstances #-}
 
 -- |
-module VisitorAction where
+module VisitorAction (E (..), run) where
 
 import qualified Authentication as Auth (E (Login))
 import Control.Algebra (Algebra (alg), send, type (:+:) (L, R))
@@ -14,7 +14,7 @@ import Control.Effect.Catch (Catch)
 import Control.Effect.NonDet (oneOf)
 import Control.Effect.Sum (Member)
 import Control.Effect.Throw (Throw, throwError)
-import qualified Current
+import qualified Current (E)
 import Domain.Article (ArticleR)
 import Domain.Comment (CommentR)
 import Domain.User (UserR (..))
@@ -23,7 +23,7 @@ import Domain.Util.Field (Email, Tag, Time, Username)
 import Domain.Util.Representation (Transform (transform))
 import GHC.Records (HasField (getField))
 import qualified Relation.ManyToMany (E)
-import qualified Relation.OneToMany
+import qualified Relation.OneToMany (E (GetRelated))
 import qualified Relation.OneToOne (E (Relate))
 import qualified Storage.Map (E (GetAll, GetById, Insert))
 import qualified Storage.Set (E (GetAll))

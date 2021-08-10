@@ -1,7 +1,7 @@
 {-# LANGUAGE DataKinds #-}
 
 -- |
-module Relation.OneToMany where
+module Relation.OneToMany (E(..)) where
 
 import GHC.TypeLits (Symbol)
 

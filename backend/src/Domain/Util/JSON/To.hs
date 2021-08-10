@@ -2,7 +2,7 @@
 {-# LANGUAGE FlexibleContexts #-}
 
 -- |
-module Domain.Util.JSON.To where
+module Domain.Util.JSON.To (Out (..), wrapEncoding, wrappedToEncoding, multiWrappedWithCountToEncoding) where
 
 import Data.Aeson (Encoding, GToJSON', ToJSON (toEncoding), Zero, defaultOptions, genericToEncoding)
 import Data.Aeson.Encoding (int, text)

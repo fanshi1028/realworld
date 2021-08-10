@@ -1,7 +1,7 @@
 {-# LANGUAGE DataKinds #-}
 
 -- |
-module Storage.Map where
+module Storage.Map (E(..)) where
 
 import GHC.TypeLits (Symbol)
 

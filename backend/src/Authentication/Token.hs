@@ -1,7 +1,7 @@
 {-# LANGUAGE DataKinds #-}
 
 -- |
-module Authentication.Token where
+module Authentication.Token (E (..)) where
 
 import GHC.TypeLits (Symbol)
 

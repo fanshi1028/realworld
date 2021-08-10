@@ -1,5 +1,5 @@
 -- |
-module Storage.Set where
+module Storage.Set (E(..)) where
 
 data E (e :: Type) (m :: Type -> Type) k where
   IsMember :: e -> E e m Bool

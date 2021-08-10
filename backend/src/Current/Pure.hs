@@ -4,7 +4,7 @@
 {-# LANGUAGE UndecidableInstances #-}
 
 -- |
-module Current.Pure where
+module Current.Pure (run) where
 
 import Control.Algebra (Algebra (alg), type (:+:) (L, R))
 import Current (E (GetCurrent))

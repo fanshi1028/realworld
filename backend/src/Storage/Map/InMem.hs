@@ -5,7 +5,7 @@
 {-# LANGUAGE UndecidableInstances #-}
 
 -- |
-module Storage.Map.InMem where
+module Storage.Map.InMem (TableInMem', TableInMem, run) where
 
 import Control.Algebra (Algebra (alg), type (:+:) (L, R))
 import Control.Effect.Error (Throw, throwError)
@@ -13,9 +13,9 @@ import Control.Effect.Lift (Lift, sendM)
 import Control.Effect.Sum (Member)
 import Domain.Util.Error (NotFound (NotFound))
 import Domain.Util.Representation (Transform (transform))
-import qualified Focus as FC
+import qualified Focus as FC (Change (Leave, Remove, Set), cases)
 import GHC.TypeLits (Symbol)
-import qualified ListT
+import qualified ListT (fold)
 import qualified StmContainers.Map as STM (Map, focus, insert, listT, lookup)
 import Storage.Map (E (DeleteById, GetAll, GetById, Insert, UpdateById))
 

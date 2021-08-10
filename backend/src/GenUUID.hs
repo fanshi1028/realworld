@@ -1,7 +1,7 @@
 {-# LANGUAGE DataKinds #-}
 
 -- |
-module GenUUID where
+module GenUUID (E(..)) where
 
 import Data.UUID (UUID)
 

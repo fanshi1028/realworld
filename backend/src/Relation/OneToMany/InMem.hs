@@ -4,7 +4,7 @@
 {-# LANGUAGE UndecidableInstances #-}
 
 -- |
-module Relation.OneToMany.InMem where
+module Relation.OneToMany.InMem (run) where
 
 import Control.Algebra (Algebra (alg), type (:+:) (L, R))
 import Control.Effect.Lift (Lift, sendM)
@@ -12,7 +12,7 @@ import Control.Effect.Sum (Member)
 import GHC.TypeLits (Symbol)
 import qualified ListT (toList)
 import Relation.OneToMany (E (GetRelated, IsRelated, Relate, Unrelate, UnrelateByKey))
-import qualified StmContainers.Multimap as STM (Multimap, delete, insert, listTByKey, lookup, deleteByKey)
+import qualified StmContainers.Multimap as STM (Multimap, delete, deleteByKey, insert, listTByKey, lookup)
 
 newtype
   C

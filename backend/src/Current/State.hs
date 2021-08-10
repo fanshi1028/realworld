@@ -4,7 +4,7 @@
 {-# LANGUAGE UndecidableInstances #-}
 
 -- |
-module Current.State where
+module Current.State (run) where
 
 import Control.Algebra (Algebra (alg), type (:+:) (L, R))
 import qualified Control.Effect.State as S (State, get)

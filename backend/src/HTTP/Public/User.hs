@@ -10,33 +10,31 @@ module HTTP.Public.User (UserApi, userServer) where
 import Control.Algebra (Algebra, send)
 import Control.Effect.Error (Throw, throwError)
 import Control.Effect.Lift (Lift, sendIO)
-import qualified Control.Effect.Reader as R
+import qualified Control.Effect.Reader as R (Reader, ask)
 import Control.Effect.Sum (Member)
 import Data.ByteString.Base64.Type (mkBS64)
 import Domain.User (UserR (..))
 import Domain.Util.Error (ValidationErr)
 import Domain.Util.JSON.From (In (In))
 import Domain.Util.JSON.To (Out (Out))
+import Domain.Util.Validation (WithValidation)
 import HTTP.Util (CreateApi)
 import Relude.Extra (un)
 import Servant
-  ( GetHeaders (getHeaders),
-    HList (HCons),
+  ( HList (HCons),
     Header,
-    Headers (Headers, getHeadersHList),
+    Headers (Headers),
     JSON,
     ReqBody,
     ResponseHeader (Header, MissingHeader, UndecodableHeader),
     ServerT,
     StdMethod (POST),
     Verb,
-    lookupResponseHeader,
     type (:<|>) ((:<|>)),
     type (:>),
   )
 import Servant.Auth.Server (CookieSettings, JWTSettings, SetCookie, acceptLogin, makeJWT)
 import Validation (validation)
-import Domain.Util.Validation (WithValidation)
 import VisitorAction (E (Login, Register))
 import Web.Cookie (setCookieValue)
 

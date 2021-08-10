@@ -7,7 +7,7 @@ module HTTP.Public (PublicApi, publicServer) where
 
 import Control.Algebra (Algebra)
 import Control.Effect.Lift (Lift)
-import qualified Control.Effect.Reader as R
+import qualified Control.Effect.Reader as R (Reader)
 import Control.Effect.Sum (Member)
 import Control.Effect.Throw (Throw)
 import Domain.Util.Error (ValidationErr)
