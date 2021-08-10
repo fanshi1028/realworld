@@ -10,7 +10,7 @@ module VisitorAction (E (..), run) where
 import qualified Authentication as Auth (E (Login))
 import Control.Algebra (Algebra (alg), send, type (:+:) (L, R))
 import Control.Carrier.NonDet.Church (runNonDetA)
-import Control.Effect.Catch (Catch)
+import Control.Effect.Catch (Catch, catchError)
 import Control.Effect.NonDet (oneOf)
 import Control.Effect.Sum (Member)
 import Control.Effect.Throw (Throw, throwError)
@@ -60,6 +60,8 @@ instance
     Member (Current.E Time) sig,
     Member (Current.E (UserR "authWithToken")) sig,
     Member (Catch (NotAuthorized UserR)) sig,
+    Member (Catch (NotFound (UserR "id"))) sig,
+    Member (Catch (NotFound (CommentR "id"))) sig,
     Algebra sig m
   ) =>
   Algebra (E :+: sig) (C m)
@@ -73,26 +75,21 @@ instance
         transform a
       Login user -> do
         send (Auth.Login user)
-          >>= send . Storage.Map.GetById @UserR
-          -- TODO FIXME throw in Storage get
-          >>= maybe (throwError $ NotAuthorized @UserR) transform
-      GetProfile uid ->
-        send (Storage.Map.GetById @UserR uid)
-          >>= maybe (throwError $ NotFound uid) transform
-      GetAritcle aid ->
-        send (Storage.Map.GetById @ArticleR aid)
-          >>= maybe (throwError $ NotFound aid) transform
+          >>= flip catchError (const @_ @(NotFound (UserR "id")) $ throwError $ NotAuthorized @UserR)
+            . send
+            . Storage.Map.GetById @UserR
+          >>= transform
+      GetProfile uid -> send (Storage.Map.GetById @UserR uid) >>= transform
+      GetAritcle aid -> send (Storage.Map.GetById @ArticleR aid) >>= transform
       ListArticles -> runNonDetA @[] $ send (Storage.Map.GetAll @ArticleR) >>= oneOf >>= transform
-      GetComments aid ->
-        send (Storage.Map.GetById @ArticleR aid)
-          >>= maybe
-            (throwError $ NotFound aid)
-            ( const $
-                runNonDetA @[] $
-                  send (Relation.OneToMany.GetRelated @_ @"has" @(CommentR "id") aid)
-                    >>= oneOf
-                    >>= send . Storage.Map.GetById
-                    >>= maybe (throwError $ Impossible "comment id not found") transform
-            )
+      GetComments aid -> do
+        void $ send (Storage.Map.GetById @ArticleR aid)
+        runNonDetA @[] $
+          send (Relation.OneToMany.GetRelated @_ @"has" @(CommentR "id") aid)
+            >>= oneOf
+            >>= flip catchError (const @_ @(NotFound (CommentR "id")) $ throwError $ Impossible "comment id not found")
+              . send
+              . Storage.Map.GetById
+            >>= transform
       GetTags -> send $ Storage.Set.GetAll @Tag
   alg hdl (R other) ctx = C $ alg (run . hdl) other ctx

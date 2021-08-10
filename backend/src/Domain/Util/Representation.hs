@@ -20,7 +20,7 @@ import qualified Data.Text as Text (intercalate, toLower)
 import Domain.Article (ArticleR (..))
 import Domain.Comment (CommentR (..))
 import Domain.User (UserR (..))
-import Domain.Util.Error (AlreadyExists (AlreadyExists), NotAuthorized)
+import Domain.Util.Error (AlreadyExists (AlreadyExists), NotAuthorized, NotFound)
 import Domain.Util.Field (Bio (Bio), Email, Image (Image), Slug (Slug), Time, Title (..), Username)
 import Domain.Util.Validation (WithUpdate, WithValidation)
 import GHC.Records (HasField (getField))
@@ -65,7 +65,8 @@ instance
     Member (Storage.Map.E UserR) sig,
     Member (Relation.OneToOne.E Email "of" (UserR "id")) sig,
     Member (Throw (AlreadyExists Email)) sig,
-    Member (Throw (AlreadyExists Username)) sig
+    Member (Throw (AlreadyExists Username)) sig,
+    Member (Catch (NotFound (UserR "id"))) sig
   ) =>
   Transform UserR "create" "all" m
   where
@@ -74,9 +75,8 @@ instance
     send (Relation.OneToOne.GetRelated @_ @"of" @(UserR "id") em) >>= \case
       Just _ -> throwError $ AlreadyExists em
       Nothing ->
-        send (Storage.Map.GetById @UserR $ UserId user) >>= \case
-          Just _ -> throwError $ AlreadyExists user
-          Nothing -> pure $ User em pw user (Bio "") (Image "")
+        send (Storage.Map.GetById $ UserId user) >> throwError (AlreadyExists user)
+          `catchError` const @_ @(NotFound (UserR "id")) (pure $ User em pw user (Bio "") (Image ""))
 
 instance Transform UserR "all" "auth" m where
   transform (User em _ name bio' img) = pure $ UserAuth em name bio' img

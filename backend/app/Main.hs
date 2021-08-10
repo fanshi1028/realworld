@@ -44,15 +44,15 @@ app cs jwts userDb articleDb commentDb tagDb =
       ( atomically
           . STMWithUnsafeIO.run
           . runError @(NotAuthorized UserR)
+          . runError @(NotFound (ArticleR "id"))
+          . runError @(NotFound (CommentR "id"))
+          . runError @(NotFound (UserR "id"))
           . runThrow @Impossible
           . runThrow @RequestedUUIDsTooQuickly
           . runThrow @Crypto.JOSE.Error
           . runThrow @(NotLogin UserR)
           . runThrow @(NotAuthorized UserR)
           . runThrow @ValidationErr
-          . runThrow @(NotFound (UserR "id"))
-          . runThrow @(NotFound (ArticleR "id"))
-          . runThrow @(NotFound (CommentR "id"))
           . runThrow @(NotFound Tag)
           . runThrow @(AlreadyExists (ArticleR "id"))
           . runThrow @(AlreadyExists Email)

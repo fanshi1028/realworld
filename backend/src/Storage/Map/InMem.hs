@@ -43,7 +43,9 @@ instance
     L action ->
       (<$ ctx) <$> do
         ask >>= case action of
-          GetById id' -> sendM . STM.lookup id'
+          GetById id' ->
+            sendM . STM.lookup id'
+              >=> maybe (throwError $ NotFound id') pure
           GetAll -> sendM . _getAll
           Insert value -> \db -> do
             key <- transform value
