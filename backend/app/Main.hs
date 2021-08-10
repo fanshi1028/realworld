@@ -2,7 +2,6 @@
 
 module Main where
 
-import Authentication.Pure (SomeNotAuthorized, SomeNotLogin)
 import qualified Authentication.Pure (run)
 import qualified Authentication.Token.JWT (run)
 import qualified Authentication.Token.JWT.Invalidate.Pure (run)
@@ -16,7 +15,7 @@ import qualified Current.State (run)
 import Domain.Article (ArticleR (..))
 import Domain.Comment (CommentR (..))
 import Domain.User (UserR (..))
-import Domain.Util.Error (AlreadyExists, Impossible, NotAuthorized, NotFound, ValidationErr)
+import Domain.Util.Error (AlreadyExists, Impossible, NotAuthorized, NotFound, NotLogin, ValidationErr)
 import Domain.Util.Field (Email, Tag, Time, Username)
 import GenUUID.V1 (RequestedUUIDsTooQuickly)
 import qualified GenUUID.V1 (run)
@@ -48,8 +47,8 @@ app cs jwts userDb articleDb commentDb tagDb =
           . runThrow @Impossible
           . runThrow @RequestedUUIDsTooQuickly
           . runThrow @Error
-          . runThrow @SomeNotLogin
-          . runThrow @SomeNotAuthorized
+          . runThrow @(NotLogin UserR)
+          . runThrow @(NotAuthorized UserR)
           . runThrow @ValidationErr
           . runThrow @(NotFound (UserR "id"))
           . runThrow @(NotFound (ArticleR "id"))

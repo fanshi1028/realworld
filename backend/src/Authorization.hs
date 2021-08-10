@@ -7,24 +7,24 @@
 -- |
 module Authorization (TokenAuth, TokenAuthInMem) where
 
-import Authentication.Pure (SomeNotAuthorized)
 import Authentication.Token (E (CheckToken))
 import Authentication.Token.JWT (run)
 import Authentication.Token.JWT.Invalidate.Pure (run)
 import Control.Algebra (send)
 import Control.Carrier.Lift (runM)
-import qualified Control.Carrier.Reader as R
+import qualified Control.Carrier.Reader as R (runReader)
 import Control.Carrier.Throw.Either (runThrow)
 import Crypto.JOSE (Error)
-import qualified Data.List as List
+import qualified Data.List as List (lookup)
 import Domain.User (UserR (Token, UserAuthWithToken))
+import Domain.Util.Error (NotAuthorized)
 import Domain.Util.Representation (Transform (transform))
 import Network.Wai (requestHeaders)
 import Servant (FromHttpApiData (parseHeader))
 import Servant.Auth.Server (CookieSettings, JWTSettings)
 import qualified Servant.Auth.Server as Auth (AuthCheck (AuthCheck))
 import Servant.Auth.Server.Internal.Class (IsAuth (AuthArgs, runAuth))
-import qualified StmContainers.Map as STM
+import qualified StmContainers.Map as STM (lookup)
 import Storage.Map.InMem (TableInMem, TableInMem')
 
 data TokenAuth
@@ -38,7 +38,7 @@ instance IsAuth TokenAuth (UserR "authWithToken") where
         ) ->
           runM
             . runThrow @Error
-            . runThrow @SomeNotAuthorized
+            . runThrow @(NotAuthorized UserR)
             . R.runReader cs
             . R.runReader jwts
             . Authentication.Token.JWT.Invalidate.Pure.run @UserR

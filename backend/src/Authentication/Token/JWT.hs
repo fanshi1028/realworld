@@ -2,12 +2,12 @@
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE UndecidableInstances #-}
 
 -- |
 module Authentication.Token.JWT where
 
-import Authentication.Pure (SomeNotAuthorized (SomeNotAuthorized))
 import Authentication.Token (E (CheckToken, CreateToken, InvalidateToken))
 import Authentication.Token.JWT.Invalidate (E (Invalidate))
 import Control.Algebra (Algebra (alg), send, type (:+:) (L, R))
@@ -17,6 +17,7 @@ import Control.Effect.Sum (Member)
 import Control.Effect.Throw (Throw, throwError)
 import Crypto.JOSE (Error)
 import Data.ByteString.Base64.Type (ByteString64, getBS64, mkBS64)
+import Domain.Util.Error (NotAuthorized (NotAuthorized))
 import GHC.TypeLits (Symbol)
 import Relude.Extra (un)
 import Servant.Auth.Server (CookieSettings (cookieExpires), FromJWT, JWTSettings, ToJWT, makeJWT, verifyJWT)
@@ -29,7 +30,7 @@ newtype C (r :: Symbol -> Type) (m :: Type -> Type) a = C
 instance
   ( Member (R.Reader JWTSettings) sig,
     Member (R.Reader CookieSettings) sig,
-    Member (Throw SomeNotAuthorized) sig,
+    Member (Throw (NotAuthorized r)) sig,
     Member (Authentication.Token.JWT.Invalidate.E r) sig,
     Member (Throw Error) sig,
     Member (Lift IO) sig,
@@ -44,7 +45,7 @@ instance
     verifyJWT <$> R.ask <*> pure (getBS64 $ un token)
       >>= sendIO
       >>= \case
-        Nothing -> throwError SomeNotAuthorized
+        Nothing -> throwError $ NotAuthorized @r
         (Just auth) -> pure $ auth <$ ctx
   alg _ (L (CreateToken auth)) ctx =
     makeJWT auth <$> R.ask <*> R.asks cookieExpires >>= sendIO
