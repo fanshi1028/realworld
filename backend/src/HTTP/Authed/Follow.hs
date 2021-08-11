@@ -1,4 +1,5 @@
 {-# LANGUAGE DataKinds #-}
+{-# LANGUAGE FlexibleContexts #-}
 
 -- |
 module HTTP.Authed.Follow (FollowApi, followServer) where
@@ -19,5 +20,5 @@ followServer ::
   ) =>
   ServerT FollowApi m
 followServer uid =
-  (Out <$> send (UserAction.FollowUser uid))
+  Out <$> send (UserAction.FollowUser uid)
     :<|> (Out <$> send (UserAction.UnfollowUser uid))
