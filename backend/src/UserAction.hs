@@ -128,6 +128,7 @@ instance
             send $ Relation.OneToMany.Relate @_ @_ @"has" articleId commentId
             CommentWithAuthorProfile commentId time time comment <$> transform auth
           DeleteComment articleId commentId -> do
+            void $ send $ Storage.Map.GetById articleId
             void $ send $ Storage.Map.GetById commentId
             send $ Storage.Map.DeleteById commentId
             send $ Relation.OneToMany.Unrelate @_ @_ @"has" articleId commentId

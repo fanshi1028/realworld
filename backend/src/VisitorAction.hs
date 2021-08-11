@@ -18,7 +18,7 @@ import qualified Current (E)
 import Domain.Article (ArticleR)
 import Domain.Comment (CommentR)
 import Domain.User (UserR (..))
-import Domain.Util.Error (AlreadyExists, Impossible (Impossible), NotAuthorized (NotAuthorized), NotFound (NotFound))
+import Domain.Util.Error (AlreadyExists, Impossible (Impossible), NotAuthorized (NotAuthorized), NotFound)
 import Domain.Util.Field (Email, Tag, Time, Username)
 import Domain.Util.Representation (Transform (transform))
 import GHC.Records (HasField (getField))
@@ -32,7 +32,7 @@ data E (m :: Type -> Type) a where
   Register :: UserR "create" -> E m (UserR "auth")
   Login :: UserR "login" -> E m (UserR "auth")
   GetProfile :: UserR "id" -> E m (UserR "profile")
-  GetAritcle :: ArticleR "id" -> E m (ArticleR "withAuthorProfile")
+  GetArticle :: ArticleR "id" -> E m (ArticleR "withAuthorProfile")
   ListArticles :: E m [ArticleR "withAuthorProfile"]
   GetTags :: E m [Tag]
   GetComments :: ArticleR "id" -> E m [CommentR "withAuthorProfile"]
@@ -80,7 +80,7 @@ instance
             . Storage.Map.GetById @UserR
           >>= transform
       GetProfile uid -> send (Storage.Map.GetById @UserR uid) >>= transform
-      GetAritcle aid -> send (Storage.Map.GetById @ArticleR aid) >>= transform
+      GetArticle aid -> send (Storage.Map.GetById @ArticleR aid) >>= transform
       ListArticles -> runNonDetA @[] $ send (Storage.Map.GetAll @ArticleR) >>= oneOf >>= transform
       GetComments aid -> do
         void $ send (Storage.Map.GetById @ArticleR aid)

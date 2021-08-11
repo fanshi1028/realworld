@@ -11,20 +11,19 @@ module HTTP.Util
     CreateApi,
     ReadApi,
     UpdateApi,
-    DeleteApi,
     ReadManyApi,
-    RUDApi,
     NoBodyUpdateApi,
     ToggleApi,
+    UDApi,
   )
 where
 
 import Domain.Util.Field (Tag, Username)
 import Domain.Util.JSON.From (In)
 import Domain.Util.JSON.To (Out)
-import GHC.TypeLits (Symbol)
-import Servant (Delete, FromHttpApiData, Get, JSON, Post, Put, QueryParam, ReqBody, type (:<|>), type (:>))
 import Domain.Util.Validation (WithValidation)
+import GHC.TypeLits (Symbol)
+import Servant (Delete, FromHttpApiData, Get, JSON, Post, Put, QueryParam, ReqBody, type (:<|>), type (:>), NoContent)
 
 -- Paging
 newtype Limit = Limit Natural deriving (FromHttpApiData)
@@ -60,12 +59,10 @@ type ReadManyApi (r :: Symbol -> Type) (o :: Symbol) = Get '[JSON] (Out [r o])
 
 type UpdateApi (r :: Symbol -> Type) (o :: Symbol) = UpdateBody r :> Put '[JSON] (Out (r o))
 
-type DeleteApi (r :: Symbol -> Type) (o :: Symbol) = Delete '[JSON] (Out (r o))
-
 type NoBodyUpdateApi (r :: Symbol -> Type) (o :: Symbol) = Post '[JSON] (Out (r o))
 
 -- common CRUD combination
 
-type RUDApi (r :: Symbol -> Type) (o :: Symbol) = ReadApi r o :<|> UpdateApi r o :<|> DeleteApi r o
+type UDApi (r :: Symbol -> Type) (o :: Symbol) = UpdateApi r o :<|> Delete '[JSON] NoContent
 
-type ToggleApi (r :: Symbol -> Type) (o :: Symbol) = NoBodyUpdateApi r o :<|> DeleteApi r o
+type ToggleApi (r :: Symbol -> Type) (o :: Symbol) = NoBodyUpdateApi r o :<|> Delete '[JSON] (Out (r o))
