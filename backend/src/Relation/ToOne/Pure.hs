@@ -5,12 +5,12 @@
 {-# LANGUAGE UndecidableInstances #-}
 
 -- |
-module Relation.OneToOne.Pure (run) where
+module Relation.ToOne.Pure (run) where
 
 import Control.Algebra (Algebra (alg), type (:+:) (L, R))
 import Data.Singletons.Bool (SBoolI (sbool), fromSBool)
 import GHC.TypeLits (Symbol)
-import Relation.OneToOne (E (GetRelated, IsRelated, Relate, Unrelate))
+import Relation.ToOne (E (GetRelated, IsRelated, Relate, Unrelate))
 
 newtype
   C

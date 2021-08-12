@@ -23,7 +23,7 @@ import HTTP (Api, server)
 import qualified Network.Wai.Handler.Warp as W (run)
 import qualified Relation.ManyToMany (run)
 import qualified Relation.ToMany.Pure (run)
-import qualified Relation.OneToOne.Pure (run)
+import qualified Relation.ToOne.Pure (run)
 import qualified STMWithUnsafeIO (run)
 import Servant (Application, Context (EmptyContext, (:.)), ServerError (errBody), err400, err401, err404, err500, hoistServerWithContext, serveWithContext, throwError)
 import Servant.Auth.Server (AuthResult (Indefinite), CookieSettings, JWTSettings, defaultCookieSettings, defaultJWTSettings, generateKey)
@@ -61,7 +61,7 @@ app cs jwts userDb articleDb commentDb tagDb =
           . Current.State.run
           . R.runReader jwts
           . R.runReader cs
-          . Relation.OneToOne.Pure.run @Email @"of" @(UserR "id") @'True
+          . Relation.ToOne.Pure.run @Email @"of" @(UserR "id") @'True
           . Relation.ToMany.Pure.run @(ArticleR "id") @"has" @(CommentR "id") @'True
           . Relation.ToMany.Pure.run @(UserR "id") @"create" @(ArticleR "id") @'True
           . ( Relation.ManyToMany.run @(ArticleR "id") @"taggedBy" @Tag

@@ -27,7 +27,7 @@ import GHC.Records (HasField (getField))
 import GHC.TypeLits (Symbol)
 import qualified GenUUID (E (Generate))
 import qualified Relation.ManyToMany (E (GetRelatedLeft, GetRelatedRight, IsRelated, Relate))
-import qualified Relation.OneToOne (E (GetRelated))
+import qualified Relation.ToOne (E (GetRelated))
 import Relude.Extra (un)
 import qualified Storage.Map (E (GetById))
 import Validation (Validation (Failure))
@@ -63,7 +63,7 @@ instance
   ( Algebra sig m,
     Member (Current.E Time) sig,
     Member (Storage.Map.E UserR) sig,
-    Member (Relation.OneToOne.E Email "of" (UserR "id")) sig,
+    Member (Relation.ToOne.E Email "of" (UserR "id")) sig,
     Member (Throw (AlreadyExists Email)) sig,
     Member (Throw (AlreadyExists Username)) sig,
     Member (Catch (NotFound (UserR "id"))) sig
@@ -72,7 +72,7 @@ instance
   where
   transform (UserRegister user em pw) = do
     void $ send $ GetCurrent @Time
-    send (Relation.OneToOne.GetRelated @_ @"of" @(UserR "id") em) >>= \case
+    send (Relation.ToOne.GetRelated @_ @"of" @(UserR "id") em) >>= \case
       Just _ -> throwError $ AlreadyExists em
       Nothing ->
         send (Storage.Map.GetById $ UserId user) >> throwError (AlreadyExists user)

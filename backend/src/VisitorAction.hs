@@ -24,7 +24,7 @@ import Domain.Util.Representation (Transform (transform))
 import GHC.Records (HasField (getField))
 import qualified Relation.ManyToMany (E)
 import qualified Relation.ToMany (E (GetRelated))
-import qualified Relation.OneToOne (E (Relate))
+import qualified Relation.ToOne (E (Relate))
 import qualified Storage.Map (E (GetAll, GetById, Insert))
 import qualified Storage.Set (E (GetAll))
 
@@ -48,7 +48,7 @@ instance
     Member (Storage.Map.E ArticleR) sig,
     Member (Storage.Map.E CommentR) sig,
     Member (Storage.Set.E Tag) sig,
-    Member (Relation.OneToOne.E Email "of" (UserR "id")) sig,
+    Member (Relation.ToOne.E Email "of" (UserR "id")) sig,
     Member (Relation.ManyToMany.E (ArticleR "id") "taggedBy" Tag) sig,
     Member (Relation.ManyToMany.E (UserR "id") "favorite" (ArticleR "id")) sig,
     Member (Relation.ManyToMany.E (UserR "id") "follow" (UserR "id")) sig,
@@ -73,7 +73,7 @@ instance
       Register user -> do
         a <- transform user
         send $ Storage.Map.Insert @UserR a
-        transform user >>= send . Relation.OneToOne.Relate @_ @(UserR "id") @"of" (getField @"email" user)
+        transform user >>= send . Relation.ToOne.Relate @_ @(UserR "id") @"of" (getField @"email" user)
         transform a
       Login user -> do
         send (Auth.Login user)

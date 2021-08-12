@@ -4,14 +4,14 @@
 {-# LANGUAGE UndecidableInstances #-}
 
 -- |
-module Relation.OneToOne.InMem (ExistAction (..), run) where
+module Relation.ToOne.InMem (ExistAction (..), run) where
 
 import Control.Algebra (Algebra (alg), type (:+:) (L, R))
 import Control.Effect.Lift (Lift, sendM)
 import Control.Effect.Sum (Member)
 import qualified Focus as FC (Change (Leave, Remove, Set), unitCases)
 import GHC.TypeLits (Symbol)
-import Relation.OneToOne (E (GetRelated, IsRelated, Relate, Unrelate))
+import Relation.ToOne (E (GetRelated, IsRelated, Relate, Unrelate))
 import qualified StmContainers.Map as STM (Map, focus, lookup)
 
 data ExistAction = UpdateIfExist | IgnoreIfExist
