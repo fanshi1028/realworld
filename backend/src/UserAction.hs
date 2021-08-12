@@ -29,7 +29,7 @@ import Domain.Util.Field (Tag, Time)
 import Domain.Util.Representation (Transform (transform), applyPatch)
 import qualified GenUUID (E)
 import qualified Relation.ManyToMany (E (GetRelatedLeft, Relate, Unrelate, UnrelateByKeyRight))
-import qualified Relation.OneToMany (E (GetRelated, Relate, Unrelate, UnrelateByKey))
+import qualified Relation.ToMany (E (GetRelated, Relate, Unrelate, UnrelateByKey))
 import qualified Storage.Map (E (DeleteById, GetById, Insert, UpdateById))
 import qualified Validation as V (Validation (Failure, Success))
 
@@ -72,8 +72,8 @@ instance
     Member (Relation.ManyToMany.E (UserR "id") "follow" (UserR "id")) sig,
     Member (Relation.ManyToMany.E (UserR "id") "favorite" (ArticleR "id")) sig,
     Member (Relation.ManyToMany.E (ArticleR "id") "taggedBy" Tag) sig,
-    Member (Relation.OneToMany.E (ArticleR "id") "has" (CommentR "id")) sig,
-    Member (Relation.OneToMany.E (UserR "id") "create" (ArticleR "id")) sig,
+    Member (Relation.ToMany.E (ArticleR "id") "has" (CommentR "id")) sig,
+    Member (Relation.ToMany.E (UserR "id") "create" (ArticleR "id")) sig,
     Member (Current.E (UserR "authWithToken")) sig,
     Member (Catch (NotAuthorized UserR)) sig,
     Algebra sig m
@@ -105,7 +105,7 @@ instance
             send $ Relation.ManyToMany.Unrelate @_ @_ @"follow" authUserId targetUserId
             UserProfile <$> transform targetUser <*> pure False
           CreateArticle create -> do
-            transform create >>= send . Relation.OneToMany.Relate @_ @(ArticleR "id") @"create" authUserId
+            transform create >>= send . Relation.ToMany.Relate @_ @(ArticleR "id") @"create" authUserId
             a <- transform create
             send (Storage.Map.Insert a) >> transform a
           UpdateArticle articleId update ->
@@ -117,8 +117,8 @@ instance
           DeleteArticle articleId -> do
             void $ send $ Storage.Map.GetById articleId
             send $ Storage.Map.DeleteById articleId
-            send $ Relation.OneToMany.Unrelate @_ @_ @"create" authUserId articleId
-            send $ Relation.OneToMany.UnrelateByKey @_ @"has" @(CommentR "id") articleId
+            send $ Relation.ToMany.Unrelate @_ @_ @"create" authUserId articleId
+            send $ Relation.ToMany.UnrelateByKey @_ @"has" @(CommentR "id") articleId
             send $ Relation.ManyToMany.UnrelateByKeyRight @_ @(UserR "id") @"favorite" articleId
           AddCommentToArticle articleId cc@(CommentCreate comment) -> do
             authorId <- getField @"author" <$> send (Storage.Map.GetById articleId)
@@ -126,13 +126,13 @@ instance
             commentId <- transform cc
             time <- send $ Current.GetCurrent @Time
             send $ Storage.Map.Insert $ Comment commentId time time comment authorId articleId
-            send $ Relation.OneToMany.Relate @_ @_ @"has" articleId commentId
+            send $ Relation.ToMany.Relate @_ @_ @"has" articleId commentId
             CommentWithAuthorProfile commentId time time comment <$> transform auth
           DeleteComment articleId commentId -> do
             void $ send $ Storage.Map.GetById articleId
             void $ send $ Storage.Map.GetById commentId
             send $ Storage.Map.DeleteById commentId
-            send $ Relation.OneToMany.Unrelate @_ @_ @"has" articleId commentId
+            send $ Relation.ToMany.Unrelate @_ @_ @"has" articleId commentId
           FavoriteArticle articleId -> do
             a <- send $ Storage.Map.GetById articleId
             send $ Relation.ManyToMany.Relate @_ @_ @"favorite" authUserId articleId
@@ -145,7 +145,7 @@ instance
           FeedArticles -> runNonDetA @[] $ do
             send (Relation.ManyToMany.GetRelatedLeft @_ @"follow" authUserId)
               >>= oneOf
-              >>= send . Relation.OneToMany.GetRelated @(UserR "id") @"create"
+              >>= send . Relation.ToMany.GetRelated @(UserR "id") @"create"
               >>= oneOf
               >>= flip catchError (const @_ @(NotFound (ArticleR "id")) $ throwError $ Impossible "article id not found")
                 . send
@@ -154,7 +154,7 @@ instance
           GetCommentsFromArticle articleId -> do
             void $ send (Storage.Map.GetById articleId)
             runNonDetA @[] $ do
-              send (Relation.OneToMany.GetRelated @_ @"has" articleId)
+              send (Relation.ToMany.GetRelated @_ @"has" articleId)
                 >>= oneOf
                 >>= flip catchError (const @_ @(NotFound (CommentR "id")) $ throwError $ Impossible "comment id not found")
                   . send

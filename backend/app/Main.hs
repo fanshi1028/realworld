@@ -22,7 +22,7 @@ import qualified GenUUID.V1 (run)
 import HTTP (Api, server)
 import qualified Network.Wai.Handler.Warp as W (run)
 import qualified Relation.ManyToMany (run)
-import qualified Relation.OneToMany.Pure (run)
+import qualified Relation.ToMany.Pure (run)
 import qualified Relation.OneToOne.Pure (run)
 import qualified STMWithUnsafeIO (run)
 import Servant (Application, Context (EmptyContext, (:.)), ServerError (errBody), err400, err401, err404, err500, hoistServerWithContext, serveWithContext, throwError)
@@ -62,19 +62,19 @@ app cs jwts userDb articleDb commentDb tagDb =
           . R.runReader jwts
           . R.runReader cs
           . Relation.OneToOne.Pure.run @Email @"of" @(UserR "id") @'True
-          . Relation.OneToMany.Pure.run @(ArticleR "id") @"has" @(CommentR "id") @'True
-          . Relation.OneToMany.Pure.run @(UserR "id") @"create" @(ArticleR "id") @'True
+          . Relation.ToMany.Pure.run @(ArticleR "id") @"has" @(CommentR "id") @'True
+          . Relation.ToMany.Pure.run @(UserR "id") @"create" @(ArticleR "id") @'True
           . ( Relation.ManyToMany.run @(ArticleR "id") @"taggedBy" @Tag
-                >>> Relation.OneToMany.Pure.run @(ArticleR "id") @"taggedBy" @Tag @'True
-                >>> Relation.OneToMany.Pure.run @Tag @"tagging" @(ArticleR "id") @'True
+                >>> Relation.ToMany.Pure.run @(ArticleR "id") @"taggedBy" @Tag @'True
+                >>> Relation.ToMany.Pure.run @Tag @"tagging" @(ArticleR "id") @'True
             )
           . ( Relation.ManyToMany.run @(UserR "id") @"follow" @(UserR "id")
-                >>> Relation.OneToMany.Pure.run @(UserR "id") @"following" @(UserR "id") @'True
-                >>> Relation.OneToMany.Pure.run @(UserR "id") @"followedBy" @(UserR "id") @'True
+                >>> Relation.ToMany.Pure.run @(UserR "id") @"following" @(UserR "id") @'True
+                >>> Relation.ToMany.Pure.run @(UserR "id") @"followedBy" @(UserR "id") @'True
             )
           . ( Relation.ManyToMany.run @(UserR "id") @"favorite" @(ArticleR "id")
-                >>> Relation.OneToMany.Pure.run @(ArticleR "id") @"favoritedBy" @(UserR "id") @'True
-                >>> Relation.OneToMany.Pure.run @(UserR "id") @"favorite" @(ArticleR "id") @'True
+                >>> Relation.ToMany.Pure.run @(ArticleR "id") @"favoritedBy" @(UserR "id") @'True
+                >>> Relation.ToMany.Pure.run @(UserR "id") @"favorite" @(ArticleR "id") @'True
             )
           . (Storage.Map.InMem.run @UserR >>> usingReaderT userDb)
           . (Storage.Map.InMem.run @ArticleR >>> usingReaderT articleDb)

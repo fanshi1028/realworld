@@ -23,7 +23,7 @@ import Domain.Util.Field (Email, Tag, Time, Username)
 import Domain.Util.Representation (Transform (transform))
 import GHC.Records (HasField (getField))
 import qualified Relation.ManyToMany (E)
-import qualified Relation.OneToMany (E (GetRelated))
+import qualified Relation.ToMany (E (GetRelated))
 import qualified Relation.OneToOne (E (Relate))
 import qualified Storage.Map (E (GetAll, GetById, Insert))
 import qualified Storage.Set (E (GetAll))
@@ -52,7 +52,7 @@ instance
     Member (Relation.ManyToMany.E (ArticleR "id") "taggedBy" Tag) sig,
     Member (Relation.ManyToMany.E (UserR "id") "favorite" (ArticleR "id")) sig,
     Member (Relation.ManyToMany.E (UserR "id") "follow" (UserR "id")) sig,
-    Member (Relation.OneToMany.E (ArticleR "id") "has" (CommentR "id")) sig,
+    Member (Relation.ToMany.E (ArticleR "id") "has" (CommentR "id")) sig,
     Member (Throw Impossible) sig,
     Member (Throw (NotAuthorized UserR)) sig,
     Member (Throw (AlreadyExists Email)) sig,
@@ -87,7 +87,7 @@ instance
       GetComments aid -> do
         void $ send (Storage.Map.GetById @ArticleR aid)
         runNonDetA @[] $
-          send (Relation.OneToMany.GetRelated @_ @"has" @(CommentR "id") aid)
+          send (Relation.ToMany.GetRelated @_ @"has" @(CommentR "id") aid)
             >>= oneOf
             >>= flip catchError (const @_ @(NotFound (CommentR "id")) $ throwError $ Impossible "comment id not found")
               . send
