@@ -25,7 +25,7 @@ import Domain.Article (ArticleR (..))
 import Domain.Comment (CommentR (..))
 import Domain.User (UserR (..))
 import Domain.Util.Error (AlreadyExists, Impossible (Impossible), NotAuthorized, NotFound, ValidationErr)
-import Domain.Util.Field (Time)
+import Domain.Util.Field (Tag, Time)
 import Domain.Util.Representation (Transform (transform), applyPatch)
 import qualified GenUUID (E)
 import qualified Relation.ManyToMany (E (GetRelatedLeft, Relate, Unrelate, UnrelateByKeyRight))
@@ -71,6 +71,7 @@ instance
     Member GenUUID.E sig,
     Member (Relation.ManyToMany.E (UserR "id") "follow" (UserR "id")) sig,
     Member (Relation.ManyToMany.E (UserR "id") "favorite" (ArticleR "id")) sig,
+    Member (Relation.ManyToMany.E (ArticleR "id") "taggedBy" Tag) sig,
     Member (Relation.OneToMany.E (ArticleR "id") "has" (CommentR "id")) sig,
     Member (Relation.OneToMany.E (UserR "id") "create" (ArticleR "id")) sig,
     Member (Current.E (UserR "authWithToken")) sig,

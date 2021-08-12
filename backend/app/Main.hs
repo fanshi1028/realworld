@@ -64,6 +64,10 @@ app cs jwts userDb articleDb commentDb tagDb =
           . Relation.OneToOne.Pure.run @Email @"of" @(UserR "id") @'True
           . Relation.OneToMany.Pure.run @(ArticleR "id") @"has" @(CommentR "id") @'True
           . Relation.OneToMany.Pure.run @(UserR "id") @"create" @(ArticleR "id") @'True
+          . ( Relation.ManyToMany.run @(ArticleR "id") @"taggedBy" @Tag
+                >>> Relation.OneToMany.Pure.run @(ArticleR "id") @"taggedBy" @Tag @'True
+                >>> Relation.OneToMany.Pure.run @Tag @"tagging" @(ArticleR "id") @'True
+            )
           . ( Relation.ManyToMany.run @(UserR "id") @"follow" @(UserR "id")
                 >>> Relation.OneToMany.Pure.run @(UserR "id") @"following" @(UserR "id") @'True
                 >>> Relation.OneToMany.Pure.run @(UserR "id") @"followedBy" @(UserR "id") @'True

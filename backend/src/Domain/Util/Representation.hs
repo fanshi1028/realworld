@@ -21,12 +21,12 @@ import Domain.Article (ArticleR (..))
 import Domain.Comment (CommentR (..))
 import Domain.User (UserR (..))
 import Domain.Util.Error (AlreadyExists (AlreadyExists), NotAuthorized, NotFound)
-import Domain.Util.Field (Bio (Bio), Email, Image (Image), Slug (Slug), Time, Title (..), Username)
+import Domain.Util.Field (Bio (Bio), Email, Image (Image), Slug (Slug), Tag, Time, Title (..), Username)
 import Domain.Util.Validation (WithUpdate, WithValidation)
 import GHC.Records (HasField (getField))
 import GHC.TypeLits (Symbol)
 import qualified GenUUID (E (Generate))
-import qualified Relation.ManyToMany (E (IsRelated))
+import qualified Relation.ManyToMany (E (IsRelated, Relate))
 import qualified Relation.OneToOne (E (GetRelated))
 import Relude.Extra (un)
 import qualified Storage.Map (E (GetById))
@@ -125,9 +125,20 @@ instance {-# OVERLAPPABLE #-} (HasField "slug" (ArticleR s) Slug) => Transform A
 instance {-# OVERLAPPING #-} Transform ArticleR "create" "id" m where
   transform = pure . ArticleId . Slug . Text.intercalate "-" . words . Text.toLower . un . getField @"title"
 
--- FIXME
-instance Transform ArticleR "create" "all" m where
-  transform _ = pure undefined
+instance
+  ( Algebra sig m,
+    Member (Current.E Time) sig,
+    Member (Current.E (UserR "authWithToken")) sig,
+    Member (Relation.ManyToMany.E (ArticleR "id") "taggedBy" Tag) sig
+  ) =>
+  Transform ArticleR "create" "all" m
+  where
+  transform ac@(ArticleCreate tt des bd ts) = do
+    t <- send $ GetCurrent @Time
+    UserAuthWithToken auth _ <- send $ GetCurrent @(UserR "authWithToken")
+    aid@(ArticleId sl) <- transform ac
+    foldMapA (send . Relation.ManyToMany.Relate @_ @_ @"taggedBy" aid) ts
+    Article sl tt des bd t t <$> transform auth
 
 -- FIXME
 instance Transform ArticleR "all" "withAuthorProfile" m where

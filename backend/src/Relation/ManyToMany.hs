@@ -84,3 +84,9 @@ type instance ManyRight "follow" = "followedBy"
 type instance ManyLeft "favorite" = "favorite"
 
 type instance ManyRight "favorite" = "favoritedBy"
+
+-- taggedBy
+
+type instance ManyLeft "taggedBy" = "taggedBy"
+
+type instance ManyRight "taggedBy" = "tagging"

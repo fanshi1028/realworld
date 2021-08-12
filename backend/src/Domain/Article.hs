@@ -33,11 +33,11 @@ data instance ArticleR "all" = Article
     title :: Title, -- "How to train your dragon",
     description :: Description, -- "Ever wonder how?",
     body :: Body, -- "It takes a Jacobian",
-    tagList :: [Tag], -- ["dragons", "training"],
+    -- tagList :: [Tag], -- ["dragons", "training"],
     createdAt :: Time, -- "2016-02-18T03:22:56.637Z",
     updatedAt :: Time, -- "2016-02-18T03:48:35.824Z",
-    favorited :: Bool, -- false,
-    favoritesCount :: Natural, -- 0,
+    -- favorited :: Bool, -- false,
+    -- favoritesCount :: Natural, -- 0,
     author :: UserR "id"
   }
   deriving (Generic)
