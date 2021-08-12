@@ -10,13 +10,15 @@
 -- |
 module Domain.Article (ArticleR (..)) where
 
-import Data.Aeson (FromJSON (parseJSON), ToJSON (toEncoding), Value (Array), defaultOptions, genericParseJSON, withObject)
+import Data.Aeson (FromJSON (parseJSON), ToJSON (toEncoding, toJSON), Value (Array), defaultOptions, genericParseJSON, genericToEncoding, genericToJSON, withObject)
+import Data.Aeson.Encoding (value)
 import Data.Aeson.Types (Value (Object))
 import Data.Generic.HKD (construct)
+import qualified Data.HashMap.Strict as HM
 import Domain.User (UserR)
 import Domain.Util.Field (Body, Description, Slug (Slug), Tag, Time, Title)
 import Domain.Util.JSON.From (In, insert', updatableParseJSON, wrappedParseJSON)
-import Domain.Util.JSON.To (Out (Out), multiWrappedWithCountToEncoding, wrappedToEncoding)
+import Domain.Util.JSON.To (Out (Out), multiWrappedWithCountToEncoding, wrapEncoding, wrappedToEncoding)
 import Domain.Util.Validation (WithUpdate, WithValidation)
 import GHC.TypeLits (Symbol)
 import Servant (FromHttpApiData (parseUrlPiece))
@@ -40,7 +42,7 @@ data instance ArticleR "all" = Article
     -- favoritesCount :: Natural, -- 0,
     author :: UserR "id"
   }
-  deriving (Generic)
+  deriving (Generic, ToJSON)
 
 --------------------------
 --                 m    --
@@ -50,19 +52,45 @@ data instance ArticleR "all" = Article
 -- "#m#"  "mm"#    "mm  --
 --------------------------
 
+-- data instance ArticleR "withAuthorProfile" = ArticleWithAuthorProfile
+--   { slug :: Slug, -- "how-to-train-your-dragon",
+--     title :: Title, -- "How to train your dragon",
+--     description :: Description, -- "Ever wonder how?",
+--     body :: Body, -- "It takes a Jacobian",
+--     tagList :: [Tag], -- ["dragons", "training"],
+--     createdAt :: Time, -- "2016-02-18T03:22:56.637Z",
+--     updatedAt :: Time, -- "2016-02-18T03:48:35.824Z",
+--     favorited :: Bool, -- false,
+--     favoritesCount :: Natural, -- 0,
+--     author :: UserR "profile"
+--   }
+--   deriving (Generic, ToJSON)
+
 data instance ArticleR "withAuthorProfile" = ArticleWithAuthorProfile
-  { slug :: Slug, -- "how-to-train-your-dragon",
-    title :: Title, -- "How to train your dragon",
-    description :: Description, -- "Ever wonder how?",
-    body :: Body, -- "It takes a Jacobian",
+  { article :: ArticleR "all",
     tagList :: [Tag], -- ["dragons", "training"],
-    createdAt :: Time, -- "2016-02-18T03:22:56.637Z",
-    updatedAt :: Time, -- "2016-02-18T03:48:35.824Z",
     favorited :: Bool, -- false,
     favoritesCount :: Natural, -- 0,
     author :: UserR "profile"
   }
-  deriving (Generic, ToJSON)
+  deriving (Generic)
+
+instance ToJSON (ArticleR "withAuthorProfile") where
+  toEncoding (ArticleWithAuthorProfile a tags b n ur) =
+    case genericToJSON defaultOptions a of
+      Object hm ->
+        value
+          . Object
+          . HM.insert "tagList" (toJSON tags)
+          . HM.insert "favorited" (toJSON b)
+          . HM.insert "favoritesCount" (toJSON n)
+          . HM.insert "author" (toJSON ur)
+          $ hm
+      -- FIXME
+      _ -> undefined
+
+instance ToJSON (Out (ArticleR "withAuthorProfile")) where
+  toEncoding (Out a) = wrapEncoding "article" $ toEncoding a
 
 -- >>> import Domain.Util
 -- >>> import Domain.User
@@ -82,8 +110,8 @@ data instance ArticleR "withAuthorProfile" = ArticleWithAuthorProfile
 -- >>> encode $ Out article
 -- >>> encode [ article, article ]
 -- >>> encode $ Out [ article, article ]
-instance ToJSON (Out (ArticleR "withAuthorProfile")) where
-  toEncoding = wrappedToEncoding "article"
+-- instance ToJSON (Out (ArticleR "withAuthorProfile")) where
+--   toEncoding = wrappedToEncoding "article"
 
 instance (Foldable t, ToJSON (t (ArticleR "withAuthorProfile"))) => ToJSON (Out (t (ArticleR "withAuthorProfile"))) where
   toEncoding (Out as) = multiWrappedWithCountToEncoding "articles" "articlesCount" as

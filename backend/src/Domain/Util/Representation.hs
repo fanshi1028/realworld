@@ -26,7 +26,7 @@ import Domain.Util.Validation (WithUpdate, WithValidation)
 import GHC.Records (HasField (getField))
 import GHC.TypeLits (Symbol)
 import qualified GenUUID (E (Generate))
-import qualified Relation.ManyToMany (E (IsRelated, Relate))
+import qualified Relation.ManyToMany (E (GetRelatedLeft, GetRelatedRight, IsRelated, Relate))
 import qualified Relation.OneToOne (E (GetRelated))
 import Relude.Extra (un)
 import qualified Storage.Map (E (GetById))
@@ -140,9 +140,24 @@ instance
     foldMapA (send . Relation.ManyToMany.Relate @_ @_ @"taggedBy" aid) ts
     Article sl tt des bd t t <$> transform auth
 
--- FIXME
-instance Transform ArticleR "all" "withAuthorProfile" m where
-  transform _ = pure undefined
+instance
+  ( Algebra sig m,
+    Member (Current.E (UserR "authWithToken")) sig,
+    Member (Relation.ManyToMany.E (ArticleR "id") "taggedBy" Tag) sig,
+    Member (Relation.ManyToMany.E (UserR "id") "favorite" (ArticleR "id")) sig
+  ) =>
+  Transform ArticleR "all" "withAuthorProfile" m
+  where
+  transform a = do
+    UserAuthWithToken auth _ <- send $ GetCurrent @(UserR "authWithToken")
+    aid <- transform a
+    uid <- transform auth
+    ArticleWithAuthorProfile a
+      <$> send (Relation.ManyToMany.GetRelatedLeft @(ArticleR "id") @"taggedBy" @Tag aid)
+      <*> send (Relation.ManyToMany.IsRelated @(UserR "id") @_ @"favorite" uid aid)
+      <*> (fromIntegral . length <$> send (Relation.ManyToMany.GetRelatedRight @_ @(UserR "id") @"favorite" aid))
+      -- FIXME
+      <*> undefined
 
 -- NOTE: Comment
 

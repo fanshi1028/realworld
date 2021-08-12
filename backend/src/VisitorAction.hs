@@ -49,6 +49,8 @@ instance
     Member (Storage.Map.E CommentR) sig,
     Member (Storage.Set.E Tag) sig,
     Member (Relation.OneToOne.E Email "of" (UserR "id")) sig,
+    Member (Relation.ManyToMany.E (ArticleR "id") "taggedBy" Tag) sig,
+    Member (Relation.ManyToMany.E (UserR "id") "favorite" (ArticleR "id")) sig,
     Member (Relation.ManyToMany.E (UserR "id") "follow" (UserR "id")) sig,
     Member (Relation.OneToMany.E (ArticleR "id") "has" (CommentR "id")) sig,
     Member (Throw Impossible) sig,

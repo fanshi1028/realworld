@@ -99,10 +99,7 @@ instance ToJWT (UserR "authWithToken") where
 -- >>> user = UserAuthWithToken (UserAuth (Email "jake@jake.jake") (Username "jake") (Bio "I work at statefarm") (Image "https://static.productionready.io/images/smiley-cyrus.jpg")) (Token "jwt.token.here")
 -- >>> encode $ Out user
 instance ToJSON (Out (UserR "authWithToken")) where
-  toEncoding (Out (UserAuthWithToken auth token)) = case genericToJSON defaultOptions auth of
-    Object hm -> wrapEncoding "user" $ value $ Object $ HM.insert "token" (toJSON token) hm
-    -- FIXME
-    _ -> undefined -- impossible case
+  toEncoding (Out a) = wrapEncoding "user" $ toEncoding a
 
 -- Profile
 -- data instance UserR "profile" = UserProfile
