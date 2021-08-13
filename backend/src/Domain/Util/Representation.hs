@@ -143,8 +143,11 @@ instance
 instance
   ( Algebra sig m,
     Member (Current.E (UserR "authWithToken")) sig,
+    Member (Storage.Map.E UserR) sig,
     Member (Relation.ManyToMany.E (ArticleR "id") "taggedBy" Tag) sig,
-    Member (Relation.ManyToMany.E (UserR "id") "favorite" (ArticleR "id")) sig
+    Member (Relation.ManyToMany.E (UserR "id") "favorite" (ArticleR "id")) sig,
+    Member (Relation.ManyToMany.E (UserR "id") "follow" (UserR "id")) sig,
+    Member (Catch (NotAuthorized UserR)) sig
   ) =>
   Transform ArticleR "all" "withAuthorProfile" m
   where
@@ -156,8 +159,7 @@ instance
       <$> send (Relation.ManyToMany.GetRelatedLeft @(ArticleR "id") @"taggedBy" @Tag aid)
       <*> send (Relation.ManyToMany.IsRelated @(UserR "id") @_ @"favorite" uid aid)
       <*> (fromIntegral . length <$> send (Relation.ManyToMany.GetRelatedRight @_ @(UserR "id") @"favorite" aid))
-      -- FIXME
-      <*> undefined
+      <*> (getField @"author" a & send . Storage.Map.GetById @UserR >>= transform)
 
 -- NOTE: Comment
 
