@@ -124,7 +124,6 @@ instance
                 )
           AddCommentToArticle articleId cc@(CommentCreate comment) -> do
             authorId <- getField @"author" <$> send (Storage.Map.GetById articleId)
-            void $ send (Storage.Map.GetById authorId)
             commentId <- transform cc
             time <- send $ Current.GetCurrent @Time
             send $ Storage.Map.Insert $ Comment commentId time time comment authorId articleId
