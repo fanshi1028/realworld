@@ -95,10 +95,10 @@ instance
 
 instance
   ( Algebra sig m,
-    Transform UserR "auth" "id" m,
     Member (Relation.ManyToMany.E (UserR "id") "follow" (UserR "id")) sig,
     Member (Current.E (UserR "authWithToken")) sig,
-    Member (Catch (NotAuthorized UserR)) sig
+    Member (Catch (NotAuthorized UserR)) sig,
+    Transform UserR "auth" "id" m
   ) =>
   Transform UserR "auth" "profile" m
   where
@@ -147,7 +147,7 @@ instance
     Member (Relation.ManyToMany.E (ArticleR "id") "taggedBy" Tag) sig,
     Member (Relation.ManyToMany.E (UserR "id") "favorite" (ArticleR "id")) sig,
     Member (Relation.ManyToMany.E (UserR "id") "follow" (UserR "id")) sig,
-    Member (Catch (NotAuthorized UserR)) sig
+    Transform UserR "all" "profile" m
   ) =>
   Transform ArticleR "all" "withAuthorProfile" m
   where
