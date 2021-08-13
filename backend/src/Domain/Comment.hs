@@ -33,6 +33,7 @@ data instance CommentR "all" = Comment
     author :: UserR "id",
     article :: ArticleR "id"
   }
+  deriving (Generic)
 
 --------------------------
 --                 m    --

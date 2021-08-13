@@ -24,12 +24,12 @@ import Data.Generics.Product (getField)
 import Domain.Article (ArticleR (..))
 import Domain.Comment (CommentR (..))
 import Domain.User (UserR (..))
-import Domain.Util.Error (AlreadyExists, Impossible (Impossible), NotAuthorized, NotFound, ValidationErr)
+import Domain.Util.Error (AlreadyExists, Impossible (Impossible), NotAuthorized (NotAuthorized), NotFound (NotFound), ValidationErr)
 import Domain.Util.Field (Tag, Time)
 import Domain.Util.Representation (Transform (transform), applyPatch)
 import qualified GenUUID (E)
 import qualified Relation.ManyToMany (E (GetRelatedLeft, Relate, Unrelate, UnrelateByKeyRight))
-import qualified Relation.ToMany (E (GetRelated, Relate, Unrelate, UnrelateByKey))
+import qualified Relation.ToMany (E (GetRelated, IsRelated, Relate, Unrelate, UnrelateByKey))
 import qualified Storage.Map (E (DeleteById, GetById, Insert, UpdateById))
 import Validation (validation)
 
@@ -66,6 +66,7 @@ instance
     Member (Catch (NotFound (ArticleR "id"))) sig,
     Member (Throw (NotFound (CommentR "id"))) sig,
     Member (Catch (NotFound (CommentR "id"))) sig,
+    Member (Throw (NotAuthorized UserR)) sig,
     Member (Throw Impossible) sig,
     Member (Current.E Time) sig,
     Member GenUUID.E sig,
@@ -110,12 +111,17 @@ instance
               <&> applyPatch update
               >>= validation throwError (send . Storage.Map.UpdateById articleId . const)
               >>= transform @_ @_ @"withAuthorProfile"
-          DeleteArticle articleId -> do
-            void $ send $ Storage.Map.GetById articleId
-            send $ Storage.Map.DeleteById articleId
-            send $ Relation.ToMany.Unrelate @_ @_ @"create" authUserId articleId
-            send $ Relation.ToMany.UnrelateByKey @_ @"has" @(CommentR "id") articleId
-            send $ Relation.ManyToMany.UnrelateByKeyRight @_ @(UserR "id") @"favorite" articleId
+          DeleteArticle articleId ->
+            send (Storage.Map.GetById articleId)
+              <&> (== authUserId) . getField @"author"
+              >>= bool
+                (throwError $ NotAuthorized @UserR)
+                ( do
+                    send $ Storage.Map.DeleteById articleId
+                    send $ Relation.ToMany.Unrelate @_ @_ @"create" authUserId articleId
+                    send $ Relation.ToMany.UnrelateByKey @_ @"has" @(CommentR "id") articleId
+                    send $ Relation.ManyToMany.UnrelateByKeyRight @_ @(UserR "id") @"favorite" articleId
+                )
           AddCommentToArticle articleId cc@(CommentCreate comment) -> do
             authorId <- getField @"author" <$> send (Storage.Map.GetById articleId)
             void $ send (Storage.Map.GetById authorId)
@@ -126,9 +132,17 @@ instance
             CommentWithAuthorProfile commentId time time comment <$> transform auth
           DeleteComment articleId commentId -> do
             void $ send $ Storage.Map.GetById articleId
-            void $ send $ Storage.Map.GetById commentId
-            send $ Storage.Map.DeleteById commentId
-            send $ Relation.ToMany.Unrelate @_ @_ @"has" articleId commentId
+            send (Relation.ToMany.IsRelated @_ @_ @"has" articleId commentId)
+              >>= bool
+                (throwError $ NotFound commentId)
+                (send $ Storage.Map.GetById commentId)
+              <&> (== authUserId) . getField @"author"
+              >>= bool
+                (throwError $ NotAuthorized @UserR)
+                ( do
+                    send $ Storage.Map.DeleteById commentId
+                    send $ Relation.ToMany.Unrelate @_ @_ @"has" articleId commentId
+                )
           FavoriteArticle articleId -> do
             a <- send $ Storage.Map.GetById articleId
             send $ Relation.ManyToMany.Relate @_ @_ @"favorite" authUserId articleId
