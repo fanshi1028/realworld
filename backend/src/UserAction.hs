@@ -122,13 +122,12 @@ instance
                     send $ Relation.ToMany.UnrelateByKey @_ @"has" @(CommentR "id") articleId
                     send $ Relation.ManyToMany.UnrelateByKeyRight @_ @(UserR "id") @"favorite" articleId
                 )
-          AddCommentToArticle articleId cc@(CommentCreate comment) -> do
-            authorId <- getField @"author" <$> send (Storage.Map.GetById articleId)
-            commentId <- transform cc
-            time <- send $ Current.GetCurrent @Time
-            send $ Storage.Map.Insert $ Comment commentId time time comment authorId articleId
+          AddCommentToArticle articleId create -> do
+            a <- usingReaderT articleId $ transform create
+            send $ Storage.Map.Insert a
+            commentId <- transform a
             send $ Relation.ToMany.Relate @_ @_ @"has" articleId commentId
-            CommentWithAuthorProfile commentId time time comment <$> transform auth
+            send (Storage.Map.GetById commentId) >>= transform
           DeleteComment articleId commentId -> do
             void $ send $ Storage.Map.GetById articleId
             send (Relation.ToMany.IsRelated @_ @_ @"has" articleId commentId)

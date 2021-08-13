@@ -166,14 +166,38 @@ instance
 instance {-# OVERLAPPABLE #-} (HasField "id" (CommentR s) (CommentR "id")) => Transform CommentR s "id" m where
   transform = pure . getField @"id"
 
--- FIXME
 instance {-# OVERLAPPING #-} (Algebra sig m, Member GenUUID.E sig) => Transform CommentR "create" "id" m where
   transform _ = CommentId <$> send GenUUID.Generate
 
--- FIXME
-instance Transform CommentR "create" "all" m where
-  transform _ = pure undefined
+instance
+  ( Algebra sig m,
+    Member (Current.E Time) sig,
+    Member (Current.E (UserR "authWithToken")) sig,
+    Transform CommentR "create" "id" m,
+    MonadReader (ArticleR "id") m
+  ) =>
+  Transform CommentR "create" "all" m
+  where
+  transform cc@(CommentCreate txt) = do
+    t <- send $ Current.GetCurrent @Time
+    Comment
+      <$> transform cc
+      <*> pure t
+      <*> pure t
+      <*> pure txt
+      <*> ( send (Current.GetCurrent @(UserR "authWithToken"))
+              >>= \(UserAuthWithToken auth _) -> transform auth
+          )
+      <*> ask @(ArticleR "id")
 
--- FIXME
-instance Transform CommentR "all" "withAuthorProfile" m where
-  transform _ = pure undefined
+instance
+  ( Algebra sig m,
+    Member (Storage.Map.E UserR) sig,
+    Transform UserR "all" "profile" m
+  ) =>
+  Transform CommentR "all" "withAuthorProfile" m
+  where
+  transform (Comment cid t1 t2 txt uid _) =
+    send (Storage.Map.GetById uid)
+      >>= transform
+      <&> CommentWithAuthorProfile cid t1 t2 txt
