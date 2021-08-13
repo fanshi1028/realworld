@@ -31,7 +31,7 @@ import qualified GenUUID (E)
 import qualified Relation.ManyToMany (E (GetRelatedLeft, Relate, Unrelate, UnrelateByKeyRight))
 import qualified Relation.ToMany (E (GetRelated, Relate, Unrelate, UnrelateByKey))
 import qualified Storage.Map (E (DeleteById, GetById, Insert, UpdateById))
-import qualified Validation as V (Validation (Failure, Success))
+import Validation (validation)
 
 data E (m :: Type -> Type) a where
   GetCurrentUser :: E m (UserR "authWithToken")
@@ -89,13 +89,10 @@ instance
           GetCurrentUser -> pure authOut
           UpdateUser update ->
             send (Storage.Map.GetById authUserId)
-              >>= ( applyPatch update >>> \case
-                      V.Failure err -> throwError err
-                      V.Success new ->
-                        send (Storage.Map.UpdateById authUserId $ const new)
-                          >>= transform
-                          >>= \newAuth -> UserAuthWithToken newAuth <$> send (Authentication.Token.CreateToken newAuth)
-                  )
+              <&> applyPatch update
+                >>= validation throwError (send . Storage.Map.UpdateById authUserId . const)
+                >>= transform
+                >>= \newAuth -> UserAuthWithToken newAuth <$> send (Authentication.Token.CreateToken newAuth)
           FollowUser targetUserId -> do
             targetUser <- send (Storage.Map.GetById targetUserId)
             send $ Relation.ManyToMany.Relate @_ @_ @"follow" authUserId targetUserId
@@ -110,10 +107,9 @@ instance
             send (Storage.Map.Insert a) >> transform a
           UpdateArticle articleId update ->
             send (Storage.Map.GetById articleId)
-              >>= ( applyPatch update >>> \case
-                      V.Failure err -> throwError err
-                      V.Success new -> send (Storage.Map.UpdateById articleId $ const new) >>= transform @_ @_ @"withAuthorProfile"
-                  )
+              <&> applyPatch update
+              >>= validation throwError (send . Storage.Map.UpdateById articleId . const)
+              >>= transform @_ @_ @"withAuthorProfile"
           DeleteArticle articleId -> do
             void $ send $ Storage.Map.GetById articleId
             send $ Storage.Map.DeleteById articleId
