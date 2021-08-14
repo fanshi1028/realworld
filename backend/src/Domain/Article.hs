@@ -27,12 +27,11 @@ data family ArticleR (r :: Symbol)
 
 newtype instance ArticleR "id" = ArticleId Slug
   deriving (Show, Eq)
-  deriving newtype (Hashable)
+  deriving newtype (Hashable, ToJSON)
 
 -- | Articles
 data instance ArticleR "all" = Article
-  { slug :: Slug, -- "how-to-train-your-dragon",
-    title :: Title, -- "How to train your dragon",
+  { title :: Title, -- "How to train your dragon",
     description :: Description, -- "Ever wonder how?",
     body :: Body, -- "It takes a Jacobian",
     -- tagList :: [Tag], -- ["dragons", "training"],
@@ -67,7 +66,8 @@ data instance ArticleR "all" = Article
 --   deriving (Generic, ToJSON)
 
 data instance ArticleR "withAuthorProfile" = ArticleWithAuthorProfile
-  { article :: ArticleR "all",
+  { slug :: ArticleR "id",
+    article :: ArticleR "all",
     tagList :: [Tag], -- ["dragons", "training"],
     favorited :: Bool, -- false,
     favoritesCount :: Natural, -- 0,
@@ -76,11 +76,12 @@ data instance ArticleR "withAuthorProfile" = ArticleWithAuthorProfile
   deriving (Generic)
 
 instance ToJSON (ArticleR "withAuthorProfile") where
-  toEncoding (ArticleWithAuthorProfile a tags b n ur) =
+  toEncoding (ArticleWithAuthorProfile aid a tags b n ur) =
     case genericToJSON defaultOptions a of
       Object hm ->
         value
           . Object
+          . HM.insert "slug" (toJSON aid)
           . HM.insert "tagList" (toJSON tags)
           . HM.insert "favorited" (toJSON b)
           . HM.insert "favoritesCount" (toJSON n)

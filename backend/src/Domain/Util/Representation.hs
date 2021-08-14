@@ -119,10 +119,7 @@ instance (Algebra sig m, Transform UserR "auth" "profile" m, Transform UserR "al
 
 -- NOTE: Article
 
-instance {-# OVERLAPPABLE #-} (HasField "slug" (ArticleR s) Slug) => Transform ArticleR s "id" m where
-  transform = pure . ArticleId . getField @"slug"
-
-instance {-# OVERLAPPING #-} Transform ArticleR "create" "id" m where
+instance (HasField "title" (ArticleR s) Title) => Transform ArticleR s "id" m where
   transform = pure . ArticleId . Slug . Text.intercalate "-" . words . Text.toLower . un . getField @"title"
 
 instance
@@ -136,9 +133,9 @@ instance
   transform ac@(ArticleCreate tt des bd ts) = do
     t <- send $ GetCurrent @Time
     UserAuthWithToken auth _ <- send $ GetCurrent @(UserR "authWithToken")
-    aid@(ArticleId sl) <- transform ac
-    foldMapA (send . Relation.ManyToMany.Relate @_ @_ @"taggedBy" aid) ts
-    Article sl tt des bd t t <$> transform auth
+    aid <- transform ac
+    foldMapA (send . Relation.ManyToMany.Relate @(ArticleR "id") @_ @"taggedBy" aid) ts
+    Article tt des bd t t <$> transform auth
 
 instance
   ( Algebra sig m,
@@ -155,7 +152,7 @@ instance
     UserAuthWithToken auth _ <- send $ GetCurrent @(UserR "authWithToken")
     aid <- transform a
     uid <- transform auth
-    ArticleWithAuthorProfile a
+    ArticleWithAuthorProfile aid a
       <$> send (Relation.ManyToMany.GetRelatedLeft @(ArticleR "id") @"taggedBy" @Tag aid)
       <*> send (Relation.ManyToMany.IsRelated @(UserR "id") @_ @"favorite" uid aid)
       <*> (fromIntegral . length <$> send (Relation.ManyToMany.GetRelatedRight @_ @(UserR "id") @"favorite" aid))
