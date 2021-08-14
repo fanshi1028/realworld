@@ -87,8 +87,7 @@ instance ToJSON (ArticleR "withAuthorProfile") where
           . HM.insert "favoritesCount" (toJSON n)
           . HM.insert "author" (toJSON ur)
           $ hm
-      -- FIXME
-      _ -> undefined
+      _ -> error "impossible in ToJSON (ArticleR \"withAuthorProfile\")"
 
 instance ToJSON (Out (ArticleR "withAuthorProfile")) where
   toEncoding (Out a) = wrapEncoding "article" $ toEncoding a

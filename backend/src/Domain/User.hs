@@ -83,13 +83,11 @@ instance FromJWT (UserR "auth")
 -- Users (for authentication)
 data instance UserR "authWithToken" = UserAuthWithToken (UserR "auth") (UserR "token") deriving (Generic, Show, Eq)
 
--- FIXME Why is this instance needed for the instance Out instance below
 instance ToJSON (UserR "authWithToken") where
   toEncoding (UserAuthWithToken auth token) =
     case genericToJSON defaultOptions auth of
       Object hm -> value $ Object $ HM.insert "token" (toJSON token) hm
-      -- FIXME
-      _ -> undefined -- impossible case
+      _ -> error "impossible in ToJSON (UserR \"authWithToken\")"
 
 instance ToJWT (UserR "authWithToken") where
   encodeJWT (UserAuthWithToken auth _) = encodeJWT auth
@@ -123,11 +121,10 @@ data instance UserR "profile" = UserProfile
 -- >>> encode $ Out profile
 -- "{\"profile\":{\"image\":\"https://static.productionready.io/images/smiley-cyrus.jpg\",\"bio\":\"I work at statefarm\",\"email\":\"jake@jake.jake\",\"following\":false,\"username\":\"jake\"}}"
 instance ToJSON (Out (UserR "profile")) where
-  toEncoding (Out (UserProfile auth following)) = wrapEncoding "profile" $
+  toEncoding (Out (UserProfile auth following')) = wrapEncoding "profile" $
     case genericToJSON defaultOptions auth of
-      Object hm -> value $ Object $ HM.insert "following" (toJSON following) hm
-      -- FIXME
-      _ -> undefined -- impossible case
+      Object hm -> value $ Object $ HM.insert "following" (toJSON following') hm
+      _ -> error "impossible in ToJSON (UserR \"profile\")"
 
 -------------------
 --   "           --
