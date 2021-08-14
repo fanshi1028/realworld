@@ -8,10 +8,9 @@ module HTTP (server, Api) where
 
 import Authorization (TokenAuth)
 import Control.Algebra (Algebra)
-import qualified Control.Carrier.Reader as R (Reader)
+import qualified Control.Carrier.Reader as R (Reader, local)
 import Control.Effect.Catch (Catch)
 import Control.Effect.Lift (Lift)
-import qualified Control.Effect.State as S (State, put)
 import Control.Effect.Sum (Member)
 import Control.Effect.Throw (Throw)
 import Domain.User (UserR)
@@ -38,14 +37,14 @@ server ::
     Member VisitorAction.E sig,
     Member UserAction.E sig,
     Member (Throw ValidationErr) sig,
-    Member (S.State (AuthResult (UserR "authWithToken"))) sig
+    Member (R.Reader (AuthResult (UserR "authWithToken"))) sig
   ) =>
   ServerT Api m
 server =
   ( \auth ->
       hoistServer
         (Proxy @(PublicApi :<|> AuthedApi))
-        (S.put auth >>)
+        (R.local $ const auth)
         (publicServer :<|> authedServer)
   )
     :<|> pure "health-checked"

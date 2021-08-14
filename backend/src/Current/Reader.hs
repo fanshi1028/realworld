@@ -4,10 +4,10 @@
 {-# LANGUAGE UndecidableInstances #-}
 
 -- |
-module Current.State (run) where
+module Current.Reader (run) where
 
 import Control.Algebra (Algebra (alg), type (:+:) (L, R))
-import qualified Control.Effect.State as S (State, get)
+import qualified Control.Effect.Reader as R (Reader, ask)
 import Control.Effect.Sum (Member)
 import Control.Effect.Throw (Throw, throwError)
 import Current (E (GetCurrent))
@@ -23,14 +23,14 @@ newtype C m a = C
 instance
   ( Algebra sig m,
     Member (Throw (NotAuthorized UserR)) sig,
-    Member (S.State (AuthResult (UserR "authWithToken"))) sig
+    Member (R.Reader (AuthResult (UserR "authWithToken"))) sig
   ) =>
   Algebra (E (UserR "authWithToken") :+: sig) (C m)
   where
   alg _ (L GetCurrent) ctx =
     (<$ ctx)
       <$> do
-        S.get >>= \case
+        R.ask >>= \case
           Authenticated u -> pure u
           _ -> throwError $ NotAuthorized @UserR
   alg hdl (R other) ctx = C $ alg (run . hdl) other ctx

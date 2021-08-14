@@ -7,11 +7,10 @@ import qualified Authentication.Token.JWT (run)
 import qualified Authentication.Token.JWT.Invalidate.Pure (run)
 import Control.Carrier.Error.Either (runError)
 import qualified Control.Carrier.Reader as R (runReader)
-import qualified Control.Carrier.State.Strict as S (evalState)
 import Control.Carrier.Throw.Either (runThrow)
 import qualified Crypto.JOSE (Error)
 import qualified Current.IO (run)
-import qualified Current.State (run)
+import qualified Current.Reader (run)
 import Domain.Article (ArticleR (..))
 import Domain.Comment (CommentR (..))
 import Domain.User (UserR (..))
@@ -57,8 +56,9 @@ app cs jwts userDb articleDb commentDb tagDb =
           . runThrow @(AlreadyExists (ArticleR "id"))
           . runThrow @(AlreadyExists Email)
           . runThrow @(AlreadyExists Username)
-          . S.evalState (Indefinite @(UserR "authWithToken"))
-          . Current.State.run
+          . ( Current.Reader.run
+                >>> R.runReader (Indefinite @(UserR "authWithToken"))
+            )
           . R.runReader jwts
           . R.runReader cs
           . Relation.ToOne.Pure.run @Email @"of" @(UserR "id") @'True
