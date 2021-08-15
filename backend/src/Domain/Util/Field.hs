@@ -48,11 +48,13 @@ instance Show Password where
 
 -- | Username
 newtype Username = Username Text
-  deriving newtype (Show, Eq, ToJSON, FromJSON, Hashable, FromHttpApiData)
+  deriving newtype (Show, Eq, ToJSON, FromJSON, Hashable)
 
 -- deriving (Generic)
 
 deriving via NoValidation instance FromJSON (WithValidation Username)
+
+deriving via NoValidation instance FromHttpApiData (WithValidation Username)
 
 -- | Bio
 newtype Bio = Bio Text
@@ -90,9 +92,11 @@ newtype Body = Body Text deriving newtype (Show, Eq, ToJSON)
 
 deriving via NoValidation instance FromJSON (WithValidation Body)
 
-newtype Tag = Tag Text deriving newtype (Show, Eq, Hashable, ToJSON, FromHttpApiData)
+newtype Tag = Tag Text deriving newtype (Show, Eq, Hashable, ToJSON)
 
 deriving via NoValidation instance FromJSON (WithValidation Tag)
+
+deriving via NoValidation instance FromHttpApiData (WithValidation Tag)
 
 instance (Foldable t, ToJSON (t Tag)) => ToJSON (Out (t Tag)) where
   toEncoding = wrappedToEncoding "tags"

@@ -1,5 +1,7 @@
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE TypeFamilies #-}
+{-# LANGUAGE TypeSynonymInstances #-}
+{-# LANGUAGE FlexibleInstances #-}
 
 -- |
 module HTTP.Util
@@ -23,12 +25,18 @@ import Domain.Util.JSON.From (In)
 import Domain.Util.JSON.To (Out)
 import Domain.Util.Validation (WithValidation)
 import GHC.TypeLits (Symbol)
-import Servant (Delete, FromHttpApiData, Get, JSON, Post, Put, QueryParam, ReqBody, type (:<|>), type (:>), NoContent)
+import Servant (Delete, FromHttpApiData (parseQueryParam), Get, JSON, NoContent, Post, Put, QueryParam, ReqBody, type (:<|>), type (:>))
 
 -- Paging
 newtype Limit = Limit Natural deriving (FromHttpApiData)
 
+instance FromHttpApiData (WithValidation Limit) where
+  parseQueryParam = pure <<$>> parseQueryParam
+
 newtype Offset = Offset Natural deriving (FromHttpApiData)
+
+instance FromHttpApiData (WithValidation Offset) where
+  parseQueryParam = pure <<$>> parseQueryParam
 
 -- QueryParam shorthand
 type family QP' (s :: Symbol)
@@ -43,7 +51,7 @@ type instance QP' "limit" = Limit
 
 type instance QP' "offset" = Offset
 
-type QP s = QueryParam s (QP' s)
+type QP s = QueryParam s (WithValidation (QP' s))
 
 -- ReqBody shorthand
 type CreateBody (r :: Symbol -> Type) = ReqBody '[JSON] (In (WithValidation (r "create")))

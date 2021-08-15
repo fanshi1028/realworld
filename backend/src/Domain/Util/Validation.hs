@@ -15,6 +15,7 @@ import qualified Data.Semigroup as SG (Last)
 import Data.Time (UTCTime)
 import Domain.Util.Error (ValidationErr)
 import qualified Validation as V (Validation (Success), failure)
+import Servant (FromHttpApiData (parseQueryParam))
 
 -- | TEMP: dangerous orphan instance
 instance FromJSON (WithValidation a) => FromJSON (WithValidation [a]) where
@@ -43,11 +44,14 @@ validate p err raw = if p raw then V.Success raw else V.failure err
 
 type WithValidation = V.Validation ValidationErr
 
-newtype NoValidation' = NoValidation' Text deriving (Generic)
+newtype NoValidation' = NoValidation' Text deriving (Generic, FromHttpApiData)
 
 type NoValidation = WithValidation NoValidation'
 
 instance FromJSON (WithValidation NoValidation') where
   parseJSON = pure <<$>> genericParseJSON defaultOptions
+
+instance FromHttpApiData (WithValidation NoValidation') where
+  parseQueryParam = pure <<$>> parseQueryParam
 
 type WithUpdate a = HKD (HKD (HKD a WithValidation) SG.Last) Maybe
