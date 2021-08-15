@@ -1,7 +1,9 @@
 {-# LANGUAGE DataKinds #-}
+{-# LANGUAGE DerivingVia #-}
+{-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE StandaloneDeriving #-}
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE TypeSynonymInstances #-}
-{-# LANGUAGE FlexibleInstances #-}
 
 -- |
 module HTTP.Util
@@ -23,20 +25,18 @@ where
 import Domain.Util.Field (Tag, Username)
 import Domain.Util.JSON.From (In)
 import Domain.Util.JSON.To (Out)
-import Domain.Util.Validation (WithValidation)
+import Domain.Util.Validation (NoValidation, NoValidation' (..), WithValidation)
 import GHC.TypeLits (Symbol)
-import Servant (Delete, FromHttpApiData (parseQueryParam), Get, JSON, NoContent, Post, Put, QueryParam, ReqBody, type (:<|>), type (:>))
+import Servant (Delete, FromHttpApiData, Get, JSON, NoContent, Post, Put, QueryParam, ReqBody, type (:<|>), type (:>))
 
 -- Paging
 newtype Limit = Limit Natural deriving (FromHttpApiData)
 
-instance FromHttpApiData (WithValidation Limit) where
-  parseQueryParam = pure <<$>> parseQueryParam
+deriving via (NoValidation Natural) instance FromHttpApiData (WithValidation Limit)
 
 newtype Offset = Offset Natural deriving (FromHttpApiData)
 
-instance FromHttpApiData (WithValidation Offset) where
-  parseQueryParam = pure <<$>> parseQueryParam
+deriving via (NoValidation Natural) instance FromHttpApiData (WithValidation Offset)
 
 -- QueryParam shorthand
 type family QP' (s :: Symbol)

@@ -52,9 +52,9 @@ newtype Username = Username Text
 
 -- deriving (Generic)
 
-deriving via NoValidation instance FromJSON (WithValidation Username)
+deriving via (NoValidation Text) instance FromJSON (WithValidation Username)
 
-deriving via NoValidation instance FromHttpApiData (WithValidation Username)
+deriving via (NoValidation Text) instance FromHttpApiData (WithValidation Username)
 
 -- | Bio
 newtype Bio = Bio Text
@@ -62,13 +62,13 @@ newtype Bio = Bio Text
 
 -- deriving (Generic)
 
-deriving via NoValidation instance FromJSON (WithValidation Bio)
+deriving via (NoValidation Text) instance FromJSON (WithValidation Bio)
 
 -- | Image
 newtype Image = Image Text
   deriving newtype (Show, Eq, ToJSON, FromJSON)
 
-deriving via NoValidation instance FromJSON (WithValidation Image)
+deriving via (NoValidation Text) instance FromJSON (WithValidation Image)
 
 -- | Slug
 newtype Slug = Slug Text deriving newtype (Show, Eq, ToJSON, Hashable)
@@ -83,19 +83,19 @@ instance FromJSON (WithValidation Title) where
 -- | Description
 newtype Description = Description Text deriving newtype (Show, Eq, ToJSON)
 
-deriving via NoValidation instance FromJSON (WithValidation Description)
+deriving via (NoValidation Text) instance FromJSON (WithValidation Description)
 
 -- | Body
 newtype Body = Body Text deriving newtype (Show, Eq, ToJSON)
 
-deriving via NoValidation instance FromJSON (WithValidation Body)
+deriving via (NoValidation Text) instance FromJSON (WithValidation Body)
 
 -- | Tag
 newtype Tag = Tag Text deriving newtype (Show, Eq, Hashable, ToJSON)
 
-deriving via NoValidation instance FromJSON (WithValidation Tag)
+deriving via (NoValidation Text) instance FromJSON (WithValidation Tag)
 
-deriving via NoValidation instance FromHttpApiData (WithValidation Tag)
+deriving via (NoValidation Text) instance FromHttpApiData (WithValidation Tag)
 
 instance (Foldable t, ToJSON (t Tag)) => ToJSON (Out (t Tag)) where
   toEncoding = wrappedToEncoding "tags"
