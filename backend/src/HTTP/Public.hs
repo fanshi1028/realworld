@@ -5,11 +5,13 @@
 -- |
 module HTTP.Public (PublicApi, publicServer) where
 
+import qualified Authentication.Token (E)
 import Control.Algebra (Algebra)
 import Control.Effect.Lift (Lift)
 import qualified Control.Effect.Reader as R (Reader)
 import Control.Effect.Sum (Member)
 import Control.Effect.Throw (Throw)
+import Domain.User (UserR)
 import Domain.Util.Error (Impossible, ValidationErr)
 import HTTP.Public.Article (ArticleApi, articleServer)
 import HTTP.Public.Profile (ProfileApi, profileServer)
@@ -28,6 +30,7 @@ type PublicApi =
 publicServer ::
   ( Algebra sig m,
     Member VisitorAction.E sig,
+    Member (Authentication.Token.E UserR) sig,
     Member (Throw ValidationErr) sig,
     Member (R.Reader JWTSettings) sig,
     Member (R.Reader CookieSettings) sig,

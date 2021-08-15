@@ -6,6 +6,7 @@
 -- |
 module HTTP (server, Api) where
 
+import qualified Authentication.Token (E)
 import Authorization (TokenAuth)
 import Control.Algebra (Algebra)
 import qualified Control.Carrier.Reader as R (Reader, local)
@@ -38,6 +39,7 @@ server ::
     Member UserAction.E sig,
     Member (Throw ValidationErr) sig,
     Member (R.Reader (AuthResult (UserR "authWithToken"))) sig,
+    Member (Authentication.Token.E UserR) sig,
     Member (Throw Impossible) sig
   ) =>
   ServerT Api m

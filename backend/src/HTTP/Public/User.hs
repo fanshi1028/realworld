@@ -7,6 +7,7 @@
 -- |
 module HTTP.Public.User (UserApi, userServer) where
 
+import Authentication.Token (E (CreateToken))
 import Control.Algebra (Algebra, send)
 import Control.Effect.Error (Throw, throwError)
 import Control.Effect.Lift (Lift, sendIO)
@@ -33,7 +34,7 @@ import Servant
     type (:<|>) ((:<|>)),
     type (:>),
   )
-import Servant.Auth.Server (CookieSettings, JWTSettings, SetCookie, acceptLogin, makeJWT)
+import Servant.Auth.Server (CookieSettings, JWTSettings, SetCookie, acceptLogin)
 import Validation (validation)
 import VisitorAction (E (Login, Register))
 import Web.Cookie (setCookieValue)
@@ -50,7 +51,8 @@ userServer ::
     Member (Lift IO) sig,
     Member (R.Reader CookieSettings) sig,
     Member (R.Reader JWTSettings) sig,
-    Member (Throw Impossible) sig
+    Member (Throw Impossible) sig,
+    Member (Authentication.Token.E UserR) sig
   ) =>
   ServerT UserApi m
 userServer =
@@ -67,11 +69,4 @@ userServer =
                   MissingHeader -> throwError $ Impossible "missing header for login"
                   UndecodableHeader bs -> throwError $ Impossible $ "undecodable header: " <> show bs
       )
-        :<|> ( validateThen Register >=> \auth -> do
-                 jwts <- R.ask
-                 -- FIXME what should the expiry be?
-                 sendIO (makeJWT auth jwts Nothing) >>= \case
-                   Right (Token . mkBS64 . toStrict -> token) -> pure $ Out $ UserAuthWithToken auth token
-                   -- FIXME
-                   _ -> undefined
-             )
+        :<|> (validateThen Register >=> \auth -> Out . UserAuthWithToken auth <$> send (CreateToken auth))
