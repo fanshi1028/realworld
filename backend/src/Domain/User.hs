@@ -4,9 +4,9 @@
 {-# LANGUAGE DerivingVia #-}
 {-# LANGUAGE DuplicateRecordFields #-}
 {-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE StandaloneDeriving #-}
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE ViewPatterns #-}
-{-# LANGUAGE StandaloneDeriving #-}
 
 -- |
 module Domain.User (UserR (..)) where
@@ -19,7 +19,7 @@ import qualified Data.HashMap.Strict as HM (insert)
 import Domain.Util.Field (Bio, Email, Image, Password, Username)
 import Domain.Util.JSON.From (In, updatableParseJSON, wrappedParseJSON)
 import Domain.Util.JSON.To (Out (Out), wrapEncoding)
-import Domain.Util.Validation (WithUpdate, WithValidation)
+import Domain.Util.Validation (NoValidation, NoValidation' (..), WithUpdate, WithValidation)
 import GHC.TypeLits (Symbol)
 import Servant (FromHttpApiData (parseUrlPiece))
 import Servant.Auth.Server (FromJWT, ToJWT (encodeJWT))
@@ -30,15 +30,15 @@ newtype instance UserR "id" = UserId Username
   deriving (Generic)
   deriving newtype (Show, Eq, Hashable, ToJSON)
 
-instance FromJSON (WithValidation (UserR "id")) where
-  parseJSON = fmap UserId <<$>> parseJSON
+deriving via (WithValidation Username) instance FromJSON (WithValidation (UserR "id"))
+
+deriving via (WithValidation Username) instance FromHttpApiData (WithValidation (UserR "id"))
 
 newtype instance UserR "token" = Token ByteString64
-  deriving newtype (Show, Eq, ToJSON, FromJSON, Hashable, IsString)
+  deriving newtype (Show, Eq, ToJSON, Hashable, IsString)
   deriving (Generic)
 
-instance FromJSON (WithValidation (UserR "token")) where
-  parseJSON = pure <<$>> genericParseJSON defaultOptions
+deriving via (NoValidation ByteString64) instance FromJSON (WithValidation (UserR "token"))
 
 instance FromHttpApiData (UserR "token") where
   parseUrlPiece =
@@ -152,10 +152,6 @@ instance FromJSON (WithValidation (UserR "login")) where
 -- Right (In (Success (UserLogin {email = "ejfowfow@", password = ********})))
 instance FromJSON (In (WithValidation (UserR "login"))) where
   parseJSON = wrappedParseJSON "UserLogin" "user"
-
--- FIXME
-instance FromHttpApiData (UserR "id") where
-  parseUrlPiece = undefined
 
 data instance UserR "create" = UserRegister
   { username :: Username,

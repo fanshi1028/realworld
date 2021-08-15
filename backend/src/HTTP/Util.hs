@@ -19,7 +19,7 @@ module HTTP.Util
     NoBodyUpdateApi,
     ToggleApi,
     UDApi,
-  )
+  Cap)
 where
 
 import Domain.Util.Field (Tag, Username)
@@ -27,7 +27,7 @@ import Domain.Util.JSON.From (In)
 import Domain.Util.JSON.To (Out)
 import Domain.Util.Validation (NoValidation, NoValidation' (..), WithValidation)
 import GHC.TypeLits (Symbol)
-import Servant (Delete, FromHttpApiData, Get, JSON, NoContent, Post, Put, QueryParam, ReqBody, type (:<|>), type (:>))
+import Servant (Delete, FromHttpApiData, Get, JSON, NoContent, Post, Put, QueryParam, ReqBody, type (:<|>), type (:>), Capture)
 
 -- Paging
 newtype Limit = Limit Natural deriving (FromHttpApiData)
@@ -52,6 +52,9 @@ type instance QP' "limit" = Limit
 type instance QP' "offset" = Offset
 
 type QP s = QueryParam s (WithValidation (QP' s))
+
+-- Capture shorthand
+type Cap s r = Capture s (WithValidation r)
 
 -- ReqBody shorthand
 type CreateBody (r :: Symbol -> Type) = ReqBody '[JSON] (In (WithValidation (r "create")))

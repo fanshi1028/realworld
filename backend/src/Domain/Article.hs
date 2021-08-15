@@ -2,8 +2,10 @@
 {-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE DerivingStrategies #-}
+{-# LANGUAGE DerivingVia #-}
 {-# LANGUAGE DuplicateRecordFields #-}
 {-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE StandaloneDeriving #-}
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE ViewPatterns #-}
 
@@ -21,13 +23,15 @@ import Domain.Util.JSON.From (In, insert', updatableParseJSON, wrappedParseJSON)
 import Domain.Util.JSON.To (Out (Out), multiWrappedWithCountToEncoding, wrapEncoding)
 import Domain.Util.Validation (WithUpdate, WithValidation)
 import GHC.TypeLits (Symbol)
-import Servant (FromHttpApiData (parseUrlPiece))
+import Servant (FromHttpApiData)
 
 data family ArticleR (r :: Symbol)
 
 newtype instance ArticleR "id" = ArticleId Slug
   deriving (Show, Eq)
   deriving newtype (Hashable, ToJSON)
+
+deriving via (WithValidation Slug) instance FromHttpApiData (WithValidation (ArticleR "id"))
 
 -- | Articles
 data instance ArticleR "all" = Article
@@ -164,7 +168,3 @@ instance FromJSON (ArticleR "update") where
 
 instance FromJSON (In (ArticleR "update")) where
   parseJSON = wrappedParseJSON "ArticleUpdate" "article"
-
--- FIXME
-instance FromHttpApiData (ArticleR "id") where
-  parseUrlPiece = undefined

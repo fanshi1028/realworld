@@ -50,8 +50,6 @@ instance Show Password where
 newtype Username = Username Text
   deriving newtype (Show, Eq, ToJSON, FromJSON, Hashable)
 
--- deriving (Generic)
-
 deriving via (NoValidation Text) instance FromJSON (WithValidation Username)
 
 deriving via (NoValidation Text) instance FromHttpApiData (WithValidation Username)
@@ -72,6 +70,11 @@ deriving via (NoValidation Text) instance FromJSON (WithValidation Image)
 
 -- | Slug
 newtype Slug = Slug Text deriving newtype (Show, Eq, ToJSON, Hashable)
+
+-- FIXME: Slug need validation?
+deriving via (NoValidation Text) instance FromJSON (WithValidation Slug)
+
+deriving via (NoValidation Text) instance FromHttpApiData (WithValidation Slug)
 
 -- | Title
 newtype Title = Title Text

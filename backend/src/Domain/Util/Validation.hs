@@ -26,10 +26,6 @@ instance (Eq r, Hashable r, FromJSON (WithValidation r)) => FromJSON (WithValida
 
 deriving via (NoValidation Text) instance FromJSON (WithValidation Text)
 
-deriving via (NoValidation Bool) instance FromJSON (WithValidation Bool)
-
-deriving via (NoValidation Natural) instance FromJSON (WithValidation Natural)
-
 deriving via (NoValidation UTCTime) instance FromJSON (WithValidation UTCTime)
 
 -- instance FromJSON (WithValidation a) => FromJSON (WithValidation (Maybe a)) where
