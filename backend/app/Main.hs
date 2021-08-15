@@ -79,11 +79,12 @@ app cs jwts userDb articleDb commentDb tagDb =
           . (Storage.Map.InMem.run @UserR >>> usingReaderT userDb)
           . (Storage.Map.InMem.run @ArticleR >>> usingReaderT articleDb)
           . (Storage.Map.InMem.run @CommentR >>> usingReaderT commentDb)
-          . (usingReaderT tagDb . Storage.Set.InMem.run @Tag)
+          . (Storage.Set.InMem.run @Tag >>> usingReaderT tagDb)
           . Current.IO.run @Time
           . GenUUID.V1.run
-          . Authentication.Token.JWT.Invalidate.Pure.run @UserR
-          . Authentication.Token.JWT.run @UserR
+          . ( Authentication.Token.JWT.run @UserR
+                >>> Authentication.Token.JWT.Invalidate.Pure.run @UserR
+            )
           . Authentication.Pure.run @UserR @'False
           . VisitorAction.run
           . UserAction.run

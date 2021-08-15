@@ -68,30 +68,29 @@ deriving via NoValidation instance FromJSON (WithValidation Bio)
 newtype Image = Image Text
   deriving newtype (Show, Eq, ToJSON, FromJSON)
 
--- deriving (Generic)
-
 deriving via NoValidation instance FromJSON (WithValidation Image)
 
+-- | Slug
 newtype Slug = Slug Text deriving newtype (Show, Eq, ToJSON, Hashable)
 
-deriving via NoValidation instance FromJSON (WithValidation Slug)
-
+-- | Title
 newtype Title = Title Text
   deriving newtype (Show, Eq, ToJSON)
-
--- deriving via NoValidation instance FromJSON (WithValidation Title)
 
 instance FromJSON (WithValidation Title) where
   parseJSON = withText "title" $ pure <$> (Title <<$>> validate (not . T.null) "null title")
 
+-- | Description
 newtype Description = Description Text deriving newtype (Show, Eq, ToJSON)
 
 deriving via NoValidation instance FromJSON (WithValidation Description)
 
+-- | Body
 newtype Body = Body Text deriving newtype (Show, Eq, ToJSON)
 
 deriving via NoValidation instance FromJSON (WithValidation Body)
 
+-- | Tag
 newtype Tag = Tag Text deriving newtype (Show, Eq, Hashable, ToJSON)
 
 deriving via NoValidation instance FromJSON (WithValidation Tag)
@@ -101,4 +100,5 @@ deriving via NoValidation instance FromHttpApiData (WithValidation Tag)
 instance (Foldable t, ToJSON (t Tag)) => ToJSON (Out (t Tag)) where
   toEncoding = wrappedToEncoding "tags"
 
+-- | Time
 type Time = UTCTime

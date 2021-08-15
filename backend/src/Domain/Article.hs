@@ -10,7 +10,7 @@
 -- |
 module Domain.Article (ArticleR (..)) where
 
-import Data.Aeson (FromJSON (parseJSON), ToJSON (toEncoding, toJSON), Value (Array), defaultOptions, genericParseJSON, genericToEncoding, genericToJSON, withObject)
+import Data.Aeson (FromJSON (parseJSON), ToJSON (toEncoding, toJSON), Value (Array), defaultOptions, genericParseJSON, genericToJSON, withObject)
 import Data.Aeson.Encoding (value)
 import Data.Aeson.Types (Value (Object))
 import Data.Generic.HKD (construct)
@@ -18,7 +18,7 @@ import qualified Data.HashMap.Strict as HM
 import Domain.User (UserR)
 import Domain.Util.Field (Body, Description, Slug (Slug), Tag, Time, Title)
 import Domain.Util.JSON.From (In, insert', updatableParseJSON, wrappedParseJSON)
-import Domain.Util.JSON.To (Out (Out), multiWrappedWithCountToEncoding, wrapEncoding, wrappedToEncoding)
+import Domain.Util.JSON.To (Out (Out), multiWrappedWithCountToEncoding, wrapEncoding)
 import Domain.Util.Validation (WithUpdate, WithValidation)
 import GHC.TypeLits (Symbol)
 import Servant (FromHttpApiData (parseUrlPiece))
