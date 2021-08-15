@@ -14,7 +14,7 @@ import Control.Effect.Lift (Lift)
 import Control.Effect.Sum (Member)
 import Control.Effect.Throw (Throw)
 import Domain.User (UserR)
-import Domain.Util.Error (NotAuthorized, ValidationErr)
+import Domain.Util.Error (Impossible, NotAuthorized, ValidationErr)
 import HTTP.Authed (AuthedApi, authedServer)
 import HTTP.Public (PublicApi, publicServer)
 import Servant (Get, JSON, ServerT, type (:<|>) ((:<|>)), type (:>))
@@ -37,7 +37,8 @@ server ::
     Member VisitorAction.E sig,
     Member UserAction.E sig,
     Member (Throw ValidationErr) sig,
-    Member (R.Reader (AuthResult (UserR "authWithToken"))) sig
+    Member (R.Reader (AuthResult (UserR "authWithToken"))) sig,
+    Member (Throw Impossible) sig
   ) =>
   ServerT Api m
 server =

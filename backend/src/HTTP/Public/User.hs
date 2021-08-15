@@ -14,7 +14,7 @@ import qualified Control.Effect.Reader as R (Reader, ask)
 import Control.Effect.Sum (Member)
 import Data.ByteString.Base64.Type (mkBS64)
 import Domain.User (UserR (..))
-import Domain.Util.Error (ValidationErr)
+import Domain.Util.Error (Impossible (Impossible), ValidationErr)
 import Domain.Util.JSON.From (In (In))
 import Domain.Util.JSON.To (Out (Out))
 import Domain.Util.Validation (WithValidation)
@@ -49,7 +49,8 @@ userServer ::
     Member VisitorAction.E sig,
     Member (Lift IO) sig,
     Member (R.Reader CookieSettings) sig,
-    Member (R.Reader JWTSettings) sig
+    Member (R.Reader JWTSettings) sig,
+    Member (Throw Impossible) sig
   ) =>
   ServerT UserApi m
 userServer =
@@ -58,15 +59,13 @@ userServer =
           acceptLogin <$> R.ask <*> R.ask <*> pure authInfo
             >>= sendIO
             >>= \case
-              Nothing -> undefined
+              Nothing -> throwError $ Impossible "accept login failed"
               Just f -> case f authInfo of
                 Headers auth hs@(HCons h _) -> case h of
                   Header (Token . mkBS64 . setCookieValue -> jwt) ->
                     pure $ Headers (Out $ UserAuthWithToken auth jwt) hs
-                  -- FIXME
-                  MissingHeader -> undefined
-                  -- FIXME
-                  UndecodableHeader _ -> undefined
+                  MissingHeader -> throwError $ Impossible "missing header for login"
+                  UndecodableHeader bs -> throwError $ Impossible $ "undecodable header: " <> show bs
       )
         :<|> ( validateThen Register >=> \auth -> do
                  jwts <- R.ask

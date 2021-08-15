@@ -10,7 +10,7 @@ import Control.Effect.Lift (Lift)
 import qualified Control.Effect.Reader as R (Reader)
 import Control.Effect.Sum (Member)
 import Control.Effect.Throw (Throw)
-import Domain.Util.Error (ValidationErr)
+import Domain.Util.Error (Impossible, ValidationErr)
 import HTTP.Public.Article (ArticleApi, articleServer)
 import HTTP.Public.Profile (ProfileApi, profileServer)
 import HTTP.Public.Tag (TagApi, tagServer)
@@ -31,7 +31,8 @@ publicServer ::
     Member (Throw ValidationErr) sig,
     Member (R.Reader JWTSettings) sig,
     Member (R.Reader CookieSettings) sig,
-    Member (Lift IO) sig
+    Member (Lift IO) sig,
+    Member (Throw Impossible) sig
   ) =>
   ServerT PublicApi m
 publicServer = userServer :<|> profileServer :<|> articleServer :<|> tagServer
