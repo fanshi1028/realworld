@@ -44,3 +44,4 @@ instance
       _delete e =
         sendM . STM.focus (FC.cases (Nothing, FC.Leave) (const (Just (), FC.Remove))) e
           >=> maybe (throwError $ NotFound e) pure
+  {-# INLINE alg #-}

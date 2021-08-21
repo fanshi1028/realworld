@@ -58,3 +58,4 @@ instance
       _try action id' = sendM . STM.focus (FC.cases (Nothing, FC.Leave) action) id' >=> maybe (throwError $ NotFound id') pure
       _tryUpdate updateF = _try $ \ele -> let new = updateF ele in (Just new, FC.Set new)
       _tryDelete id' = _try (const (Just (), FC.Remove)) id'
+  {-# INLINE alg #-}

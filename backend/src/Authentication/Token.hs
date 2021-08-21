@@ -61,3 +61,4 @@ instance
               then (<$ ctx) <$> transform a
               else throwError $ NotAuthorized @UserR
   alg hdl (R other) ctx = C $ alg (run . hdl) other ctx
+  {-# INLINE alg #-}

@@ -72,6 +72,7 @@ instance
       GetRelatedLeft r1 -> send $ Relation.ToMany.GetRelated @_ @lr @r2 r1
       GetRelatedRight r2 -> send $ Relation.ToMany.GetRelated @_ @rr @r1 r2
   alg hdl (R other) ctx = C $ alg (run . hdl) other ctx
+  {-# INLINE alg #-}
 
 -- follow
 

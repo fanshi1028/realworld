@@ -44,3 +44,4 @@ instance
         IsRelated k v -> STM.lookup v k
         GetRelated k -> ListT.toList . STM.listTByKey k
   alg hdl (R other) ctx = C $ alg (run . hdl) (R other) ctx
+  {-# INLINE alg #-}

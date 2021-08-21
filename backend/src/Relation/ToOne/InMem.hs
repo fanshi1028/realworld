@@ -39,9 +39,11 @@ relateFocus existAction k v =
             IgnoreIfExist -> FC.Leave
     )
     k
+{-# INLINE relateFocus #-}
 
 unrelateFocus :: (Hashable key, Eq key, Eq value) => key -> value -> STM.Map key value -> STM ()
 unrelateFocus k v = STM.focus (FC.unitCases FC.Leave (\e -> if v == e then FC.Remove else FC.Leave)) k
+{-# INLINE unrelateFocus #-}
 
 instance
   ( Algebra sig m,
@@ -60,6 +62,7 @@ instance
         IsRelated r1 r2 -> (== Just r2) <<$>> STM.lookup r1
         GetRelated r1 -> STM.lookup r1
   alg hdl (R other) ctx = C $ alg (run . hdl) (R other) ctx
+  {-# INLINE alg #-}
 
 instance
   ( Algebra sig m,
@@ -78,3 +81,4 @@ instance
         IsRelated r1 r2 -> (== Just r2) <<$>> STM.lookup r1
         GetRelated r1 -> STM.lookup r1
   alg hdl (R other) ctx = C $ alg (run . hdl) (R other) ctx
+  {-# INLINE alg #-}

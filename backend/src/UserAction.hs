@@ -169,3 +169,4 @@ instance
                   . Storage.Map.GetById @CommentR
                 >>= transform
       R other -> C $ alg (run . hdl) other ctx
+  {-# INLINE alg #-}

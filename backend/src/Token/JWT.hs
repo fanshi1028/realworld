@@ -54,3 +54,4 @@ instance
         (pure . (<$ ctx) . un . mkBS64 . toStrict)
   alg _ (L (InvalidateToken token)) ctx = (<$ ctx) <$> send (Invalidate token)
   alg hdl (R other) ctx = C $ alg (run . hdl) other ctx
+  {-# INLINE alg #-}

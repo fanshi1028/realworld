@@ -34,3 +34,4 @@ instance
           Authenticated u -> pure u
           _ -> throwError $ NotAuthorized @UserR
   alg hdl (R other) ctx = C $ alg (run . hdl) other ctx
+  {-# INLINE alg #-}

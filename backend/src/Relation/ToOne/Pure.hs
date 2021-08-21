@@ -31,3 +31,4 @@ instance (Algebra sig m, SBoolI b) => Algebra (E r1 r r2 :+: sig) (C r1 r r2 b m
   -- FIXME
   alg _ (L GetRelated {}) ctx = pure $ bool Nothing (Just undefined) (fromSBool $ sbool @b) <$ ctx
   alg hdl (R other) ctx = C $ alg (run . hdl) other ctx
+  {-# INLINE alg #-}

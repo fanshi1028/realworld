@@ -25,3 +25,4 @@ instance
   where
   alg _ (L Generate) ctx = (<$ ctx) <$> sendIO nextRandom
   alg hdl (R other) ctx = C $ alg (run . hdl) other ctx
+  {-# INLINE alg #-}

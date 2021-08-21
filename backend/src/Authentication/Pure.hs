@@ -26,6 +26,7 @@ instance (Algebra sig m, Member (Throw (AlreadyLogin r)) sig) => Algebra (E r :+
   alg _ (L (Login _)) _ = throwError $ AlreadyLogin @r
   alg _ (L Logout) ctx = pure $ () <$ ctx
   alg hdl (R other) ctx = C $ alg (run . hdl) other ctx
+  {-# INLINE alg #-}
 
 instance (Algebra sig m, Member (Throw (NotLogin r)) sig) => Algebra (E r :+: sig) (C r 'False m) where
 -- FIXME
@@ -33,3 +34,4 @@ instance (Algebra sig m, Member (Throw (NotLogin r)) sig) => Algebra (E r :+: si
   alg _ (L (Login u)) ctx = pure $ undefined <$ ctx
   alg _ (L Logout) _ = throwError $ NotLogin @r
   alg hdl (R other) ctx = C $ alg (run . hdl) other ctx
+  {-# INLINE alg #-}

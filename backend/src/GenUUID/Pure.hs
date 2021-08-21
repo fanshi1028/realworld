@@ -18,3 +18,4 @@ newtype C m a = C
 instance (Algebra sig m) => Algebra (E :+: sig) (C m) where
   alg _ (L Generate) ctx = pure $ nil <$ ctx
   alg hdl (R other) ctx = C $ alg (run . hdl) other ctx
+  {-# INLINE alg #-}

@@ -71,3 +71,4 @@ instance
             >>= transform
       GetTags -> send $ Storage.Set.GetAll @Tag
   alg hdl (R other) ctx = C $ alg (run . hdl) other ctx
+  {-# INLINE alg #-}
