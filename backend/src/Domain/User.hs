@@ -34,7 +34,7 @@ deriving via (WithValidation Username) instance FromJSON (WithValidation (UserR 
 
 deriving via (WithValidation Username) instance FromHttpApiData (WithValidation (UserR "id"))
 
-newtype instance UserR "token" = Token ByteString64
+newtype instance UserR "token" = UserToken ByteString64
   deriving newtype (Show, Eq, ToJSON, Hashable, IsString)
   deriving (Generic)
 
@@ -45,7 +45,7 @@ instance FromHttpApiData (UserR "token") where
     ( >>=
         \case
           (words . show -> [prefix, token])
-            | (prefix == "Token") -> pure $ Token $ show token
+            | (prefix == "Token") -> pure $ UserToken $ show token
           _ -> Left "Authentication Header should be in format: \"Authorization: Token jwt.token.here\""
     )
       <$> parseUrlPiece @ByteString64

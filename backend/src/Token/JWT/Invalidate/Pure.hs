@@ -4,9 +4,9 @@
 {-# LANGUAGE UndecidableInstances #-}
 
 -- |
-module Authentication.Token.JWT.Invalidate.Pure (run) where
+module Token.JWT.Invalidate.Pure (run) where
 
-import Authentication.Token.JWT.Invalidate (E (Invalidate))
+import Token.JWT.Invalidate (E (Invalidate))
 import Control.Algebra (Algebra (alg), type (:+:) (L, R))
 import GHC.TypeLits (Symbol)
 

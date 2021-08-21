@@ -9,7 +9,6 @@ module Current.Pure (run) where
 import Control.Algebra (Algebra (alg), type (:+:) (L, R))
 import Current (E (GetCurrent))
 import Data.Time (Day (ModifiedJulianDay), UTCTime (UTCTime))
-import Domain.User (UserR)
 import Domain.Util.Field (Time)
 
 newtype C e m a = C
@@ -19,9 +18,4 @@ newtype C e m a = C
 
 instance (Algebra sig m) => Algebra (E Time :+: sig) (C Time m) where
   alg _ (L GetCurrent) ctx = pure (UTCTime (ModifiedJulianDay 0) 0 <$ ctx)
-  alg hdl (R other) ctx = C $ alg (run . hdl) other ctx
-
--- FIXME
-instance (Algebra sig m) => Algebra (E (UserR s) :+: sig) (C (UserR s) m) where
-  alg _ (L GetCurrent) ctx = pure $ undefined <$ ctx
   alg hdl (R other) ctx = C $ alg (run . hdl) other ctx

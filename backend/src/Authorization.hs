@@ -7,16 +7,16 @@
 -- |
 module Authorization (TokenAuth, TokenAuthInMem) where
 
-import Authentication.Token (E (CheckToken))
-import Authentication.Token.JWT (run)
-import Authentication.Token.JWT.Invalidate.Pure (run)
+import Token (E (CheckToken))
+import Token.JWT (run)
+import Token.JWT.Invalidate.Pure (run)
 import Control.Algebra (send)
 import Control.Carrier.Lift (runM)
 import qualified Control.Carrier.Reader as R (runReader)
 import Control.Carrier.Throw.Either (runThrow)
 import Crypto.JOSE (Error)
 import qualified Data.List as List (lookup)
-import Domain.User (UserR (Token, UserAuthWithToken))
+import Domain.User (UserR (UserToken, UserAuthWithToken))
 import Domain.Util.Error (NotAuthorized)
 import Domain.Util.Representation (Transform (transform))
 import Network.Wai (requestHeaders)
@@ -41,8 +41,8 @@ instance IsAuth TokenAuth (UserR "authWithToken") where
             . runThrow @(NotAuthorized UserR)
             . R.runReader cs
             . R.runReader jwts
-            . Authentication.Token.JWT.Invalidate.Pure.run @UserR
-            . Authentication.Token.JWT.run @UserR
+            . Token.JWT.Invalidate.Pure.run @UserR
+            . Token.JWT.run @UserR
             >=> \case
               Right (Right auth) -> pure $ pure $ UserAuthWithToken auth token
               _ -> pure mempty

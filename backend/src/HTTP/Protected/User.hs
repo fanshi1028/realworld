@@ -2,7 +2,7 @@
 {-# LANGUAGE FlexibleContexts #-}
 
 -- |
-module HTTP.Authed.User (UserApi, userServer) where
+module HTTP.Protected.User (UserApi, userServer) where
 
 import Control.Algebra (Algebra, send)
 import Control.Effect.Sum (Member)

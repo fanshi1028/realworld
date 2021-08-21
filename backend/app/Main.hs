@@ -2,9 +2,7 @@
 
 module Main where
 
-import qualified Authentication.Pure (run)
-import qualified Authentication.Token.JWT (run)
-import qualified Authentication.Token.JWT.Invalidate.Pure (run)
+import qualified Authentication.Token
 import Control.Carrier.Error.Either (runError)
 import qualified Control.Carrier.Reader as R (runReader)
 import Control.Carrier.Throw.Either (runThrow)
@@ -31,6 +29,8 @@ import StmContainers.Set as STM.Set (Set, newIO)
 import Storage.Map.InMem (TableInMem)
 import qualified Storage.Map.InMem (run)
 import qualified Storage.Set.InMem (run)
+import qualified Token.JWT (run)
+import qualified Token.JWT.Invalidate.Pure (run)
 import qualified UserAction (run)
 import qualified VisitorAction (run)
 
@@ -51,6 +51,7 @@ app cs jwts userDb articleDb commentDb tagDb =
           . runThrow @Crypto.JOSE.Error
           . runThrow @(NotLogin UserR)
           . runThrow @(NotAuthorized UserR)
+          . runError @(NotFound Email)
           . runThrow @ValidationErr
           . runThrow @(NotFound Tag)
           . runThrow @(AlreadyExists (ArticleR "id"))
@@ -82,10 +83,10 @@ app cs jwts userDb articleDb commentDb tagDb =
           . (Storage.Set.InMem.run @Tag >>> usingReaderT tagDb)
           . Current.IO.run @Time
           . GenUUID.V1.run
-          . ( Authentication.Token.JWT.run @UserR
-                >>> Authentication.Token.JWT.Invalidate.Pure.run @UserR
+          . ( Token.JWT.run @UserR
+                >>> Token.JWT.Invalidate.Pure.run @UserR
             )
-          . Authentication.Pure.run @UserR @'False
+          . Authentication.Token.run @UserR
           . VisitorAction.run
           . UserAction.run
           >=> handlerErr (const $ throwError $ err500 {errBody = "fuck"})
@@ -93,6 +94,7 @@ app cs jwts userDb articleDb commentDb tagDb =
           >=> handlerErr (const $ throwError $ err400 {errBody = "fuck"})
           >=> handlerErr (const $ throwError $ err400 {errBody = "fuck"})
           >=> handlerErr (const $ throwError $ err400 {errBody = "fuck"})
+          >=> handlerErr (const $ throwError $ err401 {errBody = "fuck"})
           >=> handlerErr (const $ throwError $ err401 {errBody = "fuck"})
           >=> handlerErr (const $ throwError $ err401 {errBody = "fuck"})
           >=> handlerErr (const $ throwError $ err404 {errBody = "fuck"})

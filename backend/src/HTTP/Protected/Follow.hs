@@ -2,7 +2,7 @@
 {-# LANGUAGE FlexibleContexts #-}
 
 -- |
-module HTTP.Authed.Follow (FollowApi, followServer) where
+module HTTP.Protected.Follow (FollowApi, followServer) where
 
 import Control.Algebra (Algebra, send)
 import Control.Effect.Sum (Member)

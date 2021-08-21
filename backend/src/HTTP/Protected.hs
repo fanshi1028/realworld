@@ -2,15 +2,15 @@
 {-# LANGUAGE FlexibleContexts #-}
 
 -- |
-module HTTP.Authed (AuthedApi, authedServer) where
+module HTTP.Protected (AuthedApi, authedServer) where
 
 import Control.Algebra (Algebra)
 import Control.Effect.Sum (Member)
 import Control.Effect.Throw (Throw)
 import Domain.Util.Error (ValidationErr)
-import HTTP.Authed.Article (ArticleApi, articleServer)
-import HTTP.Authed.Follow (FollowApi, followServer)
-import HTTP.Authed.User (UserApi, userServer)
+import HTTP.Protected.Article (ArticleApi, articleServer)
+import HTTP.Protected.Follow (FollowApi, followServer)
+import HTTP.Protected.User (UserApi, userServer)
 import Servant (ServerT, type (:<|>) ((:<|>)), type (:>))
 import qualified UserAction (E)
 

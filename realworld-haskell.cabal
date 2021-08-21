@@ -83,9 +83,10 @@ library backend-internal
     Authentication
     Authentication.Pure
     Authentication.Token
-    Authentication.Token.JWT
-    Authentication.Token.JWT.Invalidate
-    Authentication.Token.JWT.Invalidate.Pure
+    Token
+    Token.JWT
+    Token.JWT.Invalidate
+    Token.JWT.Invalidate.Pure
     Authorization
     Current.IO
     Current.Pure
@@ -104,15 +105,15 @@ library backend-internal
     GenUUID.V1
     GenUUID.V4
     HTTP
+    HTTP.Auth.User
     HTTP.Public
-    HTTP.Public.User
     HTTP.Public.Tag
     HTTP.Public.Profile
     HTTP.Public.Article
-    HTTP.Authed
-    HTTP.Authed.Article
-    HTTP.Authed.Follow
-    HTTP.Authed.User
+    HTTP.Protected
+    HTTP.Protected.Article
+    HTTP.Protected.Follow
+    HTTP.Protected.User
     HTTP.Util
     Relation.ToOne
     Relation.ToOne.Pure

@@ -11,7 +11,7 @@
 module UserAction (E (..), run) where
 
 import qualified Authentication (E)
-import qualified Authentication.Token (E (CreateToken))
+import qualified Token (E (CreateToken))
 import Control.Algebra (Algebra (alg), send, type (:+:) (L, R))
 import Control.Carrier.NonDet.Church (runNonDetA)
 import Control.Effect.Catch (Catch)
@@ -54,7 +54,7 @@ newtype C m a = C
   deriving (Functor, Applicative, Monad)
 
 instance
-  ( Member (Authentication.Token.E UserR) sig,
+  ( Member (Token.E UserR) sig,
     Member (Storage.Map.E UserR) sig,
     Member (Storage.Map.E ArticleR) sig,
     Member (Storage.Map.E CommentR) sig,
@@ -93,7 +93,7 @@ instance
               <&> applyPatch update
                 >>= validation throwError (send . Storage.Map.UpdateById authUserId . const)
                 >>= transform
-                >>= \newAuth -> UserAuthWithToken newAuth <$> send (Authentication.Token.CreateToken newAuth)
+                >>= \newAuth -> UserAuthWithToken newAuth <$> send (Token.CreateToken newAuth)
           FollowUser targetUserId -> do
             targetUser <- send (Storage.Map.GetById targetUserId)
             send $ Relation.ManyToMany.Relate @_ @_ @"follow" authUserId targetUserId

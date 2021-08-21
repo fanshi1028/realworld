@@ -2,7 +2,7 @@
 {-# LANGUAGE FlexibleContexts #-}
 
 -- |
-module HTTP.Authed.Article (ArticleApi, articleServer) where
+module HTTP.Protected.Article (ArticleApi, articleServer) where
 
 import Control.Algebra (Algebra, send)
 import Control.Effect.Sum (Member)

@@ -8,7 +8,7 @@
 -- |
 module Domain.Util.Representation (applyPatch, Transform (transform)) where
 
-import Authentication.Token (E (CreateToken))
+import Token (E (CreateToken))
 import Control.Algebra (Algebra, send)
 import Control.Effect.Catch (Catch, catchError)
 import Control.Effect.Sum (Member)
@@ -81,7 +81,7 @@ instance
 instance Transform UserR "all" "auth" m where
   transform (User em _ name bio' img) = pure $ UserAuth em name bio' img
 
-instance (Algebra sig m, Member (Authentication.Token.E UserR) sig) => Transform UserR "auth" "authWithToken" m where
+instance (Algebra sig m, Member (Token.E UserR) sig) => Transform UserR "auth" "authWithToken" m where
   transform auth = UserAuthWithToken auth <$> send (CreateToken auth)
 
 instance

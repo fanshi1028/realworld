@@ -1,7 +1,7 @@
 {-# LANGUAGE DataKinds #-}
 
 -- |
-module Authentication.Token.JWT.Invalidate (E (..)) where
+module Token.JWT.Invalidate (E (..)) where
 
 import GHC.TypeLits (Symbol)
 

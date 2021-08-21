@@ -6,10 +6,10 @@
 {-# LANGUAGE UndecidableInstances #-}
 
 -- |
-module Authentication.Token.JWT (run) where
+module Token.JWT (run) where
 
-import Authentication.Token (E (CheckToken, CreateToken, InvalidateToken))
-import Authentication.Token.JWT.Invalidate (E (Invalidate))
+import Token (E (CheckToken, CreateToken, InvalidateToken))
+import Token.JWT.Invalidate (E (Invalidate))
 import Control.Algebra (Algebra (alg), send, type (:+:) (L, R))
 import Control.Effect.Lift (Lift, sendIO)
 import qualified Control.Effect.Reader as R (Reader, ask, asks)
@@ -31,7 +31,7 @@ instance
   ( Member (R.Reader JWTSettings) sig,
     Member (R.Reader CookieSettings) sig,
     Member (Throw (NotAuthorized r)) sig,
-    Member (Authentication.Token.JWT.Invalidate.E r) sig,
+    Member (Token.JWT.Invalidate.E r) sig,
     Member (Throw Error) sig,
     Member (Lift IO) sig,
     Algebra sig m,
@@ -39,7 +39,7 @@ instance
     ToJWT (r "auth"),
     Coercible (r "token") ByteString64
   ) =>
-  Algebra (Authentication.Token.E r :+: sig) (C r m)
+  Algebra (Token.E r :+: sig) (C r m)
   where
   alg _ (L (CheckToken token)) ctx = do
     verifyJWT <$> R.ask <*> pure (getBS64 $ un token)

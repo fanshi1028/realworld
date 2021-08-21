@@ -4,5 +4,6 @@
 module Authentication (E (..)) where
 
 data E r (m :: Type -> Type) a where
-  Login :: r "login" -> E r m (r "id")
+  Register :: r "create" -> E r m (r "auth")
+  Login :: r "login" -> E r m (r "auth")
   Logout :: E r m ()
