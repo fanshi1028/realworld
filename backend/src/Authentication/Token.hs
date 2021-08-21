@@ -33,7 +33,7 @@ instance
     Member (Current.E (UserR "authWithToken")) sig,
     Member (Relation.ToOne.E Email "of" (UserR "id")) sig,
     Member (Catch (NotFound (UserR "id"))) sig,
-    Member (Throw (AlreadyExists Username)) sig,
+    Member (Throw (AlreadyExists (UserR "id"))) sig,
     Member (Throw (AlreadyExists Email)) sig,
     Member (Current.E Time) sig,
     Member (Throw (NotFound Email)) sig,

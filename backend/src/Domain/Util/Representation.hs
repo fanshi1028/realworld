@@ -64,8 +64,8 @@ instance
     Member (Current.E Time) sig,
     Member (Storage.Map.E UserR) sig,
     Member (Relation.ToOne.E Email "of" (UserR "id")) sig,
+    Member (Throw (AlreadyExists (UserR "id"))) sig,
     Member (Throw (AlreadyExists Email)) sig,
-    Member (Throw (AlreadyExists Username)) sig,
     Member (Catch (NotFound (UserR "id"))) sig
   ) =>
   Transform UserR "create" "all" m
@@ -75,7 +75,7 @@ instance
     send (Relation.ToOne.GetRelated @_ @"of" @(UserR "id") em) >>= \case
       Just _ -> throwError $ AlreadyExists em
       Nothing ->
-        send (Storage.Map.GetById $ UserId user) >> throwError (AlreadyExists user)
+        send (Storage.Map.GetById $ UserId user) >> throwError (AlreadyExists $ UserId user)
           `catchError` const @_ @(NotFound (UserR "id")) (pure $ User em pw user (Bio "") (Image ""))
 
 instance Transform UserR "all" "auth" m where
