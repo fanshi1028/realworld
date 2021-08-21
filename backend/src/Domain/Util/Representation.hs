@@ -75,7 +75,9 @@ instance
     send (Relation.ToOne.GetRelated @_ @"of" @(UserR "id") em) >>= \case
       Just _ -> throwError $ AlreadyExists em
       Nothing ->
-        send (Storage.Map.GetById $ UserId user) >> throwError (AlreadyExists $ UserId user)
+        ( send (Storage.Map.GetById $ UserId user)
+            >> throwError (AlreadyExists $ UserId user)
+        )
           `catchError` const @_ @(NotFound (UserR "id")) (pure $ User em pw user (Bio "") (Image ""))
 
 instance Transform UserR "all" "auth" m where
