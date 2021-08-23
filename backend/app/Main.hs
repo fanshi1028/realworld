@@ -6,6 +6,7 @@ import qualified Authentication.Token (run)
 import Control.Carrier.Error.Either (runError)
 import qualified Control.Carrier.Reader as R (runReader)
 import Control.Carrier.Throw.Either (runThrow)
+import Control.Carrier.Trace.Returning (runTrace)
 import qualified Crypto.JOSE (Error)
 import qualified Current.IO (run)
 import qualified Current.Reader (run)
@@ -79,6 +80,7 @@ app cs jwts userDb articleDb commentDb tagDb emailUserIndex db0 db1 db2 db3 db4 
           . runThrow @(AlreadyExists Email)
           . runThrow @(AlreadyExists (UserR "id"))
           . runThrow @(AlreadyLogin UserR)
+          . runTrace
           . R.runReader (Indefinite @(UserR "authWithToken"))
           . Current.Reader.run
           . R.runReader jwts
@@ -126,6 +128,7 @@ app cs jwts userDb articleDb commentDb tagDb emailUserIndex db0 db1 db2 db3 db4 
           >=> handlerErr (\e -> throwError $ err400 {errBody = show e})
           >=> handlerErr (\e -> throwError $ err400 {errBody = show e})
           >=> handlerErr (\e -> throwError $ err400 {errBody = show e})
+          >=> \(traces, x) -> print traces >> pure x
       )
       server
   where
