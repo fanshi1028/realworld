@@ -9,14 +9,12 @@ module HTTP.Auth.User (AuthUserApi, authUserServer) where
 
 import Authentication (E (Login, Register))
 import Control.Algebra (Algebra, send)
-import Control.Effect.Catch (Catch)
 import Control.Effect.Error (Throw, throwError)
 import Control.Effect.Lift (Lift, sendIO)
 import qualified Control.Effect.Reader as R (Reader, ask)
 import Control.Effect.Sum (Member)
-import Data.ByteString.Base64.Type (mkBS64)
 import Domain.User (UserR (..))
-import Domain.Util.Error (Impossible (Impossible), NotAuthorized, NotFound, ValidationErr)
+import Domain.Util.Error (Impossible (Impossible), NotAuthorized, ValidationErr)
 import Domain.Util.JSON.From (In (In))
 import Domain.Util.JSON.To (Out (Out))
 import Domain.Util.Validation (WithValidation)
@@ -57,7 +55,6 @@ authUserServer ::
     Member (Token.E UserR) sig,
     Member (Authentication.E UserR) sig,
     Member (Throw (NotAuthorized UserR)) sig,
-    Member (Catch (NotFound (UserR "id"))) sig,
     Member (Storage.Map.E UserR) sig
   ) =>
   ServerT AuthUserApi m
@@ -71,7 +68,7 @@ authUserServer =
                 Nothing -> throwError $ Impossible "accept login failed"
                 Just f -> case f authInfo of
                   Headers auth hs@(HCons h _) -> case h of
-                    Header (UserToken . mkBS64 . setCookieValue -> jwt) ->
+                    Header (UserToken . decodeUtf8 . setCookieValue -> jwt) ->
                       pure $ Headers (Out $ UserAuthWithToken auth jwt) hs
                     MissingHeader -> throwError $ Impossible "missing header for login"
                     UndecodableHeader bs -> throwError $ Impossible $ "undecodable header: " <> show bs

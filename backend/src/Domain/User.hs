@@ -13,7 +13,6 @@ module Domain.User (UserR (..)) where
 
 import Data.Aeson (FromJSON (parseJSON), ToJSON (toEncoding, toJSON), Value (Object), defaultOptions, genericParseJSON, genericToJSON)
 import Data.Aeson.Encoding (value)
-import Data.ByteString.Base64.Type (ByteString64)
 import Data.Generic.HKD (Construct (construct), HKD (HKD))
 import qualified Data.HashMap.Strict as HM (insert)
 import Domain.Util.Field (Bio, Email, Image, Password, Username)
@@ -34,21 +33,21 @@ deriving via (WithValidation Username) instance FromJSON (WithValidation (UserR 
 
 deriving via (WithValidation Username) instance FromHttpApiData (WithValidation (UserR "id"))
 
-newtype instance UserR "token" = UserToken ByteString64
-  deriving newtype (Show, Eq, ToJSON, Hashable, IsString)
+newtype instance UserR "token" = UserToken Text
+  deriving newtype (Show, Eq, ToJSON, Hashable)
   deriving (Generic)
 
-deriving via (NoValidation ByteString64) instance FromJSON (WithValidation (UserR "token"))
+deriving via (NoValidation Text) instance FromJSON (WithValidation (UserR "token"))
 
 instance FromHttpApiData (UserR "token") where
   parseUrlPiece =
     ( >>=
         \case
-          (words . show -> [prefix, token])
-            | (prefix == "Token") -> pure $ UserToken $ show token
+          (words -> [prefix, token])
+            | (prefix == "Token") -> pure $ UserToken token
           _ -> Left "Authentication Header should be in format: \"Authorization: Token jwt.token.here\""
     )
-      <$> parseUrlPiece @ByteString64
+      <$> parseUrlPiece @Text
 
 data instance UserR "all" = User
   { email :: Email, -- "jake@jake.jake",
