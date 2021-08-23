@@ -30,7 +30,7 @@ import qualified VisitorAction (E)
 type Api =
   "api"
     :> ( Auth '[TokenAuth] (UserR "authWithToken") :> (PublicApi :<|> AuthedApi)
-           :<|> "user" :> AuthUserApi
+           :<|> "users" :> AuthUserApi
        )
     :<|> Get '[JSON] Text
 
