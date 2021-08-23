@@ -17,6 +17,6 @@ newtype C e m a = C
   deriving (Functor, Applicative, Monad)
 
 instance (Algebra sig m) => Algebra (E Time :+: sig) (C Time m) where
-  alg _ (L GetCurrent) ctx = pure (UTCTime (ModifiedJulianDay 0) 0 <$ ctx)
+  alg _ (L GetCurrent) ctx = pure $ UTCTime (ModifiedJulianDay 0) 0 <$ ctx
   alg hdl (R other) ctx = C $ alg (run . hdl) other ctx
   {-# INLINE alg #-}

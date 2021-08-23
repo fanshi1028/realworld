@@ -8,7 +8,6 @@
 -- |
 module Domain.Util.Representation (applyPatch, Transform (transform)) where
 
-import Token (E (CreateToken))
 import Control.Algebra (Algebra, send)
 import Control.Effect.Catch (Catch, catchError)
 import Control.Effect.Sum (Member)
@@ -30,6 +29,7 @@ import qualified Relation.ManyToMany (E (GetRelatedLeft, GetRelatedRight, IsRela
 import qualified Relation.ToOne (E (GetRelated))
 import Relude.Extra (un)
 import qualified Storage.Map (E (GetById))
+import Token (E (CreateToken))
 import Validation (Validation (Failure))
 
 type Patchable r =
@@ -105,16 +105,15 @@ instance
   Transform UserR "auth" "profile" m
   where
   transform auth =
-    UserProfile auth <$> do
-      catchError @(NotAuthorized UserR)
-        ( do
-            userId <- transform @_ @_ @"id" auth
-            cUserId <-
-              send (GetCurrent @(UserR "authWithToken"))
-                >>= \(UserAuthWithToken auth' _) -> transform @_ @_ @"id" auth'
-            send (Relation.ManyToMany.IsRelated @_ @_ @"follow" cUserId userId)
-        )
-        $ const $ pure False
+    UserProfile auth
+      <$> ( do
+              cUserId <-
+                send (GetCurrent @(UserR "authWithToken"))
+                  >>= \(UserAuthWithToken auth' _) -> transform auth'
+              transform auth
+                >>= send . Relation.ManyToMany.IsRelated @(_ "id") @(_ "id") @"follow" cUserId
+          )
+        `catchError` const @_ @(NotAuthorized UserR) (pure False)
 
 instance (Algebra sig m, Transform UserR "auth" "profile" m, Transform UserR "all" "auth" m) => Transform UserR "all" "profile" m where
   transform = transform >=> transform @_ @"auth"

@@ -15,7 +15,7 @@ import Control.Effect.Lift (Lift)
 import Control.Effect.Sum (Member)
 import Control.Effect.Throw (Throw)
 import Domain.User (UserR)
-import Domain.Util.Error (Impossible, NotAuthorized, NotFound, ValidationErr)
+import Domain.Util.Error (Impossible, NotAuthorized, ValidationErr)
 import HTTP.Auth.User (AuthUserApi, authUserServer)
 import HTTP.Protected (AuthedApi, authedServer)
 import HTTP.Public (PublicApi, publicServer)
@@ -48,7 +48,6 @@ server ::
     Member (Catch (NotAuthorized UserR)) sig,
     Member (Authentication.E UserR) sig,
     Member (Throw (NotAuthorized UserR)) sig,
-    Member (Catch (NotFound (UserR "id"))) sig,
     Member (Storage.Map.E UserR) sig
   ) =>
   ServerT Api m
