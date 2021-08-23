@@ -32,7 +32,7 @@ import Text.Show (Show (showsPrec), showString)
 -- | some newtype
 
 -- | Email
-newtype Email = Email Text deriving newtype (Show, Eq, ToJSON, FromJSON)
+newtype Email = Email Text deriving newtype (Show, Eq, Hashable, ToJSON, FromJSON)
 
 instance FromJSON (WithValidation Email) where
   parseJSON = withText "email" $ pure <$> (Email <<$>> validate (not . T.null) "null email")

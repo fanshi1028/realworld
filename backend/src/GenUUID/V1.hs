@@ -13,7 +13,7 @@ import Control.Effect.Throw (Throw, throwError)
 import Data.UUID.V1 (nextUUID)
 import GenUUID (E (Generate))
 
-data RequestedUUIDsTooQuickly = RequestedUUIDsTooQuickly
+data RequestedUUIDsTooQuickly = RequestedUUIDsTooQuickly deriving (Show)
 
 newtype C m a = C
   { run :: m a
