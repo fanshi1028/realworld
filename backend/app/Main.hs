@@ -85,25 +85,25 @@ app cs jwts userDb articleDb commentDb tagDb emailUserIndex db0 db1 db2 db3 db4 
           . Current.Reader.run
           . R.runReader jwts
           . R.runReader cs
-          . (Relation.ToOne.InMem.run @Email @"of" @(UserR "id") @'IgnoreIfExist >>> usingReaderT emailUserIndex)
-          . (Relation.ToMany.InMem.run @(ArticleR "id") @"has" @(CommentR "id") >>> usingReaderT db0)
-          . (Relation.ToMany.InMem.run @(UserR "id") @"create" @(ArticleR "id") >>> usingReaderT db1)
+          . Relation.ToOne.InMem.run @Email @"of" @(UserR "id") @'IgnoreIfExist emailUserIndex
+          . Relation.ToMany.InMem.run @(ArticleR "id") @"has" @(CommentR "id") db0
+          . Relation.ToMany.InMem.run @(UserR "id") @"create" @(ArticleR "id") db1
           . ( Relation.ManyToMany.run @(ArticleR "id") @"taggedBy" @Tag
-                >>> (Relation.ToMany.InMem.run @(ArticleR "id") @"taggedBy" @Tag >>> usingReaderT db2)
-                >>> (Relation.ToMany.InMem.run @Tag @"tagging" @(ArticleR "id") >>> usingReaderT db3)
+                >>> Relation.ToMany.InMem.run @(ArticleR "id") @"taggedBy" @Tag db2
+                >>> Relation.ToMany.InMem.run @Tag @"tagging" @(ArticleR "id") db3
             )
           . ( Relation.ManyToMany.run @(UserR "id") @"follow" @(UserR "id")
-                >>> (Relation.ToMany.InMem.run @(UserR "id") @"following" @(UserR "id") >>> usingReaderT db4)
-                >>> (Relation.ToMany.InMem.run @(UserR "id") @"followedBy" @(UserR "id") >>> usingReaderT db5)
+                >>> Relation.ToMany.InMem.run @(UserR "id") @"following" @(UserR "id") db4
+                >>> Relation.ToMany.InMem.run @(UserR "id") @"followedBy" @(UserR "id") db5
             )
           . ( Relation.ManyToMany.run @(UserR "id") @"favorite" @(ArticleR "id")
-                >>> (Relation.ToMany.InMem.run @(ArticleR "id") @"favoritedBy" @(UserR "id") >>> usingReaderT db6)
-                >>> (Relation.ToMany.InMem.run @(UserR "id") @"favorite" @(ArticleR "id") >>> usingReaderT db7)
+                >>> Relation.ToMany.InMem.run @(ArticleR "id") @"favoritedBy" @(UserR "id") db6
+                >>> Relation.ToMany.InMem.run @(UserR "id") @"favorite" @(ArticleR "id") db7
             )
-          . (Storage.Map.InMem.run @UserR >>> usingReaderT userDb)
-          . (Storage.Map.InMem.run @ArticleR >>> usingReaderT articleDb)
-          . (Storage.Map.InMem.run @CommentR >>> usingReaderT commentDb)
-          . (Storage.Set.InMem.run @Tag >>> usingReaderT tagDb)
+          . Storage.Map.InMem.run @UserR userDb
+          . Storage.Map.InMem.run @ArticleR articleDb
+          . Storage.Map.InMem.run @CommentR commentDb
+          . Storage.Set.InMem.run @Tag tagDb
           . Current.IO.run @Time
           . GenUUID.V1.run
           . ( Token.JWT.run @UserR

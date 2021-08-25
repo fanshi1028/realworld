@@ -24,7 +24,7 @@ newtype
     (ex :: ExistAction)
     (m :: Type -> Type)
     a = C
-  { run :: ReaderT (STM.Map r1 r2) m a
+  { run' :: ReaderT (STM.Map r1 r2) m a
   }
   deriving (Functor, Applicative, Monad, MonadReader (STM.Map r1 r2))
 
@@ -61,7 +61,7 @@ instance
         Unrelate r1 r2 -> unrelateFocus r1 r2
         IsRelated r1 r2 -> (== Just r2) <<$>> STM.lookup r1
         GetRelated r1 -> STM.lookup r1
-  alg hdl (R other) ctx = C $ alg (run . hdl) (R other) ctx
+  alg hdl (R other) ctx = C $ alg (run' . hdl) (R other) ctx
   {-# INLINE alg #-}
 
 instance
@@ -80,5 +80,8 @@ instance
         Unrelate r1 r2 -> unrelateFocus r1 r2
         IsRelated r1 r2 -> (== Just r2) <<$>> STM.lookup r1
         GetRelated r1 -> STM.lookup r1
-  alg hdl (R other) ctx = C $ alg (run . hdl) (R other) ctx
+  alg hdl (R other) ctx = C $ alg (run' . hdl) (R other) ctx
   {-# INLINE alg #-}
+
+run :: forall r1 r r2 ex a m. STM.Map r1 r2 -> C r1 r r2 ex m a -> m a
+run db = run' >>> usingReaderT db

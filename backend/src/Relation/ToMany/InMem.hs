@@ -21,7 +21,7 @@ newtype
     (r2 :: Type)
     (m :: Type -> Type)
     a = C
-  { run :: ReaderT (STM.Multimap r1 r2) m a
+  { run' :: ReaderT (STM.Multimap r1 r2) m a
   }
   deriving (Functor, Applicative, Monad, MonadReader (STM.Multimap r1 r2))
 
@@ -43,5 +43,8 @@ instance
         UnrelateByKey k -> STM.deleteByKey k
         IsRelated k v -> STM.lookup v k
         GetRelated k -> ListT.toList . STM.listTByKey k
-  alg hdl (R other) ctx = C $ alg (run . hdl) (R other) ctx
+  alg hdl (R other) ctx = C $ alg (run' . hdl) (R other) ctx
   {-# INLINE alg #-}
+
+run :: forall r1 r r2 a m. STM.Multimap r1 r2 -> C r1 r r2 m a -> m a
+run db = run' >>> usingReaderT db

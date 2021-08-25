@@ -24,7 +24,7 @@ type TableInMem' r (k :: Symbol) (v :: Symbol) = STM.Map (r k) (r v)
 type TableInMem r = TableInMem' r "id" "all"
 
 newtype C (r :: Symbol -> Type) m a = C
-  { run :: ReaderT (TableInMem r) m a
+  { run' :: ReaderT (TableInMem r) m a
   }
   deriving (Functor, Applicative, Monad, MonadReader (TableInMem r))
 
@@ -52,10 +52,13 @@ instance
             sendM $ STM.insert value key db
           UpdateById id' updateF -> _tryUpdate updateF id'
           DeleteById id' -> _tryDelete id'
-    R other -> C $ alg (run . hdl) (R other) ctx
+    R other -> C $ alg (run' . hdl) (R other) ctx
     where
       _getAll = ListT.fold (\r (_, v) -> pure $ v : r) [] . STM.listT
       _try action id' = sendM . STM.focus (FC.cases (Nothing, FC.Leave) action) id' >=> maybe (throwError $ NotFound id') pure
       _tryUpdate updateF = _try $ \ele -> let new = updateF ele in (Just new, FC.Set new)
       _tryDelete id' = _try (const (Just (), FC.Remove)) id'
   {-# INLINE alg #-}
+
+run :: TableInMem r -> C r m a -> m a
+run db = run' >>> usingReaderT db
