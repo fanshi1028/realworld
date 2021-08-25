@@ -4,7 +4,7 @@
 {-# LANGUAGE UndecidableInstances #-}
 
 -- |
-module Relation.ToMany.InMem (run) where
+module Relation.ToMany.InMem (C, run) where
 
 import Control.Algebra (Algebra (alg), type (:+:) (L, R))
 import Control.Effect.Lift (Lift, sendM)

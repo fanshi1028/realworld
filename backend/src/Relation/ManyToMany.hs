@@ -6,7 +6,7 @@
 {-# LANGUAGE UndecidableInstances #-}
 
 -- |
-module Relation.ManyToMany (E (..), run) where
+module Relation.ManyToMany (E (..), C (run), ManyLeft, ManyRight) where
 
 import Control.Algebra (Algebra (alg), send, type (:+:) (L, R))
 import Control.Carrier.NonDet.Church (runNonDetA)

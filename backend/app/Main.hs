@@ -19,7 +19,7 @@ import GenUUID.V1 (RequestedUUIDsTooQuickly)
 import qualified GenUUID.V1 (run)
 import HTTP (Api, server)
 import qualified Network.Wai.Handler.Warp as W (run)
-import qualified Relation.ManyToMany (run)
+import qualified Relation.ManyToMany.InMem (run)
 import qualified Relation.ToMany.InMem (run)
 import Relation.ToOne.InMem (ExistAction (IgnoreIfExist))
 import qualified Relation.ToOne.InMem (run)
@@ -54,8 +54,8 @@ app ::
   Multimap Tag (ArticleR "id") ->
   Multimap (UserR "id") (UserR "id") ->
   Multimap (UserR "id") (UserR "id") ->
-  Multimap (ArticleR "id") (UserR "id") ->
   Multimap (UserR "id") (ArticleR "id") ->
+  Multimap (ArticleR "id") (UserR "id") ->
   Application
 app cs jwts userDb articleDb commentDb tagDb emailUserIndex db0 db1 db2 db3 db4 db5 db6 db7 =
   serveWithContext (Proxy @Api) (cs :. jwts :. EmptyContext) $
@@ -88,18 +88,9 @@ app cs jwts userDb articleDb commentDb tagDb emailUserIndex db0 db1 db2 db3 db4 
           . Relation.ToOne.InMem.run @Email @"of" @(UserR "id") @'IgnoreIfExist emailUserIndex
           . Relation.ToMany.InMem.run @(ArticleR "id") @"has" @(CommentR "id") db0
           . Relation.ToMany.InMem.run @(UserR "id") @"create" @(ArticleR "id") db1
-          . ( Relation.ManyToMany.run @(ArticleR "id") @"taggedBy" @Tag
-                >>> Relation.ToMany.InMem.run @(ArticleR "id") @"taggedBy" @Tag db2
-                >>> Relation.ToMany.InMem.run @Tag @"tagging" @(ArticleR "id") db3
-            )
-          . ( Relation.ManyToMany.run @(UserR "id") @"follow" @(UserR "id")
-                >>> Relation.ToMany.InMem.run @(UserR "id") @"following" @(UserR "id") db4
-                >>> Relation.ToMany.InMem.run @(UserR "id") @"followedBy" @(UserR "id") db5
-            )
-          . ( Relation.ManyToMany.run @(UserR "id") @"favorite" @(ArticleR "id")
-                >>> Relation.ToMany.InMem.run @(ArticleR "id") @"favoritedBy" @(UserR "id") db6
-                >>> Relation.ToMany.InMem.run @(UserR "id") @"favorite" @(ArticleR "id") db7
-            )
+          . Relation.ManyToMany.InMem.run @(ArticleR "id") @"taggedBy" @Tag db2 db3
+          . Relation.ManyToMany.InMem.run @(UserR "id") @"follow" @(UserR "id") db4 db5
+          . Relation.ManyToMany.InMem.run @(UserR "id") @"favorite" @(ArticleR "id") db6 db7
           . Storage.Map.InMem.run @UserR userDb
           . Storage.Map.InMem.run @ArticleR articleDb
           . Storage.Map.InMem.run @CommentR commentDb
