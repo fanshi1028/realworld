@@ -1,27 +1,22 @@
-{-# LANGUAGE ConstraintKinds #-}
 {-# LANGUAGE DataKinds #-}
-{-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE UndecidableInstances #-}
 
 -- |
-module Domain.Util.Representation (applyPatch, Transform (transform)) where
+module Domain.Util.Representation (Transform (transform)) where
 
 import Control.Algebra (Algebra, send)
 import Control.Effect.Catch (Catch, catchError)
 import Control.Effect.Sum (Member)
 import Control.Effect.Throw (Throw, throwError)
 import Current (E (GetCurrent))
-import Data.Generic.HKD (Construct (construct, deconstruct), HKD)
-import qualified Data.Semigroup as SG (Last (getLast))
 import qualified Data.Text as Text (intercalate, toLower)
 import Domain.Article (ArticleR (..))
 import Domain.Comment (CommentR (..))
 import Domain.User (UserR (..))
 import Domain.Util.Error (AlreadyExists (AlreadyExists), NotAuthorized, NotFound)
 import Domain.Util.Field (Bio (Bio), Email, Image (Image), Slug (Slug), Tag, Time, Title (..), Username)
-import Domain.Util.Validation (WithUpdate, WithValidation)
 import GHC.Records (HasField (getField))
 import GHC.TypeLits (Symbol)
 import qualified GenUUID (E (Generate))
@@ -30,26 +25,6 @@ import qualified Relation.ToOne (E (GetRelated))
 import Relude.Extra (un)
 import qualified Storage.Map (E (GetById))
 import Token (E (CreateToken))
-import Validation (Validation (Failure))
-
-type Patchable r =
-  ( Coercible (WithUpdate (r "all")) (r "update"),
-    Construct WithValidation (r "all"),
-    Construct SG.Last (HKD (r "all") WithValidation),
-    Construct Maybe (HKD (HKD (r "all") WithValidation) SG.Last),
-    Semigroup (WithUpdate (r "all"))
-  )
-
-applyPatch ::
-  (Patchable r) =>
-  r "update" ->
-  r "all" ->
-  WithValidation (r "all")
-applyPatch update orig =
-  let orig' = deconstruct $ deconstruct $ deconstruct orig
-   in case construct $ orig' <> un update of
-        Nothing -> Failure ("impossible: missing field!" :| [])
-        Just h -> construct $ SG.getLast $ construct h
 
 class Transform (r :: Symbol -> Type) (s1 :: Symbol) (s2 :: Symbol) (m :: Type -> Type) where
   transform :: (Monad m) => r s1 -> m (r s2)

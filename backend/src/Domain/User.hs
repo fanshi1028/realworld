@@ -18,10 +18,11 @@ import qualified Data.HashMap.Strict as HM (insert)
 import Domain.Util.Field (Bio, Email, Image, Password, Username)
 import Domain.Util.JSON.From (In, updatableParseJSON, wrappedParseJSON)
 import Domain.Util.JSON.To (Out (Out), wrapEncoding)
-import Domain.Util.Validation (WithNoValidation, NoValidation (..), WithUpdate, WithValidation)
+import Domain.Util.Validation (WithNoValidation, NoValidation (..), WithValidation)
 import GHC.TypeLits (Symbol)
 import Servant (FromHttpApiData (parseUrlPiece))
 import Servant.Auth.Server (FromJWT, ToJWT (encodeJWT))
+import Domain.Util.Update (WithUpdate)
 
 data family UserR (r :: Symbol)
 

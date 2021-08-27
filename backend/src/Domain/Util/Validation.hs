@@ -6,12 +6,10 @@
 {-# LANGUAGE StandaloneDeriving #-}
 
 -- |
-module Domain.Util.Validation (validate, WithValidation, NoValidation (..), WithNoValidation, WithUpdate) where
+module Domain.Util.Validation (validate, WithValidation, NoValidation (..), WithNoValidation) where
 
 import Data.Aeson (FromJSON (parseJSON), withArray)
-import Data.Generic.HKD (HKD)
 import qualified Data.HashSet as HS (fromList)
-import qualified Data.Semigroup as SG (Last)
 import Data.Time (UTCTime)
 import Domain.Util.Error (ValidationErr)
 import Servant (FromHttpApiData (parseQueryParam))
@@ -47,4 +45,3 @@ instance FromJSON a => FromJSON (WithNoValidation a) where
 instance FromHttpApiData a => FromHttpApiData (WithNoValidation a) where
   parseQueryParam = pure <<$>> parseQueryParam
 
-type WithUpdate a = HKD (HKD (HKD a WithValidation) SG.Last) Maybe
