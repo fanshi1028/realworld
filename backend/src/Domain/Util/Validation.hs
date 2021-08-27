@@ -6,7 +6,7 @@
 {-# LANGUAGE StandaloneDeriving #-}
 
 -- |
-module Domain.Util.Validation (validate, WithValidation, NoValidation' (..), NoValidation, WithUpdate) where
+module Domain.Util.Validation (validate, WithValidation, NoValidation (..), WithNoValidation, WithUpdate) where
 
 import Data.Aeson (FromJSON (parseJSON), withArray)
 import Data.Generic.HKD (HKD)
@@ -24,9 +24,9 @@ instance FromJSON (WithValidation a) => FromJSON (WithValidation [a]) where
 instance (Eq r, Hashable r, FromJSON (WithValidation r)) => FromJSON (WithValidation (HashSet r)) where
   parseJSON = fmap HS.fromList . sequenceA <<$>> parseJSON
 
-deriving via (NoValidation Text) instance FromJSON (WithValidation Text)
+deriving via (WithNoValidation Text) instance FromJSON (WithValidation Text)
 
-deriving via (NoValidation UTCTime) instance FromJSON (WithValidation UTCTime)
+deriving via (WithNoValidation UTCTime) instance FromJSON (WithValidation UTCTime)
 
 -- instance FromJSON (WithValidation a) => FromJSON (WithValidation (Maybe a)) where
 --   parseJSON = parseJSON
@@ -37,14 +37,14 @@ validate p err raw = if p raw then V.Success raw else V.failure err
 
 type WithValidation = V.Validation ValidationErr
 
-newtype NoValidation' a = NoValidation' a deriving (Generic, FromHttpApiData, FromJSON)
+newtype NoValidation a = NoValidation a deriving (Generic, FromHttpApiData, FromJSON)
 
-type NoValidation a = WithValidation (NoValidation' a)
+type WithNoValidation a = WithValidation (NoValidation a)
 
-instance FromJSON a => FromJSON (NoValidation a) where
+instance FromJSON a => FromJSON (WithNoValidation a) where
   parseJSON = pure <<$>> parseJSON
 
-instance FromHttpApiData a => FromHttpApiData (NoValidation a) where
+instance FromHttpApiData a => FromHttpApiData (WithNoValidation a) where
   parseQueryParam = pure <<$>> parseQueryParam
 
 type WithUpdate a = HKD (HKD (HKD a WithValidation) SG.Last) Maybe

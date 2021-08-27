@@ -18,7 +18,7 @@ import qualified Data.HashMap.Strict as HM (insert)
 import Domain.Util.Field (Bio, Email, Image, Password, Username)
 import Domain.Util.JSON.From (In, updatableParseJSON, wrappedParseJSON)
 import Domain.Util.JSON.To (Out (Out), wrapEncoding)
-import Domain.Util.Validation (NoValidation, NoValidation' (..), WithUpdate, WithValidation)
+import Domain.Util.Validation (WithNoValidation, NoValidation (..), WithUpdate, WithValidation)
 import GHC.TypeLits (Symbol)
 import Servant (FromHttpApiData (parseUrlPiece))
 import Servant.Auth.Server (FromJWT, ToJWT (encodeJWT))
@@ -37,7 +37,7 @@ newtype instance UserR "token" = UserToken Text
   deriving newtype (Show, Eq, ToJSON, Hashable)
   deriving (Generic)
 
-deriving via (NoValidation Text) instance FromJSON (WithValidation (UserR "token"))
+deriving via (WithNoValidation Text) instance FromJSON (WithValidation (UserR "token"))
 
 instance FromHttpApiData (UserR "token") where
   parseUrlPiece =

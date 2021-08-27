@@ -25,18 +25,18 @@ where
 import Domain.Util.Field (Tag, Username)
 import Domain.Util.JSON.From (In)
 import Domain.Util.JSON.To (Out)
-import Domain.Util.Validation (NoValidation, NoValidation' (..), WithValidation)
+import Domain.Util.Validation (WithNoValidation, NoValidation (..), WithValidation)
 import GHC.TypeLits (Symbol)
 import Servant (Delete, FromHttpApiData, Get, JSON, NoContent, Post, Put, QueryParam, ReqBody, type (:<|>), type (:>), Capture)
 
 -- Paging
 newtype Limit = Limit Natural deriving (FromHttpApiData)
 
-deriving via (NoValidation Natural) instance FromHttpApiData (WithValidation Limit)
+deriving via (WithNoValidation Natural) instance FromHttpApiData (WithValidation Limit)
 
 newtype Offset = Offset Natural deriving (FromHttpApiData)
 
-deriving via (NoValidation Natural) instance FromHttpApiData (WithValidation Offset)
+deriving via (WithNoValidation Natural) instance FromHttpApiData (WithValidation Offset)
 
 -- QueryParam shorthand
 type family QP' (s :: Symbol)

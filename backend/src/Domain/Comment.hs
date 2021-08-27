@@ -19,7 +19,7 @@ import Domain.User (UserR)
 import Domain.Util.Field (Time)
 import Domain.Util.JSON.From (In, wrappedParseJSON)
 import Domain.Util.JSON.To (Out, wrappedToEncoding)
-import Domain.Util.Validation (NoValidation, NoValidation' (..), WithValidation)
+import Domain.Util.Validation (WithNoValidation, NoValidation (..), WithValidation)
 import GHC.TypeLits (Symbol)
 import Servant (FromHttpApiData)
 
@@ -27,9 +27,9 @@ data family CommentR (r :: Symbol)
 
 newtype instance CommentR "id" = CommentId UUID deriving newtype (Show, Eq, Hashable, ToJSON)
 
-deriving via (NoValidation UUID) instance FromJSON (WithValidation (CommentR "id"))
+deriving via (WithNoValidation UUID) instance FromJSON (WithValidation (CommentR "id"))
 
-deriving via (NoValidation UUID) instance FromHttpApiData (WithValidation (CommentR "id"))
+deriving via (WithNoValidation UUID) instance FromHttpApiData (WithValidation (CommentR "id"))
 
 data instance CommentR "all" = Comment
   { id :: CommentR "id",

@@ -25,7 +25,7 @@ import Data.Aeson (FromJSON (parseJSON), ToJSON (toEncoding), withText)
 import qualified Data.Text as T (null)
 import Data.Time (UTCTime)
 import Domain.Util.JSON.To (Out, wrappedToEncoding)
-import Domain.Util.Validation (NoValidation, NoValidation' (..), WithValidation, validate)
+import Domain.Util.Validation (WithNoValidation, NoValidation (..), WithValidation, validate)
 import Servant (FromHttpApiData)
 import Text.Show (Show (showsPrec), showString)
 
@@ -50,31 +50,30 @@ instance Show Password where
 newtype Username = Username Text
   deriving newtype (Show, Eq, ToJSON, FromJSON, Hashable)
 
-deriving via (NoValidation Text) instance FromJSON (WithValidation Username)
-
-deriving via (NoValidation Text) instance FromHttpApiData (WithValidation Username)
+deriving via (WithNoValidation Text) instance FromJSON (WithValidation Username)
+deriving via (WithNoValidation Text) instance FromHttpApiData (WithValidation Username)
 
 -- | Bio
 newtype Bio = Bio Text
   deriving newtype (Show, Eq, ToJSON, FromJSON)
 
 -- deriving (Generic)
+deriving via (WithNoValidation Text) instance FromJSON (WithValidation Bio)
 
-deriving via (NoValidation Text) instance FromJSON (WithValidation Bio)
 
 -- | Image
 newtype Image = Image Text
   deriving newtype (Show, Eq, ToJSON, FromJSON)
 
-deriving via (NoValidation Text) instance FromJSON (WithValidation Image)
+deriving via (WithNoValidation Text) instance FromJSON (WithValidation Image)
 
 -- | Slug
 newtype Slug = Slug Text deriving newtype (Show, Eq, ToJSON, Hashable)
 
 -- FIXME: Slug need validation?
-deriving via (NoValidation Text) instance FromJSON (WithValidation Slug)
+deriving via (WithNoValidation Text) instance FromJSON (WithValidation Slug)
 
-deriving via (NoValidation Text) instance FromHttpApiData (WithValidation Slug)
+deriving via (WithNoValidation Text) instance FromHttpApiData (WithValidation Slug)
 
 -- | Title
 newtype Title = Title Text
@@ -86,19 +85,19 @@ instance FromJSON (WithValidation Title) where
 -- | Description
 newtype Description = Description Text deriving newtype (Show, Eq, ToJSON)
 
-deriving via (NoValidation Text) instance FromJSON (WithValidation Description)
+deriving via (WithNoValidation Text) instance FromJSON (WithValidation Description)
 
 -- | Body
 newtype Body = Body Text deriving newtype (Show, Eq, ToJSON)
 
-deriving via (NoValidation Text) instance FromJSON (WithValidation Body)
+deriving via (WithNoValidation Text) instance FromJSON (WithValidation Body)
 
 -- | Tag
 newtype Tag = Tag Text deriving newtype (Show, Eq, Hashable, ToJSON)
 
-deriving via (NoValidation Text) instance FromJSON (WithValidation Tag)
+deriving via (WithNoValidation Text) instance FromJSON (WithValidation Tag)
 
-deriving via (NoValidation Text) instance FromHttpApiData (WithValidation Tag)
+deriving via (WithNoValidation Text) instance FromHttpApiData (WithValidation Tag)
 
 instance (Foldable t, ToJSON (t Tag)) => ToJSON (Out (t Tag)) where
   toEncoding = wrappedToEncoding "tags"
