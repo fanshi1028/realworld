@@ -2,7 +2,7 @@
 {-# LANGUAGE FlexibleContexts #-}
 
 -- |
-module Domain.Util.JSON.From (In (..), insert', wrappedParseJSON, updatableParseJSON) where
+module Domain.Util.JSON.From (In (..), insert', wrappedParseJSON, filterKeysParseJSON) where
 
 import Data.Aeson (FromJSON (parseJSON), Value (Null, Object), withObject, (.:), (<?>))
 import Data.Aeson.Types (JSONPathElement (Key), Object, Parser)
@@ -19,11 +19,11 @@ newtype In a = In a deriving (Show, Generic)
 wrappedParseJSON :: FromJSON a => String -> Text -> Value -> Parser (In a)
 wrappedParseJSON info key = withObject info $ \o -> In <$> (o .: key >>= (<?> Key key) . parseJSON)
 
-updatableParseJSON ::
+filterKeysParseJSON ::
   [Text] ->
   (Value -> Parser a) ->
   (Value -> Parser a)
-updatableParseJSON updatableKeys parser =
+filterKeysParseJSON updatableKeys parser =
   withObject
     "update"
     $ parser

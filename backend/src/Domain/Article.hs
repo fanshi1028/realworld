@@ -19,7 +19,7 @@ import Data.Generic.HKD (construct)
 import qualified Data.HashMap.Strict as HM
 import Domain.User (UserR)
 import Domain.Util.Field (Body, Description, Slug (Slug), Tag, Time, Title)
-import Domain.Util.JSON.From (In, insert', updatableParseJSON, wrappedParseJSON)
+import Domain.Util.JSON.From (In, filterKeysParseJSON, insert', wrappedParseJSON)
 import Domain.Util.JSON.To (Out (Out), multiWrappedWithCountToEncoding, wrapEncoding)
 import Domain.Util.Update (WithUpdate)
 import Domain.Util.Validation (WithValidation)
@@ -165,7 +165,7 @@ newtype instance ArticleR "update" = ArticleUpdate (WithUpdate (ArticleR "all"))
 instance FromJSON (ArticleR "update") where
   parseJSON =
     ArticleUpdate
-      <<$>> updatableParseJSON
+      <<$>> filterKeysParseJSON
         ["title", "description", "body"]
         (genericParseJSON @(WithUpdate (ArticleR "all")) defaultOptions)
 

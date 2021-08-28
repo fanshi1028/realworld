@@ -16,7 +16,7 @@ import Data.Aeson.Encoding (value)
 import Data.Generic.HKD (Construct (construct), HKD (HKD))
 import qualified Data.HashMap.Strict as HM (insert)
 import Domain.Util.Field (Bio, Email, Image, Password, Username)
-import Domain.Util.JSON.From (In, updatableParseJSON, wrappedParseJSON)
+import Domain.Util.JSON.From (In, filterKeysParseJSON, wrappedParseJSON)
 import Domain.Util.JSON.To (Out (Out), wrapEncoding)
 import Domain.Util.Update (WithUpdate)
 import Domain.Util.Validation (NoValidation (..), WithNoValidation, WithValidation)
@@ -214,7 +214,7 @@ newtype instance UserR "update" = UserUpdate (WithUpdate (UserR "all"))
 instance FromJSON (UserR "update") where
   parseJSON =
     UserUpdate
-      <<$>> updatableParseJSON
+      <<$>> filterKeysParseJSON
         ["email", "password", "username", "bio", "image"]
         (genericParseJSON @(WithUpdate (UserR "all")) defaultOptions)
 
