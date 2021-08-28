@@ -10,6 +10,13 @@
 {-# LANGUAGE ViewPatterns #-}
 
 -- |
+-- Copyright   : (c) fanshi1028 , 2021
+-- Maintainer  : jackychany321@gmail.com
+-- Stability   : experimental
+--
+-- Representations for article
+--
+-- @since 0.1.0.0
 module Domain.Article (ArticleR (..)) where
 
 import Data.Aeson (FromJSON (parseJSON), ToJSON (toEncoding, toJSON), Value (Array), defaultOptions, genericParseJSON, genericToJSON, withObject)
@@ -26,15 +33,24 @@ import Domain.Util.Validation (WithValidation)
 import GHC.TypeLits (Symbol)
 import Servant (FromHttpApiData)
 
+-- | Type family for different representations of articles
+--
+-- @since 0.1.0.0
 data family ArticleR (r :: Symbol)
 
+-- | Id which can be used to uniquely idenitify an article.
+--
+-- @since 0.1.0.0
 newtype instance ArticleR "id" = ArticleId Slug
   deriving (Show, Eq)
   deriving newtype (Hashable, ToJSON)
 
+-- | @since 0.1.0.0
 deriving via (WithValidation Slug) instance FromHttpApiData (WithValidation (ArticleR "id"))
 
--- | Articles
+-- | Representation in storage
+--
+-- @since 0.1.0.0
 data instance ArticleR "all" = Article
   { title :: Title, -- "How to train your dragon",
     description :: Description, -- "Ever wonder how?",
@@ -70,6 +86,9 @@ data instance ArticleR "all" = Article
 --   }
 --   deriving (Generic, ToJSON)
 
+-- | Representation for output
+--
+-- @since 0.1.0.0
 data instance ArticleR "withAuthorProfile" = ArticleWithAuthorProfile
   { slug :: ArticleR "id",
     article :: ArticleR "all",
@@ -80,6 +99,7 @@ data instance ArticleR "withAuthorProfile" = ArticleWithAuthorProfile
   }
   deriving (Generic)
 
+-- | @since 0.1.0.0
 instance ToJSON (ArticleR "withAuthorProfile") where
   toEncoding (ArticleWithAuthorProfile aid a tags b n ur) =
     case genericToJSON defaultOptions a of
@@ -94,9 +114,11 @@ instance ToJSON (ArticleR "withAuthorProfile") where
           $ hm
       _ -> error "impossible in ToJSON (ArticleR \"withAuthorProfile\")"
 
+-- | @since 0.1.0.0
 instance ToJSON (Out (ArticleR "withAuthorProfile")) where
   toEncoding (Out a) = wrapEncoding "article" $ toEncoding a
 
+-- |
 -- >>> import Domain.Util
 -- >>> import Domain.User
 -- >>> import Data.Time
@@ -117,7 +139,8 @@ instance ToJSON (Out (ArticleR "withAuthorProfile")) where
 -- >>> encode $ Out [ article, article ]
 -- instance ToJSON (Out (ArticleR "withAuthorProfile")) where
 --   toEncoding = wrappedToEncoding "article"
-
+--
+-- @since 0.1.0.0
 instance (Foldable t, ToJSON (t (ArticleR "withAuthorProfile"))) => ToJSON (Out (t (ArticleR "withAuthorProfile"))) where
   toEncoding (Out as) = multiWrappedWithCountToEncoding "articles" "articlesCount" as
 
@@ -129,6 +152,9 @@ instance (Foldable t, ToJSON (t (ArticleR "withAuthorProfile"))) => ToJSON (Out 
 -- mm#mm  #   #  --
 -------------------
 
+-- | Representation for creation
+--
+-- @since 0.1.0.0
 data instance ArticleR "create" = ArticleCreate
   { title :: Title, -- "How to train your dragon",
     description :: Description, -- "Ever wonder how?",
@@ -137,6 +163,7 @@ data instance ArticleR "create" = ArticleCreate
   }
   deriving (Generic, Show)
 
+-- |
 -- >>> import Data.Aeson
 -- >>> eitherDecode @(WithValidation (ArticleR "create")) "{\"title\":\"\", \"description\": \"fjowfewe\"}"
 -- >>> eitherDecode @(WithValidation (ArticleR "create")) "{\"title\":\"fjowefjew\", \"description\": \"fjowfewe\"}"
@@ -152,16 +179,23 @@ data instance ArticleR "create" = ArticleCreate
 -- Left "Error in $: key \"article\" not found"
 -- Left "Error in $: parsing CreateArticle failed, expected Object, but encountered String"
 -- Left "Error in $.article: parsing CreateArticle failed, expected Object, but encountered String"
+--
+-- @since 0.1.0.0
 instance FromJSON (WithValidation (ArticleR "create")) where
   parseJSON =
     withObject "CreateArticle" $
       \(Object . insert' "tagList" (Array mempty) -> o) -> construct <$> genericParseJSON defaultOptions o
 
+-- | @since 0.1.0.0
 instance FromJSON (In (WithValidation (ArticleR "create"))) where
   parseJSON = wrappedParseJSON "ArticleCreate" "article"
 
+-- | Representation for update
+--
+-- @since 0.1.0.0
 newtype instance ArticleR "update" = ArticleUpdate (WithUpdate (ArticleR "all")) deriving (Generic)
 
+-- | @since 0.1.0.0
 instance FromJSON (ArticleR "update") where
   parseJSON =
     ArticleUpdate
@@ -169,5 +203,6 @@ instance FromJSON (ArticleR "update") where
         ["title", "description", "body"]
         (genericParseJSON @(WithUpdate (ArticleR "all")) defaultOptions)
 
+-- | @since 0.1.0.0
 instance FromJSON (In (ArticleR "update")) where
   parseJSON = wrappedParseJSON "ArticleUpdate" "article"
