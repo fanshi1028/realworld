@@ -1,9 +1,19 @@
 {-# LANGUAGE DataKinds #-}
 
 -- |
-module GenUUID (E(..)) where
+-- Description : Effect
+-- Copyright   : (c) fanshi1028 , 2021
+-- Maintainer  : jackychany321@gmail.com
+-- Stability   : experimental
+--
+-- Effect to generate UUID
+--
+-- @since 0.1.0.0
+module GenUUID (E (..)) where
 
 import Data.UUID (UUID)
 
+-- | since 0.1.0.0
 data E (m :: Type -> Type) a where
+  -- | generate UUID
   Generate :: E m UUID
