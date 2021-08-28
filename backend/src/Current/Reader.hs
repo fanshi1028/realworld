@@ -4,7 +4,15 @@
 {-# LANGUAGE UndecidableInstances #-}
 
 -- |
-module Current.Reader (run) where
+-- Description : Carrier
+-- Copyright   : (c) fanshi1028 , 2021
+-- Maintainer  : jackychany321@gmail.com
+-- Stability   : experimental
+--
+-- Carrier in Reader
+--
+-- @since 0.1.0.0
+module Current.Reader where
 
 import Control.Algebra (Algebra (alg), type (:+:) (L, R))
 import qualified Control.Effect.Reader as R (Reader, ask)
@@ -15,11 +23,15 @@ import Domain.User (UserR)
 import Domain.Util.Error (NotAuthorized (NotAuthorized))
 import Servant.Auth.Server (AuthResult (Authenticated))
 
+-- | @since 0.1.0.0
 newtype C m a = C
   { run :: m a
   }
   deriving (Functor, Applicative, Monad)
 
+-- | Only instance for 'AuthResult' ('UserR' \"authWithToken\") for now
+--
+-- @since 0.1.0.0
 instance
   ( Algebra sig m,
     Member (Throw (NotAuthorized UserR)) sig,
