@@ -7,7 +7,7 @@
 -- |
 module Authorization (TokenAuth, TokenAuthInMem) where
 
-import Token (E (CheckToken))
+import Token (E (DecodeToken))
 import Token.JWT (run)
 import Token.JWT.Invalidate.Pure (run)
 import Control.Algebra (send)
@@ -46,7 +46,7 @@ instance IsAuth TokenAuth (UserR "authWithToken") where
             >=> \case
               Right (Right auth) -> pure $ pure $ UserAuthWithToken auth token
               _ -> pure mempty
-            $ send (CheckToken token)
+            $ send (DecodeToken token)
       _ -> pure mempty
 
 data TokenAuthInMem

@@ -18,7 +18,7 @@ import Domain.Util.Error (NotAuthorized (NotAuthorized))
 import GHC.TypeLits (Symbol)
 import Relude.Extra (un)
 import Servant.Auth.Server (CookieSettings (cookieExpires), FromJWT, JWTSettings, ToJWT, makeJWT, verifyJWT)
-import Token (E (CheckToken, CreateToken, InvalidateToken))
+import Token (E (DecodeToken, CreateToken, InvalidateToken))
 import Token.JWT.Invalidate (E (Invalidate))
 
 newtype C (r :: Symbol -> Type) (m :: Type -> Type) a = C
@@ -40,7 +40,7 @@ instance
   ) =>
   Algebra (Token.E r :+: sig) (C r m)
   where
-  alg _ (L (CheckToken token)) ctx = do
+  alg _ (L (DecodeToken token)) ctx = do
     verifyJWT <$> R.ask <*> pure (encodeUtf8 $ un @Text token)
       >>= sendIO
       >>= \case
