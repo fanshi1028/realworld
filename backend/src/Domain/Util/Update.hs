@@ -1,28 +1,24 @@
-{-# LANGUAGE ConstraintKinds #-}
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE FlexibleContexts #-}
 
 -- |
 module Domain.Util.Update (WithUpdate, applyPatch) where
 
-import Data.Generic.HKD (Construct, HKD, deconstruct, construct)
+import Data.Generic.HKD (Construct, HKD, construct, deconstruct)
 import qualified Data.Semigroup as SG
 import Domain.Util.Validation (WithValidation)
 import Relude.Extra (un)
-import Validation (Validation(Failure))
+import Validation (Validation (Failure))
 
 type WithUpdate a = HKD (HKD (HKD a WithValidation) SG.Last) Maybe
 
-type Patchable r =
-  ( Coercible (WithUpdate (r "all")) (r "update"),
-    Construct WithValidation (r "all"),
+applyPatch ::
+  ( Construct WithValidation (r "all"),
     Construct SG.Last (HKD (r "all") WithValidation),
     Construct Maybe (HKD (HKD (r "all") WithValidation) SG.Last),
-    Semigroup (WithUpdate (r "all"))
-  )
-
-applyPatch ::
-  (Patchable r) =>
+    Semigroup (WithUpdate (r "all")),
+    Coercible (WithUpdate (r "all")) (r "update")
+  ) =>
   r "update" ->
   r "all" ->
   WithValidation (r "all")
