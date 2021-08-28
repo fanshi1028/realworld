@@ -5,13 +5,22 @@
 {-# LANGUAGE UndecidableInstances #-}
 
 -- |
-module Relation.ToOne.Pure (run) where
+-- Description : Carrier
+-- Copyright   : (c) fanshi1028 , 2021
+-- Maintainer  : jackychany321@gmail.com
+-- Stability   : experimental
+--
+-- Carrier in pure
+--
+-- @since 0.1.0.0
+module Relation.ToOne.Pure where
 
 import Control.Algebra (Algebra (alg), type (:+:) (L, R))
 import Data.Singletons.Bool (SBoolI (sbool), fromSBool)
 import GHC.TypeLits (Symbol)
 import Relation.ToOne (E (GetRelated, IsRelated, Relate, Unrelate))
 
+-- | @since 0.1.0.0
 newtype
   C
     (r1 :: Type)
@@ -24,6 +33,7 @@ newtype
   }
   deriving (Functor, Applicative, Monad)
 
+-- | @since 0.1.0.0
 instance (Algebra sig m, SBoolI b) => Algebra (E r1 r r2 :+: sig) (C r1 r r2 b m) where
   alg _ (L Relate {}) ctx = pure $ () <$ ctx
   alg _ (L Unrelate {}) ctx = pure $ () <$ ctx

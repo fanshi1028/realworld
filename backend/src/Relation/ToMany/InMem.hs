@@ -4,7 +4,15 @@
 {-# LANGUAGE UndecidableInstances #-}
 
 -- |
-module Relation.ToMany.InMem (C, run) where
+-- Description : Carrier
+-- Copyright   : (c) fanshi1028 , 2021
+-- Maintainer  : jackychany321@gmail.com
+-- Stability   : experimental
+--
+-- Carrier to run in memory
+--
+-- @since 0.1.0.0
+module Relation.ToMany.InMem where
 
 import Control.Algebra (Algebra (alg), type (:+:) (L, R))
 import Control.Effect.Lift (Lift, sendM)
@@ -14,6 +22,7 @@ import qualified ListT (toList)
 import Relation.ToMany (E (GetRelated, IsRelated, Relate, Unrelate, UnrelateByKey))
 import qualified StmContainers.Multimap as STM (Multimap, delete, deleteByKey, insert, listTByKey, lookup)
 
+-- | @since 0.1.0.0
 newtype
   C
     (r1 :: Type)
@@ -25,6 +34,7 @@ newtype
   }
   deriving (Functor, Applicative, Monad, MonadReader (STM.Multimap r1 r2))
 
+-- | @since 0.1.0.0
 instance
   ( Algebra sig m,
     Member (Lift STM) sig,
@@ -46,5 +56,6 @@ instance
   alg hdl (R other) ctx = C $ alg (run' . hdl) (R other) ctx
   {-# INLINE alg #-}
 
+-- | @since 0.1.0.0
 run :: forall r1 r r2 a m. STM.Multimap r1 r2 -> C r1 r r2 m a -> m a
 run db = run' >>> usingReaderT db

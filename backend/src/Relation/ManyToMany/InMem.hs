@@ -2,12 +2,21 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 
 -- |
-module Relation.ManyToMany.InMem (run) where
+-- Description : Carrier
+-- Copyright   : (c) fanshi1028 , 2021
+-- Maintainer  : jackychany321@gmail.com
+-- Stability   : experimental
+--
+-- Carrier to run in memory
+--
+-- @since 0.1.0.0
+module Relation.ManyToMany.InMem where
 
 import qualified Relation.ManyToMany (C (run), ManyLeft, ManyRight)
 import qualified Relation.ToMany.InMem (C, run)
 import StmContainers.Multimap (Multimap)
 
+-- | @since 0.1.0.0
 run ::
   forall r1 r r2 a m lr rr.
   ( lr ~ Relation.ManyToMany.ManyLeft r,
