@@ -2,34 +2,53 @@
 {-# LANGUAGE DeriveGeneric #-}
 
 -- |
+-- Copyright   : (c) fanshi1028 , 2021
+-- Maintainer  : jackychany321@gmail.com
+-- Stability   : experimental
+--
+-- Some Types for some common errors.
+--
+-- @since 0.1.0.0
 module Domain.Util.Error where
 
 import Data.Aeson (ToJSON (toEncoding))
 import Data.Aeson.Encoding.Internal (Encoding' (Encoding))
--- import Domain.Util.JSON.To (Out, wrapEncoding, wrappedToEncoding)
 import GHC.TypeLits (Symbol)
 
--- newtype Err a = Err a
-
--- deriving newtype instance ToJSON a => ToJSON (Err a)
-
--- instance (Foldable t, ToJSON (t (Err a))) => ToJSON (Out (t (Err a))) where
---   toEncoding = wrapEncoding "error" . wrappedToEncoding "body"
-
--- | Common Error
-newtype NotFound a = NotFound a deriving (Show, Generic)
+-- | @since 0.1.0.0
+newtype NotFound a
+  = -- | when a is not found
+    NotFound a
+  deriving (Show, Generic)
 
 instance (ToJSON a, Show a) => ToJSON (NotFound a) where
   toEncoding = Encoding . show
 
-newtype AlreadyExists a = AlreadyExists a deriving (Show)
+-- | @since 0.1.0.0
+newtype AlreadyExists a
+  = -- | when a has already existed
+    AlreadyExists a
+  deriving (Show)
 
+-- | @since 0.1.0.0
 data NotAuthorized (r :: Symbol -> Type) = NotAuthorized deriving (Show)
 
+-- | @since 0.1.0.0
 data AlreadyLogin (r :: Symbol -> Type) = AlreadyLogin deriving (Show)
 
+-- | @since 0.1.0.0
 data NotLogin (r :: Symbol -> Type) = NotLogin deriving (Show)
 
-newtype Impossible = Impossible Text deriving (Show)
+-- | Use it to mark the impossible error case
+--
+-- @since 0.1.0.0
+newtype Impossible
+  = -- | 'Text' to provide context, in case the __IMPOSSIBLE__ really happens
+    Impossible Text
+  deriving (Show)
 
+-- | Just use 'Text' to represent all validation errors. When it happens, there will be a nonempty list of them.
+--
+-- @since 0.1.0.0
 type ValidationErr = NonEmpty Text
+
