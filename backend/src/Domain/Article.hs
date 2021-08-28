@@ -164,8 +164,10 @@ newtype instance ArticleR "update" = ArticleUpdate (WithUpdate (ArticleR "all"))
 
 instance FromJSON (ArticleR "update") where
   parseJSON =
-    updatableParseJSON ["title", "description", "body"] $
-      genericParseJSON @(WithUpdate (ArticleR "all")) defaultOptions
+    ArticleUpdate
+      <<$>> updatableParseJSON
+        ["title", "description", "body"]
+        (genericParseJSON @(WithUpdate (ArticleR "all")) defaultOptions)
 
 instance FromJSON (In (ArticleR "update")) where
   parseJSON = wrappedParseJSON "ArticleUpdate" "article"

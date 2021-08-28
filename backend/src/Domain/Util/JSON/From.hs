@@ -7,7 +7,7 @@ module Domain.Util.JSON.From (In (..), insert', wrappedParseJSON, updatableParse
 import Data.Aeson (FromJSON (parseJSON), Value (Null, Object), withObject, (.:), (<?>))
 import Data.Aeson.Types (JSONPathElement (Key), Object, Parser)
 import Data.HashMap.Strict (mapWithKey)
-import Relude.Extra (insertWith, wrap)
+import Relude.Extra (insertWith)
 
 -- | helper to override and provide default value when writing FromJSON instance
 insert' :: Text -> Value -> Object -> Object
@@ -20,10 +20,12 @@ wrappedParseJSON :: FromJSON a => String -> Text -> Value -> Parser (In a)
 wrappedParseJSON info key = withObject info $ \o -> In <$> (o .: key >>= (<?> Key key) . parseJSON)
 
 updatableParseJSON ::
-  (Coercible a b) => [Text] -> (Value -> Parser a) -> Value -> Parser b
+  [Text] ->
+  (Value -> Parser a) ->
+  (Value -> Parser a)
 updatableParseJSON updatableKeys parser =
   withObject
     "update"
-    $ (wrap <$>) . parser
+    $ parser
       . Object
       . mapWithKey (\k -> if k `notElem` updatableKeys then const Null else id)

@@ -18,11 +18,11 @@ import qualified Data.HashMap.Strict as HM (insert)
 import Domain.Util.Field (Bio, Email, Image, Password, Username)
 import Domain.Util.JSON.From (In, updatableParseJSON, wrappedParseJSON)
 import Domain.Util.JSON.To (Out (Out), wrapEncoding)
-import Domain.Util.Validation (WithNoValidation, NoValidation (..), WithValidation)
+import Domain.Util.Update (WithUpdate)
+import Domain.Util.Validation (NoValidation (..), WithNoValidation, WithValidation)
 import GHC.TypeLits (Symbol)
 import Servant (FromHttpApiData (parseUrlPiece))
 import Servant.Auth.Server (FromJWT, ToJWT (encodeJWT))
-import Domain.Util.Update (WithUpdate)
 
 data family UserR (r :: Symbol)
 
@@ -213,8 +213,10 @@ newtype instance UserR "update" = UserUpdate (WithUpdate (UserR "all"))
 
 instance FromJSON (UserR "update") where
   parseJSON =
-    updatableParseJSON ["email", "password", "username", "bio", "image"] $
-      genericParseJSON @(WithUpdate (UserR "all")) defaultOptions
+    UserUpdate
+      <<$>> updatableParseJSON
+        ["email", "password", "username", "bio", "image"]
+        (genericParseJSON @(WithUpdate (UserR "all")) defaultOptions)
 
 instance FromJSON (In (UserR "update")) where
   parseJSON = wrappedParseJSON "UserUpdate" "user"
