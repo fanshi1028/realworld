@@ -17,7 +17,7 @@ import Domain.Util.Validation (WithValidation)
 import Relude.Extra (un)
 import Validation (Validation (Failure))
 
--- | Convience type synonym, represent a patch to update a value using nested construct of "Data.Generic.HKD"
+-- | Convenient type synonym, represent a patch to update a value using nested construct of "Data.Generic.HKD"
 --
 -- @since 0.1.0.0
 type WithUpdate a = HKD (HKD (HKD a WithValidation) SG.Last) Maybe

@@ -59,7 +59,7 @@ validate ::
   V.Validation (NonEmpty e) a
 validate p err raw = if p raw then V.Success raw else V.failure err
 
--- | Convience type synonym
+-- | Convenient type synonym
 --
 -- @since 0.1.0.0
 type WithValidation = V.Validation ValidationErr
@@ -76,7 +76,7 @@ type WithValidation = V.Validation ValidationErr
 -- @since 0.1.0.0
 newtype NoValidation a = NoValidation a deriving (Generic, FromHttpApiData, FromJSON)
 
--- | Convience type synonym
+-- | Convenient type synonym
 --
 -- __Usage__:
 --
