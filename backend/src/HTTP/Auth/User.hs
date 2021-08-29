@@ -5,7 +5,15 @@
 {-# LANGUAGE ViewPatterns #-}
 
 -- |
-module HTTP.Auth.User (AuthUserApi, authUserServer) where
+-- Description : API & Server
+-- Copyright   : (c) fanshi1028 , 2021
+-- Maintainer  : jackychany321@gmail.com
+-- Stability   : experimental
+--
+-- API & Server for authorization
+--
+-- @since 0.1.0.0
+module HTTP.Auth.User where
 
 import Authentication (E (Login, Register))
 import Control.Algebra (Algebra, send)
@@ -39,12 +47,20 @@ import Token (E (CreateToken))
 import Validation (validation)
 import Web.Cookie (setCookieValue)
 
+-- * API
+
+-- | Register or Login
+--
+-- @since 0.1.0.0
 type AuthUserApi =
   ( "login" :> ReqBody '[JSON] (In (WithValidation (UserR "login")))
       :> Verb 'POST 204 '[JSON] (Headers '[Header "Set-Cookie" SetCookie, Header "Set-Cookie" SetCookie] (Out (UserR "authWithToken")))
   )
     :<|> CreateApi UserR "authWithToken"
 
+-- * Server
+
+-- | @since 0.1.0.0
 authUserServer ::
   ( Algebra sig m,
     Member (Throw ValidationErr) sig,
