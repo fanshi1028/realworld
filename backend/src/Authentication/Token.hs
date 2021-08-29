@@ -4,7 +4,15 @@
 {-# LANGUAGE UndecidableInstances #-}
 
 -- |
-module Authentication.Token (run) where
+-- Description : Carrier
+-- Copyright   : (c) fanshi1028 , 2021
+-- Maintainer  : jackychany321@gmail.com
+-- Stability   : experimental
+--
+-- Carrier using token
+--
+-- @since 0.1.0.0
+module Authentication.Token where
 
 import qualified Authentication (E (Login, Logout, Register))
 import Control.Algebra (Algebra (alg), send, type (:+:) (L, R))
@@ -22,11 +30,13 @@ import qualified Relation.ToOne
 import qualified Storage.Map
 import qualified Token (E (InvalidateToken))
 
+-- | @since 0.1.0.0
 newtype C (r :: Symbol -> Type) m a = C
   { run :: m a
   }
   deriving (Functor, Applicative, Monad)
 
+-- | @since 0.1.0.0
 instance
   ( Algebra sig m,
     Member (Throw (NotAuthorized UserR)) sig,
