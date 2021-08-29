@@ -23,7 +23,7 @@ import qualified Relation.ManyToMany.InMem (run)
 import qualified Relation.ToMany.InMem (run)
 import Relation.ToOne.InMem (ExistAction (IgnoreIfExist))
 import qualified Relation.ToOne.InMem (run)
-import qualified STMWithUnsafeIO (run)
+import STMWithUnsafeIO (runIOinSTM)
 import Servant (Application, Context (EmptyContext, (:.)), ServerError (errBody), err400, err401, err404, err500, hoistServerWithContext, serveWithContext, throwError)
 import Servant.Auth.Server (AuthResult (Indefinite), CookieSettings, JWTSettings, defaultCookieSettings, defaultJWTSettings, generateKey)
 import StmContainers.Map as STM.Map (newIO)
@@ -62,8 +62,7 @@ app cs jwts userDb articleDb commentDb tagDb emailUserIndex db0 db1 db2 db3 db4 
     hoistServerWithContext
       (Proxy @Api)
       (Proxy @'[CookieSettings, JWTSettings])
-      ( atomically
-          . STMWithUnsafeIO.run
+      ( runIOinSTM
           . runError @(NotAuthorized UserR)
           . runError @(NotFound (ArticleR "id"))
           . runError @(NotFound (CommentR "id"))
