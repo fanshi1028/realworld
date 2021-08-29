@@ -47,7 +47,6 @@ data E (m :: Type -> Type) a where
   FavoriteArticle :: ArticleR "id" -> E m (ArticleR "withAuthorProfile")
   UnfavoriteArticle :: ArticleR "id" -> E m (ArticleR "withAuthorProfile")
   FeedArticles :: E m [ArticleR "withAuthorProfile"]
-  GetCommentsFromArticle :: ArticleR "id" -> E m [CommentR "withAuthorProfile"]
 
 newtype C m a = C
   { run :: m a
@@ -159,14 +158,5 @@ instance
               . send
               . Storage.Map.GetById @ArticleR
             >>= transform
-        GetCommentsFromArticle articleId -> do
-          void $ send (Storage.Map.GetById articleId)
-          runNonDetA @[] $ do
-            send (Relation.ToMany.GetRelated @_ @"has" articleId)
-              >>= oneOf
-              >>= flip catchError (const @_ @(NotFound (CommentR "id")) $ throwError $ Impossible "comment id not found")
-                . send
-                . Storage.Map.GetById @CommentR
-              >>= transform
   alg hdl (R other) ctx = C $ alg (run . hdl) other ctx
   {-# INLINE alg #-}
