@@ -8,7 +8,15 @@
 {-# LANGUAGE ViewPatterns #-}
 
 -- |
-module UserAction (E (..), run) where
+-- Description : Effect & Carrier
+-- Copyright   : (c) fanshi1028 , 2021
+-- Maintainer  : jackychany321@gmail.com
+-- Stability   : experimental
+--
+-- Effect and Carrier of users' action
+--
+-- @since 0.1.0.0
+module UserAction where
 
 import qualified Authentication (E)
 import Control.Algebra (Algebra (alg), send, type (:+:) (L, R))
@@ -26,33 +34,78 @@ import Domain.User (UserR (..))
 import Domain.Util.Error (AlreadyExists, Impossible (Impossible), NotAuthorized (NotAuthorized), NotFound (NotFound), ValidationErr)
 import Domain.Util.Field (Tag, Time)
 import Domain.Util.Representation (Transform (transform))
+import Domain.Util.Update (applyPatch)
 import qualified GenUUID (E)
 import qualified Relation.ManyToMany (E (GetRelatedLeft, Relate, Unrelate, UnrelateByKeyRight))
 import qualified Relation.ToMany (E (GetRelated, IsRelated, Relate, Unrelate, UnrelateByKey))
 import qualified Storage.Map (E (DeleteById, GetById, Insert, UpdateById))
 import qualified Token (E (CreateToken))
 import Validation (validation)
-import Domain.Util.Update (applyPatch)
 
+-- * Effect
+
+-- | Actions that can only be carried out by __authenticated__ users.
+--
+-- @since 0.1.0.0
 data E (m :: Type -> Type) a where
+  -- | Get the info of the current authenticated user.
+  --
+  -- @since 0.1.0.0
   GetCurrentUser :: E m (UserR "authWithToken")
+  -- | Update the profile of the current authenticated user.
+  --
+  -- @since 0.1.0.0
   UpdateUser :: UserR "update" -> E m (UserR "authWithToken")
+  -- | Follow the user specified by the id.
+  --
+  -- @since 0.1.0.0
   FollowUser :: UserR "id" -> E m (UserR "profile")
+  -- | Unfollow the user specified by the id.
+  --
+  -- @since 0.1.0.0
   UnfollowUser :: UserR "id" -> E m (UserR "profile")
+  -- | Create the article specified by the id.
+  --
+  -- @since 0.1.0.0
   CreateArticle :: ArticleR "create" -> E m (ArticleR "withAuthorProfile")
+  -- | Update the authenticated user's own article specified by the id.
+  --
+  -- @since 0.1.0.0
   UpdateArticle :: ArticleR "id" -> ArticleR "update" -> E m (ArticleR "withAuthorProfile")
+  -- | Delete the authenticated user's own article specified by the id.
+  --
+  -- @since 0.1.0.0
   DeleteArticle :: ArticleR "id" -> E m ()
+  -- | Leave a comment to the article specified by the id.
+  --
+  -- @since 0.1.0.0
   AddCommentToArticle :: ArticleR "id" -> CommentR "create" -> E m (CommentR "withAuthorProfile")
+  -- | Delete the authenticated user's own comment specified by the id from the article.
+  --
+  -- @since 0.1.0.0
   DeleteComment :: ArticleR "id" -> CommentR "id" -> E m ()
+  -- | Favorite the aritcle specified by the id.
+  --
+  -- @since 0.1.0.0
   FavoriteArticle :: ArticleR "id" -> E m (ArticleR "withAuthorProfile")
+  -- | Unfavorite the aritcle specified by the id.
+  --
+  -- @since 0.1.0.0
   UnfavoriteArticle :: ArticleR "id" -> E m (ArticleR "withAuthorProfile")
+  -- | Get articles feed recommendated for the authenticated user.
+  --
+  -- @since 0.1.0.0
   FeedArticles :: E m [ArticleR "withAuthorProfile"]
 
+-- * Carrirer
+
+-- | @since 0.1.0.0
 newtype C m a = C
   { run :: m a
   }
   deriving (Functor, Applicative, Monad)
 
+-- | @since 0.1.0.0
 instance
   ( Member (Token.E UserR) sig,
     Member (Storage.Map.E UserR) sig,
