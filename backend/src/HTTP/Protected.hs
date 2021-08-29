@@ -2,7 +2,15 @@
 {-# LANGUAGE FlexibleContexts #-}
 
 -- |
-module HTTP.Protected (AuthedApi, authedServer) where
+-- Description : API & Server
+-- Copyright   : (c) fanshi1028 , 2021
+-- Maintainer  : jackychany321@gmail.com
+-- Stability   : experimental
+--
+-- Auth protected API & Server
+--
+-- @since 0.1.0.0
+module HTTP.Protected where
 
 import Control.Algebra (Algebra)
 import Control.Effect.Sum (Member)
@@ -14,11 +22,17 @@ import HTTP.Protected.User (UserApi, userServer)
 import Servant (ServerT, type (:<|>) ((:<|>)), type (:>))
 import qualified UserAction (E)
 
+-- * API
+
+-- | @since 0.1.0.0
 type AuthedApi =
   "user" :> UserApi
     :<|> "profiles" :> FollowApi
     :<|> "articles" :> ArticleApi
 
+-- * Server
+
+-- | @since 0.1.0.0
 authedServer ::
   ( Algebra sig m,
     Member UserAction.E sig,
