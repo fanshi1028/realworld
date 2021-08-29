@@ -6,7 +6,21 @@
 {-# LANGUAGE ViewPatterns #-}
 
 -- |
-module Authorization (TokenAuth, TokenAuthInMem) where
+-- Copyright   : (c) fanshi1028 , 2021
+-- Maintainer  : jackychany321@gmail.com
+-- Stability   : experimental
+--
+-- Some IsAuth instances for servant
+--
+-- @since 0.1.0.0
+module Authorization
+  ( -- * TokenAuth
+    TokenAuth,
+
+    -- * TokenAuthInMem
+    TokenAuthInMem,
+  )
+where
 
 import Control.Algebra (send)
 import Control.Carrier.Lift (runM)
@@ -28,11 +42,16 @@ import Token (E (DecodeToken))
 import Token.JWT (run)
 import Token.JWT.Invalidate.Pure (run)
 
+-- | @since 0.1.0.0
 pattern HasToken :: UserR "token" -> Request
 pattern HasToken token <- (List.lookup "authorization" . requestHeaders -> Just (parseHeader @(UserR "token") -> Right token))
 
+-- | Make use of 'CookieSettings' and 'JWTSettings' from servant-auth
+--
+-- @since 0.1.0.0
 data TokenAuth
 
+-- | @since 0.1.0.0
 instance IsAuth TokenAuth (UserR "authWithToken") where
   type AuthArgs TokenAuth = '[CookieSettings, JWTSettings]
   runAuth _ _ cs jwts = Auth.AuthCheck $
@@ -48,11 +67,15 @@ instance IsAuth TokenAuth (UserR "authWithToken") where
           >=> \case
             Right (Right auth) -> pure $ pure $ UserAuthWithToken auth token
             _ -> pure mempty
-          $ send (DecodeToken token)
+          $ send $ DecodeToken token
       _ -> pure mempty
 
+-- | Use hand-roll in-memory storage to facilitate auth process
+--
+-- @since 0.1.0.0
 data TokenAuthInMem
 
+-- | @since 0.1.0.0
 instance IsAuth TokenAuthInMem (UserR "authWithToken") where
   type AuthArgs TokenAuthInMem = '[TableInMem UserR, TableInMem' UserR "token" "id"]
   runAuth _ _ userDb tokenDb = Auth.AuthCheck $ \case
