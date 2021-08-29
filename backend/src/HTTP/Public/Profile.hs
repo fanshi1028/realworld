@@ -3,7 +3,15 @@
 {-# LANGUAGE FlexibleContexts #-}
 
 -- |
-module HTTP.Public.Profile (ProfileApi, profileServer) where
+-- Description : API & Server
+-- Copyright   : (c) fanshi1028 , 2021
+-- Maintainer  : jackychany321@gmail.com
+-- Stability   : experimental
+--
+-- API & Server to read user's profile
+--
+-- @since 0.1.0.0
+module HTTP.Public.Profile where
 
 import Control.Algebra (Algebra, send)
 import Control.Effect.Sum (Member)
@@ -16,8 +24,14 @@ import Servant (ServerT, type (:>))
 import Validation (Validation (Failure, Success))
 import VisitorAction (E (GetProfile))
 
+-- * API
+
+-- | @since 0.1.0.0
 type ProfileApi = Cap "username" (UserR "id") :> ReadApi UserR "profile"
 
+-- * Server
+
+-- | @since 0.1.0.0
 profileServer ::
   ( Algebra sig m,
     Member VisitorAction.E sig,
