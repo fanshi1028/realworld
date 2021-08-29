@@ -51,7 +51,7 @@ instance IsAuth TokenAuth (UserR "authWithToken") where
 
 data TokenAuthInMem
 
-instance IsAuth TokenAuthInMem (UserR "auth") where
+instance IsAuth TokenAuthInMem (UserR "authWithToken") where
   type AuthArgs TokenAuthInMem = '[TableInMem UserR, TableInMem' UserR "token" "id"]
   runAuth _ _ userDb tokenDb = Auth.AuthCheck $ \case
     ( List.lookup "authorization" . requestHeaders ->
@@ -60,6 +60,6 @@ instance IsAuth TokenAuthInMem (UserR "auth") where
         atomically
           ( STM.lookup token tokenDb
               >>= traverse (`STM.lookup` userDb)
-              <&> maybe mempty (transform @_ @_ @"auth") . join
+              <&> maybe mempty (flip UserAuthWithToken token <<$>> transform @_ @_ @"auth") . join
           )
     _ -> pure mempty
