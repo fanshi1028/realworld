@@ -1,7 +1,7 @@
 
 -- |
 -- Description : Effect
--- Copyright   : (c) fanshi1028 , 2021
+-- Copyright   : (c) 2021 fanshi1028
 -- Maintainer  : jackychany321@gmail.com
 -- Stability   : experimental
 --
