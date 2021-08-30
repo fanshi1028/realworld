@@ -2,7 +2,15 @@
 {-# LANGUAGE FlexibleContexts #-}
 
 -- |
-module HTTP.Public.Article (ArticleApi, articleServer) where
+-- Description : API & Server
+-- Copyright   : (c) fanshi1028 , 2021
+-- Maintainer  : jackychany321@gmail.com
+-- Stability   : experimental
+--
+-- API & Server to read articles and comments
+--
+-- @since 0.1.0.0
+module HTTP.Public.Article where
 
 import Control.Algebra (Algebra, send)
 import Control.Effect.Sum (Member)
@@ -16,6 +24,9 @@ import Servant (ServerT, type (:<|>) ((:<|>)), type (:>))
 import Validation (Validation (Failure, Success))
 import VisitorAction (E (GetArticle, GetComments, ListArticles))
 
+-- * API
+
+-- | @since 0.1.0.0
 type ArticleApi =
   QP "tag" :> QP "author" :> QP "favorited" :> QP "limit" :> QP "offset" :> ReadManyApi ArticleR "withAuthorProfile"
     :<|> Cap "slug" (ArticleR "id")
@@ -23,6 +34,9 @@ type ArticleApi =
              :<|> "comments" :> ReadManyApi CommentR "withAuthorProfile"
          )
 
+-- * Server
+
+-- | @since 0.1.0.0
 articleServer ::
   ( Algebra sig m,
     Member VisitorAction.E sig,

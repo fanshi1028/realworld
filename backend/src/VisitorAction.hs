@@ -5,7 +5,15 @@
 {-# LANGUAGE UndecidableInstances #-}
 
 -- |
-module VisitorAction (E (..), run) where
+-- Description : Effect & Carrier
+-- Copyright   : (c) fanshi1028 , 2021
+-- Maintainer  : jackychany321@gmail.com
+-- Stability   : experimental
+--
+-- Effect and Carrier of visitors' action
+--
+-- @since 0.1.0.0
+module VisitorAction where
 
 import Control.Algebra (Algebra (alg), send, type (:+:) (L, R))
 import Control.Carrier.NonDet.Church (runNonDetA)
@@ -25,18 +33,42 @@ import qualified Relation.ToMany (E (GetRelated))
 import qualified Storage.Map (E (GetAll, GetById))
 import qualified Storage.Set (E (GetAll))
 
+-- * Effect
+
+-- | Actions that can be carried out by visitor(__unauthenticated__).
+--
+-- @since 0.1.0.0
 data E (m :: Type -> Type) a where
+  -- | Get the profile of the user specified by the id.
+  --
+  -- @since 0.1.0.0
   GetProfile :: UserR "id" -> E m (UserR "profile")
+  -- | Get the article specified by the id.
+  --
+  -- @since 0.1.0.0
   GetArticle :: ArticleR "id" -> E m (ArticleR "withAuthorProfile")
+  -- | Get all the articles.
+  --
+  -- @since 0.1.0.0
   ListArticles :: E m [ArticleR "withAuthorProfile"]
+  -- | Get all the tags.
+  --
+  -- @since 0.1.0.0
   GetTags :: E m [Tag]
+  -- | Get all the comments of the article specified by the id.
+  --
+  -- @since 0.1.0.0
   GetComments :: ArticleR "id" -> E m [CommentR "withAuthorProfile"]
 
+-- * Carrirer
+
+-- | @since 0.1.0.0
 newtype C m a = C
   { run :: m a
   }
   deriving (Functor, Applicative, Monad)
 
+-- | @since 0.1.0.0
 instance
   ( Member (Storage.Map.E UserR) sig,
     Member (Storage.Map.E ArticleR) sig,

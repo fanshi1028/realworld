@@ -1,8 +1,17 @@
 {-# LANGUAGE DataKinds #-}
 
 -- |
-module Authentication (E (..)) where
+-- Description : Effect
+-- Copyright   : (c) fanshi1028 , 2021
+-- Maintainer  : jackychany321@gmail.com
+-- Stability   : experimental
+--
+-- Effect of authentication
+--
+-- @since 0.1.0.0
+module Authentication where
 
+-- | @since 0.1.0.0
 data E r (m :: Type -> Type) a where
   Register :: r "create" -> E r m (r "auth")
   Login :: r "login" -> E r m (r "auth")

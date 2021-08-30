@@ -4,7 +4,15 @@
 {-# LANGUAGE ViewPatterns #-}
 
 -- |
-module HTTP (server, Api) where
+-- Description : API & Server
+-- Copyright   : (c) fanshi1028 , 2021
+-- Maintainer  : jackychany321@gmail.com
+-- Stability   : experimental
+--
+-- All API & Server combined
+--
+-- @since 0.1.0.0
+module HTTP where
 
 import qualified Authentication (E)
 import Authorization (TokenAuth)
@@ -22,11 +30,20 @@ import HTTP.Public (PublicApi, publicServer)
 import Servant (Get, JSON, ServerT, type (:<|>) ((:<|>)), type (:>))
 import Servant.Auth.Server (Auth, AuthResult, CookieSettings, JWTSettings)
 import Servant.Server (hoistServer)
-import qualified Storage.Map
+import qualified Storage.Map (E)
 import qualified Token (E)
 import qualified UserAction (E)
 import qualified VisitorAction (E)
 
+-- * API
+
+-- | __NOTE__: This part of api
+--
+-- > Get '[JSON] Text
+--
+-- is for health check
+--
+-- @since 0.1.0.0
 type Api =
   "api"
     :> ( Auth '[TokenAuth] (UserR "authWithToken") :> (PublicApi :<|> AuthedApi)
@@ -34,6 +51,9 @@ type Api =
        )
     :<|> Get '[JSON] Text
 
+-- * Server
+
+-- | @since 0.1.0.0
 server ::
   ( Algebra sig m,
     Member VisitorAction.E sig,

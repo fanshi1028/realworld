@@ -3,7 +3,15 @@
 {-# LANGUAGE FlexibleContexts #-}
 
 -- |
-module HTTP.Public (PublicApi, publicServer) where
+-- Description : API & Server
+-- Copyright   : (c) fanshi1028 , 2021
+-- Maintainer  : jackychany321@gmail.com
+-- Stability   : experimental
+--
+-- Public API & Server, for visitors, or optionally-authed.
+--
+-- @since 0.1.0.0
+module HTTP.Public where
 
 import Control.Algebra (Algebra)
 import Control.Effect.Sum (Member)
@@ -15,11 +23,17 @@ import HTTP.Public.Tag (TagApi, tagServer)
 import Servant (ServerT, type (:<|>) ((:<|>)), type (:>))
 import qualified VisitorAction (E)
 
+-- * API
+
+-- | @since 0.1.0.0
 type PublicApi =
   "profiles" :> ProfileApi
     :<|> "articles" :> ArticleApi
     :<|> "tags" :> TagApi
 
+-- * Server
+
+-- | @since 0.1.0.0
 publicServer ::
   ( Algebra sig m,
     Member VisitorAction.E sig,

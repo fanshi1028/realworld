@@ -4,7 +4,15 @@
 {-# LANGUAGE UndecidableInstances #-}
 
 -- |
-module Relation.ToOne.InMem (ExistAction (..), run) where
+-- Description : Carrier
+-- Copyright   : (c) fanshi1028 , 2021
+-- Maintainer  : jackychany321@gmail.com
+-- Stability   : experimental
+--
+-- Carrier to run in memory
+--
+-- @since 0.1.0.0
+module Relation.ToOne.InMem (ExistAction (..), C (..), run) where
 
 import Control.Algebra (Algebra (alg), type (:+:) (L, R))
 import Control.Effect.Lift (Lift, sendM)
@@ -14,8 +22,13 @@ import GHC.TypeLits (Symbol)
 import Relation.ToOne (E (GetRelated, IsRelated, Relate, Unrelate))
 import qualified StmContainers.Map as STM (Map, focus, lookup)
 
+-- | Action to token when exists on relation insertion
+--
+--
+-- @since 0.1.0.0
 data ExistAction = UpdateIfExist | IgnoreIfExist
 
+-- | @since 0.1.0.0
 newtype
   C
     (r1 :: Type)
@@ -28,6 +41,7 @@ newtype
   }
   deriving (Functor, Applicative, Monad, MonadReader (STM.Map r1 r2))
 
+-- | @since 0.1.0.0
 relateFocus :: (Eq key, Hashable key) => ExistAction -> key -> value -> STM.Map key value -> STM ()
 relateFocus existAction k v =
   STM.focus
@@ -41,10 +55,12 @@ relateFocus existAction k v =
     k
 {-# INLINE relateFocus #-}
 
+-- | @since 0.1.0.0
 unrelateFocus :: (Hashable key, Eq key, Eq value) => key -> value -> STM.Map key value -> STM ()
 unrelateFocus k v = STM.focus (FC.unitCases FC.Leave (\e -> if v == e then FC.Remove else FC.Leave)) k
 {-# INLINE unrelateFocus #-}
 
+-- | @since 0.1.0.0
 instance
   ( Algebra sig m,
     Member (Lift STM) sig,
@@ -64,6 +80,7 @@ instance
   alg hdl (R other) ctx = C $ alg (run' . hdl) (R other) ctx
   {-# INLINE alg #-}
 
+-- | @since 0.1.0.0
 instance
   ( Algebra sig m,
     Member (Lift STM) sig,
@@ -83,5 +100,6 @@ instance
   alg hdl (R other) ctx = C $ alg (run' . hdl) (R other) ctx
   {-# INLINE alg #-}
 
+-- | @since 0.1.0.0
 run :: forall r1 r r2 ex a m. STM.Map r1 r2 -> C r1 r r2 ex m a -> m a
 run db = run' >>> usingReaderT db

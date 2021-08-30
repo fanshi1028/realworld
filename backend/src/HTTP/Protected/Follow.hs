@@ -2,7 +2,15 @@
 {-# LANGUAGE FlexibleContexts #-}
 
 -- |
-module HTTP.Protected.Follow (FollowApi, followServer) where
+-- Description : API & Server
+-- Copyright   : (c) fanshi1028 , 2021
+-- Maintainer  : jackychany321@gmail.com
+-- Stability   : experimental
+--
+-- API & Server for toggle user's following
+--
+-- @since 0.1.0.0
+module HTTP.Protected.Follow where
 
 import Control.Algebra (Algebra, send)
 import Control.Effect.Sum (Member)
@@ -15,8 +23,14 @@ import Servant (ServerT, type (:<|>) ((:<|>)), type (:>))
 import qualified UserAction
 import Validation (Validation (Failure, Success))
 
+-- * API
+
+-- | @since 0.1.0.0
 type FollowApi = Cap "username" (UserR "id") :> "follow" :> ToggleApi UserR "profile"
 
+-- * Server
+
+-- | @since 0.1.0.0
 followServer ::
   ( Algebra sig m,
     Member UserAction.E sig,

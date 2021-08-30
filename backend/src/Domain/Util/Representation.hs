@@ -4,6 +4,13 @@
 {-# LANGUAGE UndecidableInstances #-}
 
 -- |
+-- Copyright   : (c) fanshi1028 , 2021
+-- Maintainer  : jackychany321@gmail.com
+-- Stability   : experimental
+--
+-- Transforms between different representations of Domain Types.
+--
+-- @since 0.1.0.0
 module Domain.Util.Representation (Transform (transform)) where
 
 import Control.Algebra (Algebra, send)
@@ -26,13 +33,20 @@ import Relude.Extra (un)
 import qualified Storage.Map (E (GetById))
 import Token (E (CreateToken))
 
+-- | Transform between different representation of the same data
+--
+-- @since 0.1.0.0
 class Transform (r :: Symbol -> Type) (s1 :: Symbol) (s2 :: Symbol) (m :: Type -> Type) where
   transform :: (Monad m) => r s1 -> m (r s2)
 
--- User
+-- * User
+
+-- | @since 0.1.0.0
 instance (HasField "username" (UserR s) Username) => Transform UserR s "id" m where
   transform = pure . UserId . getField @"username"
 
+-- | @since 0.1.0.0
+--
 -- FIXME pw hashing
 instance
   ( Algebra sig m,
@@ -55,12 +69,15 @@ instance
         )
           `catchError` const @_ @(NotFound (UserR "id")) (pure $ User em pw user (Bio "") (Image ""))
 
+-- | @since 0.1.0.0
 instance Transform UserR "all" "auth" m where
   transform (User em _ name bio' img) = pure $ UserAuth em name bio' img
 
+-- | @since 0.1.0.0
 instance (Algebra sig m, Member (Token.E UserR) sig) => Transform UserR "auth" "authWithToken" m where
   transform auth = UserAuthWithToken auth <$> send (CreateToken auth)
 
+-- | @since 0.1.0.0
 instance
   ( Algebra sig m,
     Transform UserR "all" "auth" m,
@@ -90,14 +107,17 @@ instance
           )
         `catchError` const @_ @(NotAuthorized UserR) (pure False)
 
+-- | @since 0.1.0.0
 instance (Algebra sig m, Transform UserR "auth" "profile" m, Transform UserR "all" "auth" m) => Transform UserR "all" "profile" m where
   transform = transform >=> transform @_ @"auth"
 
--- NOTE: Article
+-- * Article
 
+-- | @since 0.1.0.0
 instance (HasField "title" (ArticleR s) Title) => Transform ArticleR s "id" m where
   transform = pure . ArticleId . Slug . Text.intercalate "-" . words . Text.toLower . un . getField @"title"
 
+-- | @since 0.1.0.0
 instance
   ( Algebra sig m,
     Member (Current.E Time) sig,
@@ -113,6 +133,7 @@ instance
     foldMapA (send . Relation.ManyToMany.Relate @(ArticleR "id") @_ @"taggedBy" aid) ts
     Article tt des bd t t <$> transform auth
 
+-- | @since 0.1.0.0
 instance
   ( Algebra sig m,
     Member (Current.E (UserR "authWithToken")) sig,
@@ -134,14 +155,17 @@ instance
       <*> (fromIntegral . length <$> send (Relation.ManyToMany.GetRelatedRight @_ @(UserR "id") @"favorite" aid))
       <*> (getField @"author" a & send . Storage.Map.GetById @UserR >>= transform)
 
--- NOTE: Comment
+-- * Comment
 
+-- | @since 0.1.0.0
 instance {-# OVERLAPPABLE #-} (HasField "id" (CommentR s) (CommentR "id")) => Transform CommentR s "id" m where
   transform = pure . getField @"id"
 
+-- | @since 0.1.0.0
 instance {-# OVERLAPPING #-} (Algebra sig m, Member GenUUID.E sig) => Transform CommentR "create" "id" m where
   transform _ = CommentId <$> send GenUUID.Generate
 
+-- | @since 0.1.0.0
 instance
   ( Algebra sig m,
     Member (Current.E Time) sig,
@@ -163,6 +187,7 @@ instance
           )
       <*> ask @(ArticleR "id")
 
+-- | @since 0.1.0.0
 instance
   ( Algebra sig m,
     Member (Storage.Map.E UserR) sig,

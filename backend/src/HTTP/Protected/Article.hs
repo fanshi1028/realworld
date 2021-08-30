@@ -2,7 +2,30 @@
 {-# LANGUAGE FlexibleContexts #-}
 
 -- |
-module HTTP.Protected.Article (ArticleApi, articleServer) where
+-- Description : API & Server
+-- Copyright   : (c) fanshi1028 , 2021
+-- Maintainer  : jackychany321@gmail.com
+-- Stability   : experimental
+--
+-- API & Server for (all related to __article__)
+--
+-- 1. __Read__ aritcle feeds(customized for the authed user)
+--
+-- 2. __CUD__ aritcles of the authed user
+--
+-- 3. __CD__ comments of the authed user on article
+--
+-- 4. __Toggle__ authed user's __favority__ on article
+--
+-- @since 0.1.0.0
+module HTTP.Protected.Article
+  ( -- * API
+    ArticleApi,
+
+    -- * Server
+    articleServer,
+  )
+where
 
 import Control.Algebra (Algebra, send)
 import Control.Effect.Sum (Member)
@@ -17,12 +40,15 @@ import Servant (Delete, JSON, NoContent (NoContent), ServerT, type (:<|>) ((:<|>
 import qualified UserAction (E (AddCommentToArticle, CreateArticle, DeleteArticle, DeleteComment, FavoriteArticle, FeedArticles, UnfavoriteArticle, UpdateArticle))
 import Validation (Validation (Failure, Success))
 
+-- |  @since 0.1.0.0
 type CommentApi =
   Cap "id" (CommentR "id") :> Delete '[JSON] NoContent
     :<|> CreateApi CommentR "withAuthorProfile"
 
+-- | @since 0.1.0.0
 type FavoriteApi = ToggleApi ArticleR "withAuthorProfile"
 
+-- | @since 0.1.0.0
 type ArticleApi =
   CreateApi ArticleR "withAuthorProfile"
     :<|> "feed" :> QP "limit" :> QP "offset" :> ReadManyApi ArticleR "withAuthorProfile"
@@ -33,6 +59,7 @@ type ArticleApi =
                 )
          )
 
+-- | @since 0.1.0.0
 articleServer ::
   ( Algebra sig m,
     Member UserAction.E sig,

@@ -4,7 +4,15 @@
 {-# LANGUAGE UndecidableInstances #-}
 
 -- |
-module Storage.Set.InMem (run) where
+-- Description : Carrier
+-- Copyright   : (c) fanshi1028 , 2021
+-- Maintainer  : jackychany321@gmail.com
+-- Stability   : experimental
+--
+-- Carrier to store in memory
+--
+-- @since 0.1.0.0
+module Storage.Set.InMem where
 
 import Control.Algebra (Algebra (alg), type (:+:) (L, R))
 import Control.Effect.Error (Throw, throwError)
@@ -16,11 +24,13 @@ import qualified ListT (fold)
 import qualified StmContainers.Set as STM (Set, focus, insert, listT, lookup)
 import Storage.Set (E (Delete, GetAll, Insert, IsMember))
 
+-- | @since 0.1.0.0
 newtype C (e :: Type) m a = C
   { run' :: ReaderT (STM.Set e) m a
   }
   deriving (Functor, Applicative, Monad, MonadReader (STM.Set e))
 
+-- | @since 0.1.0.0
 instance
   ( Member (Lift STM) sig,
     Member (Throw (NotFound e)) sig,
@@ -46,5 +56,6 @@ instance
           >=> maybe (throwError $ NotFound e) pure
   {-# INLINE alg #-}
 
+-- | @since 0.1.0.0
 run :: STM.Set e -> C e m a -> m a
 run db = run' >>> usingReaderT db

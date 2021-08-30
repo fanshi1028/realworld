@@ -5,7 +5,15 @@
 {-# LANGUAGE UndecidableInstances #-}
 
 -- |
-module Storage.Map.InMem (TableInMem', TableInMem, run) where
+-- Description : Carrier
+-- Copyright   : (c) fanshi1028 , 2021
+-- Maintainer  : jackychany321@gmail.com
+-- Stability   : experimental
+--
+-- Carrier to store in memory
+--
+-- @since 0.1.0.0
+module Storage.Map.InMem where
 
 import Control.Algebra (Algebra (alg), type (:+:) (L, R))
 import Control.Effect.Error (Throw, throwError)
@@ -19,15 +27,19 @@ import qualified ListT (fold)
 import qualified StmContainers.Map as STM (Map, focus, insert, listT, lookup)
 import Storage.Map (E (DeleteById, GetAll, GetById, Insert, UpdateById))
 
+-- | @since 0.1.0.0
 type TableInMem' r (k :: Symbol) (v :: Symbol) = STM.Map (r k) (r v)
 
+-- | @since 0.1.0.0
 type TableInMem r = TableInMem' r "id" "all"
 
+-- | @since 0.1.0.0
 newtype C (r :: Symbol -> Type) m a = C
   { run' :: ReaderT (TableInMem r) m a
   }
   deriving (Functor, Applicative, Monad, MonadReader (TableInMem r))
 
+-- | @since 0.1.0.0
 instance
   ( Show (r "id"),
     Eq (r "id"),
@@ -60,5 +72,6 @@ instance
       _tryDelete id' = _try (const (Just (), FC.Remove)) id'
   {-# INLINE alg #-}
 
+-- | @since 0.1.0.0
 run :: TableInMem r -> C r m a -> m a
 run db = run' >>> usingReaderT db

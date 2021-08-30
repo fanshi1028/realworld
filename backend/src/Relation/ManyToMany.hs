@@ -6,7 +6,29 @@
 {-# LANGUAGE UndecidableInstances #-}
 
 -- |
-module Relation.ManyToMany (E (..), C (run), ManyLeft, ManyRight) where
+-- Description : Effect & Carrier
+-- Copyright   : (c) fanshi1028 , 2021
+-- Maintainer  : jackychany321@gmail.com
+-- Stability   : experimental
+--
+-- Effect of many to many relation
+--
+-- @since 0.1.0.0
+module Relation.ManyToMany
+  ( -- * Type families
+
+    -- | We model many to many relation by two opposite on to many relations.
+    -- Hence two type families storing the tag of the corresponding relations.
+    ManyLeft,
+    ManyRight,
+
+    -- * Effect
+    E (..),
+
+    -- * Carrier
+    C (..),
+  )
+where
 
 import Control.Algebra (Algebra (alg), send, type (:+:) (L, R))
 import Control.Carrier.NonDet.Church (runNonDetA)
@@ -15,30 +37,59 @@ import Control.Effect.Sum (Member)
 import GHC.TypeLits (Symbol)
 import qualified Relation.ToMany (E (GetRelated, IsRelated, Relate, Unrelate, UnrelateByKey))
 
+-- | @since 0.1.0.0
 type family ManyLeft (many :: Symbol) :: Symbol
 
+-- | @since 0.1.0.0
 type family ManyRight (many :: Symbol) :: Symbol
 
+-- follow
+
+-- | @since 0.1.0.0
+type instance ManyLeft "follow" = "following"
+
+-- | @since 0.1.0.0
+type instance ManyRight "follow" = "followedBy"
+
+-- favorite
+
+-- | @since 0.1.0.0
+type instance ManyLeft "favorite" = "favorite"
+
+-- | @since 0.1.0.0
+type instance ManyRight "favorite" = "favoritedBy"
+
+-- taggedBy
+
+-- | @since 0.1.0.0
+type instance ManyLeft "taggedBy" = "taggedBy"
+
+-- | @since 0.1.0.0
+type instance ManyRight "taggedBy" = "tagging"
+
+-- | @since 0.1.0.0
 data E (r1 :: Type) (r :: Symbol) (r2 :: Type) (m :: Type -> Type) a where
   Relate :: r1 -> r2 -> E r1 r r2 m ()
   Unrelate :: r1 -> r2 -> E r1 r r2 m ()
+  -- | Unrelate every r2 related to the key r1
   UnrelateByKeyLeft :: r1 -> E r1 r r2 m ()
+  -- | Unrelate every r1 related to the key r2
   UnrelateByKeyRight :: r2 -> E r1 r r2 m ()
   IsRelated :: r1 -> r2 -> E r1 r r2 m Bool
+  -- | Get every r2 related to the key r1
   GetRelatedLeft :: r1 -> E r1 r r2 m [r2]
+  -- | Get every r1 related to the key r2
   GetRelatedRight :: r2 -> E r1 r r2 m [r1]
 
-newtype
-  C
-    (r1 :: Type)
-    (r :: Symbol)
-    (r2 :: Type)
-    (m :: Type -> Type)
-    a = C
+-- | @since 0.1.0.0
+newtype C (r1 :: Type) (r :: Symbol) (r2 :: Type) (m :: Type -> Type) a = C
   { run :: m a
   }
   deriving (Functor, Applicative, Monad)
 
+-- | Work are forworded to the two __one to many__ relations
+--
+-- @since 0.1.0.0
 instance
   ( Algebra sig m,
     lr ~ ManyLeft r,
@@ -73,21 +124,3 @@ instance
       GetRelatedRight r2 -> send $ Relation.ToMany.GetRelated @_ @rr @r1 r2
   alg hdl (R other) ctx = C $ alg (run . hdl) other ctx
   {-# INLINE alg #-}
-
--- follow
-
-type instance ManyLeft "follow" = "following"
-
-type instance ManyRight "follow" = "followedBy"
-
--- favorite
-
-type instance ManyLeft "favorite" = "favorite"
-
-type instance ManyRight "favorite" = "favoritedBy"
-
--- taggedBy
-
-type instance ManyLeft "taggedBy" = "taggedBy"
-
-type instance ManyRight "taggedBy" = "tagging"
