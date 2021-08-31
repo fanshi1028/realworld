@@ -28,6 +28,8 @@ import Control.Effect.Lift (Lift (LiftWith))
 import Control.Effect.Sum (type (:+:) (L, R))
 import GHC.Conc (unsafeIOToSTM)
 
+{-# WARNING runIOinSTM, runSTMinIO "This is unsafe; I hope you are sure that your IO are safe to use in STM" #-}
+
 -- | @since 0.1.0.0
 newtype C' a = C'
   { run' :: STM a
@@ -43,7 +45,7 @@ instance Algebra (Lift STM :+: Lift IO) C' where
 -- | It runs each lifted IO effects,
 -- embedding them unsafely into STM effects,
 -- then combine all the STM effect into run single STM stack and run it.
--- If you sure the side effect your IO are safe,
+-- If you sure the side effect of your IO are safe,
 -- this runner is what you should bet on.
 --
 -- @since 0.1.0.0
