@@ -46,7 +46,7 @@ instance
     Hashable (r "id"),
     Member (Lift STM) sig,
     Member (Throw (NotFound (r "id"))) sig,
-    Transform r "all" "id" (C r m),
+    Transform r "all" "id",
     Algebra sig m
   ) =>
   Algebra (E r :+: sig) (C r m)
@@ -59,9 +59,7 @@ instance
             sendM . STM.lookup id'
               >=> maybe (throwError $ NotFound id') pure
           GetAll -> sendM . _getAll
-          Insert value -> \db -> do
-            key <- transform value
-            sendM $ STM.insert value key db
+          Insert value -> sendM . STM.insert value (transform value)
           UpdateById id' updateF -> _tryUpdate updateF id'
           DeleteById id' -> _tryDelete id'
     R other -> C $ alg (run' . hdl) (R other) ctx

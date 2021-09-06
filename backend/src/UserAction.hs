@@ -35,8 +35,8 @@ import Domain.Util.Error (AlreadyExists, Impossible (Impossible), NotAuthorized 
 import Domain.Util.Field (Tag, Time)
 import Domain.Util.Representation (Transform (transform))
 import Domain.Util.Update (applyPatch)
-import qualified GenUUID (E)
-import qualified Relation.ManyToMany (E (GetRelatedLeft, Relate, Unrelate, UnrelateByKeyRight))
+import qualified GenUUID (E (Generate))
+import qualified Relation.ManyToMany (E (GetRelatedLeft, GetRelatedRight, IsRelated, Relate, Unrelate, UnrelateByKeyRight))
 import qualified Relation.ToMany (E (GetRelated, IsRelated, Relate, Unrelate, UnrelateByKey))
 import qualified Storage.Map (E (DeleteById, GetById, Insert, UpdateById))
 import qualified Token (E (CreateToken))
@@ -137,32 +137,42 @@ instance
   alg _ (L action) ctx =
     (<$ ctx) <$> do
       authOut@(UserAuthWithToken auth _) <- send Current.GetCurrent
-      authUserId <- transform @UserR @_ @"id" auth
+      let authUserId = transform @UserR @_ @"id" auth
       case action of
         GetCurrentUser -> pure authOut
         UpdateUser update ->
           send (Storage.Map.GetById authUserId)
             <&> applyPatch update
-              >>= validation throwError (send . Storage.Map.UpdateById authUserId . const)
-              >>= transform
-              >>= \newAuth -> UserAuthWithToken newAuth <$> send (Token.CreateToken newAuth)
+            >>= validation throwError (send . Storage.Map.UpdateById authUserId . const)
+            >>= \(transform -> newAuth) -> UserAuthWithToken newAuth <$> send (Token.CreateToken newAuth)
         FollowUser targetUserId -> do
           targetUser <- send $ Storage.Map.GetById targetUserId
           send $ Relation.ManyToMany.Relate @_ @_ @"follow" authUserId targetUserId
-          UserProfile <$> transform targetUser <*> pure True
+          pure $ UserProfile (transform targetUser) True
         UnfollowUser targetUserId -> do
           targetUser <- send $ Storage.Map.GetById targetUserId
-          send $ Relation.ManyToMany.Unrelate @_ @_ @"follow" authUserId targetUserId
-          UserProfile <$> transform targetUser <*> pure False
-        CreateArticle create -> do
-          transform create >>= send . Relation.ToMany.Relate @_ @(ArticleR "id") @"create" authUserId
-          a <- transform create
-          send (Storage.Map.Insert a) >> transform a
-        UpdateArticle articleId update ->
-          send (Storage.Map.GetById articleId)
-            <&> applyPatch update
-            >>= validation throwError (send . Storage.Map.UpdateById articleId . const)
-            >>= transform @_ @_ @"withAuthorProfile"
+          send (Relation.ManyToMany.Unrelate @_ @_ @"follow" authUserId targetUserId)
+            $> UserProfile (transform targetUser) False
+        CreateArticle create@(ArticleCreate tt des bd ts) -> do
+          let aid = transform create
+          send $ Relation.ToMany.Relate @_ @(ArticleR "id") @"create" authUserId aid
+          t <- send $ Current.GetCurrent @Time
+          foldMapA (send . Relation.ManyToMany.Relate @(ArticleR "id") @_ @"taggedBy" (transform create)) ts
+          let a = Article tt des bd t t $ transform auth
+          send (Storage.Map.Insert a)
+            -- FIXME: Follow his own article?
+            $> ArticleWithAuthorProfile aid a [] False 0 (UserProfile auth True)
+        UpdateArticle articleId update -> do
+          a <-
+            send (Storage.Map.GetById articleId)
+              <&> applyPatch update
+              >>= validation throwError (send . Storage.Map.UpdateById articleId . const)
+          ArticleWithAuthorProfile articleId a
+            <$> send (Relation.ManyToMany.GetRelatedLeft @_ @"taggedBy" @Tag articleId)
+            <*> send (Relation.ManyToMany.IsRelated @_ @_ @"favorite" authUserId articleId)
+            <*> (fromIntegral . length <$> send (Relation.ManyToMany.GetRelatedRight @_ @(UserR "id") @"favorite" articleId))
+            -- FIXME: Follow his own article?
+            <*> pure (UserProfile auth True)
         DeleteArticle articleId ->
           send (Storage.Map.GetById articleId)
             <&> (== authUserId) . getField @"author"
@@ -174,12 +184,16 @@ instance
                   send $ Relation.ToMany.UnrelateByKey @_ @"has" @(CommentR "id") articleId
                   send $ Relation.ManyToMany.UnrelateByKeyRight @_ @(UserR "id") @"favorite" articleId
               )
-        AddCommentToArticle articleId create -> do
-          a <- usingReaderT articleId $ transform create
+        AddCommentToArticle articleId (CommentCreate txt) -> do
+          t <- send $ Current.GetCurrent @Time
+          commentId <- CommentId <$> send GenUUID.Generate
+          let a = Comment commentId t t txt (transform auth) articleId
           send $ Storage.Map.Insert a
-          commentId <- transform a
           send $ Relation.ToMany.Relate @_ @_ @"has" articleId commentId
-          send (Storage.Map.GetById commentId) >>= transform
+          pure $
+            CommentWithAuthorProfile commentId t t txt $
+              -- FIXME is th current user following himself??
+              UserProfile auth True
         DeleteComment articleId commentId -> do
           void $ send $ Storage.Map.GetById articleId
           send (Relation.ToMany.IsRelated @_ @_ @"has" articleId commentId)
@@ -196,20 +210,46 @@ instance
         FavoriteArticle articleId -> do
           a <- send $ Storage.Map.GetById articleId
           send $ Relation.ManyToMany.Relate @_ @_ @"favorite" authUserId articleId
-          transform a
+          let authorId = getField @"author" a
+          ArticleWithAuthorProfile articleId a
+            <$> send (Relation.ManyToMany.GetRelatedLeft @_ @"taggedBy" @Tag articleId)
+            <*> send (Relation.ManyToMany.IsRelated @_ @_ @"favorite" authUserId articleId)
+            <*> (fromIntegral . length <$> send (Relation.ManyToMany.GetRelatedRight @_ @(UserR "id") @"favorite" articleId))
+            <*> ( UserProfile . transform
+                    <$> send (Storage.Map.GetById authorId)
+                    <*> send (Relation.ManyToMany.IsRelated @_ @_ @"follow" authUserId authorId)
+                )
         UnfavoriteArticle articleId -> do
           a <- send $ Storage.Map.GetById articleId
           send $ Relation.ManyToMany.Unrelate @_ @_ @"favorite" authUserId articleId
-          transform a
+          let authorId = getField @"author" a
+          ArticleWithAuthorProfile articleId a
+            <$> send (Relation.ManyToMany.GetRelatedLeft @_ @"taggedBy" @Tag articleId)
+            <*> send (Relation.ManyToMany.IsRelated @_ @_ @"favorite" authUserId articleId)
+            <*> (fromIntegral . length <$> send (Relation.ManyToMany.GetRelatedRight @_ @(UserR "id") @"favorite" articleId))
+            <*> ( UserProfile . transform
+                    <$> send (Storage.Map.GetById authorId)
+                    <*> send (Relation.ManyToMany.IsRelated @_ @_ @"follow" authUserId authorId)
+                )
         -- FIXME feed order
         FeedArticles -> runNonDetA @[] $ do
           send (Relation.ManyToMany.GetRelatedLeft @_ @"follow" authUserId)
             >>= oneOf
             >>= send . Relation.ToMany.GetRelated @(UserR "id") @"create"
             >>= oneOf
-            >>= flip catchError (const @_ @(NotFound (ArticleR "id")) $ throwError $ Impossible "article id not found")
-              . send
-              . Storage.Map.GetById @ArticleR
-            >>= transform
+            >>= \articleId ->
+              flip catchError (const @_ @(NotFound (ArticleR "id")) $ throwError $ Impossible "article id not found") $
+                do
+                  a <- send $ Storage.Map.GetById @ArticleR articleId
+                  let authorId = getField @"author" a
+                  -- TODO: factor out logic for author profile
+                  ArticleWithAuthorProfile articleId a
+                    <$> send (Relation.ManyToMany.GetRelatedLeft @_ @"taggedBy" @Tag articleId)
+                    <*> send (Relation.ManyToMany.IsRelated @_ @_ @"favorite" authUserId articleId)
+                    <*> (fromIntegral . length <$> send (Relation.ManyToMany.GetRelatedRight @_ @(UserR "id") @"favorite" articleId))
+                    <*> ( UserProfile . transform
+                            <$> send (Storage.Map.GetById authorId)
+                            <*> send (Relation.ManyToMany.IsRelated @_ @_ @"follow" authUserId authorId)
+                        )
   alg hdl (R other) ctx = C $ alg (run . hdl) other ctx
   {-# INLINE alg #-}

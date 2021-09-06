@@ -2,6 +2,7 @@
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE UndecidableInstances #-}
 
 -- |
@@ -22,13 +23,14 @@ import Control.Effect.NonDet (oneOf)
 import Control.Effect.Sum (Member)
 import Control.Effect.Throw (Throw, throwError)
 import qualified Current (E)
-import Domain.Article (ArticleR)
-import Domain.Comment (CommentR)
+import Domain.Article (ArticleR (ArticleWithAuthorProfile), author, title)
+import Domain.Comment (CommentR (Comment, CommentWithAuthorProfile), author, body, createdAt, updatedAt)
 import Domain.User (UserR (..))
 import Domain.Util.Error (Impossible (Impossible), NotAuthorized, NotFound)
 import Domain.Util.Field (Tag)
 import Domain.Util.Representation (Transform (transform))
-import qualified Relation.ManyToMany (E)
+import GHC.Records (getField)
+import qualified Relation.ManyToMany (E (GetRelatedLeft, GetRelatedRight))
 import qualified Relation.ToMany (E (GetRelated))
 import qualified Storage.Map (E (GetAll, GetById))
 import qualified Storage.Set (E (GetAll))
@@ -89,18 +91,40 @@ instance
   where
   alg _ (L action) ctx =
     (<$ ctx) <$> case action of
-      GetProfile uid -> send (Storage.Map.GetById @UserR uid) >>= transform
-      GetArticle aid -> send (Storage.Map.GetById @ArticleR aid) >>= transform
-      ListArticles -> runNonDetA @[] $ send (Storage.Map.GetAll @ArticleR) >>= oneOf >>= transform
+      GetProfile uid -> send (Storage.Map.GetById @UserR uid) <&> flip UserProfile False . transform
+      GetArticle aid -> do
+        a <- send $ Storage.Map.GetById aid
+        let uid = getField @"author" a
+        u <- transform <$> send (Storage.Map.GetById uid)
+        ArticleWithAuthorProfile aid a
+          <$> send (Relation.ManyToMany.GetRelatedLeft @_ @"taggedBy" @Tag aid)
+          <*> pure False
+          <*> (fromIntegral . length <$> send (Relation.ManyToMany.GetRelatedRight @_ @(UserR "id") @"favorite" aid))
+          <*> pure (UserProfile u False)
+      ListArticles ->
+        runNonDetA @[] $
+          send (Storage.Map.GetAll @ArticleR) >>= oneOf
+            >>= \a -> do
+              let aid = transform a
+                  uid = getField @"author" a
+              u <- transform <$> send (Storage.Map.GetById uid)
+              ArticleWithAuthorProfile aid a
+                <$> send (Relation.ManyToMany.GetRelatedLeft @_ @"taggedBy" @Tag aid)
+                <*> pure False
+                <*> (fromIntegral . length <$> send (Relation.ManyToMany.GetRelatedRight @_ @(UserR "id") @"favorite" aid))
+                <*> pure (UserProfile u False)
       GetComments aid -> do
         void $ send (Storage.Map.GetById @ArticleR aid)
         runNonDetA @[] $
           send (Relation.ToMany.GetRelated @_ @"has" @(CommentR "id") aid)
             >>= oneOf
-            >>= flip catchError (const @_ @(NotFound (CommentR "id")) $ throwError $ Impossible "comment id not found")
-              . send
-              . Storage.Map.GetById
-            >>= transform
+            >>= \cid -> flip catchError (const @_ @(NotFound (CommentR "id")) $ throwError $ Impossible "comment id not found") $
+              do
+                Comment {..} <- send $ Storage.Map.GetById cid
+                CommentWithAuthorProfile cid createdAt updatedAt body
+                  . flip UserProfile False
+                  . transform
+                  <$> send (Storage.Map.GetById author)
       GetTags -> send $ Storage.Set.GetAll @Tag
   alg hdl (R other) ctx = C $ alg (run . hdl) other ctx
   {-# INLINE alg #-}

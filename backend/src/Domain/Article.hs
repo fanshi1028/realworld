@@ -91,6 +91,7 @@ data instance ArticleR "all" = Article
 -- @since 0.1.0.0
 data instance ArticleR "withAuthorProfile" = ArticleWithAuthorProfile
   { slug :: ArticleR "id",
+    -- FIXME: Better representation? ArticleR has uid and we have UserR "profile" outside too
     article :: ArticleR "all",
     tagList :: [Tag], -- ["dragons", "training"],
     favorited :: Bool, -- false,

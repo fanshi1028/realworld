@@ -17,12 +17,13 @@ module Authentication.Token where
 import qualified Authentication (E (Login, Logout, Register))
 import Control.Algebra (Algebra (alg), send, type (:+:) (L, R))
 import Control.Effect.Catch (Catch)
+import Control.Effect.Error (catchError)
 import Control.Effect.Sum (Member)
 import Control.Effect.Throw (Throw, throwError)
 import qualified Current (E (GetCurrent))
 import Domain.User (UserR (..))
-import Domain.Util.Error (AlreadyExists, NotAuthorized (NotAuthorized), NotFound (NotFound))
-import Domain.Util.Field (Email, Time)
+import Domain.Util.Error (AlreadyExists (AlreadyExists), NotAuthorized (NotAuthorized), NotFound (NotFound))
+import Domain.Util.Field (Bio (Bio), Email, Image (Image), Time)
 import Domain.Util.Representation (transform)
 import GHC.Records (getField)
 import GHC.TypeLits (Symbol)
@@ -55,11 +56,20 @@ instance
   alg _ (L action) ctx =
     (<$ ctx) <$> do
       case action of
-        Authentication.Register user -> do
-          a <- transform user
-          send $ Storage.Map.Insert @UserR a
-          transform user >>= send . Relation.ToOne.Relate @_ @(UserR "id") @"of" (getField @"email" user)
-          transform a
+        Authentication.Register (UserRegister user em pw) -> do
+          -- FIXME: meta data like createdTime and UpdatedTime?
+          -- send $ GetCurrent @Time
+          u <-
+            send (Relation.ToOne.GetRelated @_ @"of" @(UserR "id") em) >>= \case
+              Just _ -> throwError $ AlreadyExists em
+              Nothing ->
+                ( send (Storage.Map.GetById $ UserId user)
+                    >> throwError (AlreadyExists $ UserId user)
+                )
+                  `catchError` const @_ @(NotFound (UserR "id")) (pure $ User em pw user (Bio "") (Image ""))
+          send $ Storage.Map.Insert @UserR u
+          send $ Relation.ToOne.Relate @_ @(UserR "id") @"of" em $ UserId user
+          pure $ transform u
         Authentication.Logout ->
           send (Current.GetCurrent @(UserR "authWithToken"))
             >>= \(UserAuthWithToken _ t) -> send $ Token.InvalidateToken t
@@ -70,7 +80,7 @@ instance
               send (Storage.Map.GetById @UserR uid) >>= \a ->
                 -- FIXME: pw stuff
                 if getField @"password" a == pw
-                  then transform a
+                  then pure $ transform a
                   else throwError $ NotAuthorized @UserR
   alg hdl (R other) ctx = C $ alg (run . hdl) other ctx
   {-# INLINE alg #-}
