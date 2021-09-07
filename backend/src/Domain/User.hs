@@ -41,7 +41,7 @@ data family UserR (r :: Symbol)
 -- @since 0.1.0.0
 newtype instance UserR "id" = UserId Username
   deriving (Generic)
-  deriving newtype (Show, Eq, Hashable, ToJSON)
+  deriving newtype (Show, Eq, Hashable, ToJSON, FromJSON)
 
 -- | @since 0.1.0.0
 deriving via (WithValidation Username) instance FromJSON (WithValidation (UserR "id"))
@@ -273,14 +273,13 @@ newtype instance UserR "update" = UserUpdate (WithUpdate (UserR "all"))
 -- Left "Error in $: Failed reading: satisfyWith. Expecting ':' at 'fjwofjoew}'"
 -- Right (UserUpdate User {email = Just (Last {getLast = Failure ("null email" :| [])}), token = Nothing, password = Nothing, username = Nothing, bio = Nothing, image = Nothing, following = Nothing, followBy = Nothing})
 
--- | @since 0.1.0.0
-instance FromJSON (UserR "update") where
+-- | @since 0.2.0.0
+instance FromJSON (WithValidation (UserR "update")) where
   parseJSON =
-    UserUpdate
-      <<$>> filterKeysParseJSON
-        ["email", "password", "username", "bio", "image"]
-        (genericParseJSON @(WithUpdate (UserR "all")) defaultOptions)
+    filterKeysParseJSON
+      ["email", "password", "username", "bio", "image"]
+      (fmap UserUpdate . construct <<$>> genericParseJSON defaultOptions)
 
--- | @since 0.1.0.0
-instance FromJSON (In (UserR "update")) where
+-- | @since 0.2.0.0
+instance FromJSON (In (WithValidation (UserR "update"))) where
   parseJSON = wrappedParseJSON "UserUpdate" "user"

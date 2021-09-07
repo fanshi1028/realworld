@@ -41,7 +41,7 @@ instance FromJSON (WithValidation Email) where
 -- | __FIXME__: Hashing of password in storage
 --
 -- @since 0.1.0.0
-newtype Password = Password Text deriving newtype (Eq, ToJSON)
+newtype Password = Password Text deriving newtype (Eq, ToJSON, FromJSON)
 
 -- | __FIXME__: Refine validation of 'Password'
 --
@@ -104,7 +104,7 @@ deriving via (WithNoValidation Text) instance FromHttpApiData (WithValidation Sl
 
 -- | @since 0.1.0.0
 newtype Title = Title Text
-  deriving newtype (Show, Eq, ToJSON)
+  deriving newtype (Show, Eq, ToJSON, FromJSON)
 
 -- | @since 0.1.0.0
 instance FromJSON (WithValidation Title) where
@@ -113,7 +113,7 @@ instance FromJSON (WithValidation Title) where
 -- ** Description
 
 -- | @since 0.1.0.0
-newtype Description = Description Text deriving newtype (Show, Eq, ToJSON)
+newtype Description = Description Text deriving newtype (Show, Eq, ToJSON, FromJSON)
 
 -- | @since 0.1.0.0
 deriving via (WithNoValidation Text) instance FromJSON (WithValidation Description)
@@ -121,7 +121,7 @@ deriving via (WithNoValidation Text) instance FromJSON (WithValidation Descripti
 -- ** Body
 
 -- | @since 0.1.0.0
-newtype Body = Body Text deriving newtype (Show, Eq, ToJSON)
+newtype Body = Body Text deriving newtype (Show, Eq, ToJSON, FromJSON)
 
 -- | @since 0.1.0.0
 deriving via (WithNoValidation Text) instance FromJSON (WithValidation Body)

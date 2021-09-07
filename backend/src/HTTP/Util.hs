@@ -82,8 +82,8 @@ type CreateBody (r :: Symbol -> Type) = ReqBody '[JSON] (In (WithValidation (r "
 
 -- | Convenient alias.
 --
--- @since 0.1.0.0
-type UpdateBody (r :: Symbol -> Type) = ReqBody '[JSON] (In (r "update"))
+-- @since 0.2.0.0
+type UpdateBody (r :: Symbol -> Type) = ReqBody '[JSON] (In (WithValidation (r "update")))
 
 -- * CRUD
 

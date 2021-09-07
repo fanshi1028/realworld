@@ -196,14 +196,13 @@ instance FromJSON (In (WithValidation (ArticleR "create"))) where
 -- @since 0.1.0.0
 newtype instance ArticleR "update" = ArticleUpdate (WithUpdate (ArticleR "all")) deriving (Generic)
 
--- | @since 0.1.0.0
-instance FromJSON (ArticleR "update") where
+-- | @since 0.2.0.0
+instance FromJSON (WithValidation (ArticleR "update")) where
   parseJSON =
-    ArticleUpdate
-      <<$>> filterKeysParseJSON
-        ["title", "description", "body"]
-        (genericParseJSON @(WithUpdate (ArticleR "all")) defaultOptions)
+    filterKeysParseJSON
+      ["title", "description", "body"]
+      (fmap ArticleUpdate . construct <<$>> genericParseJSON defaultOptions)
 
--- | @since 0.1.0.0
-instance FromJSON (In (ArticleR "update")) where
+-- | @since 0.2.0.0
+instance FromJSON (In (WithValidation (ArticleR "update"))) where
   parseJSON = wrappedParseJSON "ArticleUpdate" "article"

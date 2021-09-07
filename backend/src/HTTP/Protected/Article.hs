@@ -75,7 +75,7 @@ articleServer =
         :<|> (\_ _ -> Out <$> send UserAction.FeedArticles)
         :<|> ( \case
                  Success aid ->
-                   ( (\(In au) -> Out <$> send (UserAction.UpdateArticle aid au))
+                   ( fromUnValidatedInput (Out <<$>> send . UserAction.UpdateArticle aid)
                        :<|> send (UserAction.DeleteArticle aid) $> NoContent
                    )
                      -- Comment

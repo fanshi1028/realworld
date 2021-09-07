@@ -3,6 +3,7 @@
 {-# LANGUAGE EmptyCase #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE StandaloneDeriving #-}
 
 -- |
@@ -27,6 +28,7 @@ where
 
 import Data.Aeson (FromJSON (parseJSON), withArray)
 import qualified Data.HashSet as HS (fromList)
+import qualified Data.Semigroup as SG
 import Data.Time (UTCTime)
 import Domain.Util.Error (ValidationErr)
 import Servant (FromHttpApiData (parseQueryParam))
@@ -45,6 +47,12 @@ deriving via (WithNoValidation Text) instance FromJSON (WithValidation Text)
 
 -- | @since 0.1.0.0
 deriving via (WithNoValidation UTCTime) instance FromJSON (WithValidation UTCTime)
+
+-- | For parsing partial update patch with 'HKD'
+--
+-- @since 0.2.0.0
+instance (FromJSON a, FromJSON (WithValidation a)) => FromJSON (WithValidation (Maybe (SG.Last a))) where
+  parseJSON = (Just . SG.Last <$>) <<$>> parseJSON @(WithValidation a)
 
 -- | Helper function for validation
 --

@@ -143,7 +143,7 @@ instance
         UpdateUser update ->
           send (Storage.Map.GetById authUserId)
             <&> applyPatch update
-            >>= validation throwError (send . Storage.Map.UpdateById authUserId . const)
+            >>= send . Storage.Map.UpdateById authUserId . const
             >>= \(transform -> newAuth) -> UserAuthWithToken newAuth <$> send (Token.CreateToken newAuth)
         FollowUser targetUserId -> do
           targetUser <- send $ Storage.Map.GetById targetUserId
@@ -166,7 +166,7 @@ instance
           a <-
             send (Storage.Map.GetById articleId)
               <&> applyPatch update
-              >>= validation throwError (send . Storage.Map.UpdateById articleId . const)
+              >>= send . Storage.Map.UpdateById articleId . const
           ArticleWithAuthorProfile articleId a
             <$> send (Relation.ManyToMany.GetRelatedLeft @_ @"taggedBy" @Tag articleId)
             <*> send (Relation.ManyToMany.IsRelated @_ @_ @"favorite" authUserId articleId)
