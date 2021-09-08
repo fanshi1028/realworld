@@ -20,9 +20,10 @@ module Domain.User (UserR (..)) where
 
 import Data.Aeson (FromJSON (parseJSON), ToJSON (toEncoding, toJSON), Value (Object), defaultOptions, genericParseJSON, genericToJSON)
 import Data.Aeson.Encoding (value)
-import Data.Generic.HKD (Construct (construct), HKD (HKD))
+import Data.Generic.HKD (Construct (construct))
 import qualified Data.HashMap.Strict as HM (insert)
-import Domain.Util.Field (Bio, Email, Image, Password, Username)
+import Data.Password.Argon2 (Password)
+import Domain.Util.Field (Bio, Email, Image, PasswordHash, Username)
 import Domain.Util.JSON.From (In, filterKeysParseJSON, wrappedParseJSON)
 import Domain.Util.JSON.To (Out (Out), wrapEncoding)
 import Domain.Util.Update (WithUpdate)
@@ -76,7 +77,7 @@ instance FromHttpApiData (UserR "token") where
 data instance UserR "all" = User
   { email :: Email, -- "jake@jake.jake",
   -- token :: UserR "token", -- "jwt.token.here",
-    password :: Password, -- "jakejake"
+    password :: PasswordHash, -- "jakejake"
     username :: Username, -- "jake",
     bio :: Bio, -- "I work at statefarm",
     image :: Image -- "https://static.productionready.io/images/smiley-cyrus.jpg",
@@ -231,17 +232,32 @@ instance FromJSON (WithValidation (UserR "create")) where
 instance FromJSON (In (WithValidation (UserR "create"))) where
   parseJSON = wrappedParseJSON "UserRegister" "user"
 
+-- | Since we need IO to hash the password,
+-- we need an "updateInternal" representation as middleman
+-- instead of just reusing the "all" representation
+--
+-- @since 0.2.0.0
+data instance UserR "updateInternal" = UserUpdateInternal
+  { email :: Email, -- "jake@jake.jake",
+    password :: Password, -- "jakejake"
+    username :: Username, -- "jake",
+    bio :: Bio, -- "I work at statefarm",
+    image :: Image -- "https://static.productionready.io/images/smiley-cyrus.jpg",
+  }
+  deriving (Generic, Show)
+
 -- | Representation for update
 --
 -- @since 0.1.0.0
-newtype instance UserR "update" = UserUpdate (WithUpdate (UserR "all"))
+newtype instance UserR "update" = UserUpdate (WithUpdate (UserR "updateInternal"))
+  -- newtype instance UserR "update" = UserUpdate (WithUpdate (UserR "all"))
   -- { email :: Email, -- "jake@jake.jake",
   --   password :: Password, -- "jakejake"
   --   username :: Username, -- "jake",
   --   bio :: Bio, -- "I work at statefarm",
   --   image :: Image -- "https://static.productionready.io/images/smiley-cyrus.jpg",
   -- }
-  deriving (Generic, Show, Eq)
+  deriving (Generic)
 
 -- >>> import Data.Aeson
 -- >>> eitherDecode @(UserR "update") "{\"email\": \"fjwofjoew\"}"

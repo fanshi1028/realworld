@@ -5,6 +5,7 @@
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE StandaloneDeriving #-}
+{-# LANGUAGE ViewPatterns #-}
 
 -- |
 -- Copyright   : (c) 2021 fanshi1028
@@ -27,12 +28,27 @@ module Domain.Util.Validation
 where
 
 import Data.Aeson (FromJSON (parseJSON), withArray)
+import Data.Aeson.Types (withText)
 import qualified Data.HashSet as HS (fromList)
+import Data.Password.Argon2 (Password, mkPassword)
+import Data.Password.Validate (ValidationResult (InvalidPassword, ValidPassword), defaultPasswordPolicy_, validatePassword)
 import qualified Data.Semigroup as SG
 import Data.Time (UTCTime)
 import Domain.Util.Error (ValidationErr)
 import Servant (FromHttpApiData (parseQueryParam))
-import qualified Validation as V (Validation (Success), failure)
+import qualified Validation as V (Validation (Failure, Success), failure)
+
+-- | Validate password with default password policy
+--
+-- @since 0.2.0.0
+instance FromJSON (WithValidation Password) where
+  parseJSON =
+    withText "password" $ \(mkPassword -> pw) -> pure $
+      case validatePassword defaultPasswordPolicy_ pw of
+        ValidPassword -> V.Success pw
+        InvalidPassword irs ->
+          maybe (error "Impossible: password must be invalidated with a reason!") V.Failure $
+            nonEmpty $ show @Text <$> irs
 
 -- | @since 0.1.0.0
 instance FromJSON (WithValidation a) => FromJSON (WithValidation [a]) where

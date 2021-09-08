@@ -74,6 +74,7 @@ common backend-internal
     , safe-exceptions
     , jose                  ^>=0.8.4
     , singleton-bool
+    , password
 
 library backend-internal
   import: prelude, backend-internal

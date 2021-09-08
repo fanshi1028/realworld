@@ -18,9 +18,11 @@ import qualified Authentication (E (Login, Logout, Register))
 import Control.Algebra (Algebra (alg), send, type (:+:) (L, R))
 import Control.Effect.Catch (Catch)
 import Control.Effect.Error (catchError)
+import Control.Effect.Lift (Lift, sendIO)
 import Control.Effect.Sum (Member)
 import Control.Effect.Throw (Throw, throwError)
 import qualified Current (E (GetCurrent))
+import Data.Password.Argon2 (PasswordCheck (PasswordCheckFail, PasswordCheckSuccess), checkPassword, hashPassword)
 import Domain.User (UserR (..))
 import Domain.Util.Error (AlreadyExists (AlreadyExists), NotAuthorized (NotAuthorized), NotFound (NotFound))
 import Domain.Util.Field (Bio (Bio), Email, Image (Image), Time)
@@ -40,6 +42,7 @@ newtype C (r :: Symbol -> Type) m a = C
 -- | @since 0.1.0.0
 instance
   ( Algebra sig m,
+    Member (Lift IO) sig,
     Member (Throw (NotAuthorized UserR)) sig,
     Member (Current.E (UserR "authWithToken")) sig,
     Member (Relation.ToOne.E Email "of" (UserR "id")) sig,
@@ -66,7 +69,10 @@ instance
                 ( send (Storage.Map.GetById $ UserId user)
                     >> throwError (AlreadyExists $ UserId user)
                 )
-                  `catchError` const @_ @(NotFound (UserR "id")) (pure $ User em pw user (Bio "") (Image ""))
+                  `catchError` const @_ @(NotFound (UserR "id"))
+                    ( sendIO (hashPassword pw)
+                        <&> \hash -> User em hash user (Bio "") (Image "")
+                    )
           send $ Storage.Map.Insert @UserR u
           send $ Relation.ToOne.Relate @_ @(UserR "id") @"of" em $ UserId user
           pure $ transform u
@@ -78,9 +84,8 @@ instance
             Nothing -> throwError $ NotFound em
             Just uid ->
               send (Storage.Map.GetById @UserR uid) >>= \a ->
-                -- FIXME: pw stuff
-                if getField @"password" a == pw
-                  then pure $ transform a
-                  else throwError $ NotAuthorized @UserR
+                case checkPassword pw $ getField @"password" a of
+                  PasswordCheckSuccess -> pure $ transform a
+                  PasswordCheckFail -> throwError $ NotAuthorized @UserR
   alg hdl (R other) ctx = C $ alg (run . hdl) other ctx
   {-# INLINE alg #-}

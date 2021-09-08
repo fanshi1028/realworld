@@ -16,12 +16,13 @@
 module Domain.Util.Field where
 
 import Data.Aeson (FromJSON (parseJSON), ToJSON (toEncoding), withText)
+import Data.Password.Argon2 (mkPassword)
+import qualified Data.Password.Argon2 as Argon2 (Argon2, Password, PasswordHash)
 import qualified Data.Text as T (null)
 import Data.Time (UTCTime)
 import Domain.Util.JSON.To (Out, wrappedToEncoding)
 import Domain.Util.Validation (NoValidation (..), WithNoValidation, WithValidation, validate)
 import Servant (FromHttpApiData)
-import Text.Show (Show (showsPrec), showString)
 
 -- * Text-like fields
 
@@ -38,22 +39,14 @@ instance FromJSON (WithValidation Email) where
 
 -- ** Password
 
--- | __FIXME__: Hashing of password in storage
+-- | Password hashed using Argon2
 --
--- @since 0.1.0.0
-newtype Password = Password Text deriving newtype (Eq, ToJSON, FromJSON)
+-- @since 0.2.0.0
+type PasswordHash = Argon2.PasswordHash Argon2.Argon2
 
--- | __FIXME__: Refine validation of 'Password'
---
--- @since 0.1.0.0
-instance FromJSON (WithValidation Password) where
-  parseJSON = withText "password" $ pure <$> (Password <<$>> validate (not . T.null) "null password")
-
--- | Never show password
---
--- @since 0.1.0.0
-instance Show Password where
-  showsPrec _ _ = showString "********"
+-- | @since 0.2.0.0
+instance FromJSON Argon2.Password where
+  parseJSON = mkPassword <<$>> parseJSON
 
 -- ** Username
 
