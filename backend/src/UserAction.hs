@@ -23,24 +23,27 @@ import Control.Algebra (Algebra (alg), send, type (:+:) (L, R))
 import Control.Carrier.NonDet.Church (runNonDetA)
 import Control.Effect.Catch (Catch)
 import Control.Effect.Error (catchError)
+import Control.Effect.Lift (Lift, sendIO)
 import Control.Effect.NonDet (oneOf)
 import Control.Effect.Sum (Member)
 import Control.Effect.Throw (Throw, throwError)
 import qualified Current (E (GetCurrent))
+import Data.Generic.HKD (Build (build), Construct (construct), deconstruct)
 import Data.Generics.Product (getField)
+import Data.Password.Argon2 (hashPassword)
+import qualified Data.Semigroup as SG
 import Domain.Article (ArticleR (..))
 import Domain.Comment (CommentR (..))
 import Domain.User (UserR (..))
 import Domain.Util.Error (AlreadyExists, Impossible (Impossible), NotAuthorized (NotAuthorized), NotFound (NotFound), ValidationErr)
 import Domain.Util.Field (Tag, Time)
 import Domain.Util.Representation (Transform (transform))
-import Domain.Util.Update (applyPatch)
+import Domain.Util.Update (WithUpdate, applyPatch)
 import qualified GenUUID (E (Generate))
 import qualified Relation.ManyToMany (E (GetRelatedLeft, GetRelatedRight, IsRelated, Relate, Unrelate, UnrelateByKeyRight))
 import qualified Relation.ToMany (E (GetRelated, IsRelated, Relate, Unrelate, UnrelateByKey))
 import qualified Storage.Map (E (DeleteById, GetById, Insert, UpdateById))
 import qualified Token (E (CreateToken))
-import Validation (validation)
 
 -- * Effect
 
@@ -105,7 +108,7 @@ newtype C m a = C
   }
   deriving (Functor, Applicative, Monad)
 
--- | @since 0.1.0.0
+-- | @since 0.2.0.0
 instance
   ( Member (Token.E UserR) sig,
     Member (Storage.Map.E UserR) sig,
@@ -130,6 +133,7 @@ instance
     Member (Relation.ToMany.E (UserR "id") "create" (ArticleR "id")) sig,
     Member (Current.E (UserR "authWithToken")) sig,
     Member (Catch (NotAuthorized UserR)) sig,
+    Member (Lift IO) sig,
     Algebra sig m
   ) =>
   Algebra (UserAction.E :+: sig) (C m)
@@ -140,11 +144,26 @@ instance
       let authUserId = transform @UserR @_ @"id" auth
       case action of
         GetCurrentUser -> pure authOut
-        UpdateUser update ->
-          send (Storage.Map.GetById authUserId)
-            <&> applyPatch update
-            >>= send . Storage.Map.UpdateById authUserId . const
-            >>= \(transform -> newAuth) -> UserAuthWithToken newAuth <$> send (Token.CreateToken newAuth)
+        UpdateUser (UserUpdate update) ->
+          send (Storage.Map.GetById authUserId) >>= \orig -> do
+            update' <-
+              construct $
+                build @(WithUpdate (UserR "all"))
+                  (pure $ getField @"email" update)
+                  ( case getField @"password" update of
+                      Just (SG.Last pwNew) -> do
+                        hpw <- sendIO $ hashPassword pwNew
+                        pure $ Just $ SG.Last hpw
+                      Nothing -> pure Nothing
+                  )
+                  (pure $ getField @"username" update)
+                  (pure $ getField @"bio" update)
+                  (pure $ getField @"image" update)
+            case construct $ deconstruct (deconstruct orig) <> update' of
+              Nothing -> error "Impossible: Missing field when update"
+              Just (construct -> SG.Last r) ->
+                send (Storage.Map.UpdateById authUserId $ const r)
+                  >>= \(transform -> newAuth) -> UserAuthWithToken newAuth <$> send (Token.CreateToken newAuth)
         FollowUser targetUserId -> do
           targetUser <- send $ Storage.Map.GetById targetUserId
           send $ Relation.ManyToMany.Relate @_ @_ @"follow" authUserId targetUserId
