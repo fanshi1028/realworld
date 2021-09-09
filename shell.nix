@@ -25,7 +25,7 @@ in project.shellFor {
   # See overlays/tools.nix for more details
 
   # Some you may need to get some other way.
-  buildInputs = [ (import <nixpkgs> { }).git ];
+  buildInputs = [];
 
   # Sellect cross compilers to include.
   crossPlatforms = ps:
