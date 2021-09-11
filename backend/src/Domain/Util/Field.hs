@@ -60,6 +60,8 @@ deriving via (WithNoValidation Text) instance FromJSON (WithValidation Username)
 -- | @since 0.1.0.0
 deriving via (WithNoValidation Text) instance FromHttpApiData (WithValidation Username)
 
+-- ** Bio
+
 -- | @since 0.1.0.0
 newtype Bio = Bio Text
   deriving newtype (Show, Eq, ToJSON, FromJSON)
