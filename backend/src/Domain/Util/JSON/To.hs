@@ -14,21 +14,33 @@ module Domain.Util.JSON.To
     Out (..),
 
     -- * Helpers
+
+    -- ** toJSON
+    wrapJSON,
+    wrappedToJSON,
+    multiWrappedWithCountToJSON,
+
+    -- ** toEncoding
     wrapEncoding,
     wrappedToEncoding,
     multiWrappedWithCountToEncoding,
   )
 where
 
-import Data.Aeson (Encoding, GToJSON', ToJSON (toEncoding), Zero, defaultOptions, genericToEncoding)
+import Data.Aeson (Encoding, ToJSON (toEncoding), Value (Number, Object), toJSON)
 import Data.Aeson.Encoding (int, text)
 import Data.Aeson.Encoding.Internal (colon, comma, wrapObject, (><))
-import GHC.Generics (Generic (Rep))
 
 -- | Wrapping newtype for making an "out" ToJSON instance
 --
 -- @since 0.1.0.0
 newtype Out a = Out a deriving (Show, Generic)
+
+-- | Wrap an Value with a key
+--
+-- @since 0.2.0.0
+wrapJSON :: Text -> Value -> Value
+wrapJSON key json = Object $ fromList [(key, json)]
 
 -- | Wrap an encoding with a key
 --
@@ -36,20 +48,32 @@ newtype Out a = Out a deriving (Show, Generic)
 wrapEncoding :: Text -> Encoding -> Encoding
 wrapEncoding key encoding = wrapObject $ text key >< colon >< encoding
 
--- | 'ToJSON' instance wrapping helper function
+-- | 'ToJSON' instance wrapping helper function for toJSON
 --
--- @since 0.1.0.0
-wrappedToEncoding :: (Generic a, GToJSON' Encoding Zero (Rep a)) => Text -> a -> Encoding
-wrappedToEncoding key a = wrapEncoding key $ genericToEncoding defaultOptions a
+-- @since 0.2.0.0
+wrappedToJSON :: (ToJSON a) => Text -> Out a -> Value
+wrappedToJSON key (Out a) = wrapJSON key $ toJSON a
 
--- | 'ToJSON' instance  wrapping helper function (for mult row of data)
+-- | 'ToJSON' instance wrapping helper function for toEncoding
+--
+-- @since 0.2.0.0
+wrappedToEncoding :: (ToJSON a) => Text -> Out a -> Encoding
+wrappedToEncoding key (Out a) = wrapEncoding key $ toEncoding a
+
+-- | 'ToJSON' instance wrapping helper function for toJSON (for mult row of data)
+--
+-- @since 0.2.0.0
+multiWrappedWithCountToJSON :: (ToJSON (t a), Foldable t) => Text -> Text -> Out (t a) -> Value
+multiWrappedWithCountToJSON key countKey (Out ta) = Object $ fromList [(key, toJSON ta), (countKey, Number $ fromIntegral $ length ta)]
+
+-- | 'ToJSON' instance  wrapping helper function for toEncoding (for mult row of data)
 --
 -- @since 0.1.0.0
-multiWrappedWithCountToEncoding :: (ToJSON (t a), Foldable t) => Text -> Text -> t a -> Encoding
-multiWrappedWithCountToEncoding key countKey a =
+multiWrappedWithCountToEncoding :: (ToJSON (t a), Foldable t) => Text -> Text -> Out (t a) -> Encoding
+multiWrappedWithCountToEncoding key countKey (Out ta) =
   wrapObject $
-    text key >< colon >< toEncoding a
+    text key >< colon >< toEncoding ta
       >< comma
       >< text countKey
       >< colon
-      >< int (length a)
+      >< int (length ta)

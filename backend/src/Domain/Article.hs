@@ -19,15 +19,14 @@
 -- @since 0.1.0.0
 module Domain.Article (ArticleR (..)) where
 
-import Data.Aeson (FromJSON (parseJSON), ToJSON (toEncoding, toJSON), Value (Array), defaultOptions, genericParseJSON, genericToJSON, withObject)
-import Data.Aeson.Encoding (value)
+import Data.Aeson (FromJSON (parseJSON), ToJSON (toEncoding, toJSON), Value (Array), defaultOptions, genericParseJSON, withObject)
 import Data.Aeson.Types (Value (Object))
 import Data.Generic.HKD (construct)
 import qualified Data.HashMap.Strict as HM
 import Domain.User (UserR)
 import Domain.Util.Field (Body, Description, Slug (Slug), Tag, Time, Title)
 import Domain.Util.JSON.From (In, filterKeysParseJSON, insert', wrappedParseJSON)
-import Domain.Util.JSON.To (Out (Out), multiWrappedWithCountToEncoding, wrapEncoding)
+import Domain.Util.JSON.To (Out, multiWrappedWithCountToEncoding, multiWrappedWithCountToJSON, wrappedToEncoding, wrappedToJSON)
 import Domain.Util.Update (WithUpdate)
 import Domain.Util.Validation (WithValidation)
 import GHC.TypeLits (Symbol)
@@ -100,50 +99,28 @@ data instance ArticleR "withAuthorProfile" = ArticleWithAuthorProfile
   }
   deriving (Generic)
 
--- | @since 0.1.0.0
+-- | @since 0.2.0.0
 instance ToJSON (ArticleR "withAuthorProfile") where
-  toEncoding (ArticleWithAuthorProfile aid a tags b n ur) =
-    case genericToJSON defaultOptions a of
-      Object hm ->
-        value
-          . Object
-          . HM.insert "slug" (toJSON aid)
-          . HM.insert "tagList" (toJSON tags)
-          . HM.insert "favorited" (toJSON b)
-          . HM.insert "favoritesCount" (toJSON n)
-          . HM.insert "author" (toJSON ur)
-          $ hm
-      _ -> error "impossible in ToJSON (ArticleR \"withAuthorProfile\")"
+  toJSON (ArticleWithAuthorProfile aid a tags b n ur) = case toJSON a of
+    Object hm ->
+      Object
+        . HM.insert "slug" (toJSON aid)
+        . HM.insert "tagList" (toJSON tags)
+        . HM.insert "favorited" (toJSON b)
+        . HM.insert "favoritesCount" (toJSON n)
+        . HM.insert "author" (toJSON ur)
+        $ hm
+    _ -> error "impossible in ToJSON (ArticleR \"withAuthorProfile\")"
 
--- | @since 0.1.0.0
+-- | @since 0.2.0.0
 instance ToJSON (Out (ArticleR "withAuthorProfile")) where
-  toEncoding (Out a) = wrapEncoding "article" $ toEncoding a
+  toJSON = wrappedToJSON "article"
+  toEncoding = wrappedToEncoding "article"
 
--- |
--- >>> import Domain.Util
--- >>> import Domain.User
--- >>> import Data.Time
--- >>> import Data.Aeson
--- >>> slug = Slug "how-to-train-your-dragon"
--- >>> title = Title "How to train your dragon"
--- >>> description = Description "Ever wonder how?"
--- >>> body = Body "It takes a Jacobian"
--- >>> tags = Tag <$> ["dragon", "training"]
--- >>> timeHelper day = UTCTime (toEnum day) (secondsToDiffTime 3600)
--- >>> createdAt = timeHelper 0
--- >>> updatedAt = timeHelper 10000
--- >>> profile = UserProfile (Email "jake@jake.jake") "jake" (Just $ Bio "I work at statefarm") (Just $ Image "https://static.productionready.io/images/smiley-cyrus.jpg") False
--- >>> article = ArticleWithAuthorProfile slug title description body tags createdAt updatedAt True 999 profile
--- >>> encode article
--- >>> encode $ Out article
--- >>> encode [ article, article ]
--- >>> encode $ Out [ article, article ]
--- instance ToJSON (Out (ArticleR "withAuthorProfile")) where
---   toEncoding = wrappedToEncoding "article"
---
--- @since 0.1.0.0
+-- | @since 0.2.0.0
 instance (Foldable t, ToJSON (t (ArticleR "withAuthorProfile"))) => ToJSON (Out (t (ArticleR "withAuthorProfile"))) where
-  toEncoding (Out as) = multiWrappedWithCountToEncoding "articles" "articlesCount" as
+  toJSON = multiWrappedWithCountToJSON "articles" "articlesCount"
+  toEncoding = multiWrappedWithCountToEncoding "articles" "articlesCount"
 
 -------------------
 --   "           --

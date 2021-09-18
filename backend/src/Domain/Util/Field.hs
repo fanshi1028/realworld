@@ -15,12 +15,12 @@
 -- @since 0.1.0.0
 module Domain.Util.Field where
 
-import Data.Aeson (FromJSON (parseJSON), ToJSON (toEncoding), withText)
 import Data.Password.Argon2 (mkPassword)
+import Data.Aeson (FromJSON (parseJSON), ToJSON (toEncoding, toJSON), withText)
 import qualified Data.Password.Argon2 as Argon2 (Argon2, Password, PasswordHash)
 import qualified Data.Text as T (null)
 import Data.Time (UTCTime)
-import Domain.Util.JSON.To (Out, wrappedToEncoding)
+import Domain.Util.JSON.To (Out, wrappedToEncoding, wrappedToJSON)
 import Domain.Util.Validation (NoValidation (..), WithNoValidation, WithValidation, validate)
 import Servant (FromHttpApiData)
 
@@ -134,6 +134,7 @@ deriving via (WithNoValidation Text) instance FromHttpApiData (WithValidation Ta
 
 -- | @since 0.1.0.0
 instance (Foldable t, ToJSON (t Tag)) => ToJSON (Out (t Tag)) where
+  toJSON = wrappedToJSON "tags"
   toEncoding = wrappedToEncoding "tags"
 
 -- * Other fields

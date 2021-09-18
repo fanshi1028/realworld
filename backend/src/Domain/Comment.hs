@@ -18,14 +18,14 @@
 -- @since 0.1.0.0
 module Domain.Comment (CommentR (..)) where
 
-import Data.Aeson (FromJSON (parseJSON), ToJSON (toEncoding), defaultOptions, genericParseJSON)
+import Data.Aeson (FromJSON (parseJSON), ToJSON (toEncoding, toJSON), defaultOptions, genericParseJSON)
 import Data.Generic.HKD (construct)
 import Data.UUID (UUID)
 import Domain.Article (ArticleR)
 import Domain.User (UserR)
 import Domain.Util.Field (Time)
 import Domain.Util.JSON.From (In, wrappedParseJSON)
-import Domain.Util.JSON.To (Out, wrappedToEncoding)
+import Domain.Util.JSON.To (Out, wrappedToEncoding, wrappedToJSON)
 import Domain.Util.Validation (NoValidation (..), WithNoValidation, WithValidation)
 import GHC.TypeLits (Symbol)
 import Servant (FromHttpApiData)
@@ -79,12 +79,14 @@ data instance CommentR "withAuthorProfile" = CommentWithAuthorProfile
   }
   deriving (Generic, ToJSON)
 
--- | @since 0.1.0.0
+-- | @since 0.2.0.0
 instance ToJSON (Out (CommentR "withAuthorProfile")) where
+  toJSON = wrappedToJSON "comment"
   toEncoding = wrappedToEncoding "comment"
 
--- | @since 0.1.0.0
+-- | @since 0.2.0.0
 instance (Foldable t, ToJSON (t (CommentR "withAuthorProfile"))) => ToJSON (Out (t (CommentR "withAuthorProfile"))) where
+  toJSON = wrappedToJSON "comments"
   toEncoding = wrappedToEncoding "comments"
 
 -------------------

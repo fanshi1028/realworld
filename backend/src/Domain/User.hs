@@ -3,6 +3,7 @@
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE DerivingVia #-}
 {-# LANGUAGE DuplicateRecordFields #-}
+{-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE StandaloneDeriving #-}
 {-# LANGUAGE TypeFamilies #-}
@@ -19,13 +20,12 @@
 module Domain.User (UserR (..)) where
 
 import Data.Aeson (FromJSON (parseJSON), ToJSON (toEncoding, toJSON), Value (Object), defaultOptions, genericParseJSON, genericToJSON)
-import Data.Aeson.Encoding (value)
 import Data.Generic.HKD (Construct (construct))
 import qualified Data.HashMap.Strict as HM (insert)
 import Data.Password.Argon2 (Password)
 import Domain.Util.Field (Bio, Email, Image, PasswordHash, Username)
 import Domain.Util.JSON.From (In, filterKeysParseJSON, wrappedParseJSON)
-import Domain.Util.JSON.To (Out (Out), wrapEncoding)
+import Domain.Util.JSON.To (Out, wrappedToEncoding, wrappedToJSON)
 import Domain.Util.Update (WithUpdate)
 import Domain.Util.Validation (NoValidation (..), WithNoValidation, WithValidation)
 import GHC.TypeLits (Symbol)
@@ -113,13 +113,13 @@ instance FromJWT (UserR "auth")
 -- | Representation for auth info
 --
 -- @since 0.1.0.0
-data instance UserR "authWithToken" = UserAuthWithToken (UserR "auth") (UserR "token") deriving (Generic, Show, Eq)
+data instance UserR "authWithToken" = UserAuthWithToken (UserR "auth") (UserR "token") deriving (Show, Eq, Generic)
 
 -- | @since 0.1.0.0
 instance ToJSON (UserR "authWithToken") where
-  toEncoding (UserAuthWithToken auth token) =
-    case genericToJSON defaultOptions auth of
-      Object hm -> value $ Object $ HM.insert "token" (toJSON token) hm
+  toJSON (UserAuthWithToken auth token) =
+    case toJSON auth of
+      Object hm -> Object $ HM.insert "token" (toJSON token) hm
       _ -> error "impossible in ToJSON (UserR \"authWithToken\")"
 
 -- | @since 0.1.0.0
@@ -132,9 +132,10 @@ instance ToJWT (UserR "authWithToken") where
 -- >>> user = UserAuthWithToken (UserAuth (Email "jake@jake.jake") (Username "jake") (Bio "I work at statefarm") (Image "https://static.productionready.io/images/smiley-cyrus.jpg")) (Token "jwt.token.here")
 -- >>> encode $ Out user
 --
--- @since 0.1.0.0
+-- @since 0.2.0.0
 instance ToJSON (Out (UserR "authWithToken")) where
-  toEncoding (Out a) = wrapEncoding "user" $ toEncoding a
+  toJSON = wrappedToJSON "user"
+  toEncoding = wrappedToEncoding "user"
 
 -- Profile
 -- data instance UserR "profile" = UserProfile
@@ -153,7 +154,7 @@ data instance UserR "profile" = UserProfile
   { profile :: UserR "auth",
     following :: Bool
   }
-  deriving (Generic, ToJSON)
+  deriving (Generic)
 
 -- |
 -- >>> import Domain.Util.Field
@@ -162,12 +163,16 @@ data instance UserR "profile" = UserProfile
 -- >>> encode $ Out profile
 -- "{\"profile\":{\"image\":\"https://static.productionready.io/images/smiley-cyrus.jpg\",\"bio\":\"I work at statefarm\",\"email\":\"jake@jake.jake\",\"following\":false,\"username\":\"jake\"}}"
 --
--- @since 0.1.0.0
+-- | @since 0.2.0.0
+instance ToJSON (UserR "profile") where
+  toJSON (UserProfile auth following') = case genericToJSON defaultOptions auth of
+    Object hm -> Object $ HM.insert "following" (toJSON following') hm
+    _ -> error "impossible in ToJSON (UserR \"profile\")"
+
+-- | @since 0.2.0.0
 instance ToJSON (Out (UserR "profile")) where
-  toEncoding (Out (UserProfile auth following')) = wrapEncoding "profile" $
-    case genericToJSON defaultOptions auth of
-      Object hm -> value $ Object $ HM.insert "following" (toJSON following') hm
-      _ -> error "impossible in ToJSON (UserR \"profile\")"
+  toJSON = wrappedToJSON "profile"
+  toEncoding = wrappedToEncoding "profile"
 
 -------------------
 --   "           --
