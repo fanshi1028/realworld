@@ -136,13 +136,13 @@ library backend-internal
 -- other-extensions:
 
 executable realworld-haskell
-  import:         prelude
+  import:         prelude, backend-internal
 
-  if flag(ghcid)
-    import: backend-internal
+  -- if flag(ghcid)
+  --   import: backend-internal
 
-  else
-    build-depends: backend-internal
+  -- else
+  --   build-depends: backend-internal
 
   main-is:        Main.hs
   hs-source-dirs: backend/app
