@@ -180,13 +180,13 @@ instance
           let a = Article tt des bd t t $ transform auth
           send (Storage.Map.Insert a)
             -- FIXME: Follow his own article?
-            $> ArticleWithAuthorProfile aid a [] False 0 (UserProfile auth True)
+            $> ArticleWithAuthorProfile a [] False 0 (UserProfile auth True)
         UpdateArticle articleId update -> do
           a <-
             send (Storage.Map.GetById articleId)
               <&> applyPatch update
               >>= send . Storage.Map.UpdateById articleId . const
-          ArticleWithAuthorProfile articleId a
+          ArticleWithAuthorProfile a
             <$> send (Relation.ManyToMany.GetRelatedLeft @_ @"taggedBy" @Tag articleId)
             <*> send (Relation.ManyToMany.IsRelated @_ @_ @"favorite" authUserId articleId)
             <*> (fromIntegral . length <$> send (Relation.ManyToMany.GetRelatedRight @_ @(UserR "id") @"favorite" articleId))
@@ -230,7 +230,7 @@ instance
           a <- send $ Storage.Map.GetById articleId
           send $ Relation.ManyToMany.Relate @_ @_ @"favorite" authUserId articleId
           let authorId = getField @"author" a
-          ArticleWithAuthorProfile articleId a
+          ArticleWithAuthorProfile a
             <$> send (Relation.ManyToMany.GetRelatedLeft @_ @"taggedBy" @Tag articleId)
             <*> send (Relation.ManyToMany.IsRelated @_ @_ @"favorite" authUserId articleId)
             <*> (fromIntegral . length <$> send (Relation.ManyToMany.GetRelatedRight @_ @(UserR "id") @"favorite" articleId))
@@ -242,7 +242,7 @@ instance
           a <- send $ Storage.Map.GetById articleId
           send $ Relation.ManyToMany.Unrelate @_ @_ @"favorite" authUserId articleId
           let authorId = getField @"author" a
-          ArticleWithAuthorProfile articleId a
+          ArticleWithAuthorProfile a
             <$> send (Relation.ManyToMany.GetRelatedLeft @_ @"taggedBy" @Tag articleId)
             <*> send (Relation.ManyToMany.IsRelated @_ @_ @"favorite" authUserId articleId)
             <*> (fromIntegral . length <$> send (Relation.ManyToMany.GetRelatedRight @_ @(UserR "id") @"favorite" articleId))
@@ -262,7 +262,7 @@ instance
                   a <- send $ Storage.Map.GetById @ArticleR articleId
                   let authorId = getField @"author" a
                   -- TODO: factor out logic for author profile
-                  ArticleWithAuthorProfile articleId a
+                  ArticleWithAuthorProfile a
                     <$> send (Relation.ManyToMany.GetRelatedLeft @_ @"taggedBy" @Tag articleId)
                     <*> send (Relation.ManyToMany.IsRelated @_ @_ @"favorite" authUserId articleId)
                     <*> (fromIntegral . length <$> send (Relation.ManyToMany.GetRelatedRight @_ @(UserR "id") @"favorite" articleId))

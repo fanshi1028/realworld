@@ -18,7 +18,7 @@ module Domain.Util.Field where
 import Data.Password.Argon2 (mkPassword)
 import Data.Aeson (FromJSON (parseJSON), ToJSON (toEncoding, toJSON), withText)
 import qualified Data.Password.Argon2 as Argon2 (Argon2, Password, PasswordHash)
-import qualified Data.Text as T (null)
+import qualified Data.Text as T (intercalate, null, toLower)
 import Data.Time (UTCTime)
 import Domain.Util.JSON.To (Out, wrappedToEncoding, wrappedToJSON)
 import Domain.Util.Validation (NoValidation (..), WithNoValidation, WithValidation, validate)
@@ -143,3 +143,9 @@ instance (Foldable t, ToJSON (t Tag)) => ToJSON (Out (t Tag)) where
 
 -- | @since 0.1.0.0
 type Time = UTCTime
+
+-- * Some helper functions
+
+-- | @since 0.2.0.0
+titleToSlug :: Title -> Slug
+titleToSlug (Title t) = Slug $ T.intercalate "-" $ words $ T.toLower t

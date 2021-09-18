@@ -13,14 +13,12 @@
 -- @since 0.1.0.0
 module Domain.Util.Representation (Transform (transform)) where
 
-import qualified Data.Text as Text (intercalate, toLower)
 import Domain.Article (ArticleR (..))
 import Domain.Comment (CommentR (..))
 import Domain.User (UserR (..))
-import Domain.Util.Field (Slug (Slug), Title (..), Username)
+import Domain.Util.Field (Title, Username, titleToSlug)
 import GHC.Records (HasField (getField))
 import GHC.TypeLits (Symbol)
-import Relude.Extra (un)
 
 -- | Transform between different representation of the same data
 --
@@ -42,7 +40,7 @@ instance Transform UserR "all" "auth" where
 
 -- | @since 0.2.0.0
 instance (HasField "title" (ArticleR s) Title) => Transform ArticleR s "id" where
-  transform = ArticleId . Slug . Text.intercalate "-" . words . Text.toLower . un . getField @"title"
+  transform = ArticleId . titleToSlug . getField @"title"
 
 -- * Comment
 

@@ -24,11 +24,12 @@ import Data.Aeson.Types (Value (Object))
 import Data.Generic.HKD (construct)
 import qualified Data.HashMap.Strict as HM
 import Domain.User (UserR)
-import Domain.Util.Field (Body, Description, Slug (Slug), Tag, Time, Title)
+import Domain.Util.Field (Body, Description, Slug (Slug), Tag, Time, Title, titleToSlug)
 import Domain.Util.JSON.From (In, filterKeysParseJSON, insert', wrappedParseJSON)
 import Domain.Util.JSON.To (Out, multiWrappedWithCountToEncoding, multiWrappedWithCountToJSON, wrappedToEncoding, wrappedToJSON)
 import Domain.Util.Update (WithUpdate)
 import Domain.Util.Validation (WithValidation)
+import GHC.Records (getField)
 import GHC.TypeLits (Symbol)
 import Servant (FromHttpApiData)
 
@@ -87,11 +88,9 @@ data instance ArticleR "all" = Article
 
 -- | Representation for output
 --
--- @since 0.1.0.0
+-- @since 0.2.0.0
 data instance ArticleR "withAuthorProfile" = ArticleWithAuthorProfile
-  { slug :: ArticleR "id",
-    -- FIXME: Better representation? ArticleR has uid and we have UserR "profile" outside too
-    article :: ArticleR "all",
+  { article :: ArticleR "all",
     tagList :: [Tag], -- ["dragons", "training"],
     favorited :: Bool, -- false,
     favoritesCount :: Natural, -- 0,
@@ -101,10 +100,10 @@ data instance ArticleR "withAuthorProfile" = ArticleWithAuthorProfile
 
 -- | @since 0.2.0.0
 instance ToJSON (ArticleR "withAuthorProfile") where
-  toJSON (ArticleWithAuthorProfile aid a tags b n ur) = case toJSON a of
+  toJSON (ArticleWithAuthorProfile a tags b n ur) = case toJSON a of
     Object hm ->
       Object
-        . HM.insert "slug" (toJSON aid)
+        . HM.insert "slug" (toJSON $ titleToSlug $ getField @"title" a)
         . HM.insert "tagList" (toJSON tags)
         . HM.insert "favorited" (toJSON b)
         . HM.insert "favoritesCount" (toJSON n)

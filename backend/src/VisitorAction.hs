@@ -96,7 +96,7 @@ instance
         a <- send $ Storage.Map.GetById aid
         let uid = getField @"author" a
         u <- transform <$> send (Storage.Map.GetById uid)
-        ArticleWithAuthorProfile aid a
+        ArticleWithAuthorProfile a
           <$> send (Relation.ManyToMany.GetRelatedLeft @_ @"taggedBy" @Tag aid)
           <*> pure False
           <*> (fromIntegral . length <$> send (Relation.ManyToMany.GetRelatedRight @_ @(UserR "id") @"favorite" aid))
@@ -108,8 +108,8 @@ instance
               let aid = transform a
                   uid = getField @"author" a
               u <- transform <$> send (Storage.Map.GetById uid)
-              ArticleWithAuthorProfile aid a
-                <$> send (Relation.ManyToMany.GetRelatedLeft @_ @"taggedBy" @Tag aid)
+              ArticleWithAuthorProfile a
+                <$> send (Relation.ManyToMany.GetRelatedLeft @(ArticleR "id") @"taggedBy" @Tag aid)
                 <*> pure False
                 <*> (fromIntegral . length <$> send (Relation.ManyToMany.GetRelatedRight @_ @(UserR "id") @"favorite" aid))
                 <*> pure (UserProfile u False)
