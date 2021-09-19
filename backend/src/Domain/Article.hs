@@ -62,7 +62,7 @@ data instance ArticleR "all" = Article
     -- favoritesCount :: Natural, -- 0,
     author :: UserR "id"
   }
-  deriving (Generic, ToJSON)
+  deriving (Show, Eq, Generic, ToJSON)
 
 --------------------------
 --                 m    --
@@ -96,7 +96,7 @@ data instance ArticleR "withAuthorProfile" = ArticleWithAuthorProfile
     favoritesCount :: Natural, -- 0,
     author :: UserR "profile"
   }
-  deriving (Generic)
+  deriving (Eq, Show, Generic)
 
 -- | @since 0.2.0.0
 instance ToJSON (ArticleR "withAuthorProfile") where
@@ -138,7 +138,7 @@ data instance ArticleR "create" = ArticleCreate
     body :: Body, -- "You have to believe",
     tagList :: [Tag] -- ["reactjs", "angularjs", "dragons"]
   }
-  deriving (Generic, Show)
+  deriving (Eq, Show, Generic)
 
 -- |
 -- >>> import Data.Aeson

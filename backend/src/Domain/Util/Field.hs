@@ -15,8 +15,8 @@
 -- @since 0.1.0.0
 module Domain.Util.Field where
 
-import Data.Password.Argon2 (mkPassword)
 import Data.Aeson (FromJSON (parseJSON), ToJSON (toEncoding, toJSON), withText)
+import Data.Password.Argon2 (mkPassword, Password, unsafeShowPassword)
 import qualified Data.Password.Argon2 as Argon2 (Argon2, Password, PasswordHash)
 import qualified Data.Text as T (intercalate, null, toLower)
 import Data.Time (UTCTime)
@@ -38,6 +38,12 @@ instance FromJSON (WithValidation Email) where
   parseJSON = withText "email" $ pure <$> (Email <<$>> validate (not . T.null) "null email")
 
 -- ** Password
+
+-- | Password hashed using Argon2
+--
+-- @since 0.2.0.0
+instance Eq Password where
+  (==) = (==) `on` unsafeShowPassword
 
 -- | Password hashed using Argon2
 --

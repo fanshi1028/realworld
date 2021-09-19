@@ -154,7 +154,7 @@ data instance UserR "profile" = UserProfile
   { profile :: UserR "auth",
     following :: Bool
   }
-  deriving (Generic)
+  deriving (Show, Eq, Generic)
 
 -- |
 -- >>> import Domain.Util.Field
@@ -189,7 +189,7 @@ data instance UserR "login" = UserLogin
   { email :: Email,
     password :: Password
   }
-  deriving (Generic, Show)
+  deriving (Eq, Show, Generic)
 
 -- |
 -- >>> import Data.Aeson
@@ -217,7 +217,7 @@ data instance UserR "create" = UserRegister
     email :: Email,
     password :: Password
   }
-  deriving (Generic, Show)
+  deriving (Eq, Show, Generic)
 
 -- |
 -- >>> import Data.Aeson
@@ -262,7 +262,7 @@ newtype instance UserR "update" = UserUpdate (WithUpdate (UserR "updateInternal"
   --   bio :: Bio, -- "I work at statefarm",
   --   image :: Image -- "https://static.productionready.io/images/smiley-cyrus.jpg",
   -- }
-  deriving (Generic)
+  deriving (Eq, Show, Generic)
 
 -- >>> import Data.Aeson
 -- >>> eitherDecode @(UserR "update") "{\"email\": \"fjwofjoew\"}"

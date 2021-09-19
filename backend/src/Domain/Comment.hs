@@ -77,7 +77,7 @@ data instance CommentR "withAuthorProfile" = CommentWithAuthorProfile
     body :: Text, -- "It takes a Jacobian",
     author :: UserR "profile"
   }
-  deriving (Generic, ToJSON)
+  deriving (Show, Eq, Generic, ToJSON)
 
 -- | @since 0.2.0.0
 instance ToJSON (Out (CommentR "withAuthorProfile")) where
@@ -103,7 +103,7 @@ instance (Foldable t, ToJSON (t (CommentR "withAuthorProfile"))) => ToJSON (Out 
 newtype instance CommentR "create" = CommentCreate
   { body :: Text -- "It takes a Jacobian",
   }
-  deriving (Generic, Show)
+  deriving (Eq, Show, Generic)
 
 -- | @since 0.1.0.0
 instance FromJSON (WithValidation (CommentR "create")) where
