@@ -42,6 +42,8 @@ common prelude
   ghc-options:
     -W -Wall -Wincomplete-uni-patterns -Wincomplete-record-updates
     -Wcompat -Wnoncanonical-monad-instances -O2
+    -- for stan
+    -fwrite-ide-info -hiedir=.hie
 
   build-depends:
     , base    ^>=4.14
