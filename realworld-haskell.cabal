@@ -156,11 +156,12 @@ executable realworld-haskell
 
 test-suite realworld-haskell-test
   import: prelude, backend-internal
-  if flag(ghcid)
-    -- import: backend-internal
+  -- import: prelude
+  -- if flag(ghcid)
+  --   import: backend-internal
 
-  else
-    build-depends: backend-internal
+  -- else
+  --   build-depends: backend-internal
   type:             exitcode-stdio-1.0
   hs-source-dirs:
       test
