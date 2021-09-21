@@ -42,12 +42,6 @@ instance FromJSON (WithValidation Email) where
 -- | Password hashed using Argon2
 --
 -- @since 0.2.0.0
-instance Eq Password where
-  (==) = (==) `on` unsafeShowPassword
-
--- | Password hashed using Argon2
---
--- @since 0.2.0.0
 type PasswordHash = Argon2.PasswordHash Argon2.Argon2
 
 -- | @since 0.2.0.0

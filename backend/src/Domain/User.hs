@@ -185,7 +185,7 @@ data instance UserR "login" = UserLogin
   { email :: Email,
     password :: Password
   }
-  deriving (Eq, Show, Generic)
+  deriving (Show, Generic)
 
 -- | @since 0.1.0.0
 instance FromJSON (WithValidation (UserR "login")) where
@@ -209,7 +209,7 @@ data instance UserR "create" = UserRegister
     email :: Email,
     password :: Password
   }
-  deriving (Eq, Show, Generic)
+  deriving (Show, Generic)
 
 -- | @since 0.1.0.0
 instance FromJSON (WithValidation (UserR "create")) where
@@ -250,7 +250,7 @@ newtype instance UserR "update" = UserUpdate (WithUpdate (UserR "updateInternal"
   --   bio :: Bio, -- "I work at statefarm",
   --   image :: Image -- "https://static.productionready.io/images/smiley-cyrus.jpg",
   -- }
-  deriving (Eq, Show, Generic)
+  deriving (Show, Generic)
 
 -- | @since 0.2.0.0
 instance FromJSON (WithValidation (UserR "update")) where

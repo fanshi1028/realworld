@@ -139,3 +139,15 @@ instance ToJSON (CommentR "create")
 
 instance ToJSON (In (CommentR "create")) where
   toJSON = wrappedToJSON' "comment"
+
+-- | Password hashed using Argon2
+--
+-- @since 0.2.0.0
+instance Eq Password where
+  (==) = (==) `on` unsafeShowPassword
+
+deriving instance Eq (UserR "login")
+
+deriving instance Eq (UserR "create")
+
+deriving instance Eq (UserR "update")
