@@ -52,7 +52,7 @@ instance FromJSON (WithValidation Password) where
 
 -- | @since 0.1.0.0
 instance FromJSON (WithValidation a) => FromJSON (WithValidation [a]) where
-  parseJSON = withArray "array" $ foldMapA parseJSON
+  parseJSON = withArray "array" $ mapM parseJSON >=> pure . sequenceA . toList
 
 -- | @since 0.1.0.0
 instance (Eq r, Hashable r, FromJSON (WithValidation r)) => FromJSON (WithValidation (HashSet r)) where

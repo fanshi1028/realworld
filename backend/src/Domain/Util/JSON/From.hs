@@ -34,7 +34,7 @@ newtype In a = In a deriving (Show, Generic)
 --
 -- @since 0.1.0.0
 wrappedParseJSON :: FromJSON a => String -> Text -> Value -> Parser (In a)
-wrappedParseJSON info key = withObject info $ \o -> In <$> (o .: key >>= (<?> Key key) . parseJSON)
+wrappedParseJSON info key = withObject info $ \o -> In <$> o .: key
 
 -- | @since 0.1.0.0
 filterKeysParseJSON ::
@@ -58,4 +58,4 @@ insert' ::
   -- | original Object
   Object ->
   Object
-insert' = insertWith @Object (\_ old -> old)
+insert' = insertWith (\_ old -> old)
