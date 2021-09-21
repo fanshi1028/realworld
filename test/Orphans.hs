@@ -1,57 +1,141 @@
 {-# LANGUAGE DataKinds #-}
-{-# LANGUAGE FlexibleInstances #-}
-{-# LANGUAGE StandaloneDeriving #-}
 {-# LANGUAGE DerivingStrategies #-}
+{-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE StandaloneDeriving #-}
+{-# LANGUAGE TypeFamilies #-}
+{-# LANGUAGE UndecidableInstances #-}
 
--- |
+-- | @since 0.2.0.0
 module Orphans where
 
+import Authorization (TokenAuth)
+import Data.Aeson (FromJSON, ToJSON (toEncoding, toJSON), Value (Object, String), parseJSON, withObject, (.:))
+import Data.HashMap.Strict (insert)
+import Data.Password.Argon2 (Password, unsafeShowPassword)
+import Data.Sequence ((<|))
+import Domain.Article (ArticleR (..))
+import Domain.Comment (CommentR (..))
 import Domain.User (UserR (..))
-import Domain.Util.Field (Bio (Bio), Email (Email), Image (Image), Username (Username))
-import Domain.Util.JSON.To (Out)
-import Faker.Combinators (oneof)
-import qualified Faker.Company as Company
-import qualified Faker.FunnyName as Funny
-import qualified Faker.Name as Name
-import qualified Faker.TvShow.SiliconValley as SiliconValley
-import qualified Faker.TvShow.TheItCrowd as TheItCrowd
-import Test.QuickCheck (Arbitrary (arbitrary), sample, sample')
-import Test.QuickCheck.Arbitrary.ADT (ToADTArbitrary, genericArbitrary)
-import Test.QuickCheck.Gen.Faker (fakeQuickcheck)
-import Test.QuickCheck.Arbitrary (arbitraryASCIIChar)
+import Domain.Util.Field (Slug (Slug), Tag (Tag), Username (Username))
+import Domain.Util.JSON.From (In (In), wrappedParseJSON)
+import Domain.Util.JSON.To (Out (Out), wrappedToJSON)
+import Domain.Util.Validation (WithValidation)
+import GHC.Records (getField)
+import HTTP.Util (Limit (Limit), Offset (Offset))
+import Servant (ToHttpApiData (toUrlPiece))
+import Validation (Validation (Failure, Success))
+import Data.Aeson.Types (Parser)
 
-qucikOneOf = fakeQuickcheck . oneof
+wrappedParseJSON' :: FromJSON a => String -> Text -> Value -> Parser (Out a)
+wrappedParseJSON' info key = wrappedParseJSON info key >=> \(In a) -> pure (Out a)
 
--- * Email
+wrappedToJSON' :: ToJSON a => Text -> In a -> Value
+wrappedToJSON' key (In a) = wrappedToJSON key $ Out a
 
--- >>> sample' (arbitrary @Email)
--- ["bertram@piedpiper.test","Denyse_OConner-733897692@Marvin_LLC.net","russ@threecommaclub.test","victoria.reynholm@reynholm.test","Rep_Britany_Schultz-380839071@Hayes_LLC.co","Herma_Hilll-564648444@Bartell_Inc.net","russ@threecommaclub.test","dinesh@piedpiper.test","bertram@piedpiper.test","daniel.carey@reynholm.test","laurie@raviga.test"]
-instance Arbitrary Email where
-  arbitrary = Email <$> qucikOneOf [Company.email, SiliconValley.email, TheItCrowd.emails]
+instance ToHttpApiData a => ToHttpApiData (WithValidation a) where
+  toUrlPiece (Failure err) = error $ "Invalid http api data: " <> show err
+  toUrlPiece (Success a) = toUrlPiece a
 
--- >>> sample' (arbitrary @Username)
--- ["Brooke Trout","Estell Howell","Brook Lynn Bridge","Theron Schaefer","Barry Cade","Twana Smith","Onie Bartoletti Barton","Lonna Roob","Herta Ritchie O'Reilly","Lou Dan Obseen","Jone Ratke Collier"]
-instance Arbitrary Username where
-  arbitrary = Username <$> qucikOneOf [Name.nameWithMiddle, Funny.name, Name.name]
+deriving newtype instance ToHttpApiData Username
 
-instance Arbitrary Bio where
-  arbitrary = Bio <$> qucikOneOf [pure " wefwe"]
+deriving newtype instance ToHttpApiData (UserR "id")
 
-instance Arbitrary Image where
-  arbitrary = Image <$> qucikOneOf [pure " ewfew"]
+deriving newtype instance ToHttpApiData Slug
 
-instance Arbitrary (UserR "auth") where
-  arbitrary = genericArbitrary
+deriving newtype instance ToHttpApiData (ArticleR "id")
 
--- NOTE: validity approach?
--- FIXME
--- >>> sample' (arbitrary @(UserR "token"))
--- ["","8\995314","<kwE","","4}","Y\f\GS\8264o\141689TD","\1092918\ETX\tN\SYN0\34037","6Xc\SOvk\EM","(N\SI\1064492t3J#5o\60377o\DC3t\a5","","55l"]
-deriving instance Arbitrary (UserR "token")
+deriving newtype instance ToHttpApiData (CommentR "id")
 
--- NOTE: In could gen invalid instance which Out gen only valid instance>
+deriving newtype instance ToHttpApiData Tag
 
-instance Arbitrary (UserR "authWithToken") where
-  arbitrary = UserAuthWithToken <$> arbitrary <*> arbitrary
+deriving newtype instance ToHttpApiData Limit
 
-instance ToADTArbitrary (Out (UserR "authWithToken"))
+deriving newtype instance ToHttpApiData Offset
+
+deriving newtype instance FromJSON Tag
+
+deriving newtype instance FromJSON Slug
+
+deriving newtype instance FromJSON (ArticleR "id")
+
+instance FromJSON (ArticleR "all")
+
+instance FromJSON (UserR "profile") where
+  parseJSON v = withObject "UserR profile" (\o -> UserProfile <$> parseJSON v <*> o .: "following") v
+
+instance FromJSON (ArticleR "withAuthorProfile") where
+  parseJSON =
+    withObject
+      "withAuthorProfile"
+      $ \o -> do
+        a <- o .: "author"
+        let Username uid = getField @"username" $ getField @"profile" a
+        ArticleWithAuthorProfile
+          <$> parseJSON (Object $ insert "author" (String uid) o)
+          <*> o .: "tagList"
+          <*> o .: "favorited"
+          <*> o .: "favoritesCount"
+          <*> pure a
+
+instance FromJSON (Out (ArticleR "withAuthorProfile")) where
+  parseJSON = withObject "out ArticleR withAuthorProfile" $ \o -> Out <$> o .: "article"
+
+instance FromJSON (Out [ArticleR "withAuthorProfile"]) where
+  parseJSON = withObject "Out [ ArticleR withAuthorProfile ]" $ \o -> Out <$> o .: "articles"
+
+deriving newtype instance FromJSON (CommentR "id")
+
+instance FromJSON (CommentR "withAuthorProfile")
+
+instance FromJSON (Out (CommentR "withAuthorProfile")) where
+  parseJSON = withObject "Out CommentR withAuthorProfile" $ \o -> Out <$> o .: "comment"
+
+instance FromJSON (Out [CommentR "withAuthorProfile"]) where
+  parseJSON = withObject "Out [ CommentR withAuthorProfile ]" $ \o -> Out <$> o .: "comments"
+
+instance FromJSON (Out [Tag]) where
+  parseJSON = withObject "Out [ Tag ]" $ \o -> Out <$> o .: "tags"
+
+instance FromJSON (UserR "token")
+
+instance FromJSON (UserR "authWithToken") where
+  parseJSON v = withObject "UserR authWithToken" (\o -> UserAuthWithToken <$> parseJSON v <*> o .: "token") v
+
+instance FromJSON (Out (UserR "authWithToken")) where
+  parseJSON = withObject "Out UserR authWithToken" $ \o -> Out <$> o .: "user"
+
+instance FromJSON (Out (UserR "profile")) where
+  parseJSON = withObject "Out UserR profile" $ \o -> Out <$> o .: "profile"
+
+instance ToJSON a => ToJSON (WithValidation a) where
+  toEncoding (Failure err) = error "Invalidated toJSON"
+  toEncoding (Success a) = toEncoding a
+
+-- HACK
+instance ToJSON Password where
+  toJSON = toJSON . unsafeShowPassword
+
+instance ToJSON (UserR "login")
+
+deriving newtype instance Eq a => Eq (In a)
+
+-- instance ToJSON (In (WithValidation (UserR "login")))
+instance ToJSON (In (UserR "login")) where
+  toJSON = wrappedToJSON' "user"
+
+instance ToJSON (UserR "create")
+
+instance ToJSON (In (UserR "create")) where
+  toJSON = wrappedToJSON' "user"
+
+instance ToJSON (ArticleR "create")
+
+instance ToJSON (In (ArticleR "create")) where
+  toJSON = wrappedToJSON' "article"
+
+instance ToJSON (CommentR "create")
+
+instance ToJSON (In (CommentR "create")) where
+  toJSON = wrappedToJSON' "comment"
