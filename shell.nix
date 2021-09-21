@@ -18,7 +18,9 @@ in project.shellFor {
     haskell-language-server = "latest";
     ormolu = "latest";
     ghcid = "latest";
-    doctest = "latest";
+    # use cabal-docspec instead of doctest(which I failed to set it up right), yet it seesm that cabal-docspec is not on hackage yet
+    # https://github.com/phadej/cabal-extras/tree/master/cabal-docspec
+    # doctest = "latest";
     cabal-fmt = "latest";
     stan = "latest";
   };
