@@ -3,7 +3,6 @@
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE DerivingVia #-}
 {-# LANGUAGE DuplicateRecordFields #-}
-{-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE StandaloneDeriving #-}
 {-# LANGUAGE TypeFamilies #-}
@@ -46,7 +45,6 @@ data family UserR (r :: Symbol)
 --
 -- @since 0.1.0.0
 newtype instance UserR "id" = UserId Username
-  deriving (Generic)
   deriving newtype (Show, Eq, Hashable, ToJSON, FromJSON)
 
 -- | @since 0.1.0.0
