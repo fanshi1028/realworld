@@ -35,3 +35,5 @@ node_modules/
 /.envrc
 /dist-newstyle/
 /cabal.project.local
+/.hie/
+/.tasty-rerun-log

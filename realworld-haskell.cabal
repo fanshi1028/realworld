@@ -42,6 +42,8 @@ common prelude
   ghc-options:
     -W -Wall -Wincomplete-uni-patterns -Wincomplete-record-updates
     -Wcompat -Wnoncanonical-monad-instances -O2
+    -- for stan
+    -fwrite-ide-info -hiedir=.hie
 
   build-depends:
     , base    ^>=4.14
@@ -136,13 +138,13 @@ library backend-internal
 -- other-extensions:
 
 executable realworld-haskell
-  import:         prelude
+  import:         prelude, backend-internal
 
-  if flag(ghcid)
-    import: backend-internal
+  -- if flag(ghcid)
+  --   import: backend-internal
 
-  else
-    build-depends: backend-internal
+  -- else
+  --   build-depends: backend-internal
 
   main-is:        Main.hs
   hs-source-dirs: backend/app
@@ -153,11 +155,30 @@ executable realworld-haskell
 -- other-extensions:
 
 test-suite realworld-haskell-test
-  import:           prelude
-  default-language: Haskell2010
+  import: prelude, backend-internal
+  -- import: prelude
+  -- if flag(ghcid)
+  --   import: backend-internal
+
+  -- else
+  --   build-depends: backend-internal
   type:             exitcode-stdio-1.0
-
-  -- hs-source-dirs:
-  main-is:          MyLibTest.hs
-
--- build-depends:
+  hs-source-dirs:
+      test
+  main-is:          Main.hs
+  other-modules:    Gen.Naive
+                    Gen.Realistic
+                    Orphans
+  ghc-options: -threaded -rtsopts -with-rtsopts=-N
+  build-depends:
+    , QuickCheck
+    , hspec
+    , hspec-golden-aeson
+    , quickcheck-arbitrary-adt
+    , quickcheck-instances
+    , fakedata-quickcheck
+    , fakedata              ^>=1.0.1
+    , tasty
+    , tasty-hspec
+    , tasty-rerun
+    , containers
