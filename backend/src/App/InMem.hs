@@ -49,67 +49,6 @@ import qualified Token.JWT.Invalidate.Pure (run)
 import qualified UserAction (run)
 import qualified VisitorAction (run)
 
-nt cs jwts userDb articleDb commentDb tagDb emailUserIndex db0 db1 db2 db3 db4 db5 db6 db7 =
-  runIOinSTM
-    . runError @(NotAuthorized UserR)
-    . runError @(NotFound (ArticleR "id"))
-    . runError @(NotFound (CommentR "id"))
-    . runError @(NotFound (UserR "id"))
-    . runError @(NotFound Email)
-    . runThrow @(NotFound Tag)
-    . runThrow @(AlreadyExists (ArticleR "id"))
-    . runThrow @(AlreadyExists (UserR "id"))
-    . runThrow @(AlreadyExists Email)
-    . runThrow @(AlreadyLogin UserR)
-    . runThrow @(NotLogin UserR)
-    . runThrow @ValidationErr
-    . runThrow @RequestedUUIDsTooQuickly
-    . runThrow @Crypto.JOSE.Error
-    . runThrow @Impossible
-    . runTrace
-    . R.runReader (Indefinite @(UserR "authWithToken"))
-    . Current.Reader.run
-    . R.runReader jwts
-    . R.runReader cs
-    . Relation.ToOne.InMem.run @Email @"of" @(UserR "id") @'IgnoreIfExist emailUserIndex
-    . Relation.ToMany.InMem.run @(ArticleR "id") @"has" @(CommentR "id") db0
-    . Relation.ToMany.InMem.run @(UserR "id") @"create" @(ArticleR "id") db1
-    . Relation.ManyToMany.InMem.run @(ArticleR "id") @"taggedBy" @Tag db2 db3
-    . Relation.ManyToMany.InMem.run @(UserR "id") @"follow" @(UserR "id") db4 db5
-    . Relation.ManyToMany.InMem.run @(UserR "id") @"favorite" @(ArticleR "id") db6 db7
-    . Storage.Map.InMem.run @UserR userDb
-    . Storage.Map.InMem.run @ArticleR articleDb
-    . Storage.Map.InMem.run @CommentR commentDb
-    . Storage.Set.InMem.run @Tag tagDb
-    . Current.IO.run @Time
-    . GenUUID.V1.run
-    . ( Token.JWT.run @UserR
-          >>> Token.JWT.Invalidate.Pure.run @UserR
-      )
-    . Authentication.Token.run @UserR
-    . VisitorAction.run
-    . UserAction.run
-    >=> handlerErr err401
-    >=> handlerErr err404
-    >=> handlerErr err404
-    >=> handlerErr err404
-    >=> handlerErr err404
-    >=> handlerErr err404
-    >=> handlerErr err400
-    >=> handlerErr err400
-    >=> handlerErr err400
-    >=> handlerErr err401 -- ???? FIXME
-    >=> handlerErr err401
-    >=> handlerErr err400
-    >=> handlerErr err500
-    >=> handlerErr err400
-    >=> handlerErr err500
-    >=> \(traces, x) -> print traces >> pure x
-  where
-    -- NOTE: Helpers for handle errors in form of nested either
-    handlerErr' handler = either handler pure
-    handlerErr status = handlerErr' (\e -> throwError $ status {errBody = show e})
-
 -- | @since 0.2.0.0
 --
 -- create app by supplying settings and databases(in memory)
@@ -183,23 +122,6 @@ mkApp cs jwts userDb articleDb commentDb tagDb emailUserIndex db0 db1 db2 db3 db
           . Authentication.Token.run @UserR
           . VisitorAction.run
           . UserAction.run
-          -- >=> handlerErr (\e -> throwError $ err500 {errBody = show e})
-          -- >=> handlerErr (\e -> throwError $ err500 {errBody = show e})
-          -- >=> handlerErr (\e -> throwError $ err400 {errBody = show e})
-          -- >=> handlerErr (\e -> throwError $ err400 {errBody = show e})
-          -- >=> handlerErr (\e -> throwError $ err400 {errBody = show e})
-          -- >=> handlerErr (\e -> throwError $ err401 {errBody = show e})
-          -- >=> handlerErr (\e -> throwError $ err401 {errBody = show e})
-          -- >=> handlerErr (\e -> throwError $ err401 {errBody = show e})
-          -- >=> handlerErr (\e -> throwError $ err404 {errBody = show e})
-          -- >=> handlerErr (\e -> throwError $ err404 {errBody = show e})
-          -- >=> handlerErr (\e -> throwError $ err404 {errBody = show e})
-          -- >=> handlerErr (\e -> throwError $ err404 {errBody = show e})
-          -- >=> handlerErr (\e -> throwError $ err404 {errBody = show e})
-          -- >=> handlerErr (\e -> throwError $ err400 {errBody = show e})
-          -- >=> handlerErr (\e -> throwError $ err400 {errBody = show e})
-          -- >=> handlerErr (\e -> throwError $ err400 {errBody = show e})
-
           >=> handlerErr err401
           >=> handlerErr err404
           >=> handlerErr err404

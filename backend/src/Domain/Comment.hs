@@ -30,6 +30,9 @@ import Domain.Util.Validation (NoValidation (..), WithNoValidation, WithValidati
 import GHC.TypeLits (Symbol)
 import Servant (FromHttpApiData)
 
+-- $setup
+-- >>> import Data.Aeson (eitherDecode')
+
 -- | Type family for different representations of comments
 --
 -- @since 0.1.0.0
@@ -113,6 +116,7 @@ instance FromJSON (WithValidation (CommentR "create")) where
 instance FromJSON (In (WithValidation (CommentR "create"))) where
   parseJSON = wrappedParseJSON "CommentCreate" "comment"
 -- ^
--- >>> import Data.Aeson
--- >>> eitherDecode @(In (WithValidation (CommentR "create"))) "{ \"comment\": { \"body\": \"\"} }"
--- >>> eitherDecode @(WithValidation (CommentR "create")) "{ \"body\": \"\"}"
+-- >>> eitherDecode' @(In (WithValidation (CommentR "create"))) "{ \"comment\": { \"body\": \"\"} }"
+-- >>> eitherDecode' @(WithValidation (CommentR "create")) "{ \"body\": \"\"}"
+-- Right (In (Success (CommentCreate {body = ""})))
+-- Right (Success (CommentCreate {body = ""}))

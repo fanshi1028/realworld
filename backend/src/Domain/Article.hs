@@ -33,6 +33,9 @@ import GHC.Records (getField)
 import GHC.TypeLits (Symbol)
 import Servant (FromHttpApiData)
 
+-- $setup
+-- >>> import Data.Aeson (eitherDecode')
+
 -- | Type family for different representations of articles
 --
 -- @since 0.1.0.0
@@ -71,20 +74,6 @@ data instance ArticleR "all" = Article
 -- #   #  #   #    #    --
 -- "#m#"  "mm"#    "mm  --
 --------------------------
-
--- data instance ArticleR "withAuthorProfile" = ArticleWithAuthorProfile
---   { slug :: Slug, -- "how-to-train-your-dragon",
---     title :: Title, -- "How to train your dragon",
---     description :: Description, -- "Ever wonder how?",
---     body :: Body, -- "It takes a Jacobian",
---     tagList :: [Tag], -- ["dragons", "training"],
---     createdAt :: Time, -- "2016-02-18T03:22:56.637Z",
---     updatedAt :: Time, -- "2016-02-18T03:48:35.824Z",
---     favorited :: Bool, -- false,
---     favoritesCount :: Natural, -- 0,
---     author :: UserR "profile"
---   }
---   deriving (Generic, ToJSON)
 
 -- | Representation for output
 --
@@ -140,28 +129,22 @@ data instance ArticleR "create" = ArticleCreate
   }
   deriving (Eq, Show, Generic)
 
--- |
--- >>> import Data.Aeson
--- >>> eitherDecode @(WithValidation (ArticleR "create")) "{\"title\":\"\", \"description\": \"fjowfewe\"}"
--- >>> eitherDecode @(WithValidation (ArticleR "create")) "{\"title\":\"fjowefjew\", \"description\": \"fjowfewe\"}"
--- >>> eitherDecode @(WithValidation (ArticleR "create")) "{\"title\":\"fjowefjew\", \"description\": \"fjowfewe\", \"body\": null}"
--- >>> eitherDecode @(WithValidation (ArticleR "create")) "{\"title\":\"fjowefjew\", \"description\": \"fjowfewe\", \"body\": \"hwjowf\"}"
--- >>> eitherDecode @(In (WithValidation (ArticleR "create"))) "{\"title\":\"fjowefjew\", \"description\": \"fjowfewe\", \"body\": \"hwjowf\"}"
--- >>> eitherDecode @(In (WithValidation (ArticleR "create"))) "\"hi\""
--- >>> eitherDecode @(In (WithValidation (ArticleR "create"))) "{\"article\":\"hi\"}"
--- Right (Failure ("null title" :| []))
--- Right (Success (ArticleCreate {title = "fjowefjew", description = "fjowfewe", body = "", tagList = []}))
--- Left "Error in $.body: parsing Text failed, expected String, but encountered Null"
--- Right (Success (ArticleCreate {title = "fjowefjew", description = "fjowfewe", body = "hwjowf", tagList = []}))
--- Left "Error in $: key \"article\" not found"
--- Left "Error in $: parsing CreateArticle failed, expected Object, but encountered String"
--- Left "Error in $.article: parsing CreateArticle failed, expected Object, but encountered String"
---
--- @since 0.1.0.0
+-- | @since 0.1.0.0
 instance FromJSON (WithValidation (ArticleR "create")) where
   parseJSON =
     withObject "CreateArticle" $
       \(Object . insert' "tagList" (Array mempty) -> o) -> construct <$> genericParseJSON defaultOptions o
+-- ^
+-- >>> eitherDecode' @(WithValidation (ArticleR "create")) "{\"title\":\"fjowefjew\", \"description\": \"fjowfewe\"}"
+-- >>> eitherDecode' @(WithValidation (ArticleR "create")) "{\"title\":\"fjowefjew\", \"description\": \"fjowfewe\", \"body\": null}"
+-- >>> eitherDecode' @(WithValidation (ArticleR "create")) "{\"title\":\"fjowefjew\", \"description\": \"fjowfewe\", \"body\": \"hwjowf\"}"
+-- >>> eitherDecode' @(In (WithValidation (ArticleR "create"))) "{\"title\":\"fjowefjew\", \"description\": \"fjowfewe\", \"body\": \"hwjowf\"}"
+-- >>> eitherDecode' @(In (WithValidation (ArticleR "create"))) "{\"article\":\"hi\"}"
+-- Left "Error in $: parsing Domain.Article.ArticleR(ArticleCreate) failed, key \"body\" not found"
+-- Left "Error in $.body: parsing Text failed, expected String, but encountered Null"
+-- Right (Success (ArticleCreate {title = "fjowefjew", description = "fjowfewe", body = "hwjowf", tagList = []}))
+-- Left "Error in $: key \"article\" not found"
+-- Left "Error in $.article: parsing CreateArticle failed, expected Object, but encountered String"
 
 -- | @since 0.1.0.0
 instance FromJSON (In (WithValidation (ArticleR "create"))) where

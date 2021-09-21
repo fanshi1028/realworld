@@ -32,6 +32,11 @@ import GHC.TypeLits (Symbol)
 import Servant (FromHttpApiData (parseUrlPiece))
 import Servant.Auth.Server (FromJWT, ToJWT (encodeJWT))
 
+-- $setup
+-- >>> import Data.Aeson (eitherDecode', encode)
+-- >>> import Domain.Util.Field
+-- >>> import Domain.Util.JSON.To (Out (Out))
+
 -- | Type family for different representations of users
 --
 -- @since 0.1.0.0
@@ -126,16 +131,13 @@ instance ToJSON (UserR "authWithToken") where
 instance ToJWT (UserR "authWithToken") where
   encodeJWT (UserAuthWithToken auth _) = encodeJWT auth
 
--- |
--- >>> import Domain.Util.Field
--- >>> import Data.Aeson
--- >>> user = UserAuthWithToken (UserAuth (Email "jake@jake.jake") (Username "jake") (Bio "I work at statefarm") (Image "https://static.productionready.io/images/smiley-cyrus.jpg")) (Token "jwt.token.here")
--- >>> encode $ Out user
---
--- @since 0.2.0.0
+-- | @since 0.2.0.0
 instance ToJSON (Out (UserR "authWithToken")) where
   toJSON = wrappedToJSON "user"
   toEncoding = wrappedToEncoding "user"
+-- ^
+--- >>> encode $ Out $ UserAuthWithToken (UserAuth (Email "jake@jake.jake") (Username "jake") (Bio "I work at statefarm") (Image "https://static.productionready.io/images/smiley-cyrus.jpg")) (UserToken "jwt.token.here")
+-- "{\"user\":{\"image\":\"https://static.productionready.io/images/smiley-cyrus.jpg\",\"bio\":\"I work at statefarm\",\"email\":\"jake@jake.jake\",\"username\":\"jake\",\"token\":\"jwt.token.here\"}}"
 
 -- Profile
 -- data instance UserR "profile" = UserProfile
@@ -156,18 +158,14 @@ data instance UserR "profile" = UserProfile
   }
   deriving (Show, Eq, Generic)
 
--- |
--- >>> import Domain.Util.Field
--- >>> import Data.Aeson
--- >>> profile = UserProfile (UserAuth (Email "jake@jake.jake") (Username "jake") (Bio "I work at statefarm") (Image "https://static.productionready.io/images/smiley-cyrus.jpg")) False
--- >>> encode $ Out profile
--- "{\"profile\":{\"image\":\"https://static.productionready.io/images/smiley-cyrus.jpg\",\"bio\":\"I work at statefarm\",\"email\":\"jake@jake.jake\",\"following\":false,\"username\":\"jake\"}}"
---
 -- | @since 0.2.0.0
 instance ToJSON (UserR "profile") where
   toJSON (UserProfile auth following') = case genericToJSON defaultOptions auth of
     Object hm -> Object $ HM.insert "following" (toJSON following') hm
     _ -> error "impossible in ToJSON (UserR \"profile\")"
+-- ^
+-- >>> encode $ Out $ UserProfile (UserAuth (Email "jake@jake.jake") (Username "jake") (Bio "I work at statefarm") (Image "https://static.productionready.io/images/smiley-cyrus.jpg")) False
+-- "{\"profile\":{\"image\":\"https://static.productionready.io/images/smiley-cyrus.jpg\",\"bio\":\"I work at statefarm\",\"email\":\"jake@jake.jake\",\"following\":false,\"username\":\"jake\"}}"
 
 -- | @since 0.2.0.0
 instance ToJSON (Out (UserR "profile")) where
@@ -191,23 +189,19 @@ data instance UserR "login" = UserLogin
   }
   deriving (Eq, Show, Generic)
 
--- |
--- >>> import Data.Aeson
--- >>> eitherDecode @(WithValidation (UserR "login")) "{\"email\": \"ejfowfow@\", \"password\":\"11\" }"
--- Right (Success (UserLogin {email = "ejfowfow@", password = ********}))
---
--- @since 0.1.0.0
+-- | @since 0.1.0.0
 instance FromJSON (WithValidation (UserR "login")) where
   parseJSON = construct <<$>> genericParseJSON defaultOptions
+-- ^
+-- >>> eitherDecode' @(WithValidation (UserR "login")) "{\"email\": \"ejfowfow@\", \"password\":\"11832hf92hf2389f\" }"
+-- Right (Success (UserLogin {email = "ejfowfow@", password = **PASSWORD**}))
 
--- |
--- >>> import Data.Aeson
--- >>> eitherDecode @(In (WithValidation (UserR "login"))) "{ \"user\": {\"email\": \"ejfowfow@\", \"password\":\"11\" } }"
--- Right (In (Success (UserLogin {email = "ejfowfow@", password = ********})))
---
--- @since 0.1.0.0
+-- | @since 0.1.0.0
 instance FromJSON (In (WithValidation (UserR "login"))) where
   parseJSON = wrappedParseJSON "UserLogin" "user"
+-- ^
+-- >>> eitherDecode' @(In (WithValidation (UserR "login"))) "{ \"user\": {\"email\": \"ejfowfow@\", \"password\":\"11239h2389f9328\" } }"
+-- Right (In (Success (UserLogin {email = "ejfowfow@", password = ********})))
 
 -- | Representation for creation
 --
@@ -219,23 +213,19 @@ data instance UserR "create" = UserRegister
   }
   deriving (Eq, Show, Generic)
 
--- |
--- >>> import Data.Aeson
--- >>> eitherDecode @(WithValidation (UserR "create")) "{\"username\": \"\", \"email\": \"\", \"password\":\"11\" }"
--- Right (Failure ("null email" :| []))
---
--- @since 0.1.0.0
+-- | @since 0.1.0.0
 instance FromJSON (WithValidation (UserR "create")) where
   parseJSON = construct <<$>> genericParseJSON defaultOptions
+-- ^
+-- >>> eitherDecode' @(WithValidation (UserR "create")) "{\"username\": \"\", \"email\": \"ff2239fj3902@fiew.mail\", \"password\":\"11fewifwofwwefew\" }"
+-- Right (Success (UserRegister {username = "", email = "ff2239fj3902@fiew.mail", password = **PASSWORD**}))
 
--- |
--- >>> import Data.Aeson
--- >>> eitherDecode @(In (V.Validation ValidationErr (UserR "create"))) "{\"username\": \"\", \"email\": \"\", \"password\":\"11\" }"
--- Left "Error in $: key \"user\" not found"
---
--- @since 0.1.0.0
+-- | @since 0.1.0.0
 instance FromJSON (In (WithValidation (UserR "create"))) where
   parseJSON = wrappedParseJSON "UserRegister" "user"
+-- ^
+-- >>> eitherDecode' @(In (WithValidation (UserR "create"))) "{ \"user\": {\"username\": \"\", \"email\": \"\", \"password\":\"11\" } }"
+-- Right (In (Failure ("null email" :| ["PasswordTooShort 8 2"])))
 
 -- | Since we need IO to hash the password,
 -- we need an "updateInternal" representation as middleman
@@ -263,36 +253,6 @@ newtype instance UserR "update" = UserUpdate (WithUpdate (UserR "updateInternal"
   --   image :: Image -- "https://static.productionready.io/images/smiley-cyrus.jpg",
   -- }
   deriving (Eq, Show, Generic)
-
--- >>> import Data.Aeson
--- >>> eitherDecode @(UserR "update") "{\"email\": \"fjwofjoew\"}"
--- >>> eitherDecode @(UserR "update") "{\"email\": \"ohohhoh\",\"email\": \"fjwofjoew\",\"image\":null}"
--- >>> eitherDecode @(UserR "update") "{\"email\": \"fjwofjoew\", \"token\": \"hi\"}"
--- >>> eitherDecode @(UserR "update") "{\"email\": \"ohohhoh\",\"email\": \"fjwofjoew\",\"image\":null}"
--- Right (UserUpdate User {email = Just (Last {getLast = Success "fjwofjoew"}), token = Nothing, password = Nothing, username = Nothing, bio = Nothing, image = Nothing, following = Nothing, followBy = Nothing})
--- Right (UserUpdate User {email = Just (Last {getLast = Success "ohohhoh"}), token = Nothing, password = Nothing, username = Nothing, bio = Nothing, image = Nothing, following = Nothing, followBy = Nothing})
--- Right (UserUpdate User {email = Just (Last {getLast = Success "fjwofjoew"}), token = Nothing, password = Nothing, username = Nothing, bio = Nothing, image = Nothing, following = Nothing, followBy = Nothing})
--- Right (UserUpdate User {email = Just (Last {getLast = Success "ohohhoh"}), token = Nothing, password = Nothing, username = Nothing, bio = Nothing, image = Nothing, following = Nothing, followBy = Nothing})
-
--- >>> import Data.Aeson
--- >>> import Data.Maybe (fromJust)
--- >>> import Data.Semigroup as SG
--- >>> import Domain.Util.Field
--- >>> -- b = UserUpdate (Email "hihi") (Password "pw") (Username "jack") (Bio "hi") (Image "jpg")
--- >>> -- b
--- >>> -- update c = fmap construct <<$>> (construct <<$>> construct . (deconstruct (deconstruct $ deconstruct b) <>) <$> c)
--- >>> -- SG.getLast . fromJust <$> update c
--- >>> -- update d
--- >>> -- update f
--- >>> c = eitherDecode @(UserR "update") "{\"email\": \"fjwofjoew\"}"
--- >>> d = eitherDecode @(UserR "update") "{\"email: \"fjwofjoew\"}"
--- >>> f = eitherDecode @(UserR "update") "{\"email\": \"\"}"
--- >>> c
--- >>> d
--- >>> f
--- Right (UserUpdate User {email = Just (Last {getLast = Success "fjwofjoew"}), token = Nothing, password = Nothing, username = Nothing, bio = Nothing, image = Nothing, following = Nothing, followBy = Nothing})
--- Left "Error in $: Failed reading: satisfyWith. Expecting ':' at 'fjwofjoew}'"
--- Right (UserUpdate User {email = Just (Last {getLast = Failure ("null email" :| [])}), token = Nothing, password = Nothing, username = Nothing, bio = Nothing, image = Nothing, following = Nothing, followBy = Nothing})
 
 -- | @since 0.2.0.0
 instance FromJSON (WithValidation (UserR "update")) where
