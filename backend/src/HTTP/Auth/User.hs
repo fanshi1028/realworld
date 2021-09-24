@@ -54,7 +54,8 @@ import Web.Cookie (setCookieValue)
 -- @since 0.1.0.0
 type AuthUserApi =
   ( "login" :> ReqBody '[JSON] (In (WithValidation (UserR "login")))
-      :> Verb 'POST 204 '[JSON] (Headers '[Header "Set-Cookie" SetCookie, Header "Set-Cookie" SetCookie] (Out (UserR "authWithToken")))
+      -- :> Verb 'POST 204 '[JSON] (Headers '[Header "Set-Cookie" SetCookie, Header "Set-Cookie" SetCookie] (Out (UserR "authWithToken")))
+      :> Verb 'POST 204 '[JSON] (Out (UserR "authWithToken"))
   )
     :<|> CreateApi UserR "authWithToken"
 
@@ -83,9 +84,11 @@ authUserServer =
               >>= \case
                 Nothing -> throwError $ Impossible "accept login failed"
                 Just f -> case f authInfo of
-                  Headers auth hs@(HCons h _) -> case h of
+                  -- Headers auth hs@(HCons h _) -> case h of
+                  Headers auth (HCons h _) -> case h of
                     Header (UserToken . decodeUtf8 . setCookieValue -> jwt) ->
-                      pure $ Headers (Out $ UserAuthWithToken auth jwt) hs
+                      -- pure $ Headers (Out $ UserAuthWithToken auth jwt) hs
+                      pure $ Out $ UserAuthWithToken auth jwt
                     MissingHeader -> throwError $ Impossible "missing header for login"
                     UndecodableHeader bs -> throwError $ Impossible $ "undecodable header: " <> show bs
       )
