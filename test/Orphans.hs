@@ -110,12 +110,21 @@ instance FromJSON (Out (UserR "profile")) where
   parseJSON = withObject "Out UserR profile" $ \o -> Out <$> o .: "profile"
 
 instance ToJSON a => ToJSON (WithValidation a) where
-  toEncoding (Failure err) = error "Invalidated toJSON"
+  toJSON (Failure err) = error $ "Invalidated toJSON: " <> show err
+  toJSON (Success a) = toJSON a
+  toEncoding (Failure err) = error $ "Invalidated toJSON: " <> show err
   toEncoding (Success a) = toEncoding a
+
+instance ToJSON (In a) => ToJSON (In (WithValidation a)) where
+  toJSON (In (Failure err)) = error $ "Invalidated toJSON: " <> show err
+  toJSON (In (Success a)) = toJSON $ In a
+  toEncoding (In (Failure err)) = error $ "Invalidated toJSON: " <> show err
+  toEncoding (In (Success a)) = toEncoding $ In a
 
 -- HACK
 instance ToJSON Password where
   toJSON = toJSON . unsafeShowPassword
+  toEncoding = toEncoding . unsafeShowPassword
 
 instance ToJSON (UserR "login")
 
@@ -146,8 +155,24 @@ instance ToJSON (In (CommentR "create")) where
 instance Eq Password where
   (==) = (==) `on` unsafeShowPassword
 
+deriving instance Show (ArticleR "update")
+
 deriving instance Eq (UserR "login")
 
 deriving instance Eq (UserR "create")
 
 deriving instance Eq (UserR "update")
+
+-- for state machine, Set in model
+
+deriving instance Ord Username
+
+deriving instance Ord (UserR "id")
+
+deriving instance Ord Slug
+
+deriving instance Ord (ArticleR "id")
+
+deriving instance Ord (CommentR "id")
+
+deriving instance Ord Tag

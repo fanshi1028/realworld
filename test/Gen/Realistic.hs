@@ -9,8 +9,11 @@ module Gen.Realistic where
 
 import Data.Password.Argon2 (Password, mkPassword)
 import Data.Password.Validate (ValidationResult (ValidPassword), defaultPasswordPolicy_, validatePassword)
+import Domain.Article (ArticleR (ArticleCreate))
+import Domain.Comment (CommentR (CommentCreate))
 import Domain.User (UserR (UserAuth, UserLogin, UserRegister))
 import Domain.Util.Field (Bio (Bio), Body (Body), Description (Description), Email (Email), Image (Image), Tag (Tag), Title (Title), Username (Username))
+import Domain.Util.JSON.From (In (In))
 import Faker (Fake)
 import qualified Faker.Book as Book
 import qualified Faker.Book.CultureSeries as CultureSeries
@@ -35,11 +38,8 @@ import qualified Faker.TvShow.GameOfThrones as GameOfThrones
 import qualified Faker.TvShow.SiliconValley as SiliconValley
 import qualified Faker.TvShow.SouthPark as SouthPark
 import qualified Faker.TvShow.TheItCrowd as TheItCrowd
-import Test.QuickCheck (Arbitrary (arbitrary), Gen, arbitraryASCIIChar, elements, listOf, suchThat)
+import Test.QuickCheck (Arbitrary (arbitrary, shrink), Gen, arbitraryASCIIChar, elements, listOf, suchThat)
 import Test.QuickCheck.Gen.Faker (fakeQuickcheck)
-import Domain.Util.JSON.From (In(In))
-import Domain.Article (ArticleR (ArticleCreate))
-import Domain.Comment (CommentR (CommentCreate))
 
 -- $setup
 -- >>> import Test.QuickCheck (sample')
@@ -49,6 +49,9 @@ newtype Realistic a = Realistic {getRealistic :: a} deriving newtype (Show)
 
 arbitraryRealistic :: Arbitrary (Realistic a) => Gen a
 arbitraryRealistic = getRealistic <$> arbitrary
+
+shrinkRealistic :: Arbitrary (Realistic a) => a -> [a]
+shrinkRealistic = getRealistic <<$>> shrink . Realistic
 
 -- | @since 0.2.0.0
 --
@@ -160,11 +163,11 @@ instance Arbitrary (Realistic Password) where
   arbitrary =
     Realistic
       <$> (mkPassword . fromString <$> (elements [6 .. 15] >>= flip replicateM arbitraryASCIIChar))
-      -- <$> (mkPassword <$> arbitrary)
-      -- <$> (mkPassword . fromString <$> listOf arbitraryASCIIChar)
+        -- <$> (mkPassword <$> arbitrary)
+        -- <$> (mkPassword . fromString <$> listOf arbitraryASCIIChar)
         `suchThat` (\pw -> validatePassword defaultPasswordPolicy_ pw == ValidPassword)
 
-instance Arbitrary (Realistic a)  => Arbitrary (Realistic (In a)) where
+instance Arbitrary (Realistic a) => Arbitrary (Realistic (In a)) where
   arbitrary = arbitrary >>= \(Realistic a) -> pure (Realistic (In a))
 
 instance Arbitrary (Realistic (UserR "login")) where
