@@ -28,8 +28,9 @@ import Domain.Util.Validation (WithValidation)
 import Gen.Naive ()
 import HTTP (Api)
 import Network.HTTP.Client (Manager)
+import Network.Wai.Handler.Warp (withApplication)
 import Orphans ()
-import Servant (type (:<|>) ((:<|>)))
+import Servant (Application, type (:<|>) ((:<|>)))
 import Servant.Client (BaseUrl, ClientEnv, ClientError, ClientM, client, mkClientEnv, runClientM)
 import StateMachine.Gen (generator, shrinker)
 import StateMachine.Types
@@ -69,6 +70,7 @@ import Test.StateMachine
     (.==),
   )
 import Test.StateMachine.Logic (member)
+import Test.Tasty.QuickCheck ((===))
 import Validation (Validation (Failure, Success))
 
 initModel :: Model r
@@ -422,14 +424,22 @@ sm = StateMachine initModel transition precondition postcondition Nothing genera
 --     run' :: forall a. ClientM a -> IO (Either ClientError a)
 --     run' = flip runClientM (mkClientEnv m url)
 
-prop1 :: Manager -> BaseUrl -> Property
-prop1 mgr url =
-  forAllCommands sm Nothing $ \cmds -> monadic (ioProperty . usingReaderT (mkClientEnv mgr url)) $ do
-    (hist, _, res) <- runCommands sm cmds
-    -- prettyCommands sm hist (res === Ok)
-    pure ()
+prop1 :: IO Application -> Manager -> (Int -> BaseUrl) -> Property
+prop1 new mgr mkUrl =
+  forAllCommands sm Nothing $ \cmds -> monadic
+    ( ioProperty
+        . \prop -> liftIO $ withApplication new $ \port -> usingReaderT (mkClientEnv mgr $ mkUrl port) prop
+    )
+    $ do
+      (hist, _, res) <- runCommands sm cmds
+      prettyCommands sm hist (res === Ok)
+      pure ()
 
-prop2 :: Manager -> BaseUrl -> Property
-prop2 mgr url =
-  forAllParallelCommands sm Nothing $ \cmds -> monadic (ioProperty . usingReaderT (mkClientEnv mgr url)) $ do
-    prettyParallelCommands cmds =<< runParallelCommandsNTimes 30 sm cmds
+prop2 :: IO Application -> Manager -> (Int -> BaseUrl) -> Property
+prop2 new mgr mkUrl =
+  forAllParallelCommands sm Nothing $ \cmds -> monadic
+    ( ioProperty
+        . \prop -> liftIO $ withApplication new $ \port -> usingReaderT (mkClientEnv mgr $ mkUrl port) prop
+    )
+    $ do
+      prettyParallelCommands cmds =<< runParallelCommandsNTimes 30 sm cmds
