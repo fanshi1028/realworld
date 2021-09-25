@@ -72,6 +72,7 @@ import Test.StateMachine
 import Test.StateMachine.Logic (member)
 import Test.Tasty.QuickCheck ((===))
 import Validation (Validation (Failure, Success))
+import Domain.Util.Field (titleToSlug)
 
 initModel :: Model r
 initModel = Model mempty mempty mempty mempty S.empty S.empty S.empty S.empty S.empty S.empty mempty
@@ -320,8 +321,10 @@ mock m =
             UnfollowUser ref -> do
               _ <- findByRef ref $ users m
               pure $ pure UnfollowedUser
-            -- FIXME: fail case
-            CreateArticle _ -> pure $ CreatedArticle <$> genSym
+            CreateArticle ca -> do
+              _ <- either (const Nothing) Just $ validate ca
+              guard $ all ((/= transform ca) . ArticleId . titleToSlug . getField @"title" . snd) $ articles m
+              pure $ CreatedArticle <$> genSym
             -- FIXME: fail case
             UpdateArticle ref _ -> do
               _ <- findByRef ref $ articles m
