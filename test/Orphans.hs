@@ -25,6 +25,7 @@ import Domain.Util.Validation (WithValidation)
 import GHC.Records (getField)
 import HTTP.Util (Limit (Limit), Offset (Offset))
 import Servant (ToHttpApiData (toUrlPiece))
+import Test.StateMachine (ToExpr (toExpr))
 import Validation (Validation (Failure, Success))
 import Data.Aeson.Types (Parser)
 
@@ -176,3 +177,42 @@ deriving instance Ord (ArticleR "id")
 deriving instance Ord (CommentR "id")
 
 deriving instance Ord Tag
+
+deriving newtype instance ToExpr Title
+
+deriving newtype instance ToExpr Description
+
+deriving newtype instance ToExpr Body
+
+deriving newtype instance ToExpr Tag
+
+instance ToExpr (ArticleR "create")
+
+deriving newtype instance ToExpr Slug
+
+deriving newtype instance ToExpr (ArticleR "id")
+
+instance ToExpr (CommentR "create")
+
+deriving newtype instance ToExpr (CommentR "id")
+
+deriving newtype instance ToExpr Email
+
+deriving newtype instance ToExpr Username
+
+deriving newtype instance ToExpr Bio
+
+deriving newtype instance ToExpr Image
+
+instance ToExpr (UserR "auth")
+
+deriving newtype instance ToExpr (UserR "id")
+
+instance ToExpr (UserR "create")
+
+instance ToExpr Password where
+  toExpr = toExpr . show @Text
+
+instance ToExpr (UserR "login")
+
+deriving newtype instance ToExpr (UserR "token")

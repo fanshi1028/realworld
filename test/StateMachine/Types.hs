@@ -6,18 +6,16 @@
 -- |
 module StateMachine.Types where
 
+import Data.Functor.Classes (Show1)
 import Domain.Article (ArticleR)
 import Domain.Comment (CommentR)
 import Domain.User (UserR)
 import Domain.Util.Field (Tag)
 import GHC.Generics (Generic1)
 import Orphans ()
-import Test.QuickCheck (Arbitrary (arbitrary))
-import Test.QuickCheck.Arbitrary.ADT (genericArbitrary)
-import Test.StateMachine (Reference, Symbolic, ToExpr)
+import Test.StateMachine (Concrete, Reference, ToExpr)
 import qualified Test.StateMachine.Types.Rank2 as R2
-import Text.Show (showsPrec, showString)
-import Data.Functor.Classes (Show1)
+import Text.Show (showString, showsPrec)
 
 data VisitorCommand r
   = GetProfile (Reference (UserR "id") r)
@@ -122,12 +120,12 @@ data Response r
   | FailResponse Text
 
 instance Show1 r => Show (Response r) where
-  showsPrec n
-    = \case
-        AuthResponse ar -> showsPrec n ar
-        VisitorResponse vr -> showsPrec n vr
-        UserResponse ur -> showsPrec n ur
-        FailResponse txt -> showString $ toString txt
+  showsPrec n =
+    \case
+      AuthResponse ar -> showsPrec n ar
+      VisitorResponse vr -> showsPrec n vr
+      UserResponse ur -> showsPrec n ur
+      FailResponse txt -> showString $ toString txt
 
 deriving instance Generic1 AuthResponse
 
@@ -176,4 +174,4 @@ data Model r = Model
   }
   deriving (Show, Eq, Generic)
 
--- deriving instance ToExpr (Model Symbolic)
+instance ToExpr (Model Concrete)
