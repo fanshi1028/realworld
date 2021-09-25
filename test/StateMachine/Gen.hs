@@ -64,7 +64,7 @@ generator m =
                     else 3,
               AddCommentToArticle <$> genArticles <*> arbitraryRealistic
             ),
-            (if null $ comments m then 0 else 1, DeleteComment <$> genArticles <*> genComments),
+            ( if null (comments m) || null (articles m) then 0 else 1, DeleteComment <$> genArticles <*> genComments),
             (if null $ articles m then 0 else 1, FavoriteArticle <$> genArticles),
             (if null $ articles m then 0 else 1, UnfavoriteArticle <$> genArticles),
             (1, pure FeedArticles)
