@@ -54,8 +54,8 @@ import Web.Cookie (setCookieValue)
 -- @since 0.1.0.0
 type AuthUserApi =
   ( "login" :> ReqBody '[JSON] (In (WithValidation (UserR "login")))
-      -- :> Verb 'POST 204 '[JSON] (Headers '[Header "Set-Cookie" SetCookie, Header "Set-Cookie" SetCookie] (Out (UserR "authWithToken")))
-      :> Verb 'POST 204 '[JSON] (Out (UserR "authWithToken"))
+      -- :> Verb 'POST 200 '[JSON] (Headers '[Header "Set-Cookie" SetCookie, Header "Set-Cookie" SetCookie] (Out (UserR "authWithToken")))
+      :> Verb 'POST 200 '[JSON] (Out (UserR "authWithToken"))
   )
     :<|> CreateApi UserR "authWithToken"
 
