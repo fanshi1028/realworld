@@ -1,7 +1,7 @@
 -- |
 module StateMachine.Gen where
 
-import Gen.Realistic (Realistic (getRealistic), arbitraryRealistic, shrinkRealistic)
+import Gen.Realistic (arbitraryRealistic, shrinkRealistic)
 import Orphans ()
 import StateMachine.Types
   ( AuthCommand (..),
@@ -14,7 +14,7 @@ import StateMachine.Types
     VisitorCommand (..),
     VisitorResponse (..),
   )
-import Test.QuickCheck (Arbitrary, Gen, elements, frequency)
+import Test.QuickCheck (Gen, elements, frequency)
 
 generator :: Model r -> Maybe (Gen (Command r))
 generator m =
@@ -50,29 +50,30 @@ generator m =
           [ (1, pure GetCurrentUser),
             -- FIXME
             -- (1, UpdateUser <$> arbitraryRealistic),
-            (1, UnfollowUser <$> genUsers),
-            (1, FollowUser <$> genUsers),
+            (if null $ users m then 0 else 1, UnfollowUser <$> genUsers),
+            (if null $ users m then 0 else 1, FollowUser <$> genUsers),
             (if null $ articles m then 8 else 2, CreateArticle <$> arbitraryRealistic),
             -- FIXME
             -- (1, UpdateArticle <$> genArticles <*> arbitraryRealistic)
-            (1, DeleteArticle <$> genArticles),
-            ( if not (null $ articles m)
-                && null (comments m)
-                then 8
-                else 3,
+            (if null $ articles m then 0 else 1, DeleteArticle <$> genArticles),
+            ( if null $ articles m
+                then 0
+                else
+                  if null $ comments m
+                    then 8
+                    else 3,
               AddCommentToArticle <$> genArticles <*> arbitraryRealistic
             ),
-            (1, DeleteComment <$> genArticles <*> genComments),
-            (1, FavoriteArticle <$> genArticles),
-            (1, UnfavoriteArticle <$> genArticles),
+            (if null $ comments m then 0 else 1, DeleteComment <$> genArticles <*> genComments),
+            (if null $ articles m then 0 else 1, FavoriteArticle <$> genArticles),
+            (if null $ articles m then 0 else 1, UnfavoriteArticle <$> genArticles),
             (1, pure FeedArticles)
           ]
    in pure $
         frequency
           [ (if null (users m) || null (tokens m) then 4 else 1, AuthCommand <$> genTokens <*> genAuthCommand),
-            (if not (null $ tokens m) then 2 else 1, VisitorCommand <$> genTokens <*> genVisitCommand)
-            -- TEMP FIXME: not UserCommand for now
-            -- (1, UserCommand <$> genTokens <*> genUserCommand)
+            (if null $ tokens m then 1 else 2, VisitorCommand <$> genTokens <*> genVisitCommand),
+            (1, UserCommand <$> genTokens <*> genUserCommand)
           ]
 
 shrinker :: Model r -> Command r -> [Command r]
