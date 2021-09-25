@@ -42,8 +42,8 @@ data AuthCommand (r :: Type -> Type)
   deriving (Show)
 
 data AuthResponse (r :: Type -> Type)
-  = Registered (Reference (UserR "id") r) (Reference (UserR "auth") r) (Reference (UserR "login") r)
-  | LoggedIn (Reference (UserR "token") r) (Reference (UserR "id") r)
+  = Registered (Reference (UserR "id") r) (Reference (UserR "login") r)
+  | LoggedIn (Reference (UserR "token") r)
   | LoggedOut
   deriving (Show)
 
@@ -63,8 +63,8 @@ data UserCommand r
   deriving (Show)
 
 data UserResponse (r :: Type -> Type)
-  = GotCurrentUser (Reference (UserR "auth") r)
-  | UpdatedUser (Reference (UserR "auth") r)
+  = GotCurrentUser
+  | UpdatedUser
   | FollowedUser
   | UnfollowedUser
   | CreatedArticle (Reference (ArticleR "id") r)
@@ -162,7 +162,7 @@ instance R2.Foldable Response
 -- instance R2.Traversable Response
 
 data Model r = Model
-  { users :: [(Reference (UserR "id") r, Reference (UserR "auth") r)],
+  { users :: [(Reference (UserR "id") r, UserR "create")],
     articles :: [(Reference (ArticleR "id") r, ArticleR "create")],
     logins :: [(Reference (UserR "id") r, Reference (UserR "login") r)],
     comments :: [(Reference (CommentR "id") r, CommentR "create")],

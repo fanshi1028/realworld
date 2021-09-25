@@ -42,7 +42,7 @@ import StateMachine.Types
     VisitorCommand (..),
     VisitorResponse (..),
   )
-import StateMachine.Util (deleteByRef, findByRef, findByRef2, updateByRef)
+import StateMachine.Util (deleteByRef, findByRef, findByRef2)
 import Test.QuickCheck (Property, ioProperty)
 import Test.QuickCheck.Monadic (monadic)
 import Test.StateMachine
@@ -79,18 +79,20 @@ transition m cm res = case (cm, res) of
   (AuthCommand mref cm', AuthResponse res') -> case (mref, cm', res') of
     -- FIXME: Register when login?
     -- (_, Register _, Registered ref u) -> m & field @"users" %~ ((ref, u) :)
-    (_, Register _, Registered ref u login) ->
-      m & field @"users" %~ ((ref, u) :)
+    (_, Register cr, Registered ref login) ->
+      m & field @"users" %~ ((ref, cr) :)
         & field @"logins" %~ ((ref, login) :)
     -- FIXME: How about double login with different identity?
-    (_, Login _, LoggedIn token ref) -> m & field @"tokens" %~ ((token, ref) :)
+    (_, Login ref, LoggedIn token) -> case findByRef2 ref $ logins m of
+      Nothing -> error "impossible"
+      Just ref' -> m & field @"tokens" %~ ((token, ref') :)
     (Just t, Logout, LoggedOut) -> m & field @"tokens" %~ deleteByRef t
     _failed -> m
   (VisitorCommand _ _, _) -> m
   (UserCommand mref cm', UserResponse res') -> case (cm', res', mref >>= \t -> findByRef t $ tokens m) of
     (GetCurrentUser, _, _) -> m
     -- FIXME: JWT suck as session token, update profile will invalidate the login session
-    (UpdateUser _, UpdatedUser u, Just ref) -> m & field @"users" %~ updateByRef ref u
+    (UpdateUser _, UpdatedUser, Just ref) -> m
     (FollowUser ref, FollowedUser, Just ref') -> m & field @"userFollowUser" %~ insert (ref', ref)
     (UnfollowUser ref, UnfollowedUser, Just ref') -> m & field @"userFollowUser" %~ delete (ref', ref)
     (CreateArticle cr, CreatedArticle ref, Just ref') ->
@@ -149,14 +151,14 @@ postcondition m cmd res =
         (AuthCommand m_ref ac, AuthResponse ar) ->
           Boolean (and $ on (==) <$> authInv <*> pure m <*> pure m') .// "authInv"
             .&& case (ac, ar) of
-              (Register _, Registered ref auth login) ->
+              (Register cr, Registered ref login) ->
                 findByRef ref (users m) .== Nothing .// ""
-                  .&& findByRef ref (users m') .== Just auth .// ""
+                  .&& findByRef ref (users m') .== Just cr .// ""
                   .&& findByRef ref (logins m') .== Just login .// ""
                   .&& on (-) usersL m' m .== 1 .// ""
                   .&& on (-) loginsL m' m .== 1 .// ""
                   .&& on (.==) tokensL m' m .// ""
-              (Login _, LoggedIn _ _) ->
+              (Login _, LoggedIn _) ->
                 on (.==) usersL m' m .// "" .&& case m_ref of
                   Just ref ->
                     validToken ref m
@@ -183,8 +185,8 @@ postcondition m cmd res =
             _ -> error "visitor postcondition error"
         (UserCommand (Just ref) uc, UserResponse ur) ->
           Forall [m, m'] (validToken ref) .// "" .&& case (uc, ur) of
-            (GetCurrentUser, GotCurrentUser _) -> m .== m' .// ""
-            (UpdateUser _, UpdatedUser _) -> Boolean (and $ on (==) <$> allL <*> pure m <*> pure m') .// ""
+            (GetCurrentUser, GotCurrentUser) -> m .== m' .// ""
+            (UpdateUser _, UpdatedUser) -> Boolean (and $ on (==) <$> allL <*> pure m <*> pure m') .// ""
             (FollowUser ref', FollowedUser) ->
               Forall [m, m'] (findByRef' ref' . users) .// ""
                 .&& case findByRef ref $ tokens m of
@@ -285,9 +287,11 @@ mock m =
           case ac of
             Register cr -> either (pure . FailResponse . fromString) (AuthResponse <$>) $ do
               _ <- validate cr
-              pure $ Registered <$> genSym <*> genSym <*> genSym
+              guard $ all ((/= transform cr) . UserId . getField @"username" . snd) $ users m
+              guard $ all ((/= getField @"email" cr) . getField @"email" . snd) $ users m
+              pure $ Registered <$> genSym <*> genSym
             Login ur -> case findByRef2 ur $ logins m of
-              Just _ -> AuthResponse <$> (LoggedIn <$> genSym <*> genSym)
+              Just _ -> AuthResponse . LoggedIn <$> genSym
               Nothing -> pure $ FailResponse ""
             Logout -> pure $ AuthResponse LoggedOut
         VisitorCommand _ vc -> maybe (pure $ FailResponse "") (VisitorResponse <$>) $ case vc of
@@ -302,11 +306,11 @@ mock m =
             pure $ pure GotComments
         UserCommand m_ref uc -> maybe (pure $ FailResponse "") (UserResponse <$>) $ do
           uRef <- m_ref >>= (`findByRef` tokens m)
-          auth <- uRef `findByRef` users m
+          _ <- uRef `findByRef` users m
           case uc of
-            GetCurrentUser -> pure $ pure $ GotCurrentUser auth
+            GetCurrentUser -> pure $ pure GotCurrentUser
             -- FIXME
-            UpdateUser ur -> pure $ pure $ UpdatedUser undefined
+            UpdateUser ur -> pure $ pure UpdatedUser
             FollowUser ref -> do
               _ <- findByRef ref $ users m
               pure $ pure FollowedUser
@@ -350,18 +354,17 @@ semantics =
         AuthCommand m_ref ac ->
           let login :<|> register = client $ Proxy @AuthUserApi
            in case ac of
-                Register cr ->
-                  run (register $ In $ pure cr) $ \(UserAuthWithToken u _) ->
-                    AuthResponse $
-                      Registered
-                        (reference $ transform u)
-                        (reference u)
-                        (reference $ UserLogin (getField @"email" cr) $ getField @"password" cr)
-                Login ur ->
-                  run (login $ In $ pure $ concrete ur) $ \(UserAuthWithToken u t) ->
-                    AuthResponse $ LoggedIn (reference t) $ reference $ transform u
-                -- FIXME: No logout api
-                Logout -> undefined
+            Register cr ->
+              run (register $ In $ pure cr) $ \(UserAuthWithToken u _) ->
+                AuthResponse $
+                  Registered
+                    (reference $ transform u)
+                    (reference $ UserLogin (getField @"email" cr) $ getField @"password" cr)
+            Login ur ->
+              run (login $ In $ pure $ concrete ur) $ \(UserAuthWithToken _ t) ->
+                AuthResponse $ LoggedIn $ reference t
+            -- FIXME: No logout api
+            Logout -> undefined
         VisitorCommand m_ref vc ->
           let getProfile :<|> (listArticles :<|> withArticle) :<|> getTags = client $ Proxy @PublicApi
            in case vc of
