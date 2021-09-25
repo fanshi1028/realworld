@@ -11,23 +11,48 @@
 module Orphans where
 
 import Authorization (TokenAuth)
+import Control.Lens ((^.))
 import Data.Aeson (FromJSON, ToJSON (toEncoding, toJSON), Value (Object, String), parseJSON, withObject, (.:))
+import Data.Aeson.Types (Parser)
+import Data.Generic.HKD (field)
 import Data.HashMap.Strict (insert)
+import qualified Data.HashMap.Strict as HM (insert)
 import Data.Password.Argon2 (Password, unsafeShowPassword)
+import qualified Data.Semigroup as SG (getLast)
 import Data.Sequence ((<|))
 import Domain.Article (ArticleR (..))
 import Domain.Comment (CommentR (..))
 import Domain.User (UserR (..))
-import Domain.Util.Field (Slug (Slug), Tag (Tag), Username (Username))
+import Domain.Util.Field (Bio (Bio), Body (Body), Description (Description), Email (Email), Image (Image), Slug (Slug), Tag (Tag), Title (Title), Username (Username))
 import Domain.Util.JSON.From (In (In), wrappedParseJSON)
 import Domain.Util.JSON.To (Out (Out), wrappedToJSON)
 import Domain.Util.Validation (WithValidation)
 import GHC.Records (getField)
 import HTTP.Util (Limit (Limit), Offset (Offset))
-import Servant (ToHttpApiData (toUrlPiece))
+import Network.HTTP.Types (hAuthorization)
+import Servant (ToHttpApiData (toUrlPiece), type (:>))
+import Servant.Auth.Server (Auth)
+import Servant.Client (HasClient (Client, clientWithRoute))
+import Servant.Client.Core (requestHeaders)
 import Test.StateMachine (ToExpr (toExpr))
 import Validation (Validation (Failure, Success))
-import Data.Aeson.Types (Parser)
+
+class TokenAuthNotEnabled
+
+-- | For supporting TokenAuth client generation's instance
+type family HasTokenAuth xs :: Constraint where
+  HasTokenAuth '[TokenAuth] = ()
+  HasTokenAuth (x ': xs) = HasTokenAuth xs
+  HasTokenAuth '[] = TokenAuthNotEnabled
+
+instance (HasTokenAuth auths, HasClient m api) => HasClient m (Auth auths a :> api) where
+  type Client m (Auth auths a :> api) = UserR "token" -> Client m api
+  clientWithRoute m _ req (UserToken t) =
+    clientWithRoute m (Proxy :: Proxy api) $
+      req
+        { requestHeaders =
+            (hAuthorization, "Token " <> encodeUtf8 t) <| requestHeaders req
+        }
 
 wrappedParseJSON' :: FromJSON a => String -> Text -> Value -> Parser (Out a)
 wrappedParseJSON' info key = wrappedParseJSON info key >=> \(In a) -> pure (Out a)
@@ -150,7 +175,35 @@ instance ToJSON (CommentR "create")
 instance ToJSON (In (CommentR "create")) where
   toJSON = wrappedToJSON' "comment"
 
--- | Password hashed using Argon2
+instance ToJSON (UserR "update") where
+  toJSON (UserUpdate a) =
+    let insert' key = HM.insert key . toJSON . SG.getLast
+        mayDo = maybe Prelude.id
+        h1 = mayDo (insert' "email") $ a ^. field @"email"
+        h2 = mayDo (insert' "username") $ a ^. field @"username"
+        h3 = mayDo (insert' "password") $ a ^. field @"password"
+        h4 = mayDo (insert' "bio") $ a ^. field @"bio"
+        h5 = mayDo (insert' "image") $ a ^. field @"image"
+     in Object $ h1 $ h2 $ h3 $ h4 $ h5 mempty
+
+instance ToJSON (In (UserR "update")) where
+  toJSON = wrappedToJSON' "user"
+
+instance ToJSON (ArticleR "update") where
+  toJSON (ArticleUpdate a) =
+    let insert' key = HM.insert key . toJSON . SG.getLast
+        mayDo = maybe Prelude.id
+        h1 = mayDo (insert' "title") $ a ^. field @"title"
+        h2 = mayDo (insert' "description") $ a ^. field @"description"
+        h3 = mayDo (insert' "body") $ a ^. field @"body"
+     in Object $ h1 $ h2 $ h3 mempty
+
+instance ToJSON (In (ArticleR "update")) where
+  toJSON = wrappedToJSON' "article"
+
+-- toEncoding  = wrappedToEncoding' "article"
+
+-- | Password
 --
 -- @since 0.2.0.0
 instance Eq Password where

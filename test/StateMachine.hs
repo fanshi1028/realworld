@@ -18,14 +18,15 @@ import Data.Functor.Classes (Eq1, Ord1)
 import Data.Generics.Product (field, getField)
 import Data.Set (delete, insert)
 import qualified Data.Set as S
+import Domain.Article (ArticleR (..))
+import Domain.Comment (CommentR (..))
 import Domain.User (UserR (..))
 import Domain.Util.JSON.From (In (In))
 import Domain.Util.JSON.To (Out (Out))
 import Domain.Util.Representation (transform)
 import Domain.Util.Validation (WithValidation)
 import Gen.Naive ()
-import HTTP.Auth.User (AuthUserApi)
-import HTTP.Public (PublicApi)
+import HTTP (Api)
 import Network.HTTP.Client (Manager)
 import Orphans ()
 import Servant (type (:<|>) ((:<|>)))
@@ -345,15 +346,16 @@ mock m =
 semantics :: Command Concrete -> ReaderT ClientEnv IO (Response Concrete)
 semantics =
   let run' :: forall a. ClientM a -> ReaderT ClientEnv IO (Either ClientError a)
-      run' a = ask >>= liftIO . runClientM a
-      handleRes f = \case
-        Left ce -> pure $ FailResponse $ show ce
-        Right (Out a) -> pure $ f a
-      run req f = run' req >>= handleRes f
+      run' req = ask >>= liftIO . runClientM req
+      run req f =
+        run' req >>= \case
+          Left ce -> pure $ FailResponse $ show ce
+          Right (Out r) -> pure $ f r
+      runNoContent req res = run' req >>= either (pure . FailResponse . show) (const $ pure res)
+      (apis :<|> login :<|> register) :<|> _healthcheck = client $ Proxy @Api
    in \case
         AuthCommand m_ref ac ->
-          let login :<|> register = client $ Proxy @AuthUserApi
-           in case ac of
+          case ac of
             Register cr ->
               run (register $ In $ pure cr) $ \(UserAuthWithToken u _) ->
                 AuthResponse $
@@ -366,7 +368,7 @@ semantics =
             -- FIXME: No logout api
             Logout -> undefined
         VisitorCommand m_ref vc ->
-          let getProfile :<|> (listArticles :<|> withArticle) :<|> getTags = client $ Proxy @PublicApi
+          let (getProfile :<|> (listArticles :<|> withArticle) :<|> getTags) :<|> _ = apis $ maybe (UserToken "") concrete m_ref
            in case vc of
                 GetProfile ref -> run (getProfile $ pure $ concrete ref) $ const $ VisitorResponse GotProfile
                 GetArticle ref ->
@@ -378,22 +380,40 @@ semantics =
                 GetComments ref ->
                   let _ :<|> getComments = withArticle $ pure $ concrete ref
                    in run getComments $ const $ VisitorResponse GotComments
-
--- UserCommand m_ref uc ->
---   let a = client $ Proxy @AuthedApi
---    in case uc of
---         GetCurrentUser -> _
---         (UpdateUser ur) -> _
---         (FollowUser ref) -> _
---         (UnfollowUser ref) -> _
---         (CreateArticle ar) -> _
---         (UpdateArticle ref ar) -> _
---         (DeleteArticle ref) -> _
---         (AddCommentToArticle ref cr) -> _
---         (DeleteComment ref ref') -> _
---         (FavoriteArticle ref) -> _
---         (UnfavoriteArticle ref) -> _
---         FeedArticles -> _
+        UserCommand m_ref uc ->
+          case m_ref of
+            Nothing -> pure $ FailResponse ""
+            Just ref ->
+              let _ :<|> (getCurrentUser :<|> updateUser) :<|> withUser :<|> createArticle :<|> feedArticles :<|> withArticle = apis $ concrete ref
+               in case uc of
+                    GetCurrentUser -> run getCurrentUser $ const $ UserResponse GotCurrentUser
+                    UpdateUser ur -> run (updateUser $ In $ pure ur) $ const $ UserResponse UpdatedUser
+                    FollowUser ref' ->
+                      let follow :<|> _ = withUser $ pure $ concrete ref'
+                       in run follow $ const $ UserResponse FollowedUser
+                    UnfollowUser ref' ->
+                      let _ :<|> unfollow = withUser $ pure $ concrete ref'
+                       in run unfollow $ const $ UserResponse UnfollowedUser
+                    CreateArticle ar -> run (createArticle $ In $ pure ar) $ UserResponse . CreatedArticle . reference . transform . getField @"article"
+                    UpdateArticle ref' ar ->
+                      let (updateArticle :<|> _) :<|> _ = withArticle $ pure $ concrete ref'
+                       in run (updateArticle $ In $ pure ar) $ const $ UserResponse UpdatedArticle
+                    DeleteArticle ref' ->
+                      let (_ :<|> deleteArticle) :<|> _ = withArticle $ pure $ concrete ref'
+                       in runNoContent deleteArticle $ UserResponse DeletedArticle
+                    AddCommentToArticle ref' cr ->
+                      let _ :<|> (_ :<|> addComment) :<|> _ = withArticle $ pure $ concrete ref'
+                       in run (addComment $ In $ pure cr) $ UserResponse . AddedCommentToArticle . reference . transform
+                    DeleteComment ref' ref'' ->
+                      let _ :<|> (deleteComment :<|> _) :<|> _ = withArticle $ pure $ concrete ref'
+                       in runNoContent (deleteComment $ pure $ concrete ref'') $ UserResponse DeletedComment
+                    FavoriteArticle ref' ->
+                      let _ :<|> _ :<|> (favoriteArticle :<|> _) = withArticle $ pure $ concrete ref'
+                       in run favoriteArticle $ const $ UserResponse FavoritedArticle
+                    UnfavoriteArticle ref' ->
+                      let _ :<|> _ :<|> (_ :<|> unfavoriteArticle) = withArticle $ pure $ concrete ref'
+                       in run unfavoriteArticle $ const $ UserResponse UnfavoritedArticle
+                    FeedArticles -> run (feedArticles Nothing Nothing) $ const $ UserResponse FeededArticles
 
 sm :: StateMachine Model Command (ReaderT ClientEnv IO) Response
 sm = StateMachine initModel transition precondition postcondition Nothing generator shrinker semantics mock noCleanup
