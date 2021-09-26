@@ -54,6 +54,7 @@ import Test.StateMachine
     Reason (Ok),
     StateMachine (StateMachine),
     Symbolic,
+    checkCommandNames,
     concrete,
     forAllCommands,
     forAllParallelCommands,
@@ -435,7 +436,7 @@ prop1 new mgr mkUrl =
     )
     $ do
       (hist, _, res) <- runCommands sm cmds
-      prettyCommands sm hist (res === Ok)
+      prettyCommands sm hist $ checkCommandNames cmds $ res === Ok
       pure ()
 
 prop2 :: IO Application -> Manager -> (Int -> BaseUrl) -> Property

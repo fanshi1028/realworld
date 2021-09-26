@@ -13,7 +13,7 @@ import Domain.User (UserR)
 import Domain.Util.Field (Tag)
 import GHC.Generics (Generic1)
 import Orphans ()
-import Test.StateMachine (Concrete, Reference, ToExpr)
+import Test.StateMachine (Concrete, Reference, ToExpr, CommandNames, cmdName, cmdNames)
 import qualified Test.StateMachine.Types.Rank2 as R2
 import Text.Show (showString, showsPrec)
 
@@ -24,6 +24,8 @@ data VisitorCommand r
   | GetTags
   | GetComments (Reference (ArticleR "id") r)
   deriving (Show)
+
+instance CommandNames VisitorCommand
 
 data VisitorResponse (r :: Type -> Type)
   = GotProfile
@@ -38,6 +40,8 @@ data AuthCommand (r :: Type -> Type)
   | Login (Reference (UserR "login") r)
   | Logout
   deriving (Show)
+
+instance CommandNames AuthCommand
 
 data AuthResponse (r :: Type -> Type)
   = Registered (Reference (UserR "id") r) (Reference (UserR "login") r)
@@ -60,6 +64,8 @@ data UserCommand r
   | FeedArticles
   deriving (Show)
 
+instance CommandNames UserCommand
+
 data UserResponse (r :: Type -> Type)
   = GotCurrentUser
   | UpdatedUser
@@ -80,6 +86,16 @@ data Command r
   | VisitorCommand (Maybe (Reference (UserR "token") r)) (VisitorCommand r)
   | UserCommand (Maybe (Reference (UserR "token") r)) (UserCommand r)
   deriving (Show)
+
+instance CommandNames Command where
+  cmdName
+    = \case
+        (AuthCommand _ ac) -> cmdName ac
+        (VisitorCommand _ vc) -> cmdName vc
+        (UserCommand _ uc) -> cmdName uc
+  cmdNames _ = cmdNames (Proxy @(AuthCommand _))
+    <> cmdNames (Proxy @(VisitorCommand _))
+    <> cmdNames (Proxy @(UserCommand _))
 
 deriving instance Generic1 AuthCommand
 
