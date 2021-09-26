@@ -152,127 +152,104 @@ postcondition m cmd res =
       commentInv = [loginsL, usersL, articlesL, followL, favoriteL, tagL, createArticleL, tokensL]
       favoriteInv = [loginsL, usersL, articlesL, commentsL, followL, tagL, hasCommentL, createArticleL, tokensL]
    in case (cmd, res) of
-        (_, FailResponse _) -> m .== m'
+        (_, FailResponse _) -> m .== m' .// "same model"
         (AuthCommand m_ref ac, AuthResponse ar) ->
-          Boolean (and $ on (==) <$> authInv <*> pure m <*> pure m') .// "authInv"
+          Boolean (and $ on (==) <$> authInv <*> pure m <*> pure m') .// "auth command invariant"
             .&& case (ac, ar) of
               (Register cr, Registered ref login) ->
-                findByRef ref (users m) .== Nothing .// ""
-                  .&& findByRef ref (users m') .== Just cr .// ""
-                  .&& findByRef ref (logins m') .== Just login .// ""
-                  .&& on (-) usersL m' m .== 1 .// ""
-                  .&& on (-) loginsL m' m .== 1 .// ""
-                  .&& on (.==) tokensL m' m .// ""
-              (Login _, LoggedIn _) ->
-                on (.==) usersL m' m .// "" .&& case m_ref of
-                  Just ref ->
-                    validToken ref m
-                      .&& Boolean (isJust $ findByRef ref $ tokens m') .// ""
-                      .&& on (-) tokensL m' m .== 1 .// ""
-                      .&& on (.==) loginsL m' m .// ""
-                  Nothing -> Top
+                findByRef ref (users m) .== Nothing .// "before: the user not existed"
+                  .&& findByRef ref (users m') .== Just cr .// "after: the user exists"
+                  .&& findByRef ref (logins m) .== Nothing .// "before: the login not existed"
+                  .&& findByRef ref (logins m') .== Just login .// "after: the login exists"
+                  .&& on (-) usersL m' m .== 1 .// "after: added 1 to users"
+                  .&& on (-) loginsL m' m .== 1 .// "after: added 1 to logins"
+                  .&& on (.==) tokensL m' m .// "same tokens"
+              (Login _, LoggedIn ref) ->
+                on (.==) usersL m' m .// "same users"
+                  -- .&& validToken ref m .// "valid token"
+                  .&& Boolean (isJust $ findByRef ref $ tokens m') .// "after: the token exists"
+                  .&& on (-) tokensL m' m .== 1 .// "after: added 1 to tokens"
+                  .&& on (.==) loginsL m' m .// "same login"
+              -- NOTE: no one care, not log out in spec
               (Logout, LoggedOut) ->
-                on (.==) usersL m' m .// "" .&& case m_ref of
+                on (.==) usersL m' m .// "same users" .&& case m_ref of
                   Just ref ->
-                    validToken ref m
-                      .&& findByRef ref (tokens m') .== Nothing .// ""
-                      .&& on (-) tokensL m m' .== 1 .// ""
-                      .&& on (.==) loginsL m' m .// ""
-                  Nothing -> Top
+                    validToken ref m .// "before: the token is valid"
+                      .&& findByRef ref (tokens m') .== Nothing .// "after: the token is invalidated"
+                      .&& on (-) tokensL m m' .== 1 .// "after: removed 1 from tokens"
+                      .&& on (.==) loginsL m' m .// "same login"
+                  Nothing -> Bot .// "logged in"
               _ -> error "auth postcondition error"
         (VisitorCommand _ vc, VisitorResponse vr) ->
-          m .== m' .// "" .&& case (vc, vr) of
-            (GetProfile ref', GotProfile) -> Forall [m, m'] (findByRef' ref' . users) .// ""
-            (GetArticle ref', GotArticle) -> Forall [m, m'] (findByRef' ref' . articles) .// ""
+          m .== m' .// "same model" .&& case (vc, vr) of
+            (GetProfile ref', GotProfile) -> Forall [m, m'] (findByRef' ref' . users) .// "the user exist"
+            (GetArticle ref', GotArticle) -> Forall [m, m'] (findByRef' ref' . articles) .// "the article exists"
             (ListArticles, ListedArticles) -> Top
             (GetTags, GotTags) -> Top
-            (GetComments ref', GotComments) -> Forall [m, m'] (findByRef' ref' . articles) .// ""
+            (GetComments ref', GotComments) -> Forall [m, m'] (findByRef' ref' . articles) .// "the article exists"
             _ -> error "visitor postcondition error"
-        (UserCommand (Just ref) uc, UserResponse ur) ->
-          Forall [m, m'] (validToken ref) .// "" .&& case (uc, ur) of
-            (GetCurrentUser, GotCurrentUser) -> m .== m' .// ""
-            (UpdateUser _, UpdatedUser) -> Boolean (and $ on (==) <$> allL <*> pure m <*> pure m') .// ""
-            (FollowUser ref', FollowedUser) ->
-              Forall [m, m'] (findByRef' ref' . users) .// ""
-                .&& case findByRef ref $ tokens m of
-                  Nothing -> Bot .// ""
-                  Just ref'' ->
-                    member (ref'', ref') (userFollowUser m') .// ""
-                      .&& Boolean (and $ on (==) <$> followInv <*> pure m <*> pure m') .// ""
-            (UnfollowUser ref', UnfollowedUser) ->
-              Forall [m, m'] (findByRef' ref' . users) .// ""
-                .&& case findByRef ref $ tokens m of
-                  Nothing -> Bot .// ""
-                  Just ref'' ->
-                    notMember (ref'', ref') (userFollowUser m') .// ""
-                      .&& Boolean (and $ on (==) <$> followInv <*> pure m <*> pure m') .// ""
-            (CreateArticle _, CreatedArticle ref') ->
-              findByRef' ref' (articles m') .// ""
-                .&& Not (findByRef' ref' $ articles m) .// ""
-                .&& (findByRef ref (tokens m') >>= flip findByRef (userCreateArticle m')) .== Just ref' .// ""
-                .&& ( case findByRef ref $ tokens m' of
-                        Nothing -> Bot .// ""
-                        Just ref'' ->
-                          member (ref'', ref') (userCreateArticle m') .// ""
-                            .&& notMember (ref'', ref') (userCreateArticle m) .// ""
-                    )
-                .&& on (-) articlesL m' m .== 1 .// ""
-                .&& on (-) createArticleL m' m .== 1 .// ""
-                .&& Boolean (and $ on (==) <$> articleInv <*> pure m <*> pure m') .// ""
-            (UpdateArticle ref' _, UpdatedArticle) ->
-              Forall [m, m'] (findByRef' ref' . articles) .// ""
-                -- FIXME: factor out this
-                .&& (findByRef ref (tokens m) >>= flip findByRef (userCreateArticle m)) .== Just ref' .// ""
-                .&& (findByRef ref (tokens m') >>= flip findByRef (userCreateArticle m')) .== Just ref' .// ""
-                .&& Boolean (and $ on (==) <$> allL <*> pure m <*> pure m') .// ""
-            (DeleteArticle ref', DeletedArticle) ->
-              findByRef' ref' (articles m) .// ""
-                .&& Not (findByRef' ref' $ articles m') .// ""
-                .&& (findByRef ref (tokens m) >>= flip findByRef (userCreateArticle m)) .== Just ref' .// ""
-                -- FIXME: factor out this????
-                .&& ( case findByRef ref $ tokens m of
-                        Nothing -> Bot .// ""
-                        Just ref'' ->
-                          member (ref'', ref') (userCreateArticle m) .// ""
-                            .&& notMember (ref'', ref') (userCreateArticle m') .// ""
-                    )
-                .&& on (-) articlesL m m' .== 1 .// ""
-                .&& on (-) createArticleL m m' .== 1 .// ""
-                .&& Boolean (and $ on (==) <$> articleInv <*> pure m <*> pure m') .// ""
-            (AddCommentToArticle ref' _, AddedCommentToArticle ref'') ->
-              Forall [m, m'] (findByRef' ref' . articles) .// ""
-                .&& findByRef' ref'' (comments m') .// ""
-                .&& Not (findByRef' ref'' $ comments m) .// ""
-                .&& notMember (ref', ref'') (articleHasComment m) .// ""
-                .&& member (ref', ref'') (articleHasComment m') .// ""
-                .&& on (-) commentsL m' m .== 1 .// ""
-                .&& on (-) hasCommentL m' m .== 1 .// ""
-                .&& Boolean (and $ on (==) <$> commentInv <*> pure m <*> pure m') .// ""
-            (DeleteComment ref' ref'', DeletedComment) ->
-              Forall [m, m'] (findByRef' ref' . articles) .// ""
-                .&& findByRef' ref'' (comments m) .// ""
-                .&& Not (findByRef' ref'' $ comments m') .// ""
-                .&& member (ref', ref'') (articleHasComment m) .// ""
-                .&& notMember (ref', ref'') (articleHasComment m') .// ""
-                .&& on (-) commentsL m m' .== 1 .// ""
-                .&& on (-) hasCommentL m m' .== 1 .// ""
-                .&& Boolean (and $ on (==) <$> commentInv <*> pure m <*> pure m') .// ""
-            (FavoriteArticle ref', FavoritedArticle) ->
-              Forall [m, m'] (findByRef' ref' . articles) .// ""
-                .&& case findByRef ref $ tokens m of
-                  Nothing -> Bot .// ""
-                  Just ref'' ->
-                    member (ref'', ref') (userFavoriteArticle m') .// ""
-                      .&& Boolean (and $ on (==) <$> favoriteInv <*> pure m <*> pure m') .// ""
-            (UnfavoriteArticle ref', UnfavoritedArticle) ->
-              Forall [m, m'] (findByRef' ref' . articles) .// ""
-                .&& case findByRef ref $ tokens m of
-                  Nothing -> Bot .// ""
-                  Just ref'' ->
-                    notMember (ref'', ref') (userFavoriteArticle m') .// ""
-                      .&& Boolean (and $ on (==) <$> favoriteInv <*> pure m <*> pure m') .// ""
-            (FeedArticles, FeededArticles) -> m .== m' .// ""
-            _ -> error "user postcondition error"
+        (UserCommand (Just ref) uc, UserResponse ur) -> case findByRef ref (tokens m) >>= (`findByRef2` logins m) of
+          Nothing -> Bot .// "the token is valid"
+          Just ref'' ->
+            validToken ref m' .// "the token is valid" .&& case (uc, ur) of
+              (GetCurrentUser, GotCurrentUser) -> m .== m' .// "same model"
+              (UpdateUser _, UpdatedUser) -> m .== m' .// "same model"
+              (FollowUser ref', FollowedUser) ->
+                Forall [m, m'] (findByRef' ref' . users) .// "the user exists"
+                  .&& member (ref'', ref') (userFollowUser m') .// "after: followed the user"
+                  .&& Boolean (and $ on (==) <$> followInv <*> pure m <*> pure m') .// "follow invariant"
+              (UnfollowUser ref', UnfollowedUser) ->
+                Forall [m, m'] (findByRef' ref' . users) .// "the user exists"
+                  .&& notMember (ref'', ref') (userFollowUser m') .// "after: unfollowed the user"
+                  .&& Boolean (and $ on (==) <$> followInv <*> pure m <*> pure m') .// "follow invariant"
+              (CreateArticle _, CreatedArticle ref') ->
+                findByRef' ref' (articles m') .// "after: the article exists"
+                  .&& Not (findByRef' ref' $ articles m) .// "before: the article not existed"
+                  .&& member (ref'', ref') (userCreateArticle m') .// "after: user created the article"
+                  .&& notMember (ref'', ref') (userCreateArticle m) .// "before: user didn't created the article"
+                  .&& on (-) articlesL m' m .== 1 .// "after: added 1 to articles"
+                  .&& on (-) createArticleL m' m .== 1 .// "after: added 1 to userCreateArticle"
+                  .&& Boolean (and $ on (==) <$> articleInv <*> pure m <*> pure m') .// "article invariant"
+              (UpdateArticle ref' _, UpdatedArticle) ->
+                Forall [m, m'] (findByRef' ref' . articles) .// "the article exists"
+                  .&& Forall [m, m'] ((Just ref' .==) . findByRef ref'' . userCreateArticle) .// "user creates the article"
+                  .&& Boolean (and $ on (==) <$> allL <*> pure m <*> pure m') .// "article invariant"
+              (DeleteArticle ref', DeletedArticle) ->
+                findByRef' ref' (articles m) .// "before: the article existed"
+                  .&& Not (findByRef' ref' $ articles m') .// "after: the article not exists"
+                  .&& member (ref'', ref') (userCreateArticle m) .// "before: user created the article"
+                  .&& notMember (ref'', ref') (userCreateArticle m') .// "after: user not created the article"
+                  .&& on (-) articlesL m m' .== 1 .// "after: removed 1 from article"
+                  .&& on (-) createArticleL m m' .== 1 .// "after: removed 1 from userCreateArticle"
+                  .&& Boolean (and $ on (==) <$> articleInv <*> pure m <*> pure m') .// "article invariant"
+              (AddCommentToArticle ref' _, AddedCommentToArticle ref''') ->
+                Forall [m, m'] (findByRef' ref' . articles) .// "the article exists"
+                  .&& findByRef' ref''' (comments m') .// "after: the comment exists"
+                  .&& Not (findByRef' ref''' $ comments m) .// "before: the comment not existed"
+                  .&& notMember (ref', ref''') (articleHasComment m) .// "before: article didn't has the comment"
+                  .&& member (ref', ref''') (articleHasComment m') .// "after: aritlce has the comment"
+                  .&& on (-) commentsL m' m .== 1 .// "after: added 1 to comments"
+                  .&& on (-) hasCommentL m' m .== 1 .// "after: added 1 to aritlceHasComment"
+                  .&& Boolean (and $ on (==) <$> commentInv <*> pure m <*> pure m') .// "comment invariant"
+              (DeleteComment ref' ref''', DeletedComment) ->
+                Forall [m, m'] (findByRef' ref' . articles) .// "the article exists"
+                  .&& findByRef' ref''' (comments m) .// "before: the comment exists"
+                  .&& Not (findByRef' ref''' $ comments m') .// "after: the comment not existed"
+                  .&& member (ref', ref''') (articleHasComment m) .// "before: aritlce has the comment"
+                  .&& notMember (ref', ref''') (articleHasComment m') .// "after: article didn't has the comment"
+                  .&& on (-) commentsL m m' .== 1 .// "after: remove 1 from comments"
+                  .&& on (-) hasCommentL m m' .== 1 .// "after: remove 1 from aritlceHasComment"
+                  .&& Boolean (and $ on (==) <$> commentInv <*> pure m <*> pure m') .// "comment invariant"
+              (FavoriteArticle ref', FavoritedArticle) ->
+                Forall [m, m'] (findByRef' ref' . articles) .// "the article exists"
+                  .&& member (ref'', ref') (userFavoriteArticle m') .// "after: user favorites the article"
+                  .&& Boolean (and $ on (==) <$> favoriteInv <*> pure m <*> pure m') .// "favorite invariant"
+              (UnfavoriteArticle ref', UnfavoritedArticle) ->
+                Forall [m, m'] (findByRef' ref' . articles) .// "the article exists"
+                  .&& notMember (ref'', ref') (userFavoriteArticle m') .// "after: user unfavorites the article"
+                  .&& Boolean (and $ on (==) <$> favoriteInv <*> pure m <*> pure m') .// "favorite invariant"
+              (FeedArticles, FeededArticles) -> m .== m' .// "same model"
+              _ -> error "user postcondition error"
         _ -> error "postcondition error"
 
 -- invariant = Nothing
