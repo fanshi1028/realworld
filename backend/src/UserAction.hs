@@ -35,7 +35,7 @@ import qualified Data.Semigroup as SG
 import Domain.Article (ArticleR (..))
 import Domain.Comment (CommentR (..))
 import Domain.User (UserR (..))
-import Domain.Util.Error (AlreadyExists, Impossible (Impossible), NotAuthorized (NotAuthorized), NotFound (NotFound), ValidationErr)
+import Domain.Util.Error (AlreadyExists (AlreadyExists), Impossible (Impossible), NotAuthorized (NotAuthorized), NotFound (NotFound), ValidationErr)
 import Domain.Util.Field (Tag, Time)
 import Domain.Util.Representation (Transform (transform))
 import Domain.Util.Update (WithUpdate, applyPatch)
@@ -174,6 +174,8 @@ instance
             $> UserProfile (transform targetUser) False
         CreateArticle create@(ArticleCreate tt des bd ts) -> do
           let aid = transform create
+          (send (Storage.Map.GetById aid) >> throwError (AlreadyExists aid))
+            `catchError` (const @_ @(NotFound (ArticleR "id")) $ pure ())
           send $ Relation.ToMany.Relate @_ @(ArticleR "id") @"create" authUserId aid
           t <- send $ Current.GetCurrent @Time
           foldMapA (send . Relation.ManyToMany.Relate @(ArticleR "id") @_ @"taggedBy" (transform create)) ts
