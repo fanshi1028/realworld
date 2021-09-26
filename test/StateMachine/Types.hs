@@ -149,15 +149,11 @@ instance R2.Functor AuthResponse
 
 instance R2.Foldable AuthResponse
 
--- instance R2.Traversable AuthResponse
-
 deriving instance Generic1 VisitorResponse
 
 instance R2.Functor VisitorResponse
 
 instance R2.Foldable VisitorResponse
-
--- instance R2.Traversable VisitorResponse
 
 deriving instance Generic1 UserResponse
 
@@ -165,15 +161,11 @@ instance R2.Functor UserResponse
 
 instance R2.Foldable UserResponse
 
--- instance R2.Traversable UserResponse
-
 deriving instance Generic1 Response
 
 instance R2.Functor Response
 
 instance R2.Foldable Response
-
--- instance R2.Traversable Response
 
 data Model r = Model
   { users :: [(Reference (UserR "id") r, UserR "create")],

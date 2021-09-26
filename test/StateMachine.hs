@@ -21,6 +21,7 @@ import qualified Data.Set as S
 import Domain.Article (ArticleR (..))
 import Domain.Comment (CommentR (..))
 import Domain.User (UserR (..))
+import Domain.Util.Field (titleToSlug)
 import Domain.Util.JSON.From (In (In))
 import Domain.Util.JSON.To (Out (Out))
 import Domain.Util.Representation (transform)
@@ -73,7 +74,6 @@ import Test.StateMachine
 import Test.StateMachine.Logic (member)
 import Test.Tasty.QuickCheck ((===))
 import Validation (Validation (Failure, Success))
-import Domain.Util.Field (titleToSlug)
 
 initModel :: Model r
 initModel = Model mempty mempty mempty mempty S.empty S.empty S.empty S.empty S.empty S.empty mempty
@@ -83,7 +83,6 @@ transition m cm res = case (cm, res) of
   (_, FailResponse _) -> m
   (AuthCommand mref cm', AuthResponse res') -> case (mref, cm', res') of
     -- FIXME: Register when login?
-    -- (_, Register _, Registered ref u) -> m & field @"users" %~ ((ref, u) :)
     (_, Register cr, Registered ref login) ->
       m & field @"users" %~ ((ref, cr) :)
         & field @"logins" %~ ((ref, login) :)
@@ -398,10 +397,6 @@ semantics =
 
 sm :: StateMachine Model Command (ReaderT ClientEnv IO) Response
 sm = StateMachine initModel transition precondition postcondition Nothing generator shrinker semantics mock noCleanup
-
--- let
---     run' :: forall a. ClientM a -> IO (Either ClientError a)
---     run' = flip runClientM (mkClientEnv m url)
 
 prop1 :: IO Application -> Manager -> (Int -> BaseUrl) -> Property
 prop1 new mgr mkUrl =
