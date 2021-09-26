@@ -88,13 +88,11 @@ transition m cm res = case (cm, res) of
       m & field @"users" %~ ((ref, cr) :)
         & field @"logins" %~ ((ref, login) :)
     -- FIXME: How about double login with different identity?
-    (_, Login ref, LoggedIn token) -> case findByRef2 ref $ logins m of
-      Nothing -> error "impossible"
-      Just ref' -> m & field @"tokens" %~ ((token, ref') :)
+    (_, Login ref, LoggedIn token) -> m & field @"tokens" %~ ((token, ref) :)
     (Just t, Logout, LoggedOut) -> m & field @"tokens" %~ deleteByRef t
     _failed -> m
   (VisitorCommand _ _, _) -> m
-  (UserCommand mref cm', UserResponse res') -> case (cm', res', mref >>= \t -> findByRef t $ tokens m) of
+  (UserCommand mref cm', UserResponse res') -> case (cm', res', mref >>= (`findByRef` tokens m) >>= (`findByRef2` logins m)) of
     (GetCurrentUser, _, _) -> m
     -- FIXME: JWT suck as session token, update profile will invalidate the login session
     (UpdateUser _, UpdatedUser, Just ref) -> m
@@ -130,7 +128,7 @@ postcondition :: Model Concrete -> Command Concrete -> Response Concrete -> Logi
 postcondition m cmd res =
   let m' = transition m cmd res
 
-      tokenToUser tokenRef mm = findByRef tokenRef (tokens mm) >>= flip findByRef (users mm)
+      tokenToUser tokenRef mm = findByRef tokenRef (tokens mm) >>= (`findByRef2` logins m) >>= (`findByRef` users mm)
       validToken = Boolean . isJust <<$>> tokenToUser
       findByRef' ref = Boolean . isJust . findByRef ref
 
@@ -287,7 +285,7 @@ mock m =
             _ <- findByRef ref $ articles m
             pure $ pure GotComments
         UserCommand m_ref uc -> maybe (pure $ FailResponse "") (UserResponse <$>) $ do
-          uRef <- m_ref >>= (`findByRef` tokens m)
+          uRef <- m_ref >>= (`findByRef` tokens m) >>= (`findByRef2` logins m)
           _ <- uRef `findByRef` users m
           case uc of
             GetCurrentUser -> pure $ pure GotCurrentUser

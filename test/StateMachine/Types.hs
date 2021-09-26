@@ -186,7 +186,7 @@ data Model r = Model
     articleHasComment :: Set (Reference (ArticleR "id") r, Reference (CommentR "id") r),
     userCreateComment :: Set (Reference (UserR "id") r, Reference (CommentR "id") r),
     userCreateArticle :: Set (Reference (UserR "id") r, Reference (ArticleR "id") r),
-    tokens :: [(Reference (UserR "token") r, Reference (UserR "id") r)]
+    tokens :: [(Reference (UserR "token") r, Reference (UserR "login") r)]
   }
   deriving (Show, Eq, Generic)
 
