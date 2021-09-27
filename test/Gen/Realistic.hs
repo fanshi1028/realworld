@@ -2,16 +2,17 @@
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE StandaloneDeriving #-}
 
 -- | @since 0.2.0.0
 module Gen.Realistic where
 
 import Data.Password.Argon2 (Password, mkPassword)
 import Data.Password.Validate (ValidationResult (ValidPassword), defaultPasswordPolicy_, validatePassword)
-import Domain.Article (ArticleR (ArticleCreate))
+import Domain.Article (ArticleR (ArticleCreate, ArticleUpdate, Article))
 import Domain.Comment (CommentR (CommentCreate))
-import Domain.User (UserR (UserAuth, UserLogin, UserRegister))
-import Domain.Util.Field (Bio (Bio), Body (Body), Description (Description), Email (Email), Image (Image), Tag (Tag), Title (Title), Username (Username))
+import Domain.User (UserR (UserAuth, UserLogin, UserRegister, UserUpdate, UserUpdateInternal, UserId))
+import Domain.Util.Field (Bio (Bio), Body (Body), Description (Description), Email (Email), Image (Image), Tag (Tag), Title (Title), Username (Username), Time)
 import Domain.Util.JSON.From (In (In))
 import Faker (Fake)
 import qualified Faker.Book as Book
@@ -39,6 +40,7 @@ import qualified Faker.TvShow.SouthPark as SouthPark
 import qualified Faker.TvShow.TheItCrowd as TheItCrowd
 import Test.QuickCheck (Arbitrary (arbitrary, shrink), Gen, arbitraryASCIIChar, elements, listOf, suchThat)
 import Test.QuickCheck.Gen.Faker (fakeQuickcheck)
+import Data.Generic.HKD (deconstruct)
 
 -- $setup
 -- >>> import Test.QuickCheck (sample')
@@ -187,3 +189,24 @@ instance Arbitrary (Realistic (ArticleR "create")) where
 instance Arbitrary (Realistic (CommentR "create")) where
   arbitrary = Realistic . CommentCreate <$> genRealisticTitle
   shrink (Realistic (CommentCreate c)) = Realistic . CommentCreate <$> shrink c
+
+instance Arbitrary (Realistic (UserR "updateInternal")) where
+  arbitrary = Realistic <$> (UserUpdateInternal <$> arbitraryRealistic <*> arbitraryRealistic <*> arbitraryRealistic <*> arbitraryRealistic <*> arbitraryRealistic)
+  shrink (Realistic (UserUpdateInternal em pw u b im)) =
+    Realistic <$> (UserUpdateInternal <$> shrinkRealistic em <*> shrinkRealistic pw <*> shrinkRealistic u <*> shrinkRealistic b <*> shrinkRealistic im)
+
+instance Arbitrary (Realistic (UserR "update")) where
+  arbitrary = Realistic . UserUpdate . deconstruct . deconstruct <$> arbitraryRealistic
+
+instance Arbitrary (Realistic (UserR "id")) where
+  arbitrary = Realistic . UserId <$> arbitraryRealistic
+
+deriving newtype instance Arbitrary (Realistic Time)
+
+instance Arbitrary (Realistic (ArticleR "all")) where
+  arbitrary = Realistic <$> (Article <$> arbitraryRealistic <*> arbitraryRealistic <*> arbitraryRealistic <*> arbitraryRealistic <*> arbitraryRealistic <*> arbitraryRealistic)
+  shrink (Realistic (Article tt d b ct ud au)) =
+    Realistic <$> (Article <$> shrinkRealistic tt <*> shrinkRealistic d <*> shrinkRealistic b <*> shrinkRealistic ct <*> shrinkRealistic ud <*> shrinkRealistic au)
+
+instance Arbitrary (Realistic (ArticleR "update")) where
+  arbitrary = Realistic . ArticleUpdate . deconstruct . deconstruct <$> arbitraryRealistic

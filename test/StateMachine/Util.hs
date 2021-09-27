@@ -10,3 +10,6 @@ findByRef2 ref = foldl' (\acc (u, ref') -> if ref == ref' then Just u else acc) 
 
 deleteByRef :: (Foldable t, Eq a) => a -> t (a, b) -> [(a, b)]
 deleteByRef ref = foldl' (\acc orig@(ref', _) -> if ref == ref' then acc else orig : acc) []
+
+updateByRef :: (Foldable t, Eq a) => a -> ((a, b) -> (a, b)) -> t (a, b) -> [(a, b)]
+updateByRef ref f = foldl' (\acc orig@(ref', _) -> if ref == ref' then f orig : acc else orig : acc) []

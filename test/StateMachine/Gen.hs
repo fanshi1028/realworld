@@ -22,7 +22,7 @@ generator m =
       genUsers = genRef $ users m
       genArticles = genRef $ articles m
       genComments = genRef $ comments m
-      genLogins = elements . map snd $ logins m
+      genCredentials = elements $ credentials  m
       genTokens =
         if null $ tokens m
           then pure Nothing
@@ -42,19 +42,17 @@ generator m =
       genAuthCommand =
         frequency
           [ (if null $ users m then 3 else 1, Register <$> arbitraryRealistic),
-            (if null $ logins m then 0 else 1, Login <$> genLogins)
-            -- (1, pure Logout)
+            (if null $ credentials m then 0 else 1, uncurry Login <$> genCredentials),
+            (0, pure Logout)
           ]
       genUserCommand =
         frequency
           [ (1, pure GetCurrentUser),
-            -- FIXME
-            -- (1, UpdateUser <$> arbitraryRealistic),
+            (1, UpdateUser <$> arbitraryRealistic),
             (if null $ users m then 0 else 1, UnfollowUser <$> genUsers),
             (if null $ users m then 0 else 1, FollowUser <$> genUsers),
             (if null $ articles m then 8 else 2, CreateArticle <$> arbitraryRealistic),
-            -- FIXME
-            -- (1, UpdateArticle <$> genArticles <*> arbitraryRealistic)
+            (if null $ articles m then 0 else 1, UpdateArticle <$> genArticles <*> arbitraryRealistic),
             (if null $ articles m then 0 else 1, DeleteArticle <$> genArticles),
             ( if null $ articles m
                 then 0
@@ -71,9 +69,9 @@ generator m =
           ]
    in pure $
         frequency
-          [ (if null (users m) || null (tokens m) then 4 else 1, AuthCommand <$> genTokens <*> genAuthCommand),
-            (if null $ tokens m then 1 else 2, VisitorCommand <$> genTokens <*> genVisitCommand),
-            (1, UserCommand <$> genTokens <*> genUserCommand)
+          [ (if null (users m) || null (tokens m) then 3 else 1, AuthCommand <$> genTokens <*> genAuthCommand),
+            (1, VisitorCommand <$> genTokens <*> genVisitCommand),
+            (2, UserCommand <$> genTokens <*> genUserCommand)
           ]
 
 shrinker :: Model r -> Command r -> [Command r]
@@ -82,18 +80,16 @@ shrinker _ =
     AuthCommand m_ref ac ->
       AuthCommand m_ref <$> case ac of
         Register ur -> Register <$> shrinkRealistic ur
-        Login ur -> []
+        Login _ _ -> []
         Logout -> []
     VisitorCommand _ _ -> []
     UserCommand m_ref uc ->
       UserCommand m_ref <$> case uc of
         GetCurrentUser -> []
-        -- FIXME
-        -- UpdateUser ur -> UpdateUser <$> shrinkRealistic ur
+        UpdateUser ur -> UpdateUser <$> shrinkRealistic ur
         UnfollowUser _ -> []
         CreateArticle ar -> CreateArticle <$> shrinkRealistic ar
-        -- FIXME
-        -- UpdateArticle ref ar -> UpdateArticle ref  <$> shrinkRealistic ar
+        UpdateArticle ref ar -> UpdateArticle ref  <$> shrinkRealistic ar
         DeleteArticle _ -> []
         AddCommentToArticle ref cr -> AddCommentToArticle ref <$> shrinkRealistic cr
         DeleteComment _ _ -> []

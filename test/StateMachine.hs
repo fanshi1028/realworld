@@ -8,6 +8,7 @@
 {-# LANGUAGE StandaloneDeriving #-}
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE UndecidableInstances #-}
+{-# LANGUAGE ViewPatterns #-}
 
 -- |
 module StateMachine where
@@ -16,8 +17,9 @@ import Control.Lens ((%~))
 import Data.Aeson (FromJSON, ToJSON, eitherDecode, encode)
 import Data.Functor.Classes (Eq1, Ord1)
 import Data.Generics.Product (field, getField)
+import qualified Data.Semigroup as SG (Last (Last, getLast))
 import Data.Set (delete, insert)
-import qualified Data.Set as S
+import qualified Data.Set as S (empty, map, member)
 import Domain.Article (ArticleR (..))
 import Domain.Comment (CommentR (..))
 import Domain.User (UserR (..))
@@ -70,54 +72,78 @@ import Test.StateMachine
     (.&&),
     (.//),
     (.==),
+    (.=>),
   )
 import Test.StateMachine.Logic (member)
 import Test.Tasty.QuickCheck ((===))
 import Validation (Validation (Failure, Success))
 
 initModel :: Model r
-initModel = Model mempty mempty mempty mempty S.empty S.empty S.empty S.empty S.empty S.empty mempty
+initModel = Model mempty mempty mempty mempty mempty S.empty S.empty S.empty S.empty S.empty S.empty mempty
 
 transition :: (Eq1 r, Ord1 r) => Model r -> Command r -> Response r -> Model r
 transition m cm res = case (cm, res) of
   (_, FailResponse _) -> m
   (AuthCommand mref cm', AuthResponse res') -> case (mref, cm', res') of
     -- FIXME: Register when login?
-    (_, Register cr, Registered ref login) ->
+    (_, Register cr, Registered ref em pw) ->
       m & field @"users" %~ ((ref, cr) :)
-        & field @"logins" %~ ((ref, login) :)
+        & field @"emails" %~ ((ref, em) :)
+        & field @"credentials" %~ ((em, pw) :)
     -- FIXME: How about double login with different identity?
-    (_, Login ref, LoggedIn token) -> m & field @"tokens" %~ ((token, ref) :)
+    (_, Login ref ref', LoggedIn token) -> m & field @"tokens" %~ ((token, ref) :) . deleteByRef token
     (Just t, Logout, LoggedOut) -> m & field @"tokens" %~ deleteByRef t
     _failed -> m
   (VisitorCommand _ _, _) -> m
-  (UserCommand mref cm', UserResponse res') -> case (cm', res', mref >>= (`findByRef` tokens m) >>= (`findByRef2` logins m)) of
-    (GetCurrentUser, _, _) -> m
-    -- FIXME: JWT suck as session token, update profile will invalidate the login session
-    (UpdateUser _, UpdatedUser, Just ref) -> m
-    (FollowUser ref, FollowedUser, Just ref') -> m & field @"userFollowUser" %~ insert (ref', ref)
-    (UnfollowUser ref, UnfollowedUser, Just ref') -> m & field @"userFollowUser" %~ delete (ref', ref)
-    (CreateArticle cr, CreatedArticle ref, Just ref') ->
-      m
-        & field @"articles" %~ ((ref, cr) :)
-        & field @"userCreateArticle" %~ insert (ref', ref)
-    (UpdateArticle ref _, UpdatedArticle, Just _) -> m
-    (DeleteArticle ref, DeletedArticle, Just ref') ->
-      m
-        & field @"articles" %~ deleteByRef ref
-        & field @"userCreateArticle" %~ delete (ref', ref)
-    (AddCommentToArticle ref c, AddedCommentToArticle ref', Just _) ->
-      m
-        & field @"comments" %~ ((ref', c) :)
-        & field @"articleHasComment" %~ insert (ref, ref')
-    (DeleteComment ref ref', DeletedComment, Just _) ->
-      m
-        & field @"comments" %~ deleteByRef ref'
-        & field @"articleHasComment" %~ delete (ref, ref')
-    (FavoriteArticle ref, FavoritedArticle, Just ref') -> m & field @"userFavoriteArticle" %~ insert (ref', ref)
-    (UnfavoriteArticle ref, UnfavoritedArticle, Just ref') -> m & field @"userFavoriteArticle" %~ delete (ref', ref)
-    (FeedArticles, _, _) -> m
-    _failed -> m
+  (UserCommand (Just t) cm', UserResponse res') -> fromMaybe m $ do
+    em <- findByRef t $ tokens m
+    ref <- findByRef2 em $ emails m
+    pw <- findByRef em $ credentials m
+    pure $ case (cm', res') of
+      (GetCurrentUser, _) -> m
+      -- FIXME: JWT suck as session token, update profile will invalidate the login session
+      (UpdateUser _, UpdatedUser t' m_uid m_em m_pw) ->
+        let em' = fromMaybe em m_em
+            ref' = fromMaybe ref m_uid
+            pw' = fromMaybe pw m_pw
+         in m
+              & field @"tokens" %~ ((t', em') :) . deleteByRef t
+              & field @"emails" %~ ((ref', em') :) . deleteByRef ref
+              & field @"credentials" %~ ((em', pw') :) . deleteByRef em
+              & field @"userFollowUser" %~ S.map (\us@(u1, u2) -> (if u1 == ref then (ref', u2) else if u2 == ref then (u1, ref') else us))
+              & field @"userFavoriteArticle" %~ S.map (\ua@(u, a) -> (if u == ref then (ref', a) else ua))
+              & field @"userFavoriteArticle" %~ S.map (\ua@(u, a) -> (if u == ref then (ref', a) else ua))
+              & field @"userCreateComment" %~ S.map (\uc@(u, c) -> (if u == ref then (ref', c) else uc))
+              & field @"userCreateArticle" %~ S.map (\ua@(u, a) -> (if u == ref then (ref', a) else ua))
+      (FollowUser ref', FollowedUser) -> m & field @"userFollowUser" %~ insert (ref, ref')
+      (UnfollowUser ref', UnfollowedUser) -> m & field @"userFollowUser" %~ delete (ref, ref')
+      (CreateArticle cr, CreatedArticle ref') ->
+        m
+          & field @"articles" %~ ((ref', cr) :)
+          & field @"userCreateArticle" %~ insert (ref, ref')
+      (UpdateArticle ref' _, UpdatedArticle m_aid) ->
+        case m_aid of
+          Nothing -> m
+          Just aid ->
+            m
+              & field @"userCreateArticle" %~ insert (ref, aid) . delete (ref, ref')
+              & field @"userFavoriteArticle" %~ insert (ref, aid) . delete (ref, ref')
+      (DeleteArticle ref', DeletedArticle) ->
+        m
+          & field @"articles" %~ deleteByRef ref'
+          & field @"userCreateArticle" %~ delete (ref, ref')
+      (AddCommentToArticle ref' c, AddedCommentToArticle ref'') ->
+        m
+          & field @"comments" %~ ((ref'', c) :)
+          & field @"articleHasComment" %~ insert (ref', ref'')
+      (DeleteComment ref' ref'', DeletedComment) ->
+        m
+          & field @"comments" %~ deleteByRef ref''
+          & field @"articleHasComment" %~ delete (ref', ref'')
+      (FavoriteArticle ref', FavoritedArticle) -> m & field @"userFavoriteArticle" %~ insert (ref, ref')
+      (UnfavoriteArticle ref', UnfavoritedArticle) -> m & field @"userFavoriteArticle" %~ delete (ref, ref')
+      (FeedArticles, _) -> m
+      _failed -> m
   _failed -> m
 
 precondition :: Model Symbolic -> Command Symbolic -> Logic
@@ -127,12 +153,13 @@ postcondition :: Model Concrete -> Command Concrete -> Response Concrete -> Logi
 postcondition m cmd res =
   let m' = transition m cmd res
 
-      tokenToUser tokenRef mm = findByRef tokenRef (tokens mm) >>= (`findByRef2` logins m) >>= (`findByRef` users mm)
+      tokenToUser tokenRef mm = findByRef tokenRef (tokens mm) >>= (`findByRef2` emails m) >>= (`findByRef` users mm)
       validToken = Boolean . isJust <<$>> tokenToUser
       findByRef' ref = Boolean . isJust . findByRef ref
 
       usersL = length . users
-      loginsL = length . logins
+      emailsL = length . emails
+      credentialsL = length . credentials
       articlesL = length . articles
       commentsL = length . comments
       followL = length . userFollowUser
@@ -142,31 +169,37 @@ postcondition m cmd res =
       createArticleL = length . userCreateArticle
       tokensL = length . tokens
 
-      allL = [usersL, loginsL, articlesL, commentsL, followL, favoriteL, tagL, hasCommentL, createArticleL, tokensL]
+      allL = [usersL, emailsL, credentialsL, articlesL, commentsL, followL, favoriteL, tagL, hasCommentL, createArticleL, tokensL]
       authInv = [articlesL, commentsL, followL, favoriteL, tagL, hasCommentL, createArticleL]
-      followInv = [loginsL, usersL, articlesL, commentsL, favoriteL, tagL, hasCommentL, createArticleL, tokensL]
-      articleInv = [loginsL, usersL, commentsL, followL, favoriteL, tagL, hasCommentL, tokensL]
-      commentInv = [loginsL, usersL, articlesL, followL, favoriteL, tagL, createArticleL, tokensL]
-      favoriteInv = [loginsL, usersL, articlesL, commentsL, followL, tagL, hasCommentL, createArticleL, tokensL]
+      followInv = [emailsL, credentialsL, usersL, articlesL, commentsL, favoriteL, tagL, hasCommentL, createArticleL, tokensL]
+      articleInv = [emailsL, credentialsL, usersL, commentsL, followL, favoriteL, tagL, hasCommentL, tokensL]
+      commentInv = [emailsL, credentialsL, usersL, articlesL, followL, favoriteL, tagL, createArticleL, tokensL]
+      favoriteInv = [emailsL, credentialsL, usersL, articlesL, commentsL, followL, tagL, hasCommentL, createArticleL, tokensL]
    in case (cmd, res) of
         (_, FailResponse _) -> m .== m' .// "same model"
         (AuthCommand m_ref ac, AuthResponse ar) ->
           Boolean (and $ on (==) <$> authInv <*> pure m <*> pure m') .// "auth command invariant"
             .&& case (ac, ar) of
-              (Register cr, Registered ref login) ->
+              (Register cr, Registered ref em pw) ->
                 findByRef ref (users m) .== Nothing .// "before: the user not existed"
                   .&& findByRef ref (users m') .== Just cr .// "after: the user exists"
-                  .&& findByRef ref (logins m) .== Nothing .// "before: the login not existed"
-                  .&& findByRef ref (logins m') .== Just login .// "after: the login exists"
+                  .&& findByRef ref (emails m) .== Nothing .// "before: the email not existed"
+                  .&& findByRef ref (emails m') .== Just em .// "after: the email exists"
+                  .&& findByRef em (credentials m) .== Nothing .// "before: the credential not existed"
+                  .&& findByRef em (credentials m') .== Just pw .// "after: the credential exists"
                   .&& on (-) usersL m' m .== 1 .// "after: added 1 to users"
-                  .&& on (-) loginsL m' m .== 1 .// "after: added 1 to logins"
+                  .&& on (-) emailsL m' m .== 1 .// "after: added 1 to emails"
+                  .&& on (-) credentialsL m' m .== 1 .// "after: added 1 to credentials"
                   .&& on (.==) tokensL m' m .// "same tokens"
-              (Login _, LoggedIn ref) ->
-                on (.==) usersL m' m .// "same users"
-                  -- .&& validToken ref m .// "valid token"
-                  .&& Boolean (isJust $ findByRef ref $ tokens m') .// "after: the token exists"
-                  .&& on (-) tokensL m' m .== 1 .// "after: added 1 to tokens"
-                  .&& on (.==) loginsL m' m .// "same login"
+              (Login _ _, LoggedIn ref) ->
+                let hasToken = Boolean . isJust . findByRef ref . tokens
+                 in on (.==) usersL m' m .// "same users"
+                      -- .&& validToken ref m .// "valid token"
+                      .&& hasToken m' .// "after: the token exists"
+                      .&& (Not (hasToken m) .=> on (-) tokensL m' m .== 1) .// "after: new token, added 1 to tokensL"
+                      .&& (hasToken m .=> on (.==) tokensL m' m) .// "after: tokens existed, tokensL remain unchange "
+                      .&& on (.==) emailsL m' m .// "same emails"
+                      .&& on (.==) credentialsL m' m .// "same credentials"
               -- NOTE: no one care, not log out in spec
               (Logout, LoggedOut) ->
                 on (.==) usersL m' m .// "same users" .&& case m_ref of
@@ -174,7 +207,8 @@ postcondition m cmd res =
                     validToken ref m .// "before: the token is valid"
                       .&& findByRef ref (tokens m') .== Nothing .// "after: the token is invalidated"
                       .&& on (-) tokensL m m' .== 1 .// "after: removed 1 from tokens"
-                      .&& on (.==) loginsL m' m .// "same login"
+                      .&& on (.==) emailsL m' m .// "same emails"
+                      .&& on (.==) credentialsL m' m .// "same credentials"
                   Nothing -> Bot .// "logged in"
               _ -> error "auth postcondition error"
         (VisitorCommand _ vc, VisitorResponse vr) ->
@@ -185,12 +219,21 @@ postcondition m cmd res =
             (GetTags, GotTags) -> Top
             (GetComments ref', GotComments) -> Forall [m, m'] (findByRef' ref' . articles) .// "the article exists"
             _ -> error "visitor postcondition error"
-        (UserCommand (Just ref) uc, UserResponse ur) -> case findByRef ref (tokens m) >>= (`findByRef2` logins m) of
-          Nothing -> Bot .// "the token is valid"
-          Just ref'' ->
-            validToken ref m' .// "the token is valid" .&& case (uc, ur) of
+        (UserCommand (Just ref) uc, UserResponse ur) -> fromMaybe (Bot .// "the token is valid") $ do
+          em <- findByRef ref $ tokens m
+          ref'' <- findByRef2 em $ emails m
+          pure $
+            validToken ref m .// "the token is valid" .&& case (uc, ur) of
               (GetCurrentUser, GotCurrentUser) -> m .== m' .// "same model"
-              (UpdateUser _, UpdatedUser) -> m .== m' .// "same model"
+              (UpdateUser _, UpdatedUser t m_uid m_em m_pw) ->
+                let em' = fromMaybe em m_em
+                    uid = fromMaybe ref'' m_uid
+                 in member (ref'', em) (emails m) .// "before: old email in emails"
+                      .&& member (uid, em') (emails m') .// "after: maybe updated user name or email in emails"
+                      .&& member (ref, em) (tokens m) .// "before: old token and email in tokens"
+                      .&& member (t, em') (tokens m') .// "after: maybe updated token or email in tokens"
+                      .&& Boolean (and $ on (==) <$> allL <*> pure m <*> pure m') .// "update user invariant"
+                      .&& maybe Top (\pw -> member (em', pw) (credentials m')) m_pw .// "after: maybe updated credential in credentials"
               (FollowUser ref', FollowedUser) ->
                 Forall [m, m'] (findByRef' ref' . users) .// "the user exists"
                   .&& member (ref'', ref') (userFollowUser m') .// "after: followed the user"
@@ -207,10 +250,15 @@ postcondition m cmd res =
                   .&& on (-) articlesL m' m .== 1 .// "after: added 1 to articles"
                   .&& on (-) createArticleL m' m .== 1 .// "after: added 1 to userCreateArticle"
                   .&& Boolean (and $ on (==) <$> articleInv <*> pure m <*> pure m') .// "article invariant"
-              (UpdateArticle ref' _, UpdatedArticle) ->
-                Forall [m, m'] (findByRef' ref' . articles) .// "the article exists"
-                  .&& Forall [m, m'] ((Just ref' .==) . findByRef ref'' . userCreateArticle) .// "user creates the article"
-                  .&& Boolean (and $ on (==) <$> allL <*> pure m <*> pure m') .// "article invariant"
+              (UpdateArticle ref' _, UpdatedArticle m_ref) ->
+                let new_aid = fromMaybe ref' m_ref
+                 in findByRef' ref' (articles m) .// "before: the article exists"
+                      .&& findByRef' new_aid (articles m') .// "after: the article(maybe with new id) exists"
+                      .&& member (ref'', ref') (userCreateArticle m) .// "before: user creates the article"
+                      .&& member (ref'', new_aid) (userCreateArticle m') .// "after: user creates the article(maybe with new id)"
+                      .&& member (ref'', ref') (userFavoriteArticle m) .// "before: user favorite the article"
+                      .&& member (ref'', new_aid) (userFavoriteArticle m') .// "after: user favorite the article(maybe with new id)"
+                      .&& Boolean (and $ on (==) <$> allL <*> pure m <*> pure m') .// "article invariant"
               (DeleteArticle ref', DeletedArticle) ->
                 findByRef' ref' (articles m) .// "before: the article existed"
                   .&& Not (findByRef' ref' $ articles m') .// "after: the article not exists"
@@ -268,10 +316,11 @@ mock m =
               _ <- validate cr
               guard $ all ((/= transform cr) . UserId . getField @"username" . snd) $ users m
               guard $ all ((/= getField @"email" cr) . getField @"email" . snd) $ users m
-              pure $ Registered <$> genSym <*> genSym
-            Login ur -> case findByRef2 ur $ logins m of
-              Just _ -> AuthResponse . LoggedIn <$> genSym
-              Nothing -> pure $ FailResponse ""
+              pure $ Registered <$> genSym <*> genSym <*> genSym
+            Login em pw ->
+              if elem (em, pw) $ credentials m
+                then AuthResponse . LoggedIn <$> genSym
+                else pure $ FailResponse ""
             Logout -> pure $ AuthResponse LoggedOut
         VisitorCommand _ vc -> maybe (pure $ FailResponse "") (VisitorResponse <$>) $ case vc of
           GetProfile _ -> pure $ pure GotProfile
@@ -284,12 +333,27 @@ mock m =
             _ <- findByRef ref $ articles m
             pure $ pure GotComments
         UserCommand m_ref uc -> maybe (pure $ FailResponse "") (UserResponse <$>) $ do
-          uRef <- m_ref >>= (`findByRef` tokens m) >>= (`findByRef2` logins m)
+          uRef <- m_ref >>= (`findByRef` tokens m) >>= (`findByRef2` emails m)
           _ <- uRef `findByRef` users m
           case uc of
             GetCurrentUser -> pure $ pure GotCurrentUser
-            -- FIXME
-            UpdateUser ur -> pure $ pure UpdatedUser
+            UpdateUser (UserUpdate u) -> do
+              let validate' v = case v of
+                    Nothing -> pure Nothing
+                    Just (SG.Last a) -> case validate a of
+                      Left _ -> Nothing
+                      Right _ -> pure $ pure a
+                  maybeGenSym a = maybe (pure Nothing) (const $ Just <$> genSym) a
+              _ <- validate' $ getField @"bio" u
+              _ <- validate' $ getField @"image" u
+              m_uid <- validate' $ getField @"username" u
+              m_em <- validate' $ getField @"email" u
+              m_pw <- validate' $ getField @"password" u
+              pure $
+                UpdatedUser <$> genSym
+                  <*> maybeGenSym m_uid
+                  <*> maybeGenSym m_em
+                  <*> maybeGenSym m_pw
             FollowUser ref -> do
               _ <- findByRef ref $ users m
               pure $ pure FollowedUser
@@ -300,16 +364,26 @@ mock m =
               _ <- either (const Nothing) Just $ validate ca
               guard $ all ((/= transform ca) . ArticleId . titleToSlug . getField @"title" . snd) $ articles m
               pure $ CreatedArticle <$> genSym
-            -- FIXME: fail case
-            UpdateArticle ref _ -> do
+            UpdateArticle ref (ArticleUpdate ar) -> do
+              let validate' v = case v of
+                    Nothing -> pure Nothing
+                    Just (SG.Last a) -> case validate a of
+                      Left _ -> Nothing
+                      Right _ -> pure $ pure a
+                  maybeGenSym a = maybe (pure Nothing) (const $ Just <$> genSym) a
+              m_tt <- validate' $ getField @"title" ar
+              _ <- validate' $ getField @"description" ar
+              _ <- validate' $ getField @"body" ar
               _ <- findByRef ref $ articles m
               guard $ (uRef, ref) `S.member` userCreateArticle m
-              pure $ pure UpdatedArticle
+              pure $ UpdatedArticle <$> maybeGenSym m_tt
             DeleteArticle ref -> do
               _ <- findByRef ref $ articles m
               guard $ (uRef, ref) `S.member` userCreateArticle m
               pure $ pure DeletedArticle
-            AddCommentToArticle _ _ -> pure $ AddedCommentToArticle <$> genSym
+            AddCommentToArticle ref _ -> do
+              _ <- findByRef ref $ articles m
+              pure $ AddedCommentToArticle <$> genSym
             DeleteComment ref ref' -> do
               _ <- findByRef ref $ articles m
               guard $ (ref, ref') `S.member` articleHasComment m
@@ -341,9 +415,10 @@ semantics =
                 AuthResponse $
                   Registered
                     (reference $ transform u)
-                    (reference $ UserLogin (getField @"email" cr) $ getField @"password" cr)
-            Login ur ->
-              run (login $ In $ pure $ concrete ur) $ \(UserAuthWithToken _ t) ->
+                    (reference $ getField @"email" cr)
+                    (reference $ getField @"password" cr)
+            Login em pw ->
+              run (login $ In $ pure $ UserLogin (concrete em) $ concrete pw) $ \(UserAuthWithToken _ t) ->
                 AuthResponse $ LoggedIn $ reference t
             -- FIXME: No logout api
             Logout -> undefined
@@ -367,7 +442,12 @@ semantics =
               let _ :<|> (getCurrentUser :<|> updateUser) :<|> withUser :<|> createArticle :<|> feedArticles :<|> withArticle = apis $ concrete ref
                in case uc of
                     GetCurrentUser -> run getCurrentUser $ const $ UserResponse GotCurrentUser
-                    UpdateUser ur -> run (updateUser $ In $ pure ur) $ const $ UserResponse UpdatedUser
+                    UpdateUser u@(UserUpdate ur) -> run (updateUser $ In $ pure u) $ \(UserAuthWithToken _ t) ->
+                      UserResponse $
+                        let m_uid = getField @"username" ur <&> reference . UserId . SG.getLast
+                            m_em = getField @"email" ur <&> reference . SG.getLast
+                            m_pw = getField @"password" ur <&> reference . SG.getLast
+                         in UpdatedUser (reference t) m_uid m_em m_pw
                     FollowUser ref' ->
                       let follow :<|> _ = withUser $ pure $ concrete ref'
                        in run follow $ const $ UserResponse FollowedUser
@@ -375,9 +455,11 @@ semantics =
                       let _ :<|> unfollow = withUser $ pure $ concrete ref'
                        in run unfollow $ const $ UserResponse UnfollowedUser
                     CreateArticle ar -> run (createArticle $ In $ pure ar) $ UserResponse . CreatedArticle . reference . transform . getField @"article"
-                    UpdateArticle ref' ar ->
+                    UpdateArticle ref' au@(ArticleUpdate u) ->
                       let (updateArticle :<|> _) :<|> _ = withArticle $ pure $ concrete ref'
-                       in run (updateArticle $ In $ pure ar) $ const $ UserResponse UpdatedArticle
+                          m_new_aid = ArticleId . titleToSlug . SG.getLast <$> getField @"title" u
+                          m_new_aid' = m_new_aid >>= bool Nothing (reference <$> m_new_aid) . (== concrete ref')
+                       in run (updateArticle $ In $ pure au) $ const $ UserResponse $ UpdatedArticle m_new_aid'
                     DeleteArticle ref' ->
                       let (_ :<|> deleteArticle) :<|> _ = withArticle $ pure $ concrete ref'
                        in runNoContent deleteArticle $ UserResponse DeletedArticle

@@ -7,13 +7,14 @@
 module StateMachine.Types where
 
 import Data.Functor.Classes (Show1)
+import Data.Password.Argon2 (Password)
 import Domain.Article (ArticleR)
 import Domain.Comment (CommentR)
 import Domain.User (UserR)
-import Domain.Util.Field (Tag)
+import Domain.Util.Field (Email (Email), Tag)
 import GHC.Generics (Generic1)
 import Orphans ()
-import Test.StateMachine (Concrete, Reference, ToExpr, CommandNames, cmdName, cmdNames)
+import Test.StateMachine (CommandNames, Concrete, Reference, ToExpr, cmdName, cmdNames)
 import qualified Test.StateMachine.Types.Rank2 as R2
 import Text.Show (showString, showsPrec)
 
@@ -37,14 +38,14 @@ data VisitorResponse (r :: Type -> Type)
 
 data AuthCommand (r :: Type -> Type)
   = Register (UserR "create")
-  | Login (Reference (UserR "login") r)
+  | Login (Reference Email r) (Reference Password r)
   | Logout
   deriving (Show)
 
 instance CommandNames AuthCommand
 
 data AuthResponse (r :: Type -> Type)
-  = Registered (Reference (UserR "id") r) (Reference (UserR "login") r)
+  = Registered (Reference (UserR "id") r) (Reference Email r) (Reference Password r)
   | LoggedIn (Reference (UserR "token") r)
   | LoggedOut
   deriving (Show)
@@ -68,11 +69,11 @@ instance CommandNames UserCommand
 
 data UserResponse (r :: Type -> Type)
   = GotCurrentUser
-  | UpdatedUser
+  | UpdatedUser (Reference (UserR "token") r) (Maybe (Reference (UserR "id") r)) (Maybe (Reference Email r)) (Maybe (Reference Password r))
   | FollowedUser
   | UnfollowedUser
   | CreatedArticle (Reference (ArticleR "id") r)
-  | UpdatedArticle
+  | UpdatedArticle (Maybe (Reference (ArticleR "id") r))
   | DeletedArticle
   | AddedCommentToArticle (Reference (CommentR "id") r)
   | DeletedComment
@@ -88,14 +89,15 @@ data Command r
   deriving (Show)
 
 instance CommandNames Command where
-  cmdName
-    = \case
-        (AuthCommand _ ac) -> cmdName ac
-        (VisitorCommand _ vc) -> cmdName vc
-        (UserCommand _ uc) -> cmdName uc
-  cmdNames _ = cmdNames (Proxy @(AuthCommand _))
-    <> cmdNames (Proxy @(VisitorCommand _))
-    <> cmdNames (Proxy @(UserCommand _))
+  cmdName =
+    \case
+      (AuthCommand _ ac) -> cmdName ac
+      (VisitorCommand _ vc) -> cmdName vc
+      (UserCommand _ uc) -> cmdName uc
+  cmdNames _ =
+    cmdNames (Proxy @(AuthCommand _))
+      <> cmdNames (Proxy @(VisitorCommand _))
+      <> cmdNames (Proxy @(UserCommand _))
 
 deriving instance Generic1 AuthCommand
 
@@ -170,7 +172,8 @@ instance R2.Foldable Response
 data Model r = Model
   { users :: [(Reference (UserR "id") r, UserR "create")],
     articles :: [(Reference (ArticleR "id") r, ArticleR "create")],
-    logins :: [(Reference (UserR "id") r, Reference (UserR "login") r)],
+    credentials :: [(Reference Email r, Reference Password r)],
+    emails :: [(Reference (UserR "id") r, Reference Email r)],
     comments :: [(Reference (CommentR "id") r, CommentR "create")],
     userFollowUser :: Set (Reference (UserR "id") r, Reference (UserR "id") r),
     userFavoriteArticle :: Set (Reference (UserR "id") r, Reference (ArticleR "id") r),
@@ -178,7 +181,7 @@ data Model r = Model
     articleHasComment :: Set (Reference (ArticleR "id") r, Reference (CommentR "id") r),
     userCreateComment :: Set (Reference (UserR "id") r, Reference (CommentR "id") r),
     userCreateArticle :: Set (Reference (UserR "id") r, Reference (ArticleR "id") r),
-    tokens :: [(Reference (UserR "token") r, Reference (UserR "login") r)]
+    tokens :: [(Reference (UserR "token") r, Reference Email r)]
   }
   deriving (Show, Eq, Generic)
 
