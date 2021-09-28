@@ -79,7 +79,7 @@ import Test.Tasty.QuickCheck ((===))
 import Validation (Validation (Failure, Success))
 
 initModel :: Model r
-initModel = Model mempty mempty mempty mempty mempty S.empty S.empty S.empty S.empty S.empty S.empty mempty
+initModel = Model mempty mempty mempty mempty mempty S.empty S.empty S.empty S.empty S.empty mempty
 
 transition :: (Eq1 r, Ord1 r) => Model r -> Command r -> Response r -> Model r
 transition m cm res = case (cm, res) of
@@ -164,17 +164,16 @@ postcondition m cmd res =
       commentsL = length . comments
       followL = length . userFollowUser
       favoriteL = length . userFavoriteArticle
-      tagL = length . articleTaggedByTag
       hasCommentL = length . articleHasComment
       createArticleL = length . userCreateArticle
       tokensL = length . tokens
 
-      allL = [usersL, emailsL, credentialsL, articlesL, commentsL, followL, favoriteL, tagL, hasCommentL, createArticleL, tokensL]
-      authInv = [articlesL, commentsL, followL, favoriteL, tagL, hasCommentL, createArticleL]
-      followInv = [emailsL, credentialsL, usersL, articlesL, commentsL, favoriteL, tagL, hasCommentL, createArticleL, tokensL]
-      articleInv = [emailsL, credentialsL, usersL, commentsL, followL, favoriteL, tagL, hasCommentL, tokensL]
-      commentInv = [emailsL, credentialsL, usersL, articlesL, followL, favoriteL, tagL, createArticleL, tokensL]
-      favoriteInv = [emailsL, credentialsL, usersL, articlesL, commentsL, followL, tagL, hasCommentL, createArticleL, tokensL]
+      allL = [usersL, emailsL, credentialsL, articlesL, commentsL, followL, favoriteL, hasCommentL, createArticleL, tokensL]
+      authInv = [articlesL, commentsL, followL, favoriteL, hasCommentL, createArticleL]
+      followInv = [emailsL, credentialsL, usersL, articlesL, commentsL, favoriteL, hasCommentL, createArticleL, tokensL]
+      articleInv = [emailsL, credentialsL, usersL, commentsL, followL, favoriteL, hasCommentL, tokensL]
+      commentInv = [emailsL, credentialsL, usersL, articlesL, followL, favoriteL, createArticleL, tokensL]
+      favoriteInv = [emailsL, credentialsL, usersL, articlesL, commentsL, followL, hasCommentL, createArticleL, tokensL]
    in case (cmd, res) of
         (_, FailResponse _) -> m .== m' .// "same model"
         (AuthCommand m_ref ac, AuthResponse ar) ->

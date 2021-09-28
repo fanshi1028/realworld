@@ -177,7 +177,6 @@ data Model r = Model
     comments :: [(Reference (CommentR "id") r, CommentR "create")],
     userFollowUser :: Set (Reference (UserR "id") r, Reference (UserR "id") r),
     userFavoriteArticle :: Set (Reference (UserR "id") r, Reference (ArticleR "id") r),
-    articleTaggedByTag :: Set (Reference (UserR "id") r, Tag),
     articleHasComment :: Set (Reference (ArticleR "id") r, Reference (CommentR "id") r),
     userCreateComment :: Set (Reference (UserR "id") r, Reference (CommentR "id") r),
     userCreateArticle :: Set (Reference (UserR "id") r, Reference (ArticleR "id") r),
