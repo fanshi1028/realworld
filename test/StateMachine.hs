@@ -86,12 +86,13 @@ transition m cm res = case (cm, res) of
   (_, FailResponse _) -> m
   (AuthCommand mref cm', AuthResponse res') -> case (mref, cm', res') of
     -- FIXME: Register when login?
-    (_, Register cr, Registered ref em pw) ->
+    (_, Register cr, Registered ref em pw t) ->
       m & field @"users" %~ ((ref, cr) :)
         & field @"emails" %~ ((ref, em) :)
         & field @"credentials" %~ ((em, pw) :)
+        & field @"tokens" %~ ((t, em) :)
     -- FIXME: How about double login with different identity?
-    (_, Login ref ref', LoggedIn token) -> m & field @"tokens" %~ ((token, ref) :) . deleteByRef token
+    (_, Login _ _, LoggedIn) -> m
     (Just t, Logout, LoggedOut) -> m & field @"tokens" %~ deleteByRef t
     _failed -> m
   (VisitorCommand _ _, _) -> m
@@ -179,7 +180,7 @@ postcondition m cmd res =
         (AuthCommand m_ref ac, AuthResponse ar) ->
           Boolean (and $ on (==) <$> authInv <*> pure m <*> pure m') .// "auth command invariant"
             .&& case (ac, ar) of
-              (Register cr, Registered ref em pw) ->
+              (Register cr, Registered ref em pw t) ->
                 findByRef ref (users m) .== Nothing .// "before: the user not existed"
                   .&& findByRef ref (users m') .== Just cr .// "after: the user exists"
                   .&& findByRef ref (emails m) .== Nothing .// "before: the email not existed"
@@ -189,16 +190,8 @@ postcondition m cmd res =
                   .&& on (-) usersL m' m .== 1 .// "after: added 1 to users"
                   .&& on (-) emailsL m' m .== 1 .// "after: added 1 to emails"
                   .&& on (-) credentialsL m' m .== 1 .// "after: added 1 to credentials"
-                  .&& on (.==) tokensL m' m .// "same tokens"
-              (Login _ _, LoggedIn ref) ->
-                let hasToken = Boolean . isJust . findByRef ref . tokens
-                 in on (.==) usersL m' m .// "same users"
-                      -- .&& validToken ref m .// "valid token"
-                      .&& hasToken m' .// "after: the token exists"
-                      .&& (Not (hasToken m) .=> on (-) tokensL m' m .== 1) .// "after: new token, added 1 to tokensL"
-                      .&& (hasToken m .=> on (.==) tokensL m' m) .// "after: tokens existed, tokensL remain unchange "
-                      .&& on (.==) emailsL m' m .// "same emails"
-                      .&& on (.==) credentialsL m' m .// "same credentials"
+                  .&& on (-) tokensL m' m .== 1 .// "after: new token, added 1 to tokensL"
+              (Login _ _, LoggedIn) -> Top
               -- NOTE: no one care, not log out in spec
               (Logout, LoggedOut) ->
                 on (.==) usersL m' m .// "same users" .&& case m_ref of
@@ -315,11 +308,12 @@ mock m =
               _ <- validate cr
               guard $ all ((/= transform cr) . UserId . getField @"username" . snd) $ users m
               guard $ all ((/= getField @"email" cr) . getField @"email" . snd) $ users m
-              pure $ Registered <$> genSym <*> genSym <*> genSym
+              pure $ Registered <$> genSym <*> genSym <*> genSym <*> genSym
             Login em pw ->
-              if elem (em, pw) $ credentials m
-                then AuthResponse . LoggedIn <$> genSym
-                else pure $ FailResponse ""
+              pure $
+                if elem (em, pw) $ credentials m
+                  then AuthResponse LoggedIn
+                  else FailResponse ""
             Logout -> pure $ AuthResponse LoggedOut
         VisitorCommand _ vc -> maybe (pure $ FailResponse "") (VisitorResponse <$>) $ case vc of
           GetProfile _ -> pure $ pure GotProfile
@@ -410,15 +404,14 @@ semantics =
         AuthCommand m_ref ac ->
           case ac of
             Register cr ->
-              run (register $ In $ pure cr) $ \(UserAuthWithToken u _) ->
+              run (register $ In $ pure cr) $ \(UserAuthWithToken u t) ->
                 AuthResponse $
                   Registered
                     (reference $ transform u)
                     (reference $ getField @"email" cr)
                     (reference $ getField @"password" cr)
-            Login em pw ->
-              run (login $ In $ pure $ UserLogin (concrete em) $ concrete pw) $ \(UserAuthWithToken _ t) ->
-                AuthResponse $ LoggedIn $ reference t
+                    $ reference t
+            Login em pw -> run (login $ In $ pure $ UserLogin (concrete em) $ concrete pw) $ const $ AuthResponse LoggedIn
             -- FIXME: No logout api
             Logout -> undefined
         VisitorCommand m_ref vc ->

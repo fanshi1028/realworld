@@ -45,8 +45,8 @@ data AuthCommand (r :: Type -> Type)
 instance CommandNames AuthCommand
 
 data AuthResponse (r :: Type -> Type)
-  = Registered (Reference (UserR "id") r) (Reference Email r) (Reference Password r)
-  | LoggedIn (Reference (UserR "token") r)
+  = Registered (Reference (UserR "id") r) (Reference Email r) (Reference Password r) (Reference (UserR "token") r)
+  | LoggedIn
   | LoggedOut
   deriving (Show)
 
