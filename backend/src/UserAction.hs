@@ -36,12 +36,13 @@ import Domain.Article (ArticleR (..))
 import Domain.Comment (CommentR (..))
 import Domain.User (UserR (..))
 import Domain.Util.Error (AlreadyExists (AlreadyExists), Impossible (Impossible), NotAuthorized (NotAuthorized), NotFound (NotFound), ValidationErr)
-import Domain.Util.Field (Tag, Time)
+import Domain.Util.Field (Email, Tag, Time)
 import Domain.Util.Representation (Transform (transform))
 import Domain.Util.Update (WithUpdate, applyPatch)
 import qualified GenUUID (E (Generate))
 import qualified Relation.ManyToMany (E (GetRelatedLeft, GetRelatedRight, IsRelated, Relate, Unrelate, UnrelateByKeyRight))
 import qualified Relation.ToMany (E (GetRelated, IsRelated, Relate, Unrelate, UnrelateByKey))
+import qualified Relation.ToOne (E (Relate))
 import qualified Storage.Map (E (DeleteById, GetById, Insert, UpdateById))
 import qualified Token (E (CreateToken))
 
@@ -131,6 +132,7 @@ instance
     Member (Relation.ManyToMany.E (ArticleR "id") "taggedBy" Tag) sig,
     Member (Relation.ToMany.E (ArticleR "id") "has" (CommentR "id")) sig,
     Member (Relation.ToMany.E (UserR "id") "create" (ArticleR "id")) sig,
+    Member (Relation.ToOne.E Email "of" (UserR "id")) sig,
     Member (Current.E (UserR "authWithToken")) sig,
     Member (Catch (NotAuthorized UserR)) sig,
     Member (Lift IO) sig,
@@ -146,10 +148,11 @@ instance
         GetCurrentUser -> pure authOut
         UpdateUser (UserUpdate update) ->
           send (Storage.Map.GetById authUserId) >>= \orig -> do
+            let m_newEm = getField @"email" update
             update' <-
               construct $
                 build @(WithUpdate (UserR "all"))
-                  (pure $ getField @"email" update)
+                  (pure m_newEm)
                   ( case getField @"password" update of
                       Just (SG.Last pwNew) -> do
                         hpw <- sendIO $ hashPassword pwNew
@@ -161,7 +164,10 @@ instance
                   (pure $ getField @"image" update)
             case construct $ deconstruct (deconstruct orig) <> update' of
               Nothing -> error "Impossible: Missing field when update"
-              Just (construct -> SG.Last r) ->
+              Just (construct -> SG.Last r) -> do
+                case m_newEm of
+                  Just (SG.Last newEm) -> send (Relation.ToOne.Relate @_ @_ @"of" newEm authUserId)
+                  Nothing -> pure ()
                 send (Storage.Map.UpdateById authUserId $ const r)
                   >>= \(transform -> newAuth) -> UserAuthWithToken newAuth <$> send (Token.CreateToken newAuth)
         FollowUser targetUserId -> do
