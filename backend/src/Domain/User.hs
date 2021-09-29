@@ -19,13 +19,13 @@
 module Domain.User (UserR (..)) where
 
 import Data.Aeson (FromJSON (parseJSON), ToJSON (toEncoding, toJSON), Value (Object), defaultOptions, genericParseJSON, genericToJSON)
-import Data.Generic.HKD (Construct (construct))
+import Data.Generic.HKD (Construct (construct), HKD)
 import qualified Data.HashMap.Strict as HM (insert)
 import Data.Password.Argon2 (Password)
+import qualified Data.Semigroup as SG (Last)
 import Domain.Util.Field (Bio, Email, Image, PasswordHash, Username)
-import Domain.Util.JSON.From (In, filterKeysParseJSON, wrappedParseJSON)
+import Domain.Util.JSON.From (In, wrappedParseJSON)
 import Domain.Util.JSON.To (Out, wrappedToEncoding, wrappedToJSON)
-import Domain.Util.Update (WithUpdate)
 import Domain.Util.Validation (NoValidation (..), WithNoValidation, WithValidation)
 import GHC.TypeLits (Symbol)
 import Servant (FromHttpApiData (parseUrlPiece))
@@ -242,22 +242,11 @@ data instance UserR "updateInternal" = UserUpdateInternal
 -- | Representation for update
 --
 -- @since 0.1.0.0
-newtype instance UserR "update" = UserUpdate (WithUpdate (UserR "updateInternal"))
-  -- newtype instance UserR "update" = UserUpdate (WithUpdate (UserR "all"))
-  -- { email :: Email, -- "jake@jake.jake",
-  --   password :: Password, -- "jakejake"
-  --   username :: Username, -- "jake",
-  --   bio :: Bio, -- "I work at statefarm",
-  --   image :: Image -- "https://static.productionready.io/images/smiley-cyrus.jpg",
-  -- }
-  deriving (Show, Generic)
+newtype instance UserR "update" = UserUpdate (HKD (HKD (UserR "updateInternal") SG.Last) Maybe) deriving (Show, Generic)
 
 -- | @since 0.2.0.0
 instance FromJSON (WithValidation (UserR "update")) where
-  parseJSON =
-    filterKeysParseJSON
-      ["email", "password", "username", "bio", "image"]
-      (fmap UserUpdate . construct <<$>> genericParseJSON defaultOptions)
+  parseJSON = fmap UserUpdate . construct <<$>> genericParseJSON defaultOptions
 
 -- | @since 0.2.0.0
 instance FromJSON (In (WithValidation (UserR "update"))) where

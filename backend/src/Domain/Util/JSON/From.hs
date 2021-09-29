@@ -16,13 +16,11 @@ module Domain.Util.JSON.From
     -- * Helpers
     insert',
     wrappedParseJSON,
-    filterKeysParseJSON,
   )
 where
 
-import Data.Aeson (FromJSON (parseJSON), Value (Null, Object), withObject, (.:), (<?>))
-import Data.Aeson.Types (JSONPathElement (Key), Object, Parser)
-import Data.HashMap.Strict (mapWithKey)
+import Data.Aeson (FromJSON (parseJSON), Value (Object), withObject, (.:))
+import Data.Aeson.Types (Object, Parser)
 import Relude.Extra (insertWith)
 
 -- | Wrapping type for making an "In" FromJSON instance
@@ -35,17 +33,6 @@ newtype In a = In a deriving (Show, Generic)
 -- @since 0.1.0.0
 wrappedParseJSON :: FromJSON a => String -> Text -> Value -> Parser (In a)
 wrappedParseJSON info key = withObject info $ \o -> In <$> o .: key
-
--- | @since 0.1.0.0
-filterKeysParseJSON ::
-  -- | list of key that is allowed
-  [Text] ->
-  -- | original parseJSON
-  (Value -> Parser a) ->
-  (Value -> Parser a)
-filterKeysParseJSON updatableKeys parser =
-  withObject "update" $
-    parser . Object . mapWithKey (\k -> if k `notElem` updatableKeys then const Null else id)
 
 -- | The value is only inserted when the key is not present in the Object
 --

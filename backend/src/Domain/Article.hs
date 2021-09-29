@@ -19,15 +19,15 @@
 -- @since 0.1.0.0
 module Domain.Article (ArticleR (..)) where
 
-import Data.Aeson (FromJSON (parseJSON), ToJSON (toEncoding, toJSON), Value (Array), defaultOptions, genericParseJSON, withObject)
+import Data.Aeson (FromJSON (parseJSON), ToJSON (toEncoding, toJSON), Value (Array), defaultOptions, genericParseJSON, withObject, (.!=), (.:?))
 import Data.Aeson.Types (Value (Object))
-import Data.Generic.HKD (construct)
-import qualified Data.HashMap.Strict as HM
+import Data.Generic.HKD (HKD, build, construct)
+import qualified Data.HashMap.Strict as HM (insert)
+import qualified Data.Semigroup as SG (Last)
 import Domain.User (UserR)
 import Domain.Util.Field (Body, Description, Slug (Slug), Tag, Time, Title, titleToSlug)
-import Domain.Util.JSON.From (In, filterKeysParseJSON, insert', wrappedParseJSON)
+import Domain.Util.JSON.From (In, insert', wrappedParseJSON)
 import Domain.Util.JSON.To (Out, multiWrappedWithCountToEncoding, multiWrappedWithCountToJSON, wrappedToEncoding, wrappedToJSON)
-import Domain.Util.Update (WithUpdate)
 import Domain.Util.Validation (WithValidation)
 import GHC.Records (getField)
 import GHC.TypeLits (Symbol)
@@ -153,14 +153,22 @@ instance FromJSON (In (WithValidation (ArticleR "create"))) where
 -- | Representation for update
 --
 -- @since 0.1.0.0
-newtype instance ArticleR "update" = ArticleUpdate (WithUpdate (ArticleR "all")) deriving (Generic)
+newtype instance ArticleR "update" = ArticleUpdate (HKD (HKD (ArticleR "all") SG.Last) Maybe) deriving (Generic)
 
 -- | @since 0.2.0.0
 instance FromJSON (WithValidation (ArticleR "update")) where
-  parseJSON =
-    filterKeysParseJSON
-      ["title", "description", "body"]
-      (fmap ArticleUpdate . construct <<$>> genericParseJSON defaultOptions)
+  parseJSON = withObject "UpdateArticle" $ \o ->
+    ArticleUpdate
+      <<$>> construct
+        <$> construct
+          ( build @(HKD (HKD (HKD (ArticleR "all") SG.Last) Maybe) WithValidation)
+              (o .:? "title" .!= pure Nothing)
+              (o .:? "description" .!= pure Nothing)
+              (o .:? "body" .!= pure Nothing)
+              (pure $ pure Nothing)
+              (pure $ pure Nothing)
+              $ pure $ pure Nothing
+          )
 
 -- | @since 0.2.0.0
 instance FromJSON (In (WithValidation (ArticleR "update"))) where

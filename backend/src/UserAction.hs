@@ -28,23 +28,23 @@ import Control.Effect.NonDet (oneOf)
 import Control.Effect.Sum (Member)
 import Control.Effect.Throw (Throw, throwError)
 import qualified Current (E (GetCurrent))
-import Data.Generic.HKD (Build (build), Construct (construct), deconstruct)
+import Data.Generic.HKD (Build (build), Construct (construct), HKD, deconstruct)
 import Data.Generics.Product (getField)
 import Data.Password.Argon2 (hashPassword)
-import qualified Data.Semigroup as SG
+import qualified Data.Semigroup as SG (Last (Last, getLast))
 import Domain.Article (ArticleR (..))
 import Domain.Comment (CommentR (..))
 import Domain.User (UserR (..))
 import Domain.Util.Error (AlreadyExists (AlreadyExists), Impossible (Impossible), NotAuthorized (NotAuthorized), NotFound (NotFound), ValidationErr)
-import Domain.Util.Field (Email, Tag, Time)
+import Domain.Util.Field (Email, Tag, Time, titleToSlug)
 import Domain.Util.Representation (Transform (transform))
-import Domain.Util.Update (WithUpdate, applyPatch)
 import qualified GenUUID (E (Generate))
-import qualified Relation.ManyToMany (E (GetRelatedLeft, GetRelatedRight, IsRelated, Relate, Unrelate, UnrelateByKeyRight))
+import qualified Relation.ManyToMany (E (GetRelatedLeft, GetRelatedRight, IsRelated, Relate, Unrelate, UnrelateByKeyLeft, UnrelateByKeyRight))
 import qualified Relation.ToMany (E (GetRelated, IsRelated, Relate, Unrelate, UnrelateByKey))
-import qualified Relation.ToOne (E (Relate))
+import qualified Relation.ToOne (E (Relate, Unrelate))
 import qualified Storage.Map (E (DeleteById, GetById, Insert, UpdateById))
 import qualified Token (E (CreateToken))
+import qualified VisitorAction (E (GetProfile))
 
 -- * Effect
 
@@ -135,6 +135,7 @@ instance
     Member (Relation.ToOne.E Email "of" (UserR "id")) sig,
     Member (Current.E (UserR "authWithToken")) sig,
     Member (Catch (NotAuthorized UserR)) sig,
+    Member VisitorAction.E sig,
     Member (Lift IO) sig,
     Algebra sig m
   ) =>
@@ -149,9 +150,10 @@ instance
         UpdateUser (UserUpdate update) ->
           send (Storage.Map.GetById authUserId) >>= \orig -> do
             let m_newEm = getField @"email" update
+                m_newName = getField @"username" update
             update' <-
               construct $
-                build @(WithUpdate (UserR "all"))
+                build @(HKD (HKD (UserR "all") SG.Last) Maybe)
                   (pure m_newEm)
                   ( case getField @"password" update of
                       Just (SG.Last pwNew) -> do
@@ -159,15 +161,41 @@ instance
                         pure $ Just $ SG.Last hpw
                       Nothing -> pure Nothing
                   )
-                  (pure $ getField @"username" update)
+                  (pure m_newName)
                   (pure $ getField @"bio" update)
                   (pure $ getField @"image" update)
             case construct $ deconstruct (deconstruct orig) <> update' of
               Nothing -> error "Impossible: Missing field when update"
               Just (construct -> SG.Last r) -> do
-                case m_newEm of
-                  Just (SG.Last newEm) -> send (Relation.ToOne.Relate @_ @_ @"of" newEm authUserId)
-                  Nothing -> pure ()
+                case m_newName of
+                  Nothing -> do
+                    case m_newEm of
+                      Just (SG.Last newEm) -> do
+                        send (Relation.ToOne.Unrelate @_ @_ @"of" (getField @"email" auth) authUserId)
+                        send (Relation.ToOne.Relate @_ @_ @"of" newEm authUserId)
+                      Nothing -> pure ()
+                  Just (SG.Last (UserId -> newId)) -> do
+                    send (Relation.ToOne.Unrelate @_ @_ @"of" (getField @"email" auth) authUserId)
+                    case m_newEm of
+                      Just (SG.Last newEm) -> send $ Relation.ToOne.Relate @_ @_ @"of" newEm newId
+                      Nothing -> send $ Relation.ToOne.Relate @_ @_ @"of" (getField @"email" auth) newId
+
+                    send (Relation.ToMany.GetRelated @_ @"create" @(ArticleR "id") authUserId)
+                      >>= traverse_ (send . Relation.ToMany.Relate @_ @_ @"create" newId)
+                    send $ Relation.ToMany.UnrelateByKey @_ @"create" @(ArticleR "id") authUserId
+
+                    send (Relation.ManyToMany.GetRelatedLeft @_ @"favorite" @(ArticleR "id") authUserId)
+                      >>= traverse_ (send . Relation.ManyToMany.Relate @_ @_ @"favorite" newId)
+                    send $ Relation.ManyToMany.UnrelateByKeyLeft @_ @"favorite" @(ArticleR "id") authUserId
+
+                    send (Relation.ManyToMany.GetRelatedLeft @_ @"follow" @(UserR "id") authUserId)
+                      >>= traverse_ (send . Relation.ManyToMany.Relate @_ @_ @"follow" newId)
+                    send $ Relation.ManyToMany.UnrelateByKeyLeft @_ @"follow" @(UserR "id") authUserId
+
+                    send (Relation.ManyToMany.GetRelatedRight @_ @(UserR "id") @"follow" authUserId)
+                      >>= traverse_ (send . \rus -> Relation.ManyToMany.Relate @_ @_ @"follow" rus newId)
+                    send $ Relation.ManyToMany.UnrelateByKeyRight @_ @(UserR "id") @"follow" authUserId
+
                 send (Storage.Map.UpdateById authUserId $ const r)
                   >>= \(transform -> newAuth) -> UserAuthWithToken newAuth <$> send (Token.CreateToken newAuth)
         FollowUser targetUserId -> do
@@ -189,17 +217,26 @@ instance
           send (Storage.Map.Insert a)
             -- FIXME: Follow his own article?
             $> ArticleWithAuthorProfile a [] False 0 (UserProfile auth True)
-        UpdateArticle articleId update -> do
-          a <-
-            send (Storage.Map.GetById articleId)
-              <&> applyPatch update
-              >>= send . Storage.Map.UpdateById articleId . const
-          ArticleWithAuthorProfile a
-            <$> send (Relation.ManyToMany.GetRelatedLeft @_ @"taggedBy" @Tag articleId)
-            <*> send (Relation.ManyToMany.IsRelated @_ @_ @"favorite" authUserId articleId)
-            <*> (fromIntegral . length <$> send (Relation.ManyToMany.GetRelatedRight @_ @(UserR "id") @"favorite" articleId))
-            -- FIXME: Follow his own article?
-            <*> pure (UserProfile auth True)
+        UpdateArticle articleId (ArticleUpdate update) ->
+          send (Storage.Map.GetById articleId) >>= \orig -> do
+            case construct $ deconstruct (deconstruct orig) <> update of
+              Nothing -> error "Impossible: Missing field when update"
+              Just (construct -> SG.Last r) -> do
+                tags <- send (Relation.ManyToMany.GetRelatedLeft @_ @"taggedBy" @Tag articleId)
+                fus <- send (Relation.ManyToMany.GetRelatedRight @_ @(UserR "id") @"favorite" articleId)
+                case getField @"title" update of
+                  Just (ArticleId . titleToSlug . SG.getLast -> new_aid) -> do
+                    send (Relation.ToMany.GetRelated @_ @"has" @(CommentR "id") articleId)
+                      >>= traverse_ (send . Relation.ToMany.Relate @_ @_ @"has" new_aid)
+                    send $ Relation.ToMany.UnrelateByKey @_ @"has" @(CommentR "id") articleId
+                    traverse_ (send . \u -> Relation.ManyToMany.Relate @_ @_ @"favorite" u new_aid) fus
+                    send $ Relation.ManyToMany.UnrelateByKeyRight @_ @(UserR "id") @"favorite" articleId
+                    traverse_ (send . Relation.ManyToMany.Relate @_ @_ @"taggedBy" new_aid) tags
+                    send $ Relation.ManyToMany.UnrelateByKeyLeft @_ @"taggedBy" @Tag articleId
+                  Nothing -> pure ()
+                send (Storage.Map.UpdateById articleId $ const r) >>= \a ->
+                  ArticleWithAuthorProfile a tags (authUserId `elem` fus) (fromIntegral $ length fus)
+                    <$> send (VisitorAction.GetProfile $ getField @"author" orig)
         DeleteArticle articleId ->
           send (Storage.Map.GetById articleId)
             <&> (== authUserId) . getField @"author"

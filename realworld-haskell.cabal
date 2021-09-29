@@ -96,7 +96,6 @@ library backend-internal
     Domain.Util.JSON.From
     Domain.Util.JSON.To
     Domain.Util.Representation
-    Domain.Util.Update
     Domain.Util.Validation
     GenUUID
     GenUUID.Pure
