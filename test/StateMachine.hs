@@ -47,7 +47,7 @@ import StateMachine.Types
     VisitorCommand (..),
     VisitorResponse (..),
   )
-import StateMachine.Util (deleteByRef, findByRef, findByRef2)
+import StateMachine.Util (deleteByRef, findByRef, findByRef2, findByRef2All, findByRefAll)
 import Test.QuickCheck (Property, ioProperty)
 import Test.QuickCheck.Monadic (monadic)
 import Test.StateMachine
@@ -103,7 +103,7 @@ transition m cm res = case (cm, res) of
     pure $ case (cm', res') of
       (GetCurrentUser, _) -> m
       -- FIXME: JWT suck as session token, update profile will invalidate the login session
-      (UpdateUser _, UpdatedUser t' m_uid m_em m_pw) ->
+      (UpdateUser (UserUpdate ur), UpdatedUser t' m_uid m_em m_pw) ->
         let em' = fromMaybe em m_em
             ref' = fromMaybe ref m_uid
             pw' = fromMaybe pw m_pw
@@ -113,22 +113,43 @@ transition m cm res = case (cm, res) of
               & field @"credentials" %~ ((em', pw') :) . deleteByRef em
               & field @"userFollowUser" %~ S.map (\us@(u1, u2) -> (if u1 == ref then (ref', u2) else if u2 == ref then (u1, ref') else us))
               & field @"userFavoriteArticle" %~ S.map (\ua@(u, a) -> (if u == ref then (ref', a) else ua))
-              & field @"userFavoriteArticle" %~ S.map (\ua@(u, a) -> (if u == ref then (ref', a) else ua))
               & field @"userCreateComment" %~ S.map (\uc@(u, c) -> (if u == ref then (ref', c) else uc))
               & field @"userCreateArticle" %~ S.map (\ua@(u, a) -> (if u == ref then (ref', a) else ua))
       (FollowUser ref', FollowedUser) -> m & field @"userFollowUser" %~ insert (ref, ref')
       (UnfollowUser ref', UnfollowedUser) -> m & field @"userFollowUser" %~ delete (ref, ref')
+              & field @"users"
+                %~ fmap
+                  ( \orig@(u, cr) ->
+                      let cr' =
+                            cr
+                              & field' @"email" %~ case getField @"email" ur of
+                                Nothing -> Prelude.id
+                                Just (SG.Last new_em) -> const new_em
+                              & field' @"username" %~ case getField @"username" ur of
+                                Nothing -> Prelude.id
+                                Just (SG.Last new_un) -> const new_un
+                       in if u == ref then (ref', cr') else orig
+                  )
       (CreateArticle cr, CreatedArticle ref') ->
         m
           & field @"articles" %~ ((ref', cr) :)
           & field @"userCreateArticle" %~ insert (ref, ref')
-      (UpdateArticle ref' _, UpdatedArticle m_aid) ->
+      (UpdateArticle ref' (ArticleUpdate au), UpdatedArticle m_aid) ->
         case m_aid of
           Nothing -> m
           Just aid ->
             m
               & field @"userCreateArticle" %~ insert (ref, aid) . delete (ref, ref')
-              & field @"userFavoriteArticle" %~ insert (ref, aid) . delete (ref, ref')
+              & field @"userFavoriteArticle" %~ S.map (\orig@(u, o_aid) -> if o_aid == ref' then (u, aid) else orig)
+              & field @"articleHasComment" %~ S.map (\orig@(o_aid, c) -> if o_aid == ref' then (aid, c) else orig)
+              & field @"articles" %~ case findByRef ref' (articles m) of
+                Nothing -> error "impossible"
+                Just a ->
+                  let a' =
+                        a & field @"title" %~ case getField @"title" au of
+                          Nothing -> Prelude.id
+                          Just (SG.Last new_tt) -> const new_tt
+                   in ((aid, a') :) . deleteByRef ref'
       (DeleteArticle ref', DeletedArticle) ->
         m
           & field @"articles" %~ deleteByRef ref'
@@ -248,8 +269,8 @@ postcondition m cmd res =
                       .&& findByRef' new_aid (articles m') .// "after: the article(maybe with new id) exists"
                       .&& member (ref'', ref') (userCreateArticle m) .// "before: user creates the article"
                       .&& member (ref'', new_aid) (userCreateArticle m') .// "after: user creates the article(maybe with new id)"
-                      .&& member (ref'', ref') (userFavoriteArticle m) .// "before: user favorite the article"
-                      .&& member (ref'', new_aid) (userFavoriteArticle m') .// "after: user favorite the article(maybe with new id)"
+                      .&& findByRef2All ref' (userFavoriteArticle m) .== findByRef2All new_aid (userFavoriteArticle m') .// "has same favorite"
+                      .&& findByRefAll ref' (articleHasComment m) .== findByRefAll new_aid (articleHasComment m') .// "has same comments"
                       .&& Boolean (and $ on (==) <$> allL <*> pure m <*> pure m') .// "article invariant"
               (DeleteArticle ref', DeletedArticle) ->
                 findByRef' ref' (articles m) .// "before: the article existed"
@@ -327,7 +348,7 @@ mock m =
             pure $ pure GotComments
         UserCommand m_ref uc -> maybe (pure $ FailResponse "") (UserResponse <$>) $ do
           uRef <- m_ref >>= (`findByRef` tokens m) >>= (`findByRef2` emails m)
-          _ <- uRef `findByRef` users m
+          o_uc <- uRef `findByRef` users m
           case uc of
             GetCurrentUser -> pure $ pure GotCurrentUser
             UpdateUser (UserUpdate u) -> do
@@ -337,11 +358,21 @@ mock m =
                       Left _ -> Nothing
                       Right _ -> pure $ pure a
                   maybeGenSym a = maybe (pure Nothing) (const $ Just <$> genSym) a
+                  o_em = getField @"email" o_uc
+                  o_un = getField @"username" o_uc
               _ <- validate' $ getField @"bio" u
               _ <- validate' $ getField @"image" u
               m_uid <- validate' $ getField @"username" u
               m_em <- validate' $ getField @"email" u
               m_pw <- validate' $ getField @"password" u
+              m_uid >>= \new_un ->
+                if o_un == new_un
+                  then pure ()
+                  else guard $ all (\(_, getField @"username" -> un) -> un /= new_un) $ users m
+              m_em >>= \new_em ->
+                if o_em == new_em
+                  then pure ()
+                  else guard $ all (\(_, getField @"email" -> em) -> em /= new_em) $ users m
               pure $
                 UpdatedUser <$> genSym
                   <*> maybeGenSym m_uid
@@ -367,7 +398,11 @@ mock m =
               m_tt <- validate' $ getField @"title" ar
               _ <- validate' $ getField @"description" ar
               _ <- validate' $ getField @"body" ar
-              _ <- findByRef ref $ articles m
+              orig_tt <- getField @"title" <$> findByRef ref (articles m)
+              m_tt >>= \new_tt ->
+                if orig_tt == new_tt
+                  then pure ()
+                  else guard $ all (\(_, getField @"title" -> tt) -> tt /= new_tt) $ articles m
               guard $ (uRef, ref) `S.member` userCreateArticle m
               pure $ UpdatedArticle <$> maybeGenSym m_tt
             DeleteArticle ref -> do
@@ -449,9 +484,8 @@ semantics =
                     CreateArticle ar -> run (createArticle $ In $ pure ar) $ UserResponse . CreatedArticle . reference . transform . getField @"article"
                     UpdateArticle ref' au@(ArticleUpdate u) ->
                       let (updateArticle :<|> _) :<|> _ = withArticle $ pure $ concrete ref'
-                          m_new_aid = ArticleId . titleToSlug . SG.getLast <$> getField @"title" u
-                          m_new_aid' = m_new_aid >>= bool Nothing (reference <$> m_new_aid) . (== concrete ref')
-                       in run (updateArticle $ In $ pure au) $ const $ UserResponse $ UpdatedArticle m_new_aid'
+                          m_new_aid = reference . ArticleId . titleToSlug . SG.getLast <$> getField @"title" u
+                       in run (updateArticle $ In $ pure au) $ const $ UserResponse $ UpdatedArticle m_new_aid
                     DeleteArticle ref' ->
                       let (_ :<|> deleteArticle) :<|> _ = withArticle $ pure $ concrete ref'
                        in runNoContent deleteArticle $ UserResponse DeletedArticle
