@@ -14,7 +14,6 @@ import Authorization (TokenAuth)
 import Control.Lens ((^.))
 import Data.Aeson (FromJSON, ToJSON (toEncoding, toJSON), Value (Object, String), parseJSON, withObject, (.:))
 import Data.Aeson.Types (Parser)
-import Data.Generic.HKD (field)
 import Data.HashMap.Strict (insert)
 import qualified Data.HashMap.Strict as HM (insert)
 import Data.Password.Argon2 (Password, unsafeShowPassword)
@@ -36,6 +35,7 @@ import Servant.Client (HasClient (Client, clientWithRoute))
 import Servant.Client.Core (requestHeaders)
 import Test.StateMachine (ToExpr (toExpr))
 import Validation (Validation (Failure, Success))
+import Data.Generics.Product (field')
 
 class TokenAuthNotEnabled
 
@@ -179,11 +179,11 @@ instance ToJSON (UserR "update") where
   toJSON (UserUpdate a) =
     let insert' key = HM.insert key . toJSON . SG.getLast
         mayDo = maybe Prelude.id
-        h1 = mayDo (insert' "email") $ a ^. field @"email"
-        h2 = mayDo (insert' "username") $ a ^. field @"username"
-        h3 = mayDo (insert' "password") $ a ^. field @"password"
-        h4 = mayDo (insert' "bio") $ a ^. field @"bio"
-        h5 = mayDo (insert' "image") $ a ^. field @"image"
+        h1 = mayDo (insert' "email") $ a ^. field' @"email"
+        h2 = mayDo (insert' "username") $ a ^. field' @"username"
+        h3 = mayDo (insert' "password") $ a ^. field' @"password"
+        h4 = mayDo (insert' "bio") $ a ^. field' @"bio"
+        h5 = mayDo (insert' "image") $ a ^. field' @"image"
      in Object $ h1 $ h2 $ h3 $ h4 $ h5 mempty
 
 instance ToJSON (In (UserR "update")) where
@@ -193,9 +193,9 @@ instance ToJSON (ArticleR "update") where
   toJSON (ArticleUpdate a) =
     let insert' key = HM.insert key . toJSON . SG.getLast
         mayDo = maybe Prelude.id
-        h1 = mayDo (insert' "title") $ a ^. field @"title"
-        h2 = mayDo (insert' "description") $ a ^. field @"description"
-        h3 = mayDo (insert' "body") $ a ^. field @"body"
+        h1 = mayDo (insert' "title") $ a ^. field' @"title"
+        h2 = mayDo (insert' "description") $ a ^. field' @"description"
+        h3 = mayDo (insert' "body") $ a ^. field' @"body"
      in Object $ h1 $ h2 $ h3 mempty
 
 instance ToJSON (In (ArticleR "update")) where

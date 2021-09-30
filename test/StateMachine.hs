@@ -16,7 +16,7 @@ module StateMachine where
 import Control.Lens ((%~))
 import Data.Aeson (FromJSON, ToJSON, eitherDecode, encode)
 import Data.Functor.Classes (Eq1, Ord1)
-import Data.Generics.Product (field, getField)
+import Data.Generics.Product (HasField' (field'), getField)
 import qualified Data.Semigroup as SG (Last (Last, getLast))
 import Data.Set (delete, insert)
 import qualified Data.Set as S (empty, map, member)
@@ -87,13 +87,13 @@ transition m cm res = case (cm, res) of
   (AuthCommand mref cm', AuthResponse res') -> case (mref, cm', res') of
     -- FIXME: Register when login?
     (_, Register cr, Registered ref em pw t) ->
-      m & field @"users" %~ ((ref, cr) :)
-        & field @"emails" %~ ((ref, em) :)
-        & field @"credentials" %~ ((em, pw) :)
-        & field @"tokens" %~ ((t, em) :)
+      m & field' @"users" %~ ((ref, cr) :)
+        & field' @"emails" %~ ((ref, em) :)
+        & field' @"credentials" %~ ((em, pw) :)
+        & field' @"tokens" %~ ((t, em) :)
     -- FIXME: How about double login with different identity?
     (_, Login _ _, LoggedIn) -> m
-    (Just t, Logout, LoggedOut) -> m & field @"tokens" %~ deleteByRef t
+    (Just t, Logout, LoggedOut) -> m & field' @"tokens" %~ deleteByRef t
     _failed -> m
   (VisitorCommand _ _, _) -> m
   (UserCommand (Just t) cm', UserResponse res') -> fromMaybe m $ do
@@ -108,16 +108,7 @@ transition m cm res = case (cm, res) of
             ref' = fromMaybe ref m_uid
             pw' = fromMaybe pw m_pw
          in m
-              & field @"tokens" %~ ((t', em') :) . deleteByRef t
-              & field @"emails" %~ ((ref', em') :) . deleteByRef ref
-              & field @"credentials" %~ ((em', pw') :) . deleteByRef em
-              & field @"userFollowUser" %~ S.map (\us@(u1, u2) -> (if u1 == ref then (ref', u2) else if u2 == ref then (u1, ref') else us))
-              & field @"userFavoriteArticle" %~ S.map (\ua@(u, a) -> (if u == ref then (ref', a) else ua))
-              & field @"userCreateComment" %~ S.map (\uc@(u, c) -> (if u == ref then (ref', c) else uc))
-              & field @"userCreateArticle" %~ S.map (\ua@(u, a) -> (if u == ref then (ref', a) else ua))
-      (FollowUser ref', FollowedUser) -> m & field @"userFollowUser" %~ insert (ref, ref')
-      (UnfollowUser ref', UnfollowedUser) -> m & field @"userFollowUser" %~ delete (ref, ref')
-              & field @"users"
+              & field' @"users"
                 %~ fmap
                   ( \orig@(u, cr) ->
                       let cr' =
@@ -130,40 +121,49 @@ transition m cm res = case (cm, res) of
                                 Just (SG.Last new_un) -> const new_un
                        in if u == ref then (ref', cr') else orig
                   )
+              & field' @"tokens" %~ ((t', em') :) . deleteByRef t
+              & field' @"emails" %~ ((ref', em') :) . deleteByRef ref
+              & field' @"credentials" %~ ((em', pw') :) . deleteByRef em
+              & field' @"userFollowUser" %~ S.map (\us@(u1, u2) -> (if u1 == ref then (ref', u2) else if u2 == ref then (u1, ref') else us))
+              & field' @"userFavoriteArticle" %~ S.map (\ua@(u, a) -> (if u == ref then (ref', a) else ua))
+              & field' @"userCreateComment" %~ S.map (\uc@(u, c) -> (if u == ref then (ref', c) else uc))
+              & field' @"userCreateArticle" %~ S.map (\ua@(u, a) -> (if u == ref then (ref', a) else ua))
+      (FollowUser ref', FollowedUser) -> m & field' @"userFollowUser" %~ insert (ref, ref')
+      (UnfollowUser ref', UnfollowedUser) -> m & field' @"userFollowUser" %~ delete (ref, ref')
       (CreateArticle cr, CreatedArticle ref') ->
         m
-          & field @"articles" %~ ((ref', cr) :)
-          & field @"userCreateArticle" %~ insert (ref, ref')
+          & field' @"articles" %~ ((ref', cr) :)
+          & field' @"userCreateArticle" %~ insert (ref, ref')
       (UpdateArticle ref' (ArticleUpdate au), UpdatedArticle m_aid) ->
         case m_aid of
           Nothing -> m
           Just aid ->
             m
-              & field @"userCreateArticle" %~ insert (ref, aid) . delete (ref, ref')
-              & field @"userFavoriteArticle" %~ S.map (\orig@(u, o_aid) -> if o_aid == ref' then (u, aid) else orig)
-              & field @"articleHasComment" %~ S.map (\orig@(o_aid, c) -> if o_aid == ref' then (aid, c) else orig)
-              & field @"articles" %~ case findByRef ref' (articles m) of
+              & field' @"userCreateArticle" %~ insert (ref, aid) . delete (ref, ref')
+              & field' @"userFavoriteArticle" %~ S.map (\orig@(u, o_aid) -> if o_aid == ref' then (u, aid) else orig)
+              & field' @"articleHasComment" %~ S.map (\orig@(o_aid, c) -> if o_aid == ref' then (aid, c) else orig)
+              & field' @"articles" %~ case findByRef ref' (articles m) of
                 Nothing -> error "impossible"
                 Just a ->
                   let a' =
-                        a & field @"title" %~ case getField @"title" au of
+                        a & field' @"title" %~ case getField @"title" au of
                           Nothing -> Prelude.id
                           Just (SG.Last new_tt) -> const new_tt
                    in ((aid, a') :) . deleteByRef ref'
       (DeleteArticle ref', DeletedArticle) ->
         m
-          & field @"articles" %~ deleteByRef ref'
-          & field @"userCreateArticle" %~ delete (ref, ref')
+          & field' @"articles" %~ deleteByRef ref'
+          & field' @"userCreateArticle" %~ delete (ref, ref')
       (AddCommentToArticle ref' c, AddedCommentToArticle ref'') ->
         m
-          & field @"comments" %~ ((ref'', c) :)
-          & field @"articleHasComment" %~ insert (ref', ref'')
+          & field' @"comments" %~ ((ref'', c) :)
+          & field' @"articleHasComment" %~ insert (ref', ref'')
       (DeleteComment ref' ref'', DeletedComment) ->
         m
-          & field @"comments" %~ deleteByRef ref''
-          & field @"articleHasComment" %~ delete (ref', ref'')
-      (FavoriteArticle ref', FavoritedArticle) -> m & field @"userFavoriteArticle" %~ insert (ref, ref')
-      (UnfavoriteArticle ref', UnfavoritedArticle) -> m & field @"userFavoriteArticle" %~ delete (ref, ref')
+          & field' @"comments" %~ deleteByRef ref''
+          & field' @"articleHasComment" %~ delete (ref', ref'')
+      (FavoriteArticle ref', FavoritedArticle) -> m & field' @"userFavoriteArticle" %~ insert (ref, ref')
+      (UnfavoriteArticle ref', UnfavoritedArticle) -> m & field' @"userFavoriteArticle" %~ delete (ref, ref')
       (FeedArticles, _) -> m
       _failed -> m
   _failed -> m
