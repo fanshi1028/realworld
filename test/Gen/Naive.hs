@@ -7,12 +7,12 @@
 module Gen.Naive where
 
 import Domain.Article (ArticleR (..))
+import Domain.Comment (CommentR (..))
 import Domain.User (UserR (..))
 import Domain.Util.Field (Bio (Bio), Body (Body), Description (Description), Email (Email), Image (Image), Tag (Tag), Title (Title), Username (Username))
+import Domain.Util.JSON.To (Out (Out))
 import Test.QuickCheck (Arbitrary (arbitrary, shrink), genericShrink)
 import Test.QuickCheck.Arbitrary.ADT (ToADTArbitrary, genericArbitrary)
-import Domain.Comment (CommentR(..))
-import Domain.Util.JSON.To (Out(Out))
 
 -- $setup
 -- >>> import Test.QuickCheck (sample')

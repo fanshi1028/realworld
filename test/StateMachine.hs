@@ -362,7 +362,8 @@ mock m =
                     Just (SG.Last a) -> case validate a of
                       Left _ -> Nothing
                       Right _ -> pure $ pure a
-                  maybeGenSym a = maybe (pure Nothing) (const $ Just <$> genSym) a
+                  maybeGenSym Nothing = pure Nothing
+                  maybeGenSym (Just _) = Just <$> genSym
                   o_em = getField @"email" o_uc
                   o_un = getField @"username" o_uc
               _ <- validate' $ getField @"bio" u
@@ -522,7 +523,6 @@ prop1 new mgr mkUrl =
     $ do
       (hist, _, res) <- runCommands sm cmds
       prettyCommands sm hist $ checkCommandNames cmds $ res === Ok
-      pure ()
 
 prop2 :: IO Application -> Manager -> (Int -> BaseUrl) -> Property
 prop2 new mgr mkUrl =

@@ -14,6 +14,7 @@ import Authorization (TokenAuth)
 import Control.Lens ((^.))
 import Data.Aeson (FromJSON, ToJSON (toEncoding, toJSON), Value (Object, String), parseJSON, withObject, (.:))
 import Data.Aeson.Types (Parser)
+import Data.Generics.Product (field')
 import Data.HashMap.Strict (insert)
 import qualified Data.HashMap.Strict as HM (insert)
 import Data.Password.Argon2 (Password, unsafeShowPassword)
@@ -35,7 +36,6 @@ import Servant.Client (HasClient (Client, clientWithRoute))
 import Servant.Client.Core (requestHeaders)
 import Test.StateMachine (ToExpr (toExpr))
 import Validation (Validation (Failure, Success))
-import Data.Generics.Product (field')
 
 class TokenAuthNotEnabled
 

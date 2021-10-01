@@ -11,7 +11,7 @@ findByRefAll :: (Foldable t, Eq a1) => a1 -> t (a1, a2) -> [a2]
 findByRefAll ref = foldl' (\acc (ref', u) -> if ref == ref' then u : acc else acc) []
 
 findByRef2All :: (Foldable t, Eq a1) => a1 -> t (a2, a1) -> [a2]
-findByRef2All ref = foldl' (\acc (u, ref') -> if ref == ref' then u:acc else acc) []
+findByRef2All ref = foldl' (\acc (u, ref') -> if ref == ref' then u : acc else acc) []
 
 deleteByRef :: (Foldable t, Eq a) => a -> t (a, b) -> [(a, b)]
 deleteByRef ref = foldl' (\acc orig@(ref', _) -> if ref == ref' then acc else orig : acc) []

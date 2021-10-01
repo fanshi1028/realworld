@@ -167,7 +167,7 @@ instance FromJSON (WithValidation (ArticleR "update")) where
               (o .:? "body" .!= pure Nothing)
               (pure $ pure Nothing)
               (pure $ pure Nothing)
-              $ pure $ pure Nothing
+              (pure $ pure Nothing)
           )
 
 -- | @since 0.2.0.0
