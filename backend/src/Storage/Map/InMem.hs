@@ -19,12 +19,12 @@ import Control.Algebra (Algebra (alg), type (:+:) (L, R))
 import Control.Effect.Error (Throw, throwError)
 import Control.Effect.Lift (Lift, sendM)
 import Control.Effect.Sum (Member)
-import Domain.Util.Error (NotFound (NotFound))
+import Domain.Util.Error (AlreadyExists (AlreadyExists), NotFound (NotFound))
 import Domain.Util.Representation (Transform (transform))
-import qualified Focus as FC (Change (Leave, Remove, Set), cases)
+import qualified Focus as FC (Change (Leave, Remove), cases)
 import GHC.TypeLits (Symbol)
 import qualified ListT (fold)
-import qualified StmContainers.Map as STM (Map, focus, insert, listT, lookup)
+import qualified StmContainers.Map as STM (Map, delete, focus, insert, listT, lookup)
 import Storage.Map (E (DeleteById, GetAll, GetById, Insert, UpdateById))
 
 -- | @since 0.1.0.0
@@ -46,6 +46,7 @@ instance
     Hashable (r "id"),
     Member (Lift STM) sig,
     Member (Throw (NotFound (r "id"))) sig,
+    Member (Throw (AlreadyExists (r "id"))) sig,
     Transform r "all" "id",
     Algebra sig m
   ) =>
@@ -66,7 +67,20 @@ instance
     where
       _getAll = ListT.fold (\r (_, v) -> pure $ v : r) [] . STM.listT
       _try action id' = sendM . STM.focus (FC.cases (Nothing, FC.Leave) action) id' >=> maybe (throwError $ NotFound id') pure
-      _tryUpdate updateF = _try $ \ele -> let new = updateF ele in (Just new, FC.Set new)
+      _tryUpdate updateF id' stmMap =
+        sendM (STM.lookup id' stmMap)
+          >>= \case
+            Nothing -> throwError $ NotFound id'
+            Just ele ->
+              let new = updateF ele
+                  newId = transform new
+               in new
+                    <$ if newId == id'
+                      then sendM $ STM.insert new newId stmMap
+                      else
+                        sendM (STM.lookup newId stmMap) >>= \case
+                          Just _ -> throwError $ AlreadyExists newId
+                          Nothing -> sendM $ STM.delete id' stmMap >> STM.insert new newId stmMap
       _tryDelete id' = _try (const (Just (), FC.Remove)) id'
   {-# INLINE alg #-}
 

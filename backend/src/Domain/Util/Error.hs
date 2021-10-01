@@ -30,6 +30,14 @@ newtype AlreadyExists a
     AlreadyExists a
   deriving (Show)
 
+-- | @since 0.2.0.0
+data CRUD = C | R | U | D deriving (Show)
+
+-- | @since 0.2.0.0
+data Forbidden a
+  = Forbidden CRUD a
+  deriving (Show)
+
 -- | @since 0.1.0.0
 data NotAuthorized (r :: Symbol -> Type) = NotAuthorized deriving (Show)
 
@@ -51,4 +59,3 @@ newtype Impossible
 --
 -- @since 0.1.0.0
 type ValidationErr = NonEmpty Text
-

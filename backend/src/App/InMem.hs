@@ -23,7 +23,7 @@ import qualified Current.Reader (run)
 import Domain.Article (ArticleR (..))
 import Domain.Comment (CommentR (..))
 import Domain.User (UserR (..))
-import Domain.Util.Error (AlreadyExists, AlreadyLogin, Impossible, NotAuthorized, NotFound, NotLogin, ValidationErr)
+import Domain.Util.Error (AlreadyExists (AlreadyExists), AlreadyLogin, Impossible, NotAuthorized, NotFound, NotLogin, ValidationErr, Forbidden (Forbidden))
 import Domain.Util.Field (Email, Tag, Time)
 import GenUUID.V1 (RequestedUUIDsTooQuickly)
 import qualified GenUUID.V1 (run)
@@ -48,6 +48,7 @@ import qualified Token.JWT (run)
 import qualified Token.JWT.Invalidate.Pure (run)
 import qualified UserAction (run)
 import qualified VisitorAction (run)
+import Servant.Server (err403)
 
 -- | @since 0.2.0.0
 --
@@ -84,6 +85,7 @@ mkApp cs jwts userDb articleDb commentDb tagDb emailUserIndex db0 db1 db2 db3 db
       (Proxy @Api)
       (Proxy @'[CookieSettings, JWTSettings])
       ( runIOinSTM
+          . runError @(Forbidden (ArticleR "id"))
           . runError @(NotAuthorized UserR)
           . runError @(NotFound (ArticleR "id"))
           . runError @(NotFound (CommentR "id"))
@@ -92,6 +94,7 @@ mkApp cs jwts userDb articleDb commentDb tagDb emailUserIndex db0 db1 db2 db3 db
           . runThrow @(NotFound Tag)
           . runThrow @(AlreadyExists (ArticleR "id"))
           . runThrow @(AlreadyExists (UserR "id"))
+          . runThrow @(AlreadyExists (CommentR "id"))
           . runThrow @(AlreadyExists Email)
           . runThrow @(AlreadyLogin UserR)
           . runThrow @(NotLogin UserR)
@@ -122,6 +125,7 @@ mkApp cs jwts userDb articleDb commentDb tagDb emailUserIndex db0 db1 db2 db3 db
           . Authentication.Token.run @UserR
           . VisitorAction.run
           . UserAction.run
+          >=> handlerErr err403
           >=> handlerErr err401
           >=> handlerErr err404
           >=> handlerErr err404
@@ -130,6 +134,7 @@ mkApp cs jwts userDb articleDb commentDb tagDb emailUserIndex db0 db1 db2 db3 db
           >=> handlerErr err404
           >=> handlerErr err400
           >=> handlerErr err400
+          >=> handlerErr err500 -- Comment AlreadyExists use 500
           >=> handlerErr err400
           >=> handlerErr err401 -- ???? FIXME
           >=> handlerErr err401
