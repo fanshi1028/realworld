@@ -30,44 +30,36 @@ import GHC.Conc (unsafeIOToSTM)
 
 {-# WARNING runIOinSTM, runSTMinIO "This is unsafe; I hope you are sure that your IO are safe to use in STM" #-}
 
--- | @since 0.1.0.0
-newtype C' a = C'
-  { run' :: STM a
-  }
-  deriving (Functor, Applicative, Monad)
-
--- | @since 0.1.0.0
-instance Algebra (Lift STM :+: Lift IO) C' where
-  alg hdl (L (LiftWith with)) = C' . with (run' . hdl)
-  alg hdl (R io) = C' . unsafeIOToSTM . alg (atomically . run' . hdl) io
-  {-# INLINE alg #-}
-
 -- | It runs each lifted IO effects,
 -- embedding them unsafely into STM effects,
 -- then combine all the STM effect into run single STM stack and run it.
 -- If you sure the side effect of your IO are safe,
 -- this runner is what you should bet on.
 --
--- @since 0.1.0.0
-runIOinSTM :: MonadIO m => C' a -> m a
-runIOinSTM = run' >>> atomically
-
--- | @since 0.1.0.0
-newtype C'' a = C''
-  { run'' :: IO a
+-- @since 0.2.0.0
+newtype C' a = C'
+  { runIOinSTM :: STM a
   }
   deriving (Functor, Applicative, Monad)
 
 -- | @since 0.1.0.0
-instance Algebra (Lift STM :+: Lift IO) C'' where
-  alg hdl (L (LiftWith with)) = C'' . atomically . with (unsafeIOToSTM . run'' . hdl)
-  alg hdl (R io) = C'' . alg (run'' . hdl) io
+instance Algebra (Lift STM :+: Lift IO) C' where
+  alg hdl (L (LiftWith with)) = C' . with (runIOinSTM . hdl)
+  alg hdl (R io) = C' . unsafeIOToSTM . alg (atomically . runIOinSTM . hdl) io
   {-# INLINE alg #-}
+
+-- | @since 0.2.0.0
+newtype C'' a = C''
+  { runSTMinIO :: IO a
+  }
+  deriving (Functor, Applicative, Monad)
 
 -- | This is __99% not__ what you want.
 -- It runs each lifted STM effect separately, which turn consecutive STM effects into consecutive IO effects.
 -- Then why bother with STM in the first place??
 --
 -- @since 0.1.0.0
-runSTMinIO :: MonadIO m => C'' a -> m a
-runSTMinIO = run'' >>> liftIO
+instance Algebra (Lift STM :+: Lift IO) C'' where
+  alg hdl (L (LiftWith with)) = C'' . atomically . with (unsafeIOToSTM . runSTMinIO . hdl)
+  alg hdl (R io) = C'' . alg (runSTMinIO . hdl) io
+  {-# INLINE alg #-}
