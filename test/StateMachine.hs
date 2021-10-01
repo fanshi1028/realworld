@@ -370,14 +370,16 @@ mock m =
               m_uid <- validate' $ getField @"username" u
               m_em <- validate' $ getField @"email" u
               m_pw <- validate' $ getField @"password" u
-              m_uid >>= \case
-                new_un
+              case m_uid of
+                Just new_un
                   | o_un == new_un -> pure ()
                   | otherwise -> guard $ all (\(_, getField @"username" -> un) -> un /= new_un) $ users m
-              m_em >>= \case
-                new_em
+                Nothing -> pure ()
+              case m_em of
+                Just new_em
                   | o_em == new_em -> pure ()
                   | otherwise -> guard $ all (\(_, getField @"email" -> em) -> em /= new_em) $ users m
+                Nothing -> pure ()
               pure $
                 UpdatedUser <$> genSym
                   <*> maybeGenSym m_uid
