@@ -91,6 +91,7 @@ instance
   where
   alg _ (L action) ctx =
     (<$ ctx) <$> case action of
+      -- FIXME: options auth? following?
       GetProfile uid -> send (Storage.Map.GetById @UserR uid) <&> flip UserProfile False . transform
       GetArticle aid -> do
         a <- send $ Storage.Map.GetById aid

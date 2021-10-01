@@ -134,7 +134,7 @@ instance ToJSON (Out (UserR "authWithToken")) where
   toJSON = wrappedToJSON "user"
   toEncoding = wrappedToEncoding "user"
 -- ^
---- >>> encode $ Out $ UserAuthWithToken (UserAuth (Email "jake@jake.jake") (Username "jake") (Bio "I work at statefarm") (Image "https://static.productionready.io/images/smiley-cyrus.jpg")) (UserToken "jwt.token.here")
+-- >>> encode $ Out $ UserAuthWithToken (UserAuth (Email "jake@jake.jake") (Username "jake") (Bio "I work at statefarm") (Image "https://static.productionready.io/images/smiley-cyrus.jpg")) (UserToken "jwt.token.here")
 -- "{\"user\":{\"image\":\"https://static.productionready.io/images/smiley-cyrus.jpg\",\"bio\":\"I work at statefarm\",\"email\":\"jake@jake.jake\",\"username\":\"jake\",\"token\":\"jwt.token.here\"}}"
 
 -- Profile

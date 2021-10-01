@@ -18,7 +18,6 @@
 -- @since 0.1.0.0
 module UserAction where
 
-import qualified Authentication (E)
 import Control.Algebra (Algebra (alg), send, type (:+:) (L, R))
 import Control.Carrier.NonDet.Church (runNonDetA)
 import Control.Effect.Catch (Catch)
@@ -35,7 +34,7 @@ import qualified Data.Semigroup as SG (Last (Last, getLast))
 import Domain.Article (ArticleR (..))
 import Domain.Comment (CommentR (..))
 import Domain.User (UserR (..))
-import Domain.Util.Error (AlreadyExists (AlreadyExists), CRUD (U), Forbidden (Forbidden), Impossible (Impossible), NotAuthorized (NotAuthorized), NotFound (NotFound), ValidationErr)
+import Domain.Util.Error (AlreadyExists (AlreadyExists), CRUD (U), Forbidden (Forbidden), Impossible (Impossible), NotAuthorized (NotAuthorized), NotFound (NotFound))
 import Domain.Util.Field (Email, Tag, Time, titleToSlug)
 import Domain.Util.Representation (Transform (transform))
 import qualified GenUUID (E (Generate))
@@ -116,17 +115,12 @@ instance
     Member (Storage.Map.E UserR) sig,
     Member (Storage.Map.E ArticleR) sig,
     Member (Storage.Map.E CommentR) sig,
-    Member (Throw ValidationErr) sig,
-    Member (Throw (NotFound (UserR "id"))) sig,
     Member (Catch (NotFound (UserR "id"))) sig,
-    Member (Authentication.E UserR) sig,
     Member (Throw (AlreadyExists (ArticleR "id"))) sig,
-    Member (Throw (NotFound (ArticleR "id"))) sig,
     Member (Throw (AlreadyExists (UserR "id"))) sig,
     Member (Throw (AlreadyExists Email)) sig,
     Member (Catch (NotFound (ArticleR "id"))) sig,
     Member (Throw (NotFound (CommentR "id"))) sig,
-    Member (Catch (NotFound (CommentR "id"))) sig,
     Member (Throw (NotAuthorized UserR)) sig,
     Member (Throw (Forbidden (ArticleR "id"))) sig,
     Member (Throw Impossible) sig,
@@ -139,7 +133,6 @@ instance
     Member (Relation.ToMany.E (UserR "id") "create" (ArticleR "id")) sig,
     Member (Relation.ToOne.E Email "of" (UserR "id")) sig,
     Member (Current.E (UserR "authWithToken")) sig,
-    Member (Catch (NotAuthorized UserR)) sig,
     Member VisitorAction.E sig,
     Member (Lift IO) sig,
     Algebra sig m
