@@ -22,7 +22,7 @@ generator m =
       genUsers = genRef $ users m
       genArticles = genRef $ articles m
       genComments = genRef $ comments m
-      genCredentials = elements $ credentials  m
+      genCredentials = elements $ credentials m
       genTokens =
         if null $ tokens m
           then pure Nothing
@@ -56,10 +56,7 @@ generator m =
             (if null $ articles m then 0 else 1, DeleteArticle <$> genArticles),
             ( if null $ articles m
                 then 0
-                else
-                  if null $ comments m
-                    then 8
-                    else 3,
+                else if null $ comments m then 8 else 3,
               AddCommentToArticle <$> genArticles <*> arbitraryRealistic
             ),
             (if null (comments m) || null (articles m) then 0 else 1, DeleteComment <$> genArticles <*> genComments),
@@ -89,7 +86,7 @@ shrinker _ =
         UpdateUser ur -> UpdateUser <$> shrinkRealistic ur
         UnfollowUser _ -> []
         CreateArticle ar -> CreateArticle <$> shrinkRealistic ar
-        UpdateArticle ref ar -> UpdateArticle ref  <$> shrinkRealistic ar
+        UpdateArticle ref ar -> UpdateArticle ref <$> shrinkRealistic ar
         DeleteArticle _ -> []
         AddCommentToArticle ref cr -> AddCommentToArticle ref <$> shrinkRealistic cr
         DeleteComment _ _ -> []

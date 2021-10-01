@@ -124,10 +124,17 @@ transition m cm res = case (cm, res) of
               & field' @"tokens" %~ ((t', em') :) . deleteByRef t
               & field' @"emails" %~ ((ref', em') :) . deleteByRef ref
               & field' @"credentials" %~ ((em', pw') :) . deleteByRef em
-              & field' @"userFollowUser" %~ S.map (\us@(u1, u2) -> (if u1 == ref then (ref', u2) else if u2 == ref then (u1, ref') else us))
-              & field' @"userFavoriteArticle" %~ S.map (\ua@(u, a) -> (if u == ref then (ref', a) else ua))
-              & field' @"userCreateComment" %~ S.map (\uc@(u, c) -> (if u == ref then (ref', c) else uc))
-              & field' @"userCreateArticle" %~ S.map (\ua@(u, a) -> (if u == ref then (ref', a) else ua))
+              & field' @"userFollowUser"
+                %~ S.map
+                  ( \case
+                      us@(u1, u2)
+                        | u1 == ref -> (ref', u2)
+                        | u2 == ref -> (u1, ref')
+                        | otherwise -> us
+                  )
+              & field' @"userFavoriteArticle" %~ S.map (\ua@(u, a) -> if u == ref then (ref', a) else ua)
+              & field' @"userCreateComment" %~ S.map (\uc@(u, c) -> if u == ref then (ref', c) else uc)
+              & field' @"userCreateArticle" %~ S.map (\ua@(u, a) -> if u == ref then (ref', a) else ua)
       (FollowUser ref', FollowedUser) -> m & field' @"userFollowUser" %~ insert (ref, ref')
       (UnfollowUser ref', UnfollowedUser) -> m & field' @"userFollowUser" %~ delete (ref, ref')
       (CreateArticle cr, CreatedArticle ref') ->
@@ -330,11 +337,9 @@ mock m =
               guard $ all ((/= transform cr) . UserId . getField @"username" . snd) $ users m
               guard $ all ((/= getField @"email" cr) . getField @"email" . snd) $ users m
               pure $ Registered <$> genSym <*> genSym <*> genSym <*> genSym
-            Login em pw ->
-              pure $
-                if elem (em, pw) $ credentials m
-                  then AuthResponse LoggedIn
-                  else FailResponse ""
+            Login em pw
+              | (em, pw) `elem` credentials m -> pure $ AuthResponse LoggedIn
+              | otherwise -> pure $ FailResponse ""
             Logout -> pure $ AuthResponse LoggedOut
         VisitorCommand _ vc -> maybe (pure $ FailResponse "") (VisitorResponse <$>) $ case vc of
           GetProfile _ -> pure $ pure GotProfile
@@ -365,14 +370,14 @@ mock m =
               m_uid <- validate' $ getField @"username" u
               m_em <- validate' $ getField @"email" u
               m_pw <- validate' $ getField @"password" u
-              m_uid >>= \new_un ->
-                if o_un == new_un
-                  then pure ()
-                  else guard $ all (\(_, getField @"username" -> un) -> un /= new_un) $ users m
-              m_em >>= \new_em ->
-                if o_em == new_em
-                  then pure ()
-                  else guard $ all (\(_, getField @"email" -> em) -> em /= new_em) $ users m
+              m_uid >>= \case
+                new_un
+                  | o_un == new_un -> pure ()
+                  | otherwise -> guard $ all (\(_, getField @"username" -> un) -> un /= new_un) $ users m
+              m_em >>= \case
+                new_em
+                  | o_em == new_em -> pure ()
+                  | otherwise -> guard $ all (\(_, getField @"email" -> em) -> em /= new_em) $ users m
               pure $
                 UpdatedUser <$> genSym
                   <*> maybeGenSym m_uid
@@ -399,10 +404,10 @@ mock m =
               _ <- validate' $ getField @"description" ar
               _ <- validate' $ getField @"body" ar
               orig_tt <- getField @"title" <$> findByRef ref (articles m)
-              m_tt >>= \new_tt ->
-                if orig_tt == new_tt
-                  then pure ()
-                  else guard $ all (\(_, getField @"title" -> tt) -> tt /= new_tt) $ articles m
+              m_tt >>= \case
+                new_tt
+                  | orig_tt == new_tt -> pure ()
+                  | otherwise -> guard $ all (\(_, getField @"title" -> tt) -> tt /= new_tt) $ articles m
               guard $ (uRef, ref) `S.member` userCreateArticle m
               pure $ UpdatedArticle <$> maybeGenSym m_tt
             DeleteArticle ref -> do
