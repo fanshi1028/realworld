@@ -18,8 +18,8 @@
 -- @since 0.1.0.0
 module Domain.User (UserR (..)) where
 
-import Data.Aeson (FromJSON (parseJSON), ToJSON (toEncoding, toJSON), Value (Object), defaultOptions, genericParseJSON, genericToJSON)
-import Data.Generic.HKD (Construct (construct), HKD)
+import Data.Aeson (FromJSON (parseJSON), ToJSON (toEncoding, toJSON), Value (Object), defaultOptions, genericParseJSON, genericToJSON, withObject, (.!=), (.:?))
+import Data.Generic.HKD (Construct (construct), HKD, build)
 import qualified Data.HashMap.Strict as HM (insert)
 import Data.Password.Argon2 (Password)
 import qualified Data.Semigroup as SG (Last)
@@ -246,7 +246,17 @@ newtype instance UserR "update" = UserUpdate (HKD (HKD (UserR "updateInternal") 
 
 -- | @since 0.2.0.0
 instance FromJSON (WithValidation (UserR "update")) where
-  parseJSON = fmap UserUpdate . construct <<$>> genericParseJSON defaultOptions
+  parseJSON = withObject "UpdateUser" $ \o ->
+    UserUpdate
+      <<$>> construct
+        <$> construct
+          ( build @(HKD (HKD (HKD (UserR "updateInternal") SG.Last) Maybe) WithValidation)
+              (o .:? "email" .!= pure Nothing)
+              (o .:? "password" .!= pure Nothing)
+              (o .:? "username" .!= pure Nothing)
+              (o .:? "bio" .!= pure Nothing)
+              (o .:? "image" .!= pure Nothing)
+          )
 
 -- | @since 0.2.0.0
 instance FromJSON (In (WithValidation (UserR "update"))) where
