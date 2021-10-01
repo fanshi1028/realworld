@@ -142,7 +142,7 @@ mkApp cs jwts userDb articleDb commentDb tagDb emailUserIndex db0 db1 db2 db3 db
           >=> handlerErr err500
           >=> handlerErr err400
           >=> handlerErr err500
-          >=> \(traces, x) -> print traces >> pure x
+          >=> pure . snd
       )
       server
   where
