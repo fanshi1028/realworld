@@ -2,15 +2,18 @@
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE FlexibleInstances #-}
-{-# OPTIONS_GHC -Wno-orphans #-}
+{-# LANGUAGE StandaloneDeriving #-}
 
 -- | @since 0.2.0.0
 module Gen.Realistic where
 
 import Data.Password.Argon2 (Password, mkPassword)
 import Data.Password.Validate (ValidationResult (ValidPassword), defaultPasswordPolicy_, validatePassword)
-import Domain.User (UserR (UserAuth, UserLogin, UserRegister))
-import Domain.Util.Field (Bio (Bio), Body (Body), Description (Description), Email (Email), Image (Image), Tag (Tag), Title (Title), Username (Username))
+import Domain.Article (ArticleR (ArticleCreate, ArticleUpdate, Article))
+import Domain.Comment (CommentR (CommentCreate))
+import Domain.User (UserR (UserAuth, UserLogin, UserRegister, UserUpdate, UserUpdateInternal, UserId))
+import Domain.Util.Field (Bio (Bio), Body (Body), Description (Description), Email (Email), Image (Image), Tag (Tag), Title (Title), Username (Username), Time)
+import Domain.Util.JSON.From (In (In))
 import Faker (Fake)
 import qualified Faker.Book as Book
 import qualified Faker.Book.CultureSeries as CultureSeries
@@ -35,11 +38,9 @@ import qualified Faker.TvShow.GameOfThrones as GameOfThrones
 import qualified Faker.TvShow.SiliconValley as SiliconValley
 import qualified Faker.TvShow.SouthPark as SouthPark
 import qualified Faker.TvShow.TheItCrowd as TheItCrowd
-import Test.QuickCheck (Arbitrary (arbitrary), Gen, arbitraryASCIIChar, elements, listOf, suchThat)
+import Test.QuickCheck (Arbitrary (arbitrary, shrink), Gen, arbitraryASCIIChar, elements, listOf, suchThat)
 import Test.QuickCheck.Gen.Faker (fakeQuickcheck)
-import Domain.Util.JSON.From (In(In))
-import Domain.Article (ArticleR (ArticleCreate))
-import Domain.Comment (CommentR (CommentCreate))
+import Data.Generic.HKD (deconstruct)
 
 -- $setup
 -- >>> import Test.QuickCheck (sample')
@@ -49,6 +50,9 @@ newtype Realistic a = Realistic {getRealistic :: a} deriving newtype (Show)
 
 arbitraryRealistic :: Arbitrary (Realistic a) => Gen a
 arbitraryRealistic = getRealistic <$> arbitrary
+
+shrinkRealistic :: Arbitrary (Realistic a) => a -> [a]
+shrinkRealistic = getRealistic <<$>> shrink . Realistic
 
 -- | @since 0.2.0.0
 --
@@ -144,37 +148,65 @@ instance Arbitrary (Realistic Body) where
 instance Arbitrary (Realistic Tag) where
   arbitrary = Realistic . Tag <$> genRealisticBuzzword
 
--- shrink (Realistic (Tag t)) = Realistic . Tag <$> shrink t
-
 instance Arbitrary (Realistic a) => Arbitrary (Realistic [a]) where
   arbitrary = Realistic <$> (getRealistic <<$>> listOf arbitrary)
+  shrink (Realistic xs) = Realistic <$> (getRealistic <<$>> shrink (Realistic <$> xs))
 
 -- | @since 0.2.0.0
 -- >>> sample' $ arbitrary @(Realistic (UserR "auth"))
 -- [UserAuth {email = "erlich@bachmanity.test", username = "Ben Lyon", bio = "For ever and a day.", image = "imageTBE"},UserAuth {email = "laurie@raviga.test", username = "Arie Aufderhar Wisozk", bio = " audiences are going to adore your tour de force performance as the forceful denim-clad court reporter in 'The Court Reporter Sported Jorts', the jet-setting jort-sporting court reporter story", image = "imageTBE"},UserAuth {email = "Merry_Okuneva-541711812@Williamson_LLC.net", username = "Hubert Zieme Luettgen", bio = "When you play a game of thrones you win or you die.", image = "imageTBE"},UserAuth {email = "daniel.carey@reynholm.test", username = "Doug Updegrave", bio = "For ever and a day.", image = "imageTBE"},UserAuth {email = "jared@piedpiper.test", username = "Mr. Lorenzo Schaefer Cartwright", bio = "I'm the dude, so that's what you call me. That or, uh His Dudeness, or uh Duder, or El Duderino, if you're not into the whole brevity thing.", image = "imageTBE"},UserAuth {email = "Tommie_Huel-104543348@Franecki_Inc.net", username = "Mable Kerluke", bio = "There is nothing either good or bad, but thinking makes it so.", image = "imageTBE"},UserAuth {email = "Greta_Rice-871679444@Zemlak_LLC.net", username = "Frida Olson Kerluke", bio = "The world is grown so bad that wrens make prey where eagles dare not perch.", image = "imageTBE"},UserAuth {email = "johan@hotmail.test", username = "Janeen Reinger", bio = "Portnoy finds joy in hoi polloi boy toy", image = "imageTBE"},UserAuth {email = "Augustus_Smitham-392056915@Dare_Group.name", username = "Mr. Libby Quitzon Donnelly", bio = "When you play a game of thrones you win or you die.", image = "imageTBE"},UserAuth {email = "erlich@bachmanity.test", username = "Jimmy DeLocke", bio = "Portnoy finds joy in hoi polloi boy toy", image = "imageTBE"},UserAuth {email = "johan@hotmail.test", username = "Mr. Brigid Schaden Champlin", bio = "For ever and a day.", image = "imageTBE"}]
 instance Arbitrary (Realistic (UserR "auth")) where
   arbitrary = Realistic <$> (UserAuth <$> arbitraryRealistic <*> arbitraryRealistic <*> arbitraryRealistic <*> arbitraryRealistic)
+  shrink (Realistic (UserAuth em user bio im)) =
+    Realistic <$> (UserAuth <$> shrinkRealistic em <*> shrinkRealistic user <*> shrinkRealistic bio <*> shrinkRealistic im)
 
 -- FIXME realistic validated instance?
 instance Arbitrary (Realistic Password) where
   arbitrary =
     Realistic
       <$> (mkPassword . fromString <$> (elements [6 .. 15] >>= flip replicateM arbitraryASCIIChar))
-      -- <$> (mkPassword <$> arbitrary)
-      -- <$> (mkPassword . fromString <$> listOf arbitraryASCIIChar)
+        -- <$> (mkPassword <$> arbitrary)
+        -- <$> (mkPassword . fromString <$> listOf arbitraryASCIIChar)
         `suchThat` (\pw -> validatePassword defaultPasswordPolicy_ pw == ValidPassword)
 
-instance Arbitrary (Realistic a)  => Arbitrary (Realistic (In a)) where
+instance Arbitrary (Realistic a) => Arbitrary (Realistic (In a)) where
   arbitrary = arbitrary >>= \(Realistic a) -> pure (Realistic (In a))
 
 instance Arbitrary (Realistic (UserR "login")) where
   arbitrary = Realistic <$> (UserLogin <$> arbitraryRealistic <*> arbitraryRealistic)
+  shrink (Realistic (UserLogin em pw)) = Realistic <$> (UserLogin <$> shrinkRealistic em <*> shrinkRealistic pw)
 
 instance Arbitrary (Realistic (UserR "create")) where
   arbitrary = Realistic <$> (UserRegister <$> arbitraryRealistic <*> arbitraryRealistic <*> arbitraryRealistic)
+  shrink (Realistic (UserRegister u em pw)) =
+    Realistic <$> (UserRegister <$> shrinkRealistic u <*> shrinkRealistic em <*> shrinkRealistic pw)
 
 instance Arbitrary (Realistic (ArticleR "create")) where
   arbitrary = Realistic <$> (ArticleCreate <$> arbitraryRealistic <*> arbitraryRealistic <*> arbitraryRealistic <*> arbitraryRealistic)
+  shrink (Realistic (ArticleCreate tt d b ts)) =
+    Realistic <$> (ArticleCreate <$> shrinkRealistic tt <*> shrinkRealistic d <*> shrinkRealistic b <*> shrinkRealistic ts)
 
 instance Arbitrary (Realistic (CommentR "create")) where
-  arbitrary = Realistic <$> (CommentCreate <$> genRealisticTitle)
+  arbitrary = Realistic . CommentCreate <$> genRealisticTitle
+  shrink (Realistic (CommentCreate c)) = Realistic . CommentCreate <$> shrink c
+
+instance Arbitrary (Realistic (UserR "updateInternal")) where
+  arbitrary = Realistic <$> (UserUpdateInternal <$> arbitraryRealistic <*> arbitraryRealistic <*> arbitraryRealistic <*> arbitraryRealistic <*> arbitraryRealistic)
+  shrink (Realistic (UserUpdateInternal em pw u b im)) =
+    Realistic <$> (UserUpdateInternal <$> shrinkRealistic em <*> shrinkRealistic pw <*> shrinkRealistic u <*> shrinkRealistic b <*> shrinkRealistic im)
+
+instance Arbitrary (Realistic (UserR "update")) where
+  arbitrary = Realistic . UserUpdate . deconstruct . deconstruct <$> arbitraryRealistic
+
+instance Arbitrary (Realistic (UserR "id")) where
+  arbitrary = Realistic . UserId <$> arbitraryRealistic
+
+deriving newtype instance Arbitrary (Realistic Time)
+
+instance Arbitrary (Realistic (ArticleR "all")) where
+  arbitrary = Realistic <$> (Article <$> arbitraryRealistic <*> arbitraryRealistic <*> arbitraryRealistic <*> arbitraryRealistic <*> arbitraryRealistic <*> arbitraryRealistic)
+  shrink (Realistic (Article tt d b ct ud au)) =
+    Realistic <$> (Article <$> shrinkRealistic tt <*> shrinkRealistic d <*> shrinkRealistic b <*> shrinkRealistic ct <*> shrinkRealistic ud <*> shrinkRealistic au)
+
+instance Arbitrary (Realistic (ArticleR "update")) where
+  arbitrary = Realistic . ArticleUpdate . deconstruct . deconstruct <$> arbitraryRealistic

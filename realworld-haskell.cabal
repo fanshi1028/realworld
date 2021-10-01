@@ -168,6 +168,10 @@ test-suite realworld-haskell-test
   other-modules:    Gen.Naive
                     Gen.Realistic
                     Roundtrip
+                    StateMachine
+                    StateMachine.Types
+                    StateMachine.Util
+                    StateMachine.Gen
                     Orphans
   ghc-options: -threaded -rtsopts -with-rtsopts=-N
   build-depends:
@@ -181,4 +185,12 @@ test-suite realworld-haskell-test
     , tasty
     , tasty-hspec
     , tasty-rerun
+    , tasty-quickcheck
+    , http-types    ^>=0.12.3
+    , quickcheck-state-machine
+    , servant-client
+    , servant-client-core
+    , http-client
     , containers
+    , lens
+    , warp                 ^>=3.3.17
