@@ -19,7 +19,7 @@ import Data.Functor.Classes (Eq1, Ord1)
 import Data.Generics.Product (HasField' (field'), getField)
 import qualified Data.Semigroup as SG (Last (Last, getLast))
 import Data.Set (delete, insert)
-import qualified Data.Set as S (empty, map, member)
+import qualified Data.Set as S (empty, foldl', insert, map, member)
 import Domain.Article (ArticleR (..))
 import Domain.Comment (CommentR (..))
 import Domain.User (UserR (..))
@@ -161,6 +161,8 @@ transition m cm res = case (cm, res) of
         m
           & field' @"articles" %~ deleteByRef ref'
           & field' @"userCreateArticle" %~ delete (ref, ref')
+          & field' @"userFavoriteArticle" %~ S.foldl' (\acc orig@(_, o_aid) -> if o_aid == ref' then acc else S.insert orig acc) S.empty
+          & field' @"articleHasComment" %~ S.foldl' (\acc orig@(o_aid, _) -> if o_aid == ref' then acc else S.insert orig acc) S.empty
       (AddCommentToArticle ref' c, AddedCommentToArticle ref'') ->
         m
           & field' @"comments" %~ ((ref'', c) :)
@@ -200,7 +202,7 @@ postcondition m cmd res =
       allL = [usersL, emailsL, credentialsL, articlesL, commentsL, followL, favoriteL, hasCommentL, createArticleL, tokensL]
       authInv = [articlesL, commentsL, followL, favoriteL, hasCommentL, createArticleL]
       followInv = [emailsL, credentialsL, usersL, articlesL, commentsL, favoriteL, hasCommentL, createArticleL, tokensL]
-      articleInv = [emailsL, credentialsL, usersL, commentsL, followL, favoriteL, hasCommentL, tokensL]
+      articleInv = [emailsL, credentialsL, usersL, followL, tokensL]
       commentInv = [emailsL, credentialsL, usersL, articlesL, followL, favoriteL, createArticleL, tokensL]
       favoriteInv = [emailsL, credentialsL, usersL, articlesL, commentsL, followL, hasCommentL, createArticleL, tokensL]
    in case (cmd, res) of
@@ -269,7 +271,7 @@ postcondition m cmd res =
                   .&& notMember (ref'', ref') (userCreateArticle m) .// "before: user didn't created the article"
                   .&& on (-) articlesL m' m .== 1 .// "after: added 1 to articles"
                   .&& on (-) createArticleL m' m .== 1 .// "after: added 1 to userCreateArticle"
-                  .&& Boolean (and $ on (==) <$> articleInv <*> pure m <*> pure m') .// "article invariant"
+                  .&& Boolean (and $ on (==) <$> commentsL : favoriteL : hasCommentL : articleInv <*> pure m <*> pure m') .// "article invariant"
               (UpdateArticle ref' _, UpdatedArticle m_ref) ->
                 let new_aid = fromMaybe ref' m_ref
                  in findByRef' ref' (articles m) .// "before: the article exists"
