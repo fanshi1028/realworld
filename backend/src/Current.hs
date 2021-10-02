@@ -1,4 +1,3 @@
-
 -- |
 -- Description : Effect
 -- Copyright   : (c) 2021 fanshi1028

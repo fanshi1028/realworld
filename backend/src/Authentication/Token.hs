@@ -66,26 +66,22 @@ instance
             send (Relation.ToOne.GetRelated @_ @"of" @(UserR "id") em) >>= \case
               Just _ -> throwError $ AlreadyExists em
               Nothing ->
-                ( send (Storage.Map.GetById $ UserId user)
-                    >> throwError (AlreadyExists $ UserId user)
-                )
-                  `catchError` const @_ @(NotFound (UserR "id"))
-                    ( sendIO (hashPassword pw)
-                        <&> \hash -> User em hash user (Bio "") (Image "")
-                    )
+                catchError @(NotFound (UserR "id"))
+                  (send (Storage.Map.GetById $ UserId user) >> throwError (AlreadyExists $ UserId user))
+                  $ const $ sendIO (hashPassword pw) <&> \hash -> User em hash user (Bio "") (Image "")
           send $ Storage.Map.Insert @UserR u
           send $ Relation.ToOne.Relate @_ @(UserR "id") @"of" em $ UserId user
           pure $ transform u
-        Authentication.Logout ->
-          send (Current.GetCurrent @(UserR "authWithToken"))
-            >>= \(UserAuthWithToken _ t) -> send $ Token.InvalidateToken t
+        Authentication.Logout -> do
+          UserAuthWithToken _ t <- send $ Current.GetCurrent @(UserR "authWithToken")
+          send $ Token.InvalidateToken t
         Authentication.Login (UserLogin em pw) ->
           send (Relation.ToOne.GetRelated @_ @"of" em) >>= \case
             Nothing -> throwError $ NotFound em
-            Just uid ->
-              send (Storage.Map.GetById @UserR uid) >>= \a ->
-                case checkPassword pw $ getField @"password" a of
-                  PasswordCheckSuccess -> pure $ transform a
-                  PasswordCheckFail -> throwError $ NotAuthorized @UserR
+            Just uid -> do
+              a <- send $ Storage.Map.GetById @UserR uid
+              case checkPassword pw $ getField @"password" a of
+                PasswordCheckSuccess -> pure $ transform a
+                PasswordCheckFail -> throwError $ NotAuthorized @UserR
   alg hdl (R other) ctx = C $ alg (run . hdl) other ctx
   {-# INLINE alg #-}

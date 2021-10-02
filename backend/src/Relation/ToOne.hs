@@ -9,7 +9,7 @@
 -- Effect of one to one relation
 --
 -- @since 0.1.0.0
-module Relation.ToOne (E(..)) where
+module Relation.ToOne (E (..)) where
 
 import GHC.TypeLits (Symbol)
 

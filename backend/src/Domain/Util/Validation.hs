@@ -32,7 +32,7 @@ import Data.Aeson.Types (withText)
 import qualified Data.HashSet as HS (fromList)
 import Data.Password.Argon2 (Password, mkPassword)
 import Data.Password.Validate (ValidationResult (InvalidPassword, ValidPassword), defaultPasswordPolicy_, validatePassword)
-import qualified Data.Semigroup as SG
+import qualified Data.Semigroup as SG (Last (Last))
 import Data.Time (UTCTime)
 import Domain.Util.Error (ValidationErr)
 import Servant (FromHttpApiData (parseQueryParam))

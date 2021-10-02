@@ -66,13 +66,10 @@ deriving via (WithNoValidation Text) instance FromJSON (WithValidation (UserR "t
 -- | @since 0.1.0.0
 instance FromHttpApiData (UserR "token") where
   parseUrlPiece =
-    ( >>=
-        \case
-          (words -> [prefix, token])
-            | (prefix == "Token") -> pure $ UserToken token
-          _ -> Left "Authentication Header should be in format: \"Authorization: Token jwt.token.here\""
-    )
-      <$> parseUrlPiece @Text
+    parseUrlPiece @Text >=> \case
+      (words -> [prefix, token])
+        | (prefix == "Token") -> pure $ UserToken token
+      _ -> Left "Authentication Header should be in format: \"Authorization: Token jwt.token.here\""
 
 -- | Representation in storage
 --

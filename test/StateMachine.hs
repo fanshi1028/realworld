@@ -317,10 +317,6 @@ postcondition m cmd res =
               _ -> error "user postcondition error"
         _ -> error "postcondition error"
 
--- invariant = Nothing
-
--- mock m c = traverse (const genSym) transition m c
--- FIXME: handle fail case
 mock :: Model Symbolic -> Command Symbolic -> GenSym (Response Symbolic)
 mock m =
   let -- HACK
@@ -330,17 +326,17 @@ mock m =
           Failure err -> Left $ show err
           Success a' -> pure a'
    in \case
-        AuthCommand m_ref ac ->
+        AuthCommand m_ref ac -> maybe (pure $ FailResponse "") (AuthResponse <$>) $
           case ac of
-            Register cr -> either (pure . FailResponse . fromString) (AuthResponse <$>) $ do
-              _ <- validate cr
+            Register cr -> do
+              _ <- rightToMaybe $ validate cr
               guard $ all ((/= transform cr) . UserId . getField @"username" . snd) $ users m
               guard $ all ((/= getField @"email" cr) . getField @"email" . snd) $ users m
               pure $ Registered <$> genSym <*> genSym <*> genSym <*> genSym
-            Login em pw
-              | (em, pw) `elem` credentials m -> pure $ AuthResponse LoggedIn
-              | otherwise -> pure $ FailResponse ""
-            Logout -> pure $ AuthResponse LoggedOut
+            Login em pw -> do
+              guard $ (em, pw) `elem` credentials m
+              pure $ pure LoggedIn
+            Logout -> pure $ pure LoggedOut
         VisitorCommand _ vc -> maybe (pure $ FailResponse "") (VisitorResponse <$>) $ case vc of
           GetProfile _ -> pure $ pure GotProfile
           GetArticle ref -> do
@@ -393,7 +389,7 @@ mock m =
               _ <- findByRef ref $ users m
               pure $ pure UnfollowedUser
             CreateArticle ca -> do
-              _ <- either (const Nothing) Just $ validate ca
+              _ <- rightToMaybe $ validate ca
               guard $ all ((/= transform ca) . ArticleId . titleToSlug . getField @"title" . snd) $ articles m
               pure $ CreatedArticle <$> genSym
             UpdateArticle ref (ArticleUpdate ar) -> do

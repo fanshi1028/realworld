@@ -16,7 +16,7 @@
 module Domain.Util.Field where
 
 import Data.Aeson (FromJSON (parseJSON), ToJSON (toEncoding, toJSON), withText)
-import Data.Password.Argon2 (mkPassword, Password, unsafeShowPassword)
+import Data.Password.Argon2 (mkPassword)
 import qualified Data.Password.Argon2 as Argon2 (Argon2, Password, PasswordHash)
 import qualified Data.Text as T (intercalate, null, toLower)
 import Data.Time (UTCTime)
@@ -35,7 +35,7 @@ newtype Email = Email Text deriving newtype (Show, Eq, Hashable, ToJSON, FromJSO
 --
 -- @since 0.1.0.0
 instance FromJSON (WithValidation Email) where
-  parseJSON = withText "email" $ pure <$> (Email <<$>> validate (not . T.null) "null email")
+  parseJSON = withText "email" $ pure . (Email <<$>> validate (not . T.null) "null email")
 
 -- ** Password
 
@@ -103,7 +103,7 @@ newtype Title = Title Text
 
 -- | @since 0.1.0.0
 instance FromJSON (WithValidation Title) where
-  parseJSON = withText "title" $ pure <$> (Title <<$>> validate (not . T.null) "null title")
+  parseJSON = withText "title" $ pure . (Title <<$>> validate (not . T.null) "null title")
 
 -- ** Description
 

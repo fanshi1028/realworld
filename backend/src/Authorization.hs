@@ -80,9 +80,10 @@ instance IsAuth TokenAuthInMem (UserR "authWithToken") where
   type AuthArgs TokenAuthInMem = '[TableInMem UserR, TableInMem' UserR "token" "id"]
   runAuth _ _ userDb tokenDb = Auth.AuthCheck $ \case
     HasToken token ->
-      atomically
-        ( STM.lookup token tokenDb
-            >>= traverse (`STM.lookup` userDb)
-            <&> maybe mempty (flip UserAuthWithToken token <<$>> pure . transform @_ @_ @"auth") . join
-        )
+      atomically $
+        STM.lookup token tokenDb
+          >>= traverse (`STM.lookup` userDb)
+          <&> \case
+            (join -> Just u) -> pure $ UserAuthWithToken (transform @_ @_ @"auth" u) token
+            _ -> mempty
     _ -> pure mempty

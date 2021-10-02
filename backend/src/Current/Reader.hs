@@ -40,10 +40,8 @@ instance
   Algebra (E (UserR "authWithToken") :+: sig) (C m)
   where
   alg _ (L GetCurrent) ctx =
-    (<$ ctx)
-      <$> do
-        R.ask >>= \case
-          Authenticated u -> pure u
-          _ -> throwError $ NotAuthorized @UserR
+    R.ask >>= \case
+      Authenticated u -> pure $ u <$ ctx
+      _ -> throwError $ NotAuthorized @UserR
   alg hdl (R other) ctx = C $ alg (run . hdl) other ctx
   {-# INLINE alg #-}

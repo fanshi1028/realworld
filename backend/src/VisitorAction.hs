@@ -103,29 +103,24 @@ instance
           <*> (fromIntegral . length <$> send (Relation.ManyToMany.GetRelatedRight @_ @(UserR "id") @"favorite" aid))
           <*> pure (UserProfile u False)
       ListArticles ->
-        runNonDetA @[] $
-          send (Storage.Map.GetAll @ArticleR) >>= oneOf
-            >>= \a -> do
-              let aid = transform a
-                  uid = getField @"author" a
-              u <- transform <$> send (Storage.Map.GetById uid)
-              ArticleWithAuthorProfile a
-                <$> send (Relation.ManyToMany.GetRelatedLeft @(ArticleR "id") @"taggedBy" @Tag aid)
-                <*> pure False
-                <*> (fromIntegral . length <$> send (Relation.ManyToMany.GetRelatedRight @_ @(UserR "id") @"favorite" aid))
-                <*> pure (UserProfile u False)
+        runNonDetA @[] $ do
+          a <- send (Storage.Map.GetAll @ArticleR) >>= oneOf
+          let aid = transform a
+              uid = getField @"author" a
+          u <- transform <$> send (Storage.Map.GetById uid)
+          ArticleWithAuthorProfile a
+            <$> send (Relation.ManyToMany.GetRelatedLeft @(ArticleR "id") @"taggedBy" @Tag aid)
+            <*> pure False
+            <*> (fromIntegral . length <$> send (Relation.ManyToMany.GetRelatedRight @_ @(UserR "id") @"favorite" aid))
+            <*> pure (UserProfile u False)
       GetComments aid -> do
-        void $ send (Storage.Map.GetById @ArticleR aid)
-        runNonDetA @[] $
-          send (Relation.ToMany.GetRelated @_ @"has" @(CommentR "id") aid)
-            >>= oneOf
-            >>= \cid -> flip catchError (const @_ @(NotFound (CommentR "id")) $ throwError $ Impossible "comment id not found") $
-              do
-                Comment {..} <- send $ Storage.Map.GetById cid
-                CommentWithAuthorProfile cid createdAt updatedAt body
-                  . flip UserProfile False
-                  . transform
-                  <$> send (Storage.Map.GetById author)
+        _ <- send $ Storage.Map.GetById @ArticleR aid
+        runNonDetA @[] $ do
+          cid <- send (Relation.ToMany.GetRelated @_ @"has" @(CommentR "id") aid) >>= oneOf
+          flip (catchError @(NotFound (CommentR "id"))) (const $ throwError $ Impossible "comment id not found") $ do
+            Comment {..} <- send $ Storage.Map.GetById cid
+            auth <- transform <$> send (Storage.Map.GetById author)
+            pure $ CommentWithAuthorProfile cid createdAt updatedAt body $ UserProfile auth False
       GetTags -> send $ Storage.Set.GetAll @Tag
   alg hdl (R other) ctx = C $ alg (run . hdl) other ctx
   {-# INLINE alg #-}

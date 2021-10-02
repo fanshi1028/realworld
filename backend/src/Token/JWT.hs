@@ -26,7 +26,7 @@ import Domain.Util.Error (NotAuthorized (NotAuthorized))
 import GHC.TypeLits (Symbol)
 import Relude.Extra (un)
 import Servant.Auth.Server (CookieSettings (cookieExpires), FromJWT, JWTSettings, ToJWT, makeJWT, verifyJWT)
-import Token (E (DecodeToken, CreateToken, InvalidateToken))
+import Token (E (CreateToken, DecodeToken, InvalidateToken))
 import Token.JWT.Invalidate (E (Invalidate))
 
 -- | @since 0.1.0.0
@@ -57,7 +57,8 @@ instance
         Nothing -> throwError $ NotAuthorized @r
         (Just auth) -> pure $ auth <$ ctx
   alg _ (L (CreateToken auth)) ctx =
-    makeJWT auth <$> R.ask <*> R.asks cookieExpires >>= sendIO
+    makeJWT auth <$> R.ask <*> R.asks cookieExpires
+      >>= sendIO
       >>= either throwError (pure . (<$ ctx) . un . decodeUtf8 @Text)
   alg _ (L (InvalidateToken token)) ctx = (<$ ctx) <$> send (Invalidate token)
   alg hdl (R other) ctx = C $ alg (run . hdl) other ctx

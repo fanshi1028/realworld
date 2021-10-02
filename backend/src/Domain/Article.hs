@@ -133,7 +133,10 @@ data instance ArticleR "create" = ArticleCreate
 instance FromJSON (WithValidation (ArticleR "create")) where
   parseJSON =
     withObject "CreateArticle" $
-      \(Object . insert' "tagList" (Array mempty) -> o) -> construct <$> genericParseJSON defaultOptions o
+      insert' "tagList" (Array mempty)
+        >>> Object
+        >>> genericParseJSON defaultOptions
+        >>> fmap construct
 -- ^
 -- >>> eitherDecode' @(WithValidation (ArticleR "create")) "{\"title\":\"fjowefjew\", \"description\": \"fjowfewe\"}"
 -- >>> eitherDecode' @(WithValidation (ArticleR "create")) "{\"title\":\"fjowefjew\", \"description\": \"fjowfewe\", \"body\": null}"
