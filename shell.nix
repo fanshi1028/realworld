@@ -13,7 +13,7 @@ in project.shellFor {
 
   # Some common tools can be added with the `tools` argument
   tools = {
-    cabal = "3.2.0.0";
+    cabal = "latest";
     hlint = "latest"; # Selects the latest version in the hackage.nix snapshot
     haskell-language-server = "latest";
     ormolu = "latest";

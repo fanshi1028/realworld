@@ -42,11 +42,11 @@ common prelude
   ghc-options:
     -W -Wall -Wincomplete-uni-patterns -Wincomplete-record-updates
     -Wcompat -Wnoncanonical-monad-instances -O2
-    -- for stan
-    -fwrite-ide-info -hiedir=.hie
 
+  -- for stan
+  ghc-options:        -fwrite-ide-info -hiedir=.hie
   build-depends:
-    , base    ^>=4.14
+    , base    ^>=4.14.3
     , relude  ^>=1.0.0
 
   mixins:
@@ -58,13 +58,14 @@ common backend-internal
   build-depends:
     , aeson                 ^>=1.5.6
     , cookie                ^>=0.4.5
-    , focus                 ^>=1.0.2
+    , focus                 ^>=1.0.3
     , fused-effects         ^>=1.1.1
-    , generic-lens          ^>=2.1.0
+    , generic-lens          ^>=2.2.0
     , higgledy              ^>=0.4.1
     , jose                  ^>=0.8.4
-    , list-t                ^>=1.0.4
+    , list-t                ^>=1.0.5
     , password              ^>=3.0.0
+    , safe-exceptions       ^>=0.1.7
     , servant-auth-server   ^>=0.4.6
     , servant-server        ^>=0.18.3
     , singleton-bool        ^>=0.1.6
@@ -75,12 +76,11 @@ common backend-internal
     , uuid                  ^>=1.3.15
     , validation-selective  ^>=0.1.0
     , wai                   ^>=3.2.3
-    , safe-exceptions
-
 
 library backend-internal
   import:          prelude, backend-internal
   exposed-modules:
+    App.InMem
     Authentication
     Authentication.Pure
     Authentication.Token
@@ -132,7 +132,6 @@ library backend-internal
     Token.JWT.Invalidate.Pure
     UserAction
     VisitorAction
-    App.InMem
 
 -- other-modules:
 -- other-extensions:
@@ -148,50 +147,51 @@ executable realworld-haskell
 
   main-is:        Main.hs
   hs-source-dirs: backend/app
-  build-depends:
-    , warp                 ^>=3.3.17
+  build-depends:  warp ^>=3.3.17
 
 -- other-modules:
 -- other-extensions:
 
 test-suite realworld-haskell-test
-  import: prelude, backend-internal
+  import:         prelude, backend-internal
+
   -- import: prelude
   -- if flag(ghcid)
   --   import: backend-internal
 
   -- else
   --   build-depends: backend-internal
-  type:             exitcode-stdio-1.0
-  hs-source-dirs:
-      test
-  main-is:          Main.hs
-  other-modules:    Gen.Naive
-                    Gen.Realistic
-                    Roundtrip
-                    StateMachine
-                    StateMachine.Types
-                    StateMachine.Util
-                    StateMachine.Gen
-                    Orphans
-  ghc-options: -threaded -rtsopts -with-rtsopts=-N
+  type:           exitcode-stdio-1.0
+  hs-source-dirs: test
+  main-is:        Main.hs
+  other-modules:
+    Gen.Naive
+    Gen.Realistic
+    Orphans
+    Roundtrip
+    StateMachine
+    StateMachine.Gen
+    StateMachine.Types
+    StateMachine.Util
+
+  ghc-options:    -threaded -rtsopts -with-rtsopts=-N
   build-depends:
-    , QuickCheck
+    , containers
+    , fakedata
+    , fakedata-quickcheck
     , hspec
     , hspec-golden-aeson
+    , http-client
+    , http-types
+    , lens
+    , QuickCheck
     , quickcheck-arbitrary-adt
     , quickcheck-instances
-    , fakedata-quickcheck
-    , fakedata              ^>=1.0.1
-    , tasty
-    , tasty-hspec
-    , tasty-rerun
-    , tasty-quickcheck
-    , http-types    ^>=0.12.3
     , quickcheck-state-machine
     , servant-client
     , servant-client-core
-    , http-client
-    , containers
-    , lens
-    , warp                 ^>=3.3.17
+    , tasty
+    , tasty-hspec
+    , tasty-quickcheck
+    , tasty-rerun
+    , warp
