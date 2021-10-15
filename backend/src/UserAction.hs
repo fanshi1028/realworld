@@ -280,16 +280,14 @@ instance
                 ArticleWithAuthorProfile a tags (authUserId `elem` fus) (fromIntegral $ length fus)
                   <$> send (VisitorAction.GetProfile $ getField @"author" orig)
         DeleteArticle articleId ->
-          send (Storage.Map.GetById articleId)
-            <&> (== authUserId) . getField @"author"
-            >>= bool
-              (throwError $ NotAuthorized @UserR)
-              ( do
-                  send $ Storage.Map.DeleteById articleId
-                  send $ Relation.ToMany.Unrelate @_ @_ @"create" authUserId articleId
-                  send $ Relation.ToMany.UnrelateByKey @_ @"has" @(CommentR "id") articleId
-                  send $ Relation.ManyToMany.UnrelateByKeyRight @_ @(UserR "id") @"favorite" articleId
-              )
+          send (Storage.Map.GetById articleId) >>= \case
+            (getField @"author" -> auid)
+              | (auid == authUserId) -> do
+                send $ Storage.Map.DeleteById articleId
+                send $ Relation.ToMany.Unrelate @_ @_ @"create" authUserId articleId
+                send $ Relation.ToMany.UnrelateByKey @_ @"has" @(CommentR "id") articleId
+                send $ Relation.ManyToMany.UnrelateByKeyRight @_ @(UserR "id") @"favorite" articleId
+              | otherwise -> throwError $ NotAuthorized @UserR
         AddCommentToArticle articleId (CommentCreate txt) -> do
           t <- send $ Current.GetCurrent @Time
           commentId <- CommentId <$> send GenUUID.Generate
@@ -302,17 +300,13 @@ instance
               UserProfile auth True
         DeleteComment articleId commentId -> do
           void $ send $ Storage.Map.GetById articleId
-          send (Relation.ToMany.IsRelated @_ @_ @"has" articleId commentId)
-            >>= bool
-              (throwError $ NotFound commentId)
-              (send $ Storage.Map.GetById commentId)
-            <&> (== authUserId) . getField @"author"
-            >>= bool
-              (throwError $ NotAuthorized @UserR)
-              ( do
+          ifM (send $ Relation.ToMany.IsRelated @_ @_ @"has" articleId commentId) (throwError $ NotFound commentId) $
+            send (Storage.Map.GetById commentId) >>= \case
+              (getField @"author" -> auid)
+                | auid == authUserId -> do
                   send $ Storage.Map.DeleteById commentId
                   send $ Relation.ToMany.Unrelate @_ @_ @"has" articleId commentId
-              )
+                | otherwise -> throwError $ NotAuthorized @UserR
         FavoriteArticle articleId -> do
           a <- send $ Storage.Map.GetById articleId
           send $ Relation.ManyToMany.Relate @_ @_ @"favorite" authUserId articleId
