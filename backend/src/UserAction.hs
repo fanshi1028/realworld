@@ -277,7 +277,7 @@ instance
                 a <- case construct $ deconstruct (deconstruct orig) <> update of
                   Nothing -> error "Impossible: Missing field when update"
                   Just (construct -> SG.Last r) -> send (Storage.Map.Insert r) $> r
-                ArticleWithAuthorProfile a tags (authUserId `elem` fus) (fromIntegral $ length fus)
+                ArticleWithAuthorProfile a tags (authUserId `elem` fus) (genericLength fus)
                   <$> send (VisitorAction.GetProfile $ getField @"author" orig)
         DeleteArticle articleId ->
           send (Storage.Map.GetById articleId) >>= \case
@@ -314,7 +314,7 @@ instance
           ArticleWithAuthorProfile a
             <$> send (Relation.ManyToMany.GetRelatedLeft @_ @"taggedBy" @Tag articleId)
             <*> send (Relation.ManyToMany.IsRelated @_ @_ @"favorite" authUserId articleId)
-            <*> (fromIntegral . length <$> send (Relation.ManyToMany.GetRelatedRight @_ @(UserR "id") @"favorite" articleId))
+            <*> (genericLength <$> send (Relation.ManyToMany.GetRelatedRight @_ @(UserR "id") @"favorite" articleId))
             <*> ( UserProfile . transform
                     <$> send (Storage.Map.GetById authorId)
                     <*> send (Relation.ManyToMany.IsRelated @_ @_ @"follow" authUserId authorId)
@@ -326,7 +326,7 @@ instance
           ArticleWithAuthorProfile a
             <$> send (Relation.ManyToMany.GetRelatedLeft @_ @"taggedBy" @Tag articleId)
             <*> send (Relation.ManyToMany.IsRelated @_ @_ @"favorite" authUserId articleId)
-            <*> (fromIntegral . length <$> send (Relation.ManyToMany.GetRelatedRight @_ @(UserR "id") @"favorite" articleId))
+            <*> (genericLength <$> send (Relation.ManyToMany.GetRelatedRight @_ @(UserR "id") @"favorite" articleId))
             <*> ( UserProfile . transform
                     <$> send (Storage.Map.GetById authorId)
                     <*> send (Relation.ManyToMany.IsRelated @_ @_ @"follow" authUserId authorId)
@@ -345,7 +345,7 @@ instance
             ArticleWithAuthorProfile a
               <$> send (Relation.ManyToMany.GetRelatedLeft @_ @"taggedBy" @Tag articleId)
               <*> send (Relation.ManyToMany.IsRelated @_ @_ @"favorite" authUserId articleId)
-              <*> (fromIntegral . length <$> send (Relation.ManyToMany.GetRelatedRight @_ @(UserR "id") @"favorite" articleId))
+              <*> (genericLength <$> send (Relation.ManyToMany.GetRelatedRight @_ @(UserR "id") @"favorite" articleId))
               <*> ( UserProfile . transform
                       <$> send (Storage.Map.GetById authorId)
                       <*> send (Relation.ManyToMany.IsRelated @_ @_ @"follow" authUserId authorId)
