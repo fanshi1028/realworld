@@ -38,3 +38,4 @@ node_modules/
 /.hie/
 /.tasty-rerun-log
 /materialized/
+/result
