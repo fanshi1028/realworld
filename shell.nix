@@ -1,5 +1,8 @@
 # shell.nix
 let project = import ./default.nix;
+    index-state = "2021-10-07T00:00:00Z";
+    checkMaterialization = false;
+    materializedDir = ./materialized;
 in project.shellFor {
   # ALL of these arguments are optional.
 
@@ -13,16 +16,57 @@ in project.shellFor {
 
   # Some common tools can be added with the `tools` argument
   tools = {
-    cabal = "latest";
-    hlint = "latest"; # Selects the latest version in the hackage.nix snapshot
-    haskell-language-server = "latest";
-    ormolu = "latest";
-    ghcid = "latest";
+    cabal = {
+      inherit index-state checkMaterialization;
+      version = "3.6.0.0";
+      plan-sha256 = "mZAX06zTy8Z9u7G2wdhi7XZHB7LcS0j+2AvKou5ohlg=";
+      materialized = materializedDir + /cabal;
+    };
+    hlint = {
+      inherit index-state checkMaterialization;
+      version = "3.3.4";
+      plan-sha256 = "FBldDuwKPskZaFcr+7n1auXdoaEh5c7R1vHAx3V6zGs=";
+      materialized = materializedDir + /hlint;
+    };
+    haskell-language-server = {
+      inherit index-state checkMaterialization;
+      version = "1.4.0.0";
+      plan-sha256 = "gSxWYtUOf+orTraidRPJxqNGhtsgN/hjFhaHZuHHeg4=";
+      materialized = materializedDir + /haskell-language-server;
+    };
+    ormolu = {
+      inherit index-state checkMaterialization;
+      version = "0.3.0.1";
+      plan-sha256 = "VmCJfNcu5aNn45zQnklVPj4soK+Vr2FLWbtZMgjEz50=";
+      materialized = materializedDir + /ormolu;
+    };
+    ghcid = {
+      inherit index-state checkMaterialization;
+      version = "0.8.7";
+      plan-sha256 = "IopjzwLKTchf7SEwgzXQkOZVpFWNdm1XRxs9TK56nUU=";
+      materialized = materializedDir + /ghcid;
+    };
     # use cabal-docspec instead of doctest(which I failed to set it up right), yet it seesm that cabal-docspec is not on hackage yet
     # https://github.com/phadej/cabal-extras/tree/master/cabal-docspec
     # doctest = "latest";
-    cabal-fmt = "latest";
-    stan = "latest";
+    cabal-fmt = {
+      inherit index-state checkMaterialization;
+      version = "0.1.5.1";
+      plan-sha256 = "uFjbI0JaWBvJ7TpsyhdQ+dUO+8jO5tnxZgCqpJPciAM=";
+      materialized = materializedDir + /cabal-fmt;
+    };
+    stan = {
+      inherit index-state checkMaterialization;
+      version = "0.0.1.0";
+      plan-sha256 = "ZVtScPrqYe8/wNGG9wMEnHsPkJ7x5QSTRDeXkOoLPKI=";
+      materialized = materializedDir + /stan;
+    };
+    # hoogle = {
+    #   inherit index-state checkMaterialization;
+    #   version = "5.0.17.15";
+    #   plan-sha256 = "Z+9k15uSfml5rO/Badx0Ud+TSI/Wu92gPPTWqHBiaM4=";
+    #   materialized = materializedDir + /hoogle;
+    # };
   };
   # See overlays/tools.nix for more details
 

@@ -37,3 +37,4 @@ node_modules/
 /cabal.project.local
 /.hie/
 /.tasty-rerun-log
+/materialized/
