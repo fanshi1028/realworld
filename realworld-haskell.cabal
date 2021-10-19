@@ -26,6 +26,10 @@ flag ghcid
   default: False
   manual:  True
 
+flag stan
+  default: False
+  manual:  True
+
 common prelude
   default-language:   Haskell2010
   default-extensions:
@@ -43,8 +47,9 @@ common prelude
     -W -Wall -Wincomplete-uni-patterns -Wincomplete-record-updates
     -Wcompat -Wnoncanonical-monad-instances -O2
 
-  -- for stan
-  ghc-options:        -fwrite-ide-info -hiedir=.hie
+  if flag(stan)
+    ghc-options: -fwrite-ide-info -hiedir=.hie
+
   build-depends:
     , base    ^>=4.14.3
     , relude  ^>=1.0.0
@@ -54,7 +59,6 @@ common prelude
     relude (Relude as Prelude, Relude.Extra)
 
 common backend-internal
-  hs-source-dirs: backend/src
   build-depends:
     , aeson                 ^>=1.5.6
     , cookie                ^>=0.4.5
@@ -79,6 +83,8 @@ common backend-internal
 
 library backend-internal
   import:          prelude, backend-internal
+  ghc-options:    -j4 -ddump-timings +RTS -A64m -n2m -RTS
+  hs-source-dirs:  backend/src
   exposed-modules:
     App.InMem
     Authentication
@@ -137,17 +143,20 @@ library backend-internal
 -- other-extensions:
 
 executable realworld-haskell
-  import:         prelude, backend-internal
+  import:         prelude
 
-  -- if flag(ghcid)
-  --   import: backend-internal
+  if flag(ghcid)
+    import:         backend-internal
+    hs-source-dirs: backend/src
 
-  -- else
-  --   build-depends: backend-internal
+  else
+    build-depends: backend-internal
 
   main-is:        Main.hs
   hs-source-dirs: backend/app
   build-depends:  warp ^>=3.3.17
+  -- ghc-options:    -threaded -rtsopts -with-rtsopts=-N
+  ghc-options: -j4 -ddump-timings +RTS -A64m -n2m -RTS
 
 -- other-modules:
 -- other-extensions:
@@ -155,12 +164,12 @@ executable realworld-haskell
 test-suite realworld-haskell-test
   import:         prelude, backend-internal
 
-  -- import: prelude
-  -- if flag(ghcid)
-  --   import: backend-internal
+  if !flag(ghcid)
+    build-depends: backend-internal
 
-  -- else
-  --   build-depends: backend-internal
+  else
+    hs-source-dirs: backend/src
+
   type:           exitcode-stdio-1.0
   hs-source-dirs: test
   main-is:        Main.hs
