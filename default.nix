@@ -31,4 +31,10 @@ in pkgs.haskell-nix.project {
   index-state = "2021-10-07T00:00:00Z";
 
   # plan-sha256 = "RiN1455qlA4rp2yO6wJp9FCVzAOR20KzfmNMM3fPXTQ=";
+
+  modules = [{
+    packages.realworld-haskell.components.exes.realworld-haskell = {
+      dontStrip = false;
+    };
+  }];
 }
