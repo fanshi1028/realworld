@@ -100,7 +100,7 @@ instance
         ArticleWithAuthorProfile a
           <$> send (Relation.ManyToMany.GetRelatedLeft @_ @"taggedBy" @Tag aid)
           <*> pure False
-          <*> (fromIntegral . length <$> send (Relation.ManyToMany.GetRelatedRight @_ @(UserR "id") @"favorite" aid))
+          <*> (genericLength <$> send (Relation.ManyToMany.GetRelatedRight @_ @(UserR "id") @"favorite" aid))
           <*> pure (UserProfile u False)
       ListArticles ->
         runNonDetA @[] $ do
@@ -111,7 +111,7 @@ instance
           ArticleWithAuthorProfile a
             <$> send (Relation.ManyToMany.GetRelatedLeft @(ArticleR "id") @"taggedBy" @Tag aid)
             <*> pure False
-            <*> (fromIntegral . length <$> send (Relation.ManyToMany.GetRelatedRight @_ @(UserR "id") @"favorite" aid))
+            <*> (genericLength <$> send (Relation.ManyToMany.GetRelatedRight @_ @(UserR "id") @"favorite" aid))
             <*> pure (UserProfile u False)
       GetComments aid -> do
         _ <- send $ Storage.Map.GetById @ArticleR aid
