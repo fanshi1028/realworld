@@ -13,15 +13,15 @@
 -- Some Types appear in fields of Domain Types. Most of them are just newtype of 'Text'
 --
 -- @since 0.1.0.0
-module Domain.Util.Field where
+module Util.Field where
 
 import Data.Aeson (FromJSON (parseJSON), ToJSON (toEncoding, toJSON), withText)
 import Data.Password.Argon2 (mkPassword)
 import qualified Data.Password.Argon2 as Argon2 (Argon2, Password, PasswordHash)
 import qualified Data.Text as T (intercalate, null, toLower)
 import Data.Time (UTCTime)
-import Domain.Util.JSON.To (Out, wrappedToEncoding, wrappedToJSON)
-import Domain.Util.Validation (NoValidation (..), WithNoValidation, WithValidation, validate)
+import Util.JSON.To (Out, wrappedToEncoding, wrappedToJSON)
+import Util.Validation (NoValidation (..), WithNoValidation, WithValidation, validate)
 import Servant (FromHttpApiData)
 
 -- * Text-like fields

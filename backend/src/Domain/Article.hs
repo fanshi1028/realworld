@@ -17,18 +17,18 @@
 -- Representations for article
 --
 -- @since 0.1.0.0
-module Domain.Article (ArticleR (..)) where
+module Article (ArticleR (..)) where
 
 import Data.Aeson (FromJSON (parseJSON), ToJSON (toEncoding, toJSON), Value (Array), defaultOptions, genericParseJSON, withObject, (.!=), (.:?))
 import Data.Aeson.Types (Value (Object))
 import Data.Generic.HKD (HKD, build, construct)
 import qualified Data.HashMap.Strict as HM (insert)
 import qualified Data.Semigroup as SG (Last)
-import Domain.User (UserR)
-import Domain.Util.Field (Body, Description, Slug (Slug), Tag, Time, Title, titleToSlug)
-import Domain.Util.JSON.From (In, insert', wrappedParseJSON)
-import Domain.Util.JSON.To (Out, multiWrappedWithCountToEncoding, multiWrappedWithCountToJSON, wrappedToEncoding, wrappedToJSON)
-import Domain.Util.Validation (WithValidation)
+import User (UserR)
+import Util.Field (Body, Description, Slug (Slug), Tag, Time, Title, titleToSlug)
+import Util.JSON.From (In, insert', wrappedParseJSON)
+import Util.JSON.To (Out, multiWrappedWithCountToEncoding, multiWrappedWithCountToJSON, wrappedToEncoding, wrappedToJSON)
+import Util.Validation (WithValidation)
 import GHC.Records (getField)
 import GHC.TypeLits (Symbol)
 import Servant (FromHttpApiData)
@@ -143,7 +143,7 @@ instance FromJSON (WithValidation (ArticleR "create")) where
 -- >>> eitherDecode' @(WithValidation (ArticleR "create")) "{\"title\":\"fjowefjew\", \"description\": \"fjowfewe\", \"body\": \"hwjowf\"}"
 -- >>> eitherDecode' @(In (WithValidation (ArticleR "create"))) "{\"title\":\"fjowefjew\", \"description\": \"fjowfewe\", \"body\": \"hwjowf\"}"
 -- >>> eitherDecode' @(In (WithValidation (ArticleR "create"))) "{\"article\":\"hi\"}"
--- Left "Error in $: parsing Domain.Article.ArticleR(ArticleCreate) failed, key \"body\" not found"
+-- Left "Error in $: parsing Article.ArticleR(ArticleCreate) failed, key \"body\" not found"
 -- Left "Error in $.body: parsing Text failed, expected String, but encountered Null"
 -- Right (Success (ArticleCreate {title = "fjowefjew", description = "fjowfewe", body = "hwjowf", tagList = []}))
 -- Left "Error in $: key \"article\" not found"

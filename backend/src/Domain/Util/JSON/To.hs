@@ -9,7 +9,7 @@
 -- Utils to tweak ToJSON instances
 --
 -- @since 0.1.0.0
-module Domain.Util.JSON.To
+module Util.JSON.To
   ( -- * Types
     Out (..),
 

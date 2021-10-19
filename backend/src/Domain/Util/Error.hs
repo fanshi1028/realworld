@@ -9,7 +9,7 @@
 -- Some Types for some common errors.
 --
 -- @since 0.1.0.0
-module Domain.Util.Error where
+module Util.Error where
 
 import Data.Aeson (ToJSON (toEncoding))
 import Data.Aeson.Encoding.Internal (Encoding' (Encoding))

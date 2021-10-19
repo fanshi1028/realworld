@@ -12,11 +12,11 @@ import Data.Generic.HKD (HKD, build, construct)
 import Data.Password.Argon2 (Password, mkPassword)
 import Data.Password.Validate (ValidationResult (ValidPassword), defaultPasswordPolicy_, validatePassword)
 import qualified Data.Semigroup as SG
-import Domain.Article (ArticleR (ArticleCreate, ArticleUpdate))
-import Domain.Comment (CommentR (CommentCreate))
-import Domain.User (UserR (UserAuth, UserId, UserLogin, UserRegister, UserUpdate))
-import Domain.Util.Field (Bio (Bio), Body (Body), Description (Description), Email (Email), Image (Image), Tag (Tag), Time, Title (Title), Username (Username))
-import Domain.Util.JSON.From (In (In))
+import Article (ArticleR (ArticleCreate, ArticleUpdate))
+import Comment (CommentR (CommentCreate))
+import User (UserR (UserAuth, UserId, UserLogin, UserRegister, UserUpdate))
+import Util.Field (Bio (Bio), Body (Body), Description (Description), Email (Email), Image (Image), Tag (Tag), Time, Title (Title), Username (Username))
+import Util.JSON.From (In (In))
 import Faker (Fake)
 import qualified Faker.Book as Book
 import qualified Faker.Book.CultureSeries as CultureSeries

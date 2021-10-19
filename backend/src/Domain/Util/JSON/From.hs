@@ -9,7 +9,7 @@
 -- Utils to tweak FromJSON instances
 --
 -- @since 0.1.0.0
-module Domain.Util.JSON.From
+module Util.JSON.From
   ( -- * Types
     In (..),
 

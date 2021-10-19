@@ -16,7 +16,7 @@
 -- So we integrate validation with instance like 'FromJSON', 'FromHttpApiData', etc
 --
 -- @since 0.1.0.0
-module Domain.Util.Validation
+module Util.Validation
   ( -- * Types
     WithValidation,
     NoValidation (..),
@@ -34,7 +34,7 @@ import Data.Password.Argon2 (Password, mkPassword)
 import Data.Password.Validate (ValidationResult (InvalidPassword, ValidPassword), defaultPasswordPolicy_, validatePassword)
 import qualified Data.Semigroup as SG (Last (Last))
 import Data.Time (UTCTime)
-import Domain.Util.Error (ValidationErr)
+import Util.Error (ValidationErr)
 import Servant (FromHttpApiData (parseQueryParam))
 import qualified Validation as V (Validation (Failure, Success), failure)
 

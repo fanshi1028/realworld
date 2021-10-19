@@ -11,12 +11,12 @@
 -- Transforms between different representations of Domain Types.
 --
 -- @since 0.1.0.0
-module Domain.Util.Representation (Transform (transform)) where
+module Util.Representation (Transform (transform)) where
 
-import Domain.Article (ArticleR (..))
-import Domain.Comment (CommentR (..))
-import Domain.User (UserR (..))
-import Domain.Util.Field (Title, Username, titleToSlug)
+import Article (ArticleR (..))
+import Comment (CommentR (..))
+import User (UserR (..))
+import Util.Field (Title, Username, titleToSlug)
 import GHC.Records (HasField (getField))
 import GHC.TypeLits (Symbol)
 

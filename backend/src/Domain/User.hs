@@ -16,25 +16,25 @@
 -- Representations for user
 --
 -- @since 0.1.0.0
-module Domain.User (UserR (..)) where
+module User (UserR (..)) where
 
 import Data.Aeson (FromJSON (parseJSON), ToJSON (toEncoding, toJSON), Value (Object), defaultOptions, genericParseJSON, genericToJSON, withObject, (.!=), (.:?))
 import Data.Generic.HKD (Construct (construct), HKD, build)
 import qualified Data.HashMap.Strict as HM (insert)
 import Data.Password.Argon2 (Password)
 import qualified Data.Semigroup as SG (Last)
-import Domain.Util.Field (Bio, Email, Image, PasswordHash, Username)
-import Domain.Util.JSON.From (In, wrappedParseJSON)
-import Domain.Util.JSON.To (Out, wrappedToEncoding, wrappedToJSON)
-import Domain.Util.Validation (NoValidation (..), WithNoValidation, WithValidation)
+import Util.Field (Bio, Email, Image, PasswordHash, Username)
+import Util.JSON.From (In, wrappedParseJSON)
+import Util.JSON.To (Out, wrappedToEncoding, wrappedToJSON)
+import Util.Validation (NoValidation (..), WithNoValidation, WithValidation)
 import GHC.TypeLits (Symbol)
 import Servant (FromHttpApiData (parseUrlPiece))
 import Servant.Auth.Server (FromJWT, ToJWT (encodeJWT))
 
 -- $setup
 -- >>> import Data.Aeson (eitherDecode', encode)
--- >>> import Domain.Util.Field
--- >>> import Domain.Util.JSON.To (Out (Out))
+-- >>> import Util.Field
+-- >>> import Util.JSON.To (Out (Out))
 
 -- | Type family for different representations of users
 --
