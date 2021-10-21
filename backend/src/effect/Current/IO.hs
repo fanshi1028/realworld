@@ -18,7 +18,7 @@ import Control.Effect.Lift (Lift, sendIO)
 import Control.Effect.Sum (Member)
 import Current (E (GetCurrent))
 import Data.Time (getCurrentTime)
-import Util.Field (Time)
+import Field.Time (Time)
 
 -- | @since 0.1.0.0
 newtype C e m a = C
@@ -26,7 +26,7 @@ newtype C e m a = C
   }
   deriving (Functor, Applicative, Monad)
 
--- | @since 0.1.0.0
+-- | @since 0.2.0.0
 instance (Algebra sig m, Member (Lift IO) sig) => Algebra (E Time :+: sig) (C Time m) where
   alg _ (L GetCurrent) ctx = (<$ ctx) <$> sendIO getCurrentTime
   alg hdl (R other) ctx = C $ alg (run . hdl) other ctx

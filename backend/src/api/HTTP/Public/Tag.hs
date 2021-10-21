@@ -15,15 +15,15 @@ module HTTP.Public.Tag where
 
 import Control.Algebra (Algebra, send)
 import Control.Effect.Sum (Member)
-import Util.Field as F (Tag)
-import Util.JSON.To (Out (Out))
+import Field.Tag (Tag)
 import Servant (Get, JSON, ServerT)
+import Util.JSON.To (Out (Out))
 import qualified VisitorAction (E (GetTags))
 
 -- * API
 
 -- | @since 0.1.0.0
-type TagApi = Get '[JSON] (Out [F.Tag])
+type TagApi = Get '[JSON] (Out [Tag])
 
 -- * Server
 

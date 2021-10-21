@@ -15,12 +15,14 @@
 -- @since 0.1.0.0
 module HTTP.Util where
 
-import Util.Field (Tag, Username)
+import Field.Tag (Tag)
+import Field.Username (Username)
+import GHC.TypeLits (Symbol)
+import Servant (Capture, Delete, FromHttpApiData, Get, JSON, NoContent, Post, Put, QueryParam, ReqBody, type (:<|>), type (:>))
+import Storage.Map (CreateOf, Patch, UpdateOf)
 import Util.JSON.From (In)
 import Util.JSON.To (Out)
 import Util.Validation (NoValidation (..), WithNoValidation, WithValidation)
-import GHC.TypeLits (Symbol)
-import Servant (Capture, Delete, FromHttpApiData, Get, JSON, NoContent, Post, Put, QueryParam, ReqBody, type (:<|>), type (:>))
 
 -- * Paging
 
@@ -78,44 +80,44 @@ type Cap s r = Capture s (WithValidation r)
 -- | Convenient alias.
 --
 -- @since 0.1.0.0
-type CreateBody (r :: Symbol -> Type) = ReqBody '[JSON] (In (WithValidation (r "create")))
+type CreateBody (s :: Symbol) = ReqBody '[JSON] (In (WithValidation (CreateOf s)))
 
 -- | Convenient alias.
 --
 -- @since 0.2.0.0
-type UpdateBody (r :: Symbol -> Type) = ReqBody '[JSON] (In (WithValidation (r "update")))
+type UpdateBody (s :: Symbol) = ReqBody '[JSON] (In (WithValidation (Patch (UpdateOf s))))
 
 -- * CRUD
 
 -- ** Create
 
 -- | @since 0.1.0.0
-type CreateApi (r :: Symbol -> Type) (o :: Symbol) = CreateBody r :> Post '[JSON] (Out (r o))
+type CreateApi (s :: Symbol) o = CreateBody s :> Post '[JSON] (Out o)
 
 -- ** Read
 
 -- | @since 0.1.0.0
-type ReadApi (r :: Symbol -> Type) (o :: Symbol) = Get '[JSON] (Out (r o))
+type ReadApi (s :: Symbol) o = Get '[JSON] (Out o)
 
 -- | @since 0.1.0.0
-type ReadManyApi (r :: Symbol -> Type) (o :: Symbol) = Get '[JSON] (Out [r o])
+type ReadManyApi (s :: Symbol) o = Get '[JSON] (Out [o])
 
 -- ** Update
 
 -- | @since 0.1.0.0
-type UpdateApi (r :: Symbol -> Type) (o :: Symbol) = UpdateBody r :> Put '[JSON] (Out (r o))
+type UpdateApi (s :: Symbol) o = UpdateBody s :> Put '[JSON] (Out o)
 
 -- | @since 0.1.0.0
-type NoBodyUpdateApi (r :: Symbol -> Type) (o :: Symbol) = Post '[JSON] (Out (r o))
+type NoBodyUpdateApi (s :: Symbol) o = Post '[JSON] (Out o)
 
 -- ** Combinations
 
 -- | Update with Delete
 --
 -- @since 0.1.0.0
-type UDApi (r :: Symbol -> Type) (o :: Symbol) = UpdateApi r o :<|> Delete '[JSON] NoContent
+type UDApi (s :: Symbol) o = UpdateApi s o :<|> Delete '[JSON] NoContent
 
 -- | For togglable state
 --
 -- @since 0.1.0.0
-type ToggleApi (r :: Symbol -> Type) (o :: Symbol) = NoBodyUpdateApi r o :<|> Delete '[JSON] (Out (r o))
+type ToggleApi (s :: Symbol) o = NoBodyUpdateApi s o :<|> Delete '[JSON] (Out o)

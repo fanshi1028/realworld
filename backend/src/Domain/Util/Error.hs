@@ -39,13 +39,13 @@ data Forbidden a
   deriving (Show)
 
 -- | @since 0.1.0.0
-data NotAuthorized (r :: Symbol -> Type) = NotAuthorized deriving (Show)
+newtype NotAuthorized a = NotAuthorized a deriving (Show)
 
 -- | @since 0.1.0.0
-data AlreadyLogin (r :: Symbol -> Type) = AlreadyLogin deriving (Show)
+newtype AlreadyLogin a = AlreadyLogin a deriving (Show)
 
 -- | @since 0.1.0.0
-data NotLogin (r :: Symbol -> Type) = NotLogin deriving (Show)
+newtype NotLogin a = NotLogin a deriving (Show)
 
 -- | Use it to mark the impossible error case
 --

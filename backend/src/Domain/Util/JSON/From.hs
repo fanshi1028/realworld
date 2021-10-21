@@ -16,11 +16,13 @@ module Util.JSON.From
     -- * Helpers
     insert',
     wrappedParseJSON,
+    acceptOnlyKeys,
   )
 where
 
-import Data.Aeson (FromJSON, Value, withObject, (.:))
+import Data.Aeson (FromJSON, Value (Object), withObject, (.:))
 import Data.Aeson.Types (Object, Parser)
+import Data.HashMap.Strict (keys)
 import Relude.Extra (insertWith)
 
 -- | Wrapping type for making an "In" FromJSON instance
@@ -46,3 +48,11 @@ insert' ::
   Object ->
   Object
 insert' = insertWith (\_ old -> old)
+
+acceptOnlyKeys :: [Text] -> String -> Object -> Parser ()
+acceptOnlyKeys ks errMsg =
+  keys
+    >>> foldl' (\acc k -> if k `notElem` ks then k : acc else acc) []
+    >>> \case
+      [] -> pure ()
+      unknownFields -> fail $ errMsg ++ show unknownFields

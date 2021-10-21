@@ -19,9 +19,9 @@ import qualified Control.Effect.Reader as R (Reader, ask)
 import Control.Effect.Sum (Member)
 import Control.Effect.Throw (Throw, throwError)
 import Current (E (GetCurrent))
+import Servant.Auth.Server (AuthResult (Authenticated))
 import User (UserR)
 import Util.Error (NotAuthorized (NotAuthorized))
-import Servant.Auth.Server (AuthResult (Authenticated))
 
 -- | @since 0.1.0.0
 newtype C m a = C
@@ -31,10 +31,10 @@ newtype C m a = C
 
 -- | Only instance for 'AuthResult' ('UserR' \"authWithToken\") for now
 --
--- @since 0.1.0.0
+-- @since 0.2.0.0
 instance
   ( Algebra sig m,
-    Member (Throw (NotAuthorized UserR)) sig,
+    Member (Throw (NotAuthorized ())) sig,
     Member (R.Reader (AuthResult (UserR "authWithToken"))) sig
   ) =>
   Algebra (E (UserR "authWithToken") :+: sig) (C m)
@@ -42,6 +42,6 @@ instance
   alg _ (L GetCurrent) ctx =
     R.ask >>= \case
       Authenticated u -> pure $ u <$ ctx
-      _ -> throwError $ NotAuthorized @UserR
+      _ -> throwError $ NotAuthorized ()
   alg hdl (R other) ctx = C $ alg (run . hdl) other ctx
   {-# INLINE alg #-}

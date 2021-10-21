@@ -15,17 +15,12 @@
 -- @since 0.1.0.0
 module HTTP.Auth.User where
 
-import Authentication (E (Login, Register))
+import Authentication (E (Login, Register), HasAuth (LoginOf))
 import Control.Algebra (Algebra, send)
 import Control.Effect.Error (Throw, throwError)
 import Control.Effect.Lift (Lift, sendIO)
 import qualified Control.Effect.Reader as R (Reader, ask)
 import Control.Effect.Sum (Member)
-import User (UserR (..))
-import Util.Error (Impossible (Impossible), NotAuthorized, ValidationErr)
-import Util.JSON.From (In (In))
-import Util.JSON.To (Out (Out))
-import Util.Validation (WithValidation)
 import HTTP.Util (CreateApi)
 import Relude.Extra (un)
 import Servant
@@ -43,7 +38,12 @@ import Servant
   )
 import Servant.Auth.Server (CookieSettings, JWTSettings, SetCookie, acceptLogin)
 import qualified Storage.Map
-import Token (E (CreateToken))
+import Token (E (CreateToken), TokenOf (UserToken))
+import User (UserR (..))
+import Util.Error (Impossible (Impossible), NotAuthorized, ValidationErr)
+import Util.JSON.From (In (In))
+import Util.JSON.To (Out (Out))
+import Util.Validation (WithValidation)
 import Validation (validation)
 import Web.Cookie (setCookieValue)
 
@@ -53,11 +53,11 @@ import Web.Cookie (setCookieValue)
 --
 -- @since 0.1.0.0
 type AuthUserApi =
-  ( "login" :> ReqBody '[JSON] (In (WithValidation (UserR "login")))
+  ( "login" :> ReqBody '[JSON] (In (WithValidation (LoginOf "user")))
       -- :> Verb 'POST 200 '[JSON] (Headers '[Header "Set-Cookie" SetCookie, Header "Set-Cookie" SetCookie] (Out (UserR "authWithToken")))
       :> Verb 'POST 200 '[JSON] (Out (UserR "authWithToken"))
   )
-    :<|> CreateApi UserR "authWithToken"
+    :<|> CreateApi "user" (UserR "authWithToken")
 
 -- * Server
 
@@ -69,10 +69,10 @@ authUserServer ::
     Member (R.Reader CookieSettings) sig,
     Member (R.Reader JWTSettings) sig,
     Member (Throw Impossible) sig,
-    Member (Token.E UserR) sig,
-    Member (Authentication.E UserR) sig,
-    Member (Throw (NotAuthorized UserR)) sig,
-    Member (Storage.Map.E UserR) sig
+    Member (Token.E "user") sig,
+    Member (Authentication.E "user") sig,
+    -- Member (Throw (NotAuthorized UserR)) sig,
+    Member (Storage.Map.E "user") sig
   ) =>
   ServerT AuthUserApi m
 authUserServer =

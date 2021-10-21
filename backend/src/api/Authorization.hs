@@ -28,23 +28,24 @@ import qualified Control.Carrier.Reader as R (runReader)
 import Control.Carrier.Throw.Either (runThrow)
 import Crypto.JOSE (Error)
 import qualified Data.List as List (lookup)
-import User (UserR (UserAuthWithToken, UserToken))
-import Util.Error (NotAuthorized)
-import Util.Representation (Transform (transform))
 import Network.Wai (Request, requestHeaders)
 import Servant (FromHttpApiData (parseHeader))
 import Servant.Auth.Server (CookieSettings, JWTSettings)
 import qualified Servant.Auth.Server as Auth (AuthCheck (AuthCheck))
 import Servant.Auth.Server.Internal.Class (IsAuth (AuthArgs, runAuth))
 import qualified StmContainers.Map as STM (lookup)
+import Storage.Map (IdOf)
 import Storage.Map.InMem (TableInMem, TableInMem')
-import Token (E (DecodeToken))
+import Token (E (DecodeToken), TokenOf (..))
 import Token.JWT (run)
 import Token.JWT.Invalidate.Pure (run)
+import User (UserR (UserAuthWithToken))
+import Util.Error (NotAuthorized)
+import Util.Representation (Transform (transform))
 
 -- | @since 0.1.0.0
-pattern HasToken :: UserR "token" -> Request
-pattern HasToken token <- (List.lookup "authorization" . requestHeaders -> Just (parseHeader @(UserR "token") -> Right token))
+pattern RequestToken :: TokenOf "user" -> Request
+pattern RequestToken token <- (List.lookup "authorization" . requestHeaders -> Just (parseHeader @(TokenOf "user") -> Right token))
 
 -- | Make use of 'CookieSettings' and 'JWTSettings' from servant-auth
 --
@@ -56,14 +57,14 @@ instance IsAuth TokenAuth (UserR "authWithToken") where
   type AuthArgs TokenAuth = '[CookieSettings, JWTSettings]
   runAuth _ _ cs jwts = Auth.AuthCheck $
     \case
-      HasToken token ->
+      RequestToken token ->
         runM
           . runThrow @Error
-          . runThrow @(NotAuthorized UserR)
+          . runThrow @(NotAuthorized (TokenOf "user"))
           . R.runReader cs
           . R.runReader jwts
-          . Token.JWT.Invalidate.Pure.run @UserR
-          . Token.JWT.run @UserR
+          . Token.JWT.Invalidate.Pure.run @(TokenOf "user")
+          . Token.JWT.run @"user"
           >=> \case
             Right (Right auth) -> pure $ pure $ UserAuthWithToken auth token
             _ -> pure mempty
@@ -77,13 +78,13 @@ data TokenAuthInMem
 
 -- | @since 0.1.0.0
 instance IsAuth TokenAuthInMem (UserR "authWithToken") where
-  type AuthArgs TokenAuthInMem = '[TableInMem UserR, TableInMem' UserR "token" "id"]
+  type AuthArgs TokenAuthInMem = '[TableInMem "user", TableInMem' (TokenOf "user") (IdOf "user")]
   runAuth _ _ userDb tokenDb = Auth.AuthCheck $ \case
-    HasToken token ->
+    RequestToken token ->
       atomically $
         STM.lookup token tokenDb
           >>= traverse (`STM.lookup` userDb)
           <&> \case
-            (join -> Just u) -> pure $ UserAuthWithToken (transform @_ @_ @"auth" u) token
+            (join -> Just u) -> pure $ UserAuthWithToken (transform u) token
             _ -> mempty
     _ -> pure mempty

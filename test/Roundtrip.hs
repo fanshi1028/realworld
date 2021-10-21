@@ -5,25 +5,29 @@
 -- |
 module Roundtrip (aesonRoundtripTests) where
 
+import Article (ArticleR)
+import Authentication (AuthOf, LoginOf)
+import Comment (CommentR)
 import Data.Aeson (FromJSON, ToJSON, eitherDecode', encode)
 import Data.Typeable (typeRep)
-import Article (ArticleR)
-import Comment (CommentR)
-import User (UserR)
-import Util.Field (Tag, Time)
-import Util.JSON.From (In (In))
-import Util.JSON.To (Out)
-import Util.Validation (WithValidation)
+import Field.Tag (Tag)
+import Field.Time (Time)
 import Gen.Naive ()
 import Gen.Realistic (Realistic (Realistic))
 import Orphans ()
-import Test.Aeson.GenericSpecs (defaultSettings, roundtripAndGoldenADTSpecsWithSettings, roundtripAndGoldenSpecsWithSettings, roundtripSpecs, sampleSize)
+import Storage.Map (ContentOf, CreateOf, IdOf, Patch, UpdateOf)
+import Test.Aeson.GenericSpecs (defaultSettings, roundtripAndGoldenSpecsWithSettings, roundtripSpecs, sampleSize)
 import Test.Aeson.Internal.Utils (addBrackets)
 import Test.Hspec (Spec, describe)
 import Test.Hspec.QuickCheck (prop)
 import Test.QuickCheck (Arbitrary, Property, counterexample, (===))
 import Test.Tasty (TestTree, testGroup)
 import Test.Tasty.Hspec (testSpecs)
+import Token (TokenOf)
+import User (UserR)
+import Util.JSON.From (In (In))
+import Util.JSON.To (Out)
+import Util.Validation (WithValidation)
 import Validation (Validation (Failure, Success))
 
 -- | FIXME realistic validated instance?
@@ -47,13 +51,11 @@ roundtripSpecsWithValidation proxy =
       helper1 :: Realistic a -> Property
       helper1 (Realistic a) = case eitherDecode' @(WithValidation _) (encode a) of
         Right (Success r) -> ((===) `on` encode) a r
-        -- Right (Failure _) -> discard
         Right (Failure err) -> counterexample (show err) False
         Left err -> counterexample err False
       helper2 :: Realistic a -> Property
       helper2 (Realistic a) = case eitherDecode' @(In (WithValidation _)) (encode $ In a) of
         Right (In (Success r)) -> ((===) `on` encode . In) a r
-        -- Right (In (Failure _)) -> discard
         Right (In (Failure err)) -> counterexample (show err) False
         Left err -> counterexample err False
    in do
@@ -67,12 +69,12 @@ simpleRoundtripSpecs :: Spec
 simpleRoundtripSpecs = do
   roundtripSpecs $ Proxy @Tag
   roundtripSpecs $ Proxy @Time
-  -- NOTE: Slug is drived from Title, not need to test it? So do (AritcleR "id")
+  -- NOTE: Slug is drived from Title, not need to test it?
   -- roundtripSpecs $ Proxy @Slug
   -- roundtripSpecs $ Proxy @(AritcleR "id")
-  roundtripSpecs $ Proxy @(UserR "id")
-  roundtripSpecs $ Proxy @(CommentR "id")
-  roundtripSpecs $ Proxy @(UserR "token")
+  roundtripSpecs $ Proxy @(IdOf "user")
+  roundtripSpecs $ Proxy @(IdOf "comment")
+  roundtripSpecs $ Proxy @(TokenOf "user")
   roundtripSpecs $ Proxy @(UserR "authWithToken")
 
 -- | @since 0.2.0.0
@@ -80,42 +82,30 @@ simpleRoundtripSpecs = do
 -- Roundtrip specs with Validation
 inRoundtripSpecs :: Spec
 inRoundtripSpecs = do
-  roundtripSpecsWithValidation $ Proxy @(UserR "login")
-  roundtripSpecsWithValidation $ Proxy @(UserR "create")
-  roundtripSpecsWithValidation $ Proxy @(ArticleR "create")
-  roundtripSpecsWithValidation $ Proxy @(CommentR "create")
-
--- roundtripSpecsWithValidation $ Proxy @(UserR "update")
+  roundtripSpecsWithValidation $ Proxy @(LoginOf "user")
+  roundtripSpecsWithValidation $ Proxy @(CreateOf "user")
+  roundtripSpecsWithValidation $ Proxy @(CreateOf "article")
+  roundtripSpecsWithValidation $ Proxy @(CreateOf "comment")
+  roundtripSpecsWithValidation $ Proxy @(Patch (UpdateOf "user"))
+  roundtripSpecsWithValidation $ Proxy @(Patch (UpdateOf "article"))
 
 -- | @since 0.2.0.0
 --
--- Roundtrip specs for simple type
+-- Roundtrip specs for out type
 outRoundtripSpecs :: Spec
 outRoundtripSpecs = do
   let roundtripAndGoldenSpecs' p = roundtripAndGoldenSpecsWithSettings defaultSettings {sampleSize = 30} p
+  roundtripAndGoldenSpecs' $ Proxy @(UserR "authWithToken")
   roundtripAndGoldenSpecs' $ Proxy @(Out (UserR "authWithToken"))
+  roundtripAndGoldenSpecs' $ Proxy @(UserR "profile")
   roundtripAndGoldenSpecs' $ Proxy @(Out (UserR "profile"))
+  roundtripAndGoldenSpecs' $ Proxy @(ArticleR "withAuthorProfile")
   roundtripAndGoldenSpecs' $ Proxy @(Out (ArticleR "withAuthorProfile"))
   roundtripAndGoldenSpecs' $ Proxy @(Out [ArticleR "withAuthorProfile"])
+  roundtripAndGoldenSpecs' $ Proxy @(CommentR "withAuthorProfile")
   roundtripAndGoldenSpecs' $ Proxy @(Out (CommentR "withAuthorProfile"))
   roundtripAndGoldenSpecs' $ Proxy @(Out [CommentR "withAuthorProfile"])
   roundtripAndGoldenSpecs' $ Proxy @(Out [Tag])
-
--- | @since 0.2.0.0
-goldenAesonRoundtripTests :: IO TestTree
-goldenAesonRoundtripTests = do
-  let roundtripAndGoldenADTSpecs' p = roundtripAndGoldenADTSpecsWithSettings defaultSettings {sampleSize = 30} p
-  testGroup "golden-aeson-adt-roundtrip"
-    <$> testSpecs
-      ( do
-          roundtripAndGoldenADTSpecs' $ Proxy @(UserR "auth")
-          roundtripAndGoldenADTSpecs' $ Proxy @(ArticleR "all")
-          roundtripAndGoldenADTSpecs' $ Proxy @(UserR "profile")
-          roundtripAndGoldenADTSpecs' $ Proxy @(CommentR "withAuthorProfile")
-          roundtripAndGoldenADTSpecs' $ Proxy @(UserR "authWithToken")
-          -- FIXME: title and slug are isomorphic, so the derived toADTArbitrary instance can't round trip.
-          -- roundtripAndGoldenADTSpecs $ Proxy @(ArticleR "withAuthorProfile")
-      )
 
 aesonRoundtripTests :: IO TestTree
 aesonRoundtripTests = do
@@ -127,6 +117,5 @@ aesonRoundtripTests = do
                 simpleRoundtripSpecs
                 inRoundtripSpecs
             ),
-        testGroup "aeson-golden-roundtrip" <$> testSpecs outRoundtripSpecs,
-        goldenAesonRoundtripTests
+        testGroup "aeson-golden-roundtrip" <$> testSpecs outRoundtripSpecs
       ]

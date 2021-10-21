@@ -1,5 +1,3 @@
-{-# LANGUAGE DataKinds #-}
-
 -- |
 -- Description : Effect
 -- Copyright   : (c) 2021 fanshi1028
@@ -9,15 +7,17 @@
 -- Effect for token
 --
 -- @since 0.1.0.0
-module Token (E (..)) where
+module Token (E (..), module X) where
 
-import GHC.TypeLits (Symbol)
+import Authentication (HasAuth (AuthOf))
+import Token.Internal.HasToken as X
+import Token.Internal.HasToken.User as X
 
--- | @since 0.1.0.0
-data E (r :: Symbol -> Type) (m :: Type -> Type) a where
+-- | @since 0.2.0.0
+data E s (m :: Type -> Type) a where
   -- | Decode token to auth info
-  DecodeToken :: r "token" -> E r m (r "auth")
+  DecodeToken :: TokenOf s -> E s m (AuthOf s)
   -- | Create token from auth info
-  CreateToken :: r "auth" -> E r m (r "token")
+  CreateToken :: AuthOf s -> E s m (TokenOf s)
   -- | Invalidate token
-  InvalidateToken :: r "token" -> E r m ()
+  InvalidateToken :: TokenOf s -> E s m ()

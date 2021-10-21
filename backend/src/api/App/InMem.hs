@@ -12,6 +12,7 @@
 -- @since 0.2.0.0
 module App.InMem where
 
+import Authentication (LoginOf)
 import qualified Authentication.Token (run)
 import Control.Carrier.Error.Either (runError)
 import qualified Control.Carrier.Reader as R (runReader)
@@ -21,11 +22,9 @@ import Control.Exception.Safe (catch)
 import qualified Crypto.JOSE (Error)
 import qualified Current.IO (run)
 import qualified Current.Reader (run)
-import Article (ArticleR (..))
-import Comment (CommentR (..))
-import User (UserR (..))
-import Util.Error (AlreadyExists, AlreadyLogin, Forbidden, Impossible, NotAuthorized, NotFound, NotLogin, ValidationErr)
-import Util.Field (Email, Tag, Time)
+import Field.Email (Email)
+import Field.Tag (Tag)
+import Field.Time (Time)
 import GenUUID.V1 (RequestedUUIDsTooQuickly)
 import qualified GenUUID.V1 (run)
 import HTTP (Api, server)
@@ -43,12 +42,16 @@ import StmContainers.Multimap (Multimap)
 import qualified StmContainers.Multimap as STM.Multimap (newIO)
 import StmContainers.Set as STM.Set (newIO)
 import qualified StmContainers.Set as STM (Set)
+import Storage.Map (IdOf)
 import Storage.Map.InMem (TableInMem)
 import qualified Storage.Map.InMem (run)
 import qualified Storage.Set.InMem (run)
+import Token (TokenOf (..))
 import qualified Token.JWT (run)
 import qualified Token.JWT.Invalidate.Pure (run)
+import User (UserR)
 import qualified UserAction (run)
+import Util.Error (AlreadyExists, AlreadyLogin, Forbidden, Impossible, NotAuthorized, NotFound, NotLogin, ValidationErr)
 import qualified VisitorAction (run)
 
 -- | @since 0.2.0.0
@@ -57,28 +60,28 @@ import qualified VisitorAction (run)
 mkApp ::
   CookieSettings ->
   JWTSettings ->
-  TableInMem UserR ->
-  TableInMem ArticleR ->
-  TableInMem CommentR ->
+  TableInMem "user" ->
+  TableInMem "article" ->
+  TableInMem "comment" ->
   STM.Set Tag ->
   -- | email of user
-  STM.Map Email (UserR "id") ->
+  STM.Map Email (IdOf "user") ->
   -- | article has comment
-  Multimap (ArticleR "id") (CommentR "id") ->
+  Multimap (IdOf "article") (IdOf "comment") ->
   -- | user create article
-  Multimap (UserR "id") (ArticleR "id") ->
+  Multimap (IdOf "user") (IdOf "article") ->
   -- | article tagged by tag
-  Multimap (ArticleR "id") Tag ->
+  Multimap (IdOf "article") Tag ->
   -- | tag tag article
-  Multimap Tag (ArticleR "id") ->
+  Multimap Tag (IdOf "article") ->
   -- | user follow user
-  Multimap (UserR "id") (UserR "id") ->
+  Multimap (IdOf "user") (IdOf "user") ->
   -- | user followed by user
-  Multimap (UserR "id") (UserR "id") ->
+  Multimap (IdOf "user") (IdOf "user") ->
   -- | user favourite article
-  Multimap (UserR "id") (ArticleR "id") ->
+  Multimap (IdOf "user") (IdOf "article") ->
   -- | article favourited by user
-  Multimap (ArticleR "id") (UserR "id") ->
+  Multimap (IdOf "article") (IdOf "user") ->
   Application
 mkApp cs jwts userDb articleDb commentDb tagDb emailUserIndex db0 db1 db2 db3 db4 db5 db6 db7 =
   serveWithContext (Proxy @Api) (cs :. jwts :. EmptyContext) $
@@ -86,19 +89,21 @@ mkApp cs jwts userDb articleDb commentDb tagDb emailUserIndex db0 db1 db2 db3 db
       (Proxy @Api)
       (Proxy @'[CookieSettings, JWTSettings])
       ( ( runIOinSTM
-            . runError @(Forbidden (ArticleR "id"))
-            . runError @(NotAuthorized UserR)
-            . runError @(NotFound (ArticleR "id"))
-            . runError @(NotFound (CommentR "id"))
-            . runError @(NotFound (UserR "id"))
+            . runError @(Forbidden (IdOf "article"))
+            . runError @(NotAuthorized (IdOf "user"))
+            . runError @(NotAuthorized ())
+            . runError @(NotAuthorized (TokenOf "user"))
+            . runError @(NotFound (IdOf "article"))
+            . runError @(NotFound (IdOf "comment"))
+            . runError @(NotFound (IdOf "user"))
             . runError @(NotFound Email)
             . runThrow @(NotFound Tag)
-            . runThrow @(AlreadyExists (ArticleR "id"))
-            . runThrow @(AlreadyExists (UserR "id"))
-            . runThrow @(AlreadyExists (CommentR "id"))
+            . runThrow @(AlreadyExists (IdOf "article"))
+            . runThrow @(AlreadyExists (IdOf "user"))
+            . runThrow @(AlreadyExists (IdOf "comment"))
             . runThrow @(AlreadyExists Email)
-            . runThrow @(AlreadyLogin UserR)
-            . runThrow @(NotLogin UserR)
+            . runThrow @(AlreadyLogin (LoginOf "user"))
+            . runThrow @(NotLogin ())
             . runThrow @ValidationErr
             . runThrow @RequestedUUIDsTooQuickly
             . runThrow @Crypto.JOSE.Error
@@ -108,25 +113,27 @@ mkApp cs jwts userDb articleDb commentDb tagDb emailUserIndex db0 db1 db2 db3 db
             . Current.Reader.run
             . R.runReader jwts
             . R.runReader cs
-            . Relation.ToOne.InMem.run @Email @"of" @(UserR "id") @'IgnoreIfExist emailUserIndex
-            . Relation.ToMany.InMem.run @(ArticleR "id") @"has" @(CommentR "id") db0
-            . Relation.ToMany.InMem.run @(UserR "id") @"create" @(ArticleR "id") db1
-            . Relation.ManyToMany.InMem.run @(ArticleR "id") @"taggedBy" @Tag db2 db3
-            . Relation.ManyToMany.InMem.run @(UserR "id") @"follow" @(UserR "id") db4 db5
-            . Relation.ManyToMany.InMem.run @(UserR "id") @"favorite" @(ArticleR "id") db6 db7
-            . Storage.Map.InMem.run @UserR userDb
-            . Storage.Map.InMem.run @ArticleR articleDb
-            . Storage.Map.InMem.run @CommentR commentDb
+            . Relation.ToOne.InMem.run @Email @"of" @(IdOf "user") @'IgnoreIfExist emailUserIndex
+            . Relation.ToMany.InMem.run @(IdOf "article") @"has" @(IdOf "comment") db0
+            . Relation.ToMany.InMem.run @(IdOf "user") @"create" @(IdOf "article") db1
+            . Relation.ManyToMany.InMem.run @(IdOf "article") @"taggedBy" @Tag db2 db3
+            . Relation.ManyToMany.InMem.run @(IdOf "user") @"follow" @(IdOf "user") db4 db5
+            . Relation.ManyToMany.InMem.run @(IdOf "user") @"favorite" @(IdOf "article") db6 db7
+            . Storage.Map.InMem.run @"user" userDb
+            . Storage.Map.InMem.run @"article" articleDb
+            . Storage.Map.InMem.run @"comment" commentDb
             . Storage.Set.InMem.run @Tag tagDb
             . Current.IO.run @Time
             . GenUUID.V1.run
-            . ( Token.JWT.run @UserR
-                  >>> Token.JWT.Invalidate.Pure.run @UserR
+            . ( Token.JWT.run @"user"
+                  >>> Token.JWT.Invalidate.Pure.run @(TokenOf "user")
               )
-            . Authentication.Token.run @UserR
+            . Authentication.Token.run @"user"
             . VisitorAction.run
             . UserAction.run
             >=> handlerErr err403
+            >=> handlerErr err401
+            >=> handlerErr err401
             >=> handlerErr err401
             >=> handlerErr err404
             >=> handlerErr err404

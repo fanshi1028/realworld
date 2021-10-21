@@ -1,4 +1,5 @@
 -c "cabal new-repl realworld-haskell:realworld-haskell-test --project-file=cabal.project --repl-options=-w -fghcid -O0 -fno-code +RTS -N -T -K34K -RTS"
---reload=./Main.hs
+--reload=./
+--reload=../backend/src/
 -r
 --restart=../realworld-haskell.cabal

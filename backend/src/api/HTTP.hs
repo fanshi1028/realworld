@@ -22,8 +22,6 @@ import Control.Effect.Catch (Catch)
 import Control.Effect.Lift (Lift)
 import Control.Effect.Sum (Member)
 import Control.Effect.Throw (Throw)
-import User (UserR)
-import Util.Error (Impossible, NotAuthorized, ValidationErr)
 import HTTP.Auth.User (AuthUserApi, authUserServer)
 import HTTP.Protected (AuthedApi, authedServer)
 import HTTP.Public (PublicApi, publicServer)
@@ -31,8 +29,11 @@ import Servant (Get, JSON, ServerT, type (:<|>) ((:<|>)), type (:>))
 import Servant.Auth.Server (Auth, AuthResult, CookieSettings, JWTSettings)
 import Servant.Server (hoistServer)
 import qualified Storage.Map (E)
+import Token (TokenOf)
 import qualified Token (E)
+import User (UserR)
 import qualified UserAction (E)
+import Util.Error (Impossible, NotAuthorized, ValidationErr)
 import qualified VisitorAction (E)
 
 -- * API
@@ -59,16 +60,16 @@ server ::
     Member VisitorAction.E sig,
     Member UserAction.E sig,
     Member (Lift IO) sig,
-    Member (Token.E UserR) sig,
+    Member (Token.E "user") sig,
     Member (R.Reader JWTSettings) sig,
     Member (R.Reader CookieSettings) sig,
     Member (R.Reader (AuthResult (UserR "authWithToken"))) sig,
     Member (Throw ValidationErr) sig,
     Member (Throw Impossible) sig,
-    Member (Catch (NotAuthorized UserR)) sig,
-    Member (Authentication.E UserR) sig,
-    Member (Throw (NotAuthorized UserR)) sig,
-    Member (Storage.Map.E UserR) sig
+    Member (Catch (NotAuthorized (TokenOf "user"))) sig,
+    Member (Authentication.E "user") sig,
+    Member (Throw (NotAuthorized (TokenOf "user"))) sig,
+    Member (Storage.Map.E "user") sig
   ) =>
   ServerT Api m
 server =

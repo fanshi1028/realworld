@@ -17,7 +17,7 @@ module Current.Pure where
 import Control.Algebra (Algebra (alg), type (:+:) (L, R))
 import Current (E (GetCurrent))
 import Data.Time (Day (ModifiedJulianDay), UTCTime (UTCTime))
-import Util.Field (Time)
+import Field.Time (Time)
 
 -- | @since 0.1.0.0
 newtype C e m a = C
@@ -25,7 +25,7 @@ newtype C e m a = C
   }
   deriving (Functor, Applicative, Monad)
 
--- | @since 0.1.0.0
+-- | @since 0.2.0.0
 instance (Algebra sig m) => Algebra (E Time :+: sig) (C Time m) where
   alg _ (L GetCurrent) ctx = pure $ UTCTime (ModifiedJulianDay 0) 0 <$ ctx
   alg hdl (R other) ctx = C $ alg (run . hdl) other ctx

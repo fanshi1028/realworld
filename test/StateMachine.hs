@@ -13,6 +13,7 @@
 -- |
 module StateMachine where
 
+import Authentication (AuthOf (..), LoginOf (UserLogin))
 import Control.Lens ((%~))
 import Data.Aeson (FromJSON, ToJSON, eitherDecode, encode)
 import Data.Functor.Classes (Eq1, Ord1)
@@ -20,14 +21,7 @@ import Data.Generics.Product (HasField' (field'), getField)
 import qualified Data.Semigroup as SG (Last (Last, getLast))
 import Data.Set (delete, insert)
 import qualified Data.Set as S (empty, foldl', insert, map, member)
-import Article (ArticleR (..))
-import Comment (CommentR (..))
-import User (UserR (..))
-import Util.Field (titleToSlug)
-import Util.JSON.From (In (In))
-import Util.JSON.To (Out (Out))
-import Util.Representation (transform)
-import Util.Validation (WithValidation)
+import Field.Slug (titleToSlug)
 import Gen.Naive ()
 import HTTP (Api)
 import Network.HTTP.Client (Manager)
@@ -48,6 +42,7 @@ import StateMachine.Types
     VisitorResponse (..),
   )
 import StateMachine.Util (deleteByRef, findByRef, findByRef2, findByRef2All, findByRefAll)
+import Storage.Map (CreateOf (..), IdOf (..), toArticleId, toUserId)
 import Test.QuickCheck (Property, ioProperty)
 import Test.QuickCheck.Monadic (monadic)
 import Test.StateMachine
@@ -72,10 +67,15 @@ import Test.StateMachine
     (.&&),
     (.//),
     (.==),
-    (.=>),
   )
 import Test.StateMachine.Logic (member)
 import Test.Tasty.QuickCheck ((===))
+import Token (TokenOf (UserToken))
+import User (UserR (..))
+import Util.JSON.From (In (In))
+import Util.JSON.To (Out (Out))
+import Util.Representation (transform)
+import Util.Validation (WithValidation)
 import Validation (Validation (Failure, Success))
 
 initModel :: Model r
@@ -103,7 +103,7 @@ transition m cm res = case (cm, res) of
     pure $ case (cm', res') of
       (GetCurrentUser, _) -> m
       -- FIXME: JWT suck as session token, update profile will invalidate the login session
-      (UpdateUser (UserUpdate ur), UpdatedUser t' m_uid m_em m_pw) ->
+      (UpdateUser ur, UpdatedUser t' m_uid m_em m_pw) ->
         let em' = fromMaybe em m_em
             ref' = fromMaybe ref m_uid
             pw' = fromMaybe pw m_pw
@@ -141,7 +141,7 @@ transition m cm res = case (cm, res) of
         m
           & field' @"articles" %~ ((ref', cr) :)
           & field' @"userCreateArticle" %~ insert (ref, ref')
-      (UpdateArticle ref' (ArticleUpdate au), UpdatedArticle m_aid) ->
+      (UpdateArticle ref' au, UpdatedArticle m_aid) ->
         case m_aid of
           Nothing -> m
           Just aid ->
@@ -294,18 +294,18 @@ postcondition m cmd res =
                   .&& findByRef' ref''' (comments m') .// "after: the comment exists"
                   .&& Not (findByRef' ref''' $ comments m) .// "before: the comment not existed"
                   .&& notMember (ref', ref''') (articleHasComment m) .// "before: article didn't has the comment"
-                  .&& member (ref', ref''') (articleHasComment m') .// "after: aritlce has the comment"
+                  .&& member (ref', ref''') (articleHasComment m') .// "after: article has the comment"
                   .&& on (-) commentsL m' m .== 1 .// "after: added 1 to comments"
-                  .&& on (-) hasCommentL m' m .== 1 .// "after: added 1 to aritlceHasComment"
+                  .&& on (-) hasCommentL m' m .== 1 .// "after: added 1 to articleHasComment"
                   .&& Boolean (and $ on (==) <$> commentInv <*> pure m <*> pure m') .// "comment invariant"
               (DeleteComment ref' ref''', DeletedComment) ->
                 Forall [m, m'] (findByRef' ref' . articles) .// "the article exists"
                   .&& findByRef' ref''' (comments m) .// "before: the comment exists"
                   .&& Not (findByRef' ref''' $ comments m') .// "after: the comment not existed"
-                  .&& member (ref', ref''') (articleHasComment m) .// "before: aritlce has the comment"
+                  .&& member (ref', ref''') ( articleHasComment m) .// "before: article has the comment"
                   .&& notMember (ref', ref''') (articleHasComment m') .// "after: article didn't has the comment"
                   .&& on (-) commentsL m m' .== 1 .// "after: remove 1 from comments"
-                  .&& on (-) hasCommentL m m' .== 1 .// "after: remove 1 from aritlceHasComment"
+                  .&& on (-) hasCommentL m m' .== 1 .// "after: remove 1 from aritcleHasComment"
                   .&& Boolean (and $ on (==) <$> commentInv <*> pure m <*> pure m') .// "comment invariant"
               (FavoriteArticle ref', FavoritedArticle) ->
                 Forall [m, m'] (findByRef' ref' . articles) .// "the article exists"
@@ -332,7 +332,7 @@ mock m =
           case ac of
             Register cr -> do
               _ <- rightToMaybe $ validate cr
-              guard $ all ((/= transform cr) . UserId . getField @"username" . snd) $ users m
+              guard $ all ((/= toUserId cr) . UserId . getField @"username" . snd) $ users m
               guard $ all ((/= getField @"email" cr) . getField @"email" . snd) $ users m
               pure $ Registered <$> genSym <*> genSym <*> genSym <*> genSym
             Login em pw -> do
@@ -354,7 +354,7 @@ mock m =
           o_uc <- uRef `findByRef` users m
           case uc of
             GetCurrentUser -> pure $ pure GotCurrentUser
-            UpdateUser (UserUpdate u) -> do
+            UpdateUser u -> do
               let validate' v = case v of
                     Nothing -> pure Nothing
                     Just (SG.Last a) -> case validate a of
@@ -392,9 +392,9 @@ mock m =
               pure $ pure UnfollowedUser
             CreateArticle ca -> do
               _ <- rightToMaybe $ validate ca
-              guard $ all ((/= transform ca) . ArticleId . titleToSlug . getField @"title" . snd) $ articles m
+              guard $ all ((/= toArticleId ca) . ArticleId . titleToSlug . getField @"title" . snd) $ articles m
               pure $ CreatedArticle <$> genSym
-            UpdateArticle ref (ArticleUpdate ar) -> do
+            UpdateArticle ref ar -> do
               let validate' v = case v of
                     Nothing -> pure Nothing
                     Just (SG.Last a) -> case validate a of
@@ -448,7 +448,7 @@ semantics =
               run (register $ In $ pure cr) $ \(UserAuthWithToken u t) ->
                 AuthResponse $
                   Registered
-                    (reference $ transform u)
+                    (reference $ toUserId u)
                     (reference $ getField @"email" cr)
                     (reference $ getField @"password" cr)
                     $ reference t
@@ -475,7 +475,7 @@ semantics =
               let _ :<|> (getCurrentUser :<|> updateUser) :<|> withUser :<|> createArticle :<|> feedArticles :<|> withArticle = apis $ concrete ref
                in case uc of
                     GetCurrentUser -> run getCurrentUser $ const $ UserResponse GotCurrentUser
-                    UpdateUser u@(UserUpdate ur) -> run (updateUser $ In $ pure u) $ \(UserAuthWithToken _ t) ->
+                    UpdateUser ur -> run (updateUser $ In $ pure ur) $ \(UserAuthWithToken _ t) ->
                       UserResponse $
                         let m_uid = getField @"username" ur <&> reference . UserId . SG.getLast
                             m_em = getField @"email" ur <&> reference . SG.getLast
@@ -488,16 +488,16 @@ semantics =
                       let _ :<|> unfollow = withUser $ pure $ concrete ref'
                        in run unfollow $ const $ UserResponse UnfollowedUser
                     CreateArticle ar -> run (createArticle $ In $ pure ar) $ UserResponse . CreatedArticle . reference . transform . getField @"article"
-                    UpdateArticle ref' au@(ArticleUpdate u) ->
+                    UpdateArticle ref' u ->
                       let (updateArticle :<|> _) :<|> _ = withArticle $ pure $ concrete ref'
                           m_new_aid = reference . ArticleId . titleToSlug . SG.getLast <$> getField @"title" u
-                       in run (updateArticle $ In $ pure au) $ const $ UserResponse $ UpdatedArticle m_new_aid
+                       in run (updateArticle $ In $ pure u) $ const $ UserResponse $ UpdatedArticle m_new_aid
                     DeleteArticle ref' ->
                       let (_ :<|> deleteArticle) :<|> _ = withArticle $ pure $ concrete ref'
                        in runNoContent deleteArticle $ UserResponse DeletedArticle
                     AddCommentToArticle ref' cr ->
                       let _ :<|> (_ :<|> addComment) :<|> _ = withArticle $ pure $ concrete ref'
-                       in run (addComment $ In $ pure cr) $ UserResponse . AddedCommentToArticle . reference . transform
+                       in run (addComment $ In $ pure cr) $ UserResponse . AddedCommentToArticle . reference . getField @"id"
                     DeleteComment ref' ref'' ->
                       let _ :<|> (deleteComment :<|> _) :<|> _ = withArticle $ pure $ concrete ref'
                        in runNoContent (deleteComment $ pure $ concrete ref'') $ UserResponse DeletedComment

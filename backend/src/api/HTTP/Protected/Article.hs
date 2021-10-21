@@ -27,33 +27,34 @@ module HTTP.Protected.Article
   )
 where
 
+import Article (ArticleR)
+import Comment (CommentR)
 import Control.Algebra (Algebra, send)
 import Control.Effect.Sum (Member)
 import Control.Effect.Throw (Throw, throwError)
-import Article (ArticleR)
-import Comment (CommentR)
+import HTTP.Util (Cap, CreateApi, QP, ReadManyApi, ToggleApi, UDApi)
+import Servant (Delete, JSON, NoContent (NoContent), ServerT, type (:<|>) ((:<|>)), type (:>))
+import Storage.Map (IdOf)
+import qualified UserAction (E (AddCommentToArticle, CreateArticle, DeleteArticle, DeleteComment, FavoriteArticle, FeedArticles, UnfavoriteArticle, UpdateArticle))
 import Util.Error (ValidationErr)
 import Util.JSON.From (In (In))
 import Util.JSON.To (Out (Out))
-import HTTP.Util (Cap, CreateApi, QP, ReadManyApi, ToggleApi, UDApi)
-import Servant (Delete, JSON, NoContent (NoContent), ServerT, type (:<|>) ((:<|>)), type (:>))
-import qualified UserAction (E (AddCommentToArticle, CreateArticle, DeleteArticle, DeleteComment, FavoriteArticle, FeedArticles, UnfavoriteArticle, UpdateArticle))
 import Validation (Validation (Failure, Success))
 
 -- |  @since 0.1.0.0
 type CommentApi =
-  Cap "id" (CommentR "id") :> Delete '[JSON] NoContent
-    :<|> CreateApi CommentR "withAuthorProfile"
+  Cap "id" (IdOf "comment") :> Delete '[JSON] NoContent
+    :<|> CreateApi "comment" (CommentR "withAuthorProfile")
 
 -- | @since 0.1.0.0
-type FavoriteApi = ToggleApi ArticleR "withAuthorProfile"
+type FavoriteApi = ToggleApi "article" (ArticleR "withAuthorProfile")
 
 -- | @since 0.1.0.0
 type ArticleApi =
-  CreateApi ArticleR "withAuthorProfile"
-    :<|> "feed" :> QP "limit" :> QP "offset" :> ReadManyApi ArticleR "withAuthorProfile"
-    :<|> ( Cap "slug" (ArticleR "id")
-             :> ( UDApi ArticleR "withAuthorProfile"
+  CreateApi "article" (ArticleR "withAuthorProfile")
+    :<|> "feed" :> QP "limit" :> QP "offset" :> ReadManyApi "article" (ArticleR "withAuthorProfile")
+    :<|> ( Cap "slug" (IdOf "article")
+             :> ( UDApi "article" (ArticleR "withAuthorProfile")
                     :<|> "comments" :> CommentApi
                     :<|> "favorite" :> FavoriteApi
                 )

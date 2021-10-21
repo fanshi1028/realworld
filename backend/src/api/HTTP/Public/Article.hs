@@ -12,15 +12,16 @@
 -- @since 0.1.0.0
 module HTTP.Public.Article where
 
+import Article (ArticleR)
+import Comment (CommentR)
 import Control.Algebra (Algebra, send)
 import Control.Effect.Sum (Member)
 import Control.Effect.Throw (Throw, throwError)
-import Article (ArticleR)
-import Comment (CommentR)
-import Util.Error (ValidationErr)
-import Util.JSON.To (Out (Out))
 import HTTP.Util (Cap, QP, ReadApi, ReadManyApi)
 import Servant (ServerT, type (:<|>) ((:<|>)), type (:>))
+import Storage.Map.Internal.HasStorage.User (IdOf)
+import Util.Error (ValidationErr)
+import Util.JSON.To (Out (Out))
 import Validation (Validation (Failure, Success))
 import VisitorAction (E (GetArticle, GetComments, ListArticles))
 
@@ -28,10 +29,10 @@ import VisitorAction (E (GetArticle, GetComments, ListArticles))
 
 -- | @since 0.1.0.0
 type ArticleApi =
-  QP "tag" :> QP "author" :> QP "favorited" :> QP "limit" :> QP "offset" :> ReadManyApi ArticleR "withAuthorProfile"
-    :<|> Cap "slug" (ArticleR "id")
-      :> ( ReadApi ArticleR "withAuthorProfile"
-             :<|> "comments" :> ReadManyApi CommentR "withAuthorProfile"
+  QP "tag" :> QP "author" :> QP "favorited" :> QP "limit" :> QP "offset" :> ReadManyApi "article" (ArticleR "withAuthorProfile")
+    :<|> Cap "slug" (IdOf "article")
+      :> ( ReadApi "article" (ArticleR "withAuthorProfile")
+             :<|> "comments" :> ReadManyApi "article" (CommentR "withAuthorProfile")
          )
 
 -- * Server

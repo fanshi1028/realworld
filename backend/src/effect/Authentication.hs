@@ -1,4 +1,5 @@
 {-# LANGUAGE DataKinds #-}
+{-# LANGUAGE TypeFamilies #-}
 
 -- |
 -- Description : Effect
@@ -9,10 +10,15 @@
 -- Effect of authentication
 --
 -- @since 0.1.0.0
-module Authentication where
+module Authentication (E (..), module X) where
 
--- | @since 0.1.0.0
-data E r (m :: Type -> Type) a where
-  Register :: r "create" -> E r m (r "auth")
-  Login :: r "login" -> E r m (r "auth")
-  Logout :: E r m ()
+import Authentication.Internal.HasAuth as X
+import Authentication.Internal.HasAuth.User as X
+import GHC.TypeLits (Symbol)
+import Storage.Map (CreateOf)
+
+-- | @since 0.2.0.0
+data E (s :: Symbol) (m :: Type -> Type) a where
+  Register :: CreateOf s -> E s m (AuthOf s)
+  Login :: LoginOf s -> E s m (AuthOf s)
+  Logout :: E s m ()

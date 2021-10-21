@@ -19,38 +19,36 @@ import Control.Algebra (Algebra (alg), type (:+:) (L, R))
 import Control.Effect.Error (Throw, throwError)
 import Control.Effect.Lift (Lift, sendM)
 import Control.Effect.Sum (Member)
-import Util.Error (AlreadyExists (AlreadyExists), NotFound (NotFound))
-import Util.Representation (Transform (transform))
 import qualified Focus as FC (Change (Leave, Remove), cases)
-import GHC.TypeLits (Symbol)
 import qualified ListT (fold)
 import qualified StmContainers.Map as STM (Map, delete, focus, insert, listT, lookup)
-import Storage.Map (E (DeleteById, GetAll, GetById, Insert, UpdateById))
+import Storage.Map (E (DeleteById, GetAll, GetById, Insert, UpdateById), HasStorage (ContentOf, IdOf))
+import Util.Error (AlreadyExists (AlreadyExists), NotFound (NotFound))
+import Util.Representation (Transform (transform))
+
+-- | @since 0.2.0.0
+type TableInMem' k v = STM.Map k v
+
+type TableInMem s = STM.Map (IdOf s) (ContentOf s)
 
 -- | @since 0.1.0.0
-type TableInMem' r (k :: Symbol) (v :: Symbol) = STM.Map (r k) (r v)
-
--- | @since 0.1.0.0
-type TableInMem r = TableInMem' r "id" "all"
-
--- | @since 0.1.0.0
-newtype C (r :: Symbol -> Type) m a = C
-  { run' :: ReaderT (TableInMem r) m a
+newtype C s m a = C
+  { run' :: ReaderT (TableInMem s) m a
   }
-  deriving (Functor, Applicative, Monad, MonadReader (TableInMem r))
+  deriving (Functor, Applicative, Monad, MonadReader (TableInMem s))
 
 -- | @since 0.1.0.0
 instance
-  ( Show (r "id"),
-    Eq (r "id"),
-    Hashable (r "id"),
+  ( Show (IdOf s),
+    Eq (IdOf s),
+    Hashable (IdOf s),
     Member (Lift STM) sig,
-    Member (Throw (NotFound (r "id"))) sig,
-    Member (Throw (AlreadyExists (r "id"))) sig,
-    Transform r "all" "id",
+    Member (Throw (NotFound (IdOf s))) sig,
+    Member (Throw (AlreadyExists (IdOf s))) sig,
+    Transform (ContentOf s) (IdOf s),
     Algebra sig m
   ) =>
-  Algebra (E r :+: sig) (C r m)
+  Algebra (E s :+: sig) (C s m)
   where
   alg hdl sig ctx = case sig of
     L action ->
@@ -60,7 +58,7 @@ instance
             sendM . STM.lookup id'
               >=> maybe (throwError $ NotFound id') pure
           GetAll -> sendM . _getAll
-          Insert value -> sendM . STM.insert value (transform value)
+          Insert key value -> sendM . STM.insert value key
           UpdateById id' updateF -> _tryUpdate updateF id'
           DeleteById id' -> _tryDelete id'
     R other -> C $ alg (run' . hdl) (R other) ctx
@@ -85,5 +83,5 @@ instance
   {-# INLINE alg #-}
 
 -- | @since 0.1.0.0
-run :: TableInMem r -> C r m a -> m a
+run :: TableInMem s -> C s m a -> m a
 run db = run' >>> usingReaderT db

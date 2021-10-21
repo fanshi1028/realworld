@@ -45,9 +45,10 @@ common prelude
 
   ghc-options:
     -W -Wall -Wincomplete-uni-patterns -Wincomplete-record-updates
-    -Wcompat -Wnoncanonical-monad-instances -O0 -j4 -ddump-timings +RTS
-    -A64m -n2m -RTS -haddock
+    -Wcompat -Wnoncanonical-monad-instances -O0 -j4 +RTS -A64m -n2m
+    -RTS -haddock
 
+  -- -ddump-timings
   if flag(stan)
     ghc-options: -fwrite-ide-info -hiedir=.hie
 
@@ -107,9 +108,19 @@ library backend-domain-internal
   exposed-modules:
     Article
     Comment
+    Field.Bio
+    Field.Body
+    Field.Description
+    Field.Email
+    Field.Image
+    Field.Password
+    Field.Slug
+    Field.Tag
+    Field.Time
+    Field.Title
+    Field.Username
     User
     Util.Error
-    Util.Field
     Util.JSON.From
     Util.JSON.To
     Util.Representation
@@ -128,6 +139,8 @@ library backend-effect-internal
   hs-source-dirs:  backend/src/effect
   exposed-modules:
     Authentication
+    Authentication.Internal.HasAuth
+    Authentication.Internal.HasAuth.User
     Authentication.Pure
     Authentication.Token
     Current
@@ -149,9 +162,22 @@ library backend-effect-internal
     STMWithUnsafeIO
     Storage.Map
     Storage.Map.InMem
+    Storage.Map.Internal.HasCreate
+    Storage.Map.Internal.HasCreate.Article
+    Storage.Map.Internal.HasCreate.Comment
+    Storage.Map.Internal.HasCreate.User
+    Storage.Map.Internal.HasStorage
+    Storage.Map.Internal.HasStorage.Article
+    Storage.Map.Internal.HasStorage.Comment
+    Storage.Map.Internal.HasStorage.User
+    Storage.Map.Internal.HasUpdate
+    Storage.Map.Internal.HasUpdate.Article
+    Storage.Map.Internal.HasUpdate.User
     Storage.Set
     Storage.Set.InMem
     Token
+    Token.Internal.HasToken
+    Token.Internal.HasToken.User
     Token.JWT
     Token.JWT.Invalidate
     Token.JWT.Invalidate.Pure
@@ -203,7 +229,7 @@ executable realworld-haskell
   hs-source-dirs: backend/app
   build-depends:  warp ^>=3.3.17
 
-  -- ghc-options:    -threaded -rtsopts -with-rtsopts=-N
+-- ghc-options:    -threaded -rtsopts -with-rtsopts=-N
 
 -- other-modules:
 -- other-extensions:

@@ -16,18 +16,19 @@ module HTTP.Public.Profile where
 import Control.Algebra (Algebra, send)
 import Control.Effect.Sum (Member)
 import Control.Effect.Throw (Throw, throwError)
+import HTTP.Util (Cap, ReadApi)
+import Servant (ServerT, type (:>))
+import Storage.Map (IdOf)
 import User (UserR)
 import Util.Error (ValidationErr)
 import Util.JSON.To (Out (Out))
-import HTTP.Util (Cap, ReadApi)
-import Servant (ServerT, type (:>))
 import Validation (Validation (Failure, Success))
 import VisitorAction (E (GetProfile))
 
 -- * API
 
 -- | @since 0.1.0.0
-type ProfileApi = Cap "username" (UserR "id") :> ReadApi UserR "profile"
+type ProfileApi = Cap "username" (IdOf "user") :> ReadApi "user" (UserR "profile")
 
 -- * Server
 

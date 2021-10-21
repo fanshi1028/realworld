@@ -13,37 +13,26 @@
 -- @since 0.1.0.0
 module Util.Representation (Transform (transform)) where
 
-import Article (ArticleR (..))
-import Comment (CommentR (..))
-import User (UserR (..))
-import Util.Field (Title, Username, titleToSlug)
-import GHC.Records (HasField (getField))
-import GHC.TypeLits (Symbol)
+import Authentication (AuthOf (UserAuth))
+import Storage.Map (ContentOf (..), IdOf, toArticleId, toUserId)
+import Storage.Map.Internal.HasStorage.User ()
+import GHC.Records (getField)
 
 -- | Transform between different representation of the same data
 --
 -- @since 0.2.0.0
-class Transform (r :: Symbol -> Type) (s1 :: Symbol) (s2 :: Symbol) where
-  transform :: r s1 -> r s2
-
--- * User
+class Transform a b where
+  transform :: a -> b
 
 -- | @since 0.2.0.0
-instance (HasField "username" (UserR s) Username) => Transform UserR s "id" where
-  transform = UserId . getField @"username"
-
--- | @since 0.2.0.0
-instance Transform UserR "all" "auth" where
+instance Transform (ContentOf "user") (AuthOf "user") where
   transform (User em _ name bio' img) = UserAuth em name bio' img
 
--- * Article
+instance Transform (ContentOf "user") (IdOf "user") where
+  transform = toUserId
 
--- | @since 0.2.0.0
-instance (HasField "title" (ArticleR s) Title) => Transform ArticleR s "id" where
-  transform = ArticleId . titleToSlug . getField @"title"
+instance Transform (ContentOf "article") (IdOf "article") where
+  transform = toArticleId
 
--- * Comment
-
--- | @since 0.2.0.0
-instance (HasField "id" (CommentR s) (CommentR "id")) => Transform CommentR s "id" where
+instance Transform (ContentOf "comment") (IdOf "comment") where
   transform = getField @"id"
