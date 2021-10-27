@@ -10,6 +10,7 @@ import Authentication (AuthOf, LoginOf)
 import Comment (CommentR)
 import Data.Aeson (FromJSON, ToJSON, eitherDecode', encode)
 import Data.Typeable (typeRep)
+import Domain (Domain (Article, Comment, User))
 import Field.Tag (Tag)
 import Field.Time (Time)
 import Gen.Naive ()
@@ -72,9 +73,9 @@ simpleRoundtripSpecs = do
   -- NOTE: Slug is drived from Title, not need to test it?
   -- roundtripSpecs $ Proxy @Slug
   -- roundtripSpecs $ Proxy @(AritcleR "id")
-  roundtripSpecs $ Proxy @(IdOf "user")
-  roundtripSpecs $ Proxy @(IdOf "comment")
-  roundtripSpecs $ Proxy @(TokenOf "user")
+  roundtripSpecs $ Proxy @(IdOf 'User)
+  roundtripSpecs $ Proxy @(IdOf 'Comment)
+  roundtripSpecs $ Proxy @(TokenOf 'User)
   roundtripSpecs $ Proxy @(UserR "authWithToken")
 
 -- | @since 0.2.0.0
@@ -82,12 +83,12 @@ simpleRoundtripSpecs = do
 -- Roundtrip specs with Validation
 inRoundtripSpecs :: Spec
 inRoundtripSpecs = do
-  roundtripSpecsWithValidation $ Proxy @(LoginOf "user")
-  roundtripSpecsWithValidation $ Proxy @(CreateOf "user")
-  roundtripSpecsWithValidation $ Proxy @(CreateOf "article")
-  roundtripSpecsWithValidation $ Proxy @(CreateOf "comment")
-  roundtripSpecsWithValidation $ Proxy @(Patch (UpdateOf "user"))
-  roundtripSpecsWithValidation $ Proxy @(Patch (UpdateOf "article"))
+  roundtripSpecsWithValidation $ Proxy @(LoginOf 'User)
+  roundtripSpecsWithValidation $ Proxy @(CreateOf 'User)
+  roundtripSpecsWithValidation $ Proxy @(CreateOf 'Article)
+  roundtripSpecsWithValidation $ Proxy @(CreateOf 'Comment)
+  roundtripSpecsWithValidation $ Proxy @(Patch (UpdateOf 'User))
+  roundtripSpecsWithValidation $ Proxy @(Patch (UpdateOf 'Article))
 
 -- | @since 0.2.0.0
 --

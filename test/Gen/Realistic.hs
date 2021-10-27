@@ -13,6 +13,7 @@ import Data.Generic.HKD (build, construct)
 import Data.Password.Argon2 (mkPassword)
 import Data.Password.Validate (ValidationResult (ValidPassword), defaultPasswordPolicy_, validatePassword)
 import qualified Data.Semigroup as SG
+import Domain (Domain (Article, Comment, User))
 import Faker (Fake)
 import qualified Faker.Book as Book
 import qualified Faker.Book.CultureSeries as CultureSeries
@@ -165,7 +166,7 @@ instance Arbitrary (Realistic a) => Arbitrary (Realistic [a]) where
 -- | @since 0.2.0.0
 -- >>> sample' $ arbitrary @(Realistic (UserR "auth"))
 -- [UserAuth {email = "erlich@bachmanity.test", username = "Ben Lyon", bio = "For ever and a day.", image = "imageTBE"},UserAuth {email = "laurie@raviga.test", username = "Arie Aufderhar Wisozk", bio = " audiences are going to adore your tour de force performance as the forceful denim-clad court reporter in 'The Court Reporter Sported Jorts', the jet-setting jort-sporting court reporter story", image = "imageTBE"},UserAuth {email = "Merry_Okuneva-541711812@Williamson_LLC.net", username = "Hubert Zieme Luettgen", bio = "When you play a game of thrones you win or you die.", image = "imageTBE"},UserAuth {email = "daniel.carey@reynholm.test", username = "Doug Updegrave", bio = "For ever and a day.", image = "imageTBE"},UserAuth {email = "jared@piedpiper.test", username = "Mr. Lorenzo Schaefer Cartwright", bio = "I'm the dude, so that's what you call me. That or, uh His Dudeness, or uh Duder, or El Duderino, if you're not into the whole brevity thing.", image = "imageTBE"},UserAuth {email = "Tommie_Huel-104543348@Franecki_Inc.net", username = "Mable Kerluke", bio = "There is nothing either good or bad, but thinking makes it so.", image = "imageTBE"},UserAuth {email = "Greta_Rice-871679444@Zemlak_LLC.net", username = "Frida Olson Kerluke", bio = "The world is grown so bad that wrens make prey where eagles dare not perch.", image = "imageTBE"},UserAuth {email = "johan@hotmail.test", username = "Janeen Reinger", bio = "Portnoy finds joy in hoi polloi boy toy", image = "imageTBE"},UserAuth {email = "Augustus_Smitham-392056915@Dare_Group.name", username = "Mr. Libby Quitzon Donnelly", bio = "When you play a game of thrones you win or you die.", image = "imageTBE"},UserAuth {email = "erlich@bachmanity.test", username = "Jimmy DeLocke", bio = "Portnoy finds joy in hoi polloi boy toy", image = "imageTBE"},UserAuth {email = "johan@hotmail.test", username = "Mr. Brigid Schaden Champlin", bio = "For ever and a day.", image = "imageTBE"}]
-instance Arbitrary (Realistic (AuthOf "user")) where
+instance Arbitrary (Realistic (AuthOf 'User)) where
   arbitrary = Realistic <$> (UserAuth <$> arbitraryRealistic <*> arbitraryRealistic <*> arbitraryRealistic <*> arbitraryRealistic)
   shrink (Realistic (UserAuth em user bio im)) =
     Realistic <$> (UserAuth <$> shrinkRealistic em <*> shrinkRealistic user <*> shrinkRealistic bio <*> shrinkRealistic im)
@@ -182,21 +183,21 @@ instance Arbitrary (Realistic Password) where
 instance Arbitrary (Realistic a) => Arbitrary (Realistic (In a)) where
   arbitrary = arbitrary >>= \(Realistic a) -> pure (Realistic (In a))
 
-instance Arbitrary (Realistic (LoginOf "user")) where
+instance Arbitrary (Realistic (LoginOf 'User)) where
   arbitrary = Realistic <$> (UserLogin <$> arbitraryRealistic <*> arbitraryRealistic)
   shrink (Realistic (UserLogin em pw)) = Realistic <$> (UserLogin <$> shrinkRealistic em <*> shrinkRealistic pw)
 
-instance Arbitrary (Realistic (CreateOf "user")) where
+instance Arbitrary (Realistic (CreateOf 'User)) where
   arbitrary = Realistic <$> (UserCreate <$> arbitraryRealistic <*> arbitraryRealistic <*> arbitraryRealistic)
   shrink (Realistic (UserCreate u em pw)) =
     Realistic <$> (UserCreate <$> shrinkRealistic u <*> shrinkRealistic em <*> shrinkRealistic pw)
 
-instance Arbitrary (Realistic (CreateOf "article")) where
+instance Arbitrary (Realistic (CreateOf 'Article)) where
   arbitrary = Realistic <$> (ArticleCreate <$> arbitraryRealistic <*> arbitraryRealistic <*> arbitraryRealistic <*> arbitraryRealistic)
   shrink (Realistic (ArticleCreate tt d b ts)) =
     Realistic <$> (ArticleCreate <$> shrinkRealistic tt <*> shrinkRealistic d <*> shrinkRealistic b <*> shrinkRealistic ts)
 
-instance Arbitrary (Realistic (CreateOf "comment")) where
+instance Arbitrary (Realistic (CreateOf 'Comment)) where
   arbitrary = Realistic . CommentCreate <$> genRealisticTitle
   shrink (Realistic (CommentCreate c)) = Realistic . CommentCreate <$> shrink c
 
@@ -206,11 +207,11 @@ instance Arbitrary (Realistic a) => Arbitrary (Realistic (SG.Last a)) where
 instance Arbitrary (Realistic a) => Arbitrary (Realistic (Maybe a)) where
   arbitrary = Realistic <$> frequency [(1, Just <$> arbitraryRealistic @a), (1, pure Nothing)]
 
-instance Arbitrary (Realistic (Patch (UpdateOf "user"))) where
+instance Arbitrary (Realistic (Patch (UpdateOf 'User))) where
   arbitrary =
     Realistic
       <$> construct
-        ( build @(Patch (UpdateOf "user"))
+        ( build @(Patch (UpdateOf 'User))
             arbitraryRealistic
             arbitraryRealistic
             arbitraryRealistic
@@ -218,16 +219,16 @@ instance Arbitrary (Realistic (Patch (UpdateOf "user"))) where
             arbitraryRealistic
         )
 
-instance Arbitrary (Realistic (IdOf "user")) where
+instance Arbitrary (Realistic (IdOf 'User)) where
   arbitrary = Realistic . UserId <$> arbitraryRealistic
 
 deriving newtype instance Arbitrary (Realistic Time)
 
-instance Arbitrary (Realistic (Patch (UpdateOf "article"))) where
+instance Arbitrary (Realistic (Patch (UpdateOf 'Article))) where
   arbitrary =
     Realistic
       <$> construct
-        ( build @(Patch (UpdateOf "article"))
+        ( build @(Patch (UpdateOf 'Article))
             arbitraryRealistic
             arbitraryRealistic
             arbitraryRealistic

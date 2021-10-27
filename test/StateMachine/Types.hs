@@ -7,22 +7,23 @@
 module StateMachine.Types where
 
 import Data.Functor.Classes (Show1)
+import Domain (Domain (Article, Comment, User))
 import Field.Email (Email)
 import Field.Password (Password (Password))
 import GHC.Generics (Generic1)
 import Orphans ()
-import Storage.Map (CreateOf (..), IdOf (..), UpdateOf (..), Patch)
+import Storage.Map (CreateOf (..), IdOf (..), Patch, UpdateOf (..))
 import Test.StateMachine (CommandNames, Concrete, Reference, ToExpr, cmdName, cmdNames)
 import qualified Test.StateMachine.Types.Rank2 as R2
 import Text.Show (showString, showsPrec)
 import Token (TokenOf (..))
 
 data VisitorCommand r
-  = GetProfile (Reference (IdOf "user") r)
-  | GetArticle (Reference (IdOf "article") r)
+  = GetProfile (Reference (IdOf 'User) r)
+  | GetArticle (Reference (IdOf 'Article) r)
   | ListArticles
   | GetTags
-  | GetComments (Reference (IdOf "article") r)
+  | GetComments (Reference (IdOf 'Article) r)
   deriving (Show)
 
 instance CommandNames VisitorCommand
@@ -36,7 +37,7 @@ data VisitorResponse (r :: Type -> Type)
   deriving (Show)
 
 data AuthCommand (r :: Type -> Type)
-  = Register (CreateOf "user")
+  = Register (CreateOf 'User)
   | Login (Reference Email r) (Reference Password r)
   | Logout
   deriving (Show)
@@ -44,23 +45,23 @@ data AuthCommand (r :: Type -> Type)
 instance CommandNames AuthCommand
 
 data AuthResponse (r :: Type -> Type)
-  = Registered (Reference (IdOf "user") r) (Reference Email r) (Reference Password r) (Reference (TokenOf "user") r)
+  = Registered (Reference (IdOf 'User) r) (Reference Email r) (Reference Password r) (Reference (TokenOf 'User) r)
   | LoggedIn
   | LoggedOut
   deriving (Show)
 
 data UserCommand r
   = GetCurrentUser
-  | UpdateUser (Patch (UpdateOf "user"))
-  | FollowUser (Reference (IdOf "user") r)
-  | UnfollowUser (Reference (IdOf "user") r)
-  | CreateArticle (CreateOf "article")
-  | UpdateArticle (Reference (IdOf "article") r) (Patch (UpdateOf "article"))
-  | DeleteArticle (Reference (IdOf "article") r)
-  | AddCommentToArticle (Reference (IdOf "article") r) (CreateOf "comment")
-  | DeleteComment (Reference (IdOf "article") r) (Reference (IdOf "comment") r)
-  | FavoriteArticle (Reference (IdOf "article") r)
-  | UnfavoriteArticle (Reference (IdOf "article") r)
+  | UpdateUser (Patch (UpdateOf 'User))
+  | FollowUser (Reference (IdOf 'User) r)
+  | UnfollowUser (Reference (IdOf 'User) r)
+  | CreateArticle (CreateOf 'Article)
+  | UpdateArticle (Reference (IdOf 'Article) r) (Patch (UpdateOf 'Article))
+  | DeleteArticle (Reference (IdOf 'Article) r)
+  | AddCommentToArticle (Reference (IdOf 'Article) r) (CreateOf 'Comment)
+  | DeleteComment (Reference (IdOf 'Article) r) (Reference (IdOf 'Comment) r)
+  | FavoriteArticle (Reference (IdOf 'Article) r)
+  | UnfavoriteArticle (Reference (IdOf 'Article) r)
   | FeedArticles
   deriving (Show)
 
@@ -68,13 +69,13 @@ instance CommandNames UserCommand
 
 data UserResponse (r :: Type -> Type)
   = GotCurrentUser
-  | UpdatedUser (Reference (TokenOf "user") r) (Maybe (Reference (IdOf "user") r)) (Maybe (Reference Email r)) (Maybe (Reference Password r))
+  | UpdatedUser (Reference (TokenOf 'User) r) (Maybe (Reference (IdOf 'User) r)) (Maybe (Reference Email r)) (Maybe (Reference Password r))
   | FollowedUser
   | UnfollowedUser
-  | CreatedArticle (Reference (IdOf "article") r)
-  | UpdatedArticle (Maybe (Reference (IdOf "article") r))
+  | CreatedArticle (Reference (IdOf 'Article) r)
+  | UpdatedArticle (Maybe (Reference (IdOf 'Article) r))
   | DeletedArticle
-  | AddedCommentToArticle (Reference (IdOf "comment") r)
+  | AddedCommentToArticle (Reference (IdOf 'Comment) r)
   | DeletedComment
   | FavoritedArticle
   | UnfavoritedArticle
@@ -82,9 +83,9 @@ data UserResponse (r :: Type -> Type)
   deriving (Show)
 
 data Command r
-  = AuthCommand (Maybe (Reference (TokenOf "user") r)) (AuthCommand r)
-  | VisitorCommand (Maybe (Reference (TokenOf "user") r)) (VisitorCommand r)
-  | UserCommand (Maybe (Reference (TokenOf "user") r)) (UserCommand r)
+  = AuthCommand (Maybe (Reference (TokenOf 'User) r)) (AuthCommand r)
+  | VisitorCommand (Maybe (Reference (TokenOf 'User) r)) (VisitorCommand r)
+  | UserCommand (Maybe (Reference (TokenOf 'User) r)) (UserCommand r)
   deriving (Show)
 
 instance CommandNames Command where
@@ -169,17 +170,17 @@ instance R2.Functor Response
 instance R2.Foldable Response
 
 data Model r = Model
-  { users :: [(Reference (IdOf "user") r, CreateOf "user")],
-    articles :: [(Reference (IdOf "article") r, CreateOf "article")],
+  { users :: [(Reference (IdOf 'User) r, CreateOf 'User)],
+    articles :: [(Reference (IdOf 'Article) r, CreateOf 'Article)],
     credentials :: [(Reference Email r, Reference Password r)],
-    emails :: [(Reference (IdOf "user") r, Reference Email r)],
-    comments :: [(Reference (IdOf "comment") r, CreateOf "comment")],
-    userFollowUser :: Set (Reference (IdOf "user") r, Reference (IdOf "user") r),
-    userFavoriteArticle :: Set (Reference (IdOf "user") r, Reference (IdOf "article") r),
-    articleHasComment :: Set (Reference (IdOf "article") r, Reference (IdOf "comment") r),
-    userCreateComment :: Set (Reference (IdOf "user") r, Reference (IdOf "comment") r),
-    userCreateArticle :: Set (Reference (IdOf "user") r, Reference (IdOf "article") r),
-    tokens :: [(Reference (TokenOf "user") r, Reference Email r)]
+    emails :: [(Reference (IdOf 'User) r, Reference Email r)],
+    comments :: [(Reference (IdOf 'Comment) r, CreateOf 'Comment)],
+    userFollowUser :: Set (Reference (IdOf 'User) r, Reference (IdOf 'User) r),
+    userFavoriteArticle :: Set (Reference (IdOf 'User) r, Reference (IdOf 'Article) r),
+    articleHasComment :: Set (Reference (IdOf 'Article) r, Reference (IdOf 'Comment) r),
+    userCreateComment :: Set (Reference (IdOf 'User) r, Reference (IdOf 'Comment) r),
+    userCreateArticle :: Set (Reference (IdOf 'User) r, Reference (IdOf 'Article) r),
+    tokens :: [(Reference (TokenOf 'User) r, Reference Email r)]
   }
   deriving (Show, Eq, Generic)
 

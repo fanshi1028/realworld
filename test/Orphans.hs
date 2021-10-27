@@ -23,6 +23,7 @@ import qualified Data.HashMap.Strict as HM (insert)
 import Data.Password.Argon2 (unsafeShowPassword)
 import qualified Data.Semigroup as SG (getLast)
 import Data.Sequence ((<|))
+import Domain (Domain (Article, Comment, User))
 import Field.Bio (Bio (Bio))
 import Field.Body (Body (Body))
 import Field.Description (Description (Description))
@@ -58,7 +59,7 @@ type family HasTokenAuth xs :: Constraint where
   HasTokenAuth '[] = TokenAuthNotEnabled
 
 instance (HasTokenAuth auths, HasClient m api) => HasClient m (Auth auths a :> api) where
-  type Client m (Auth auths a :> api) = TokenOf "user" -> Client m api
+  type Client m (Auth auths a :> api) = TokenOf 'User -> Client m api
   clientWithRoute m _ req (UserToken t) =
     clientWithRoute m (Proxy :: Proxy api) $
       req
@@ -78,13 +79,13 @@ instance ToHttpApiData a => ToHttpApiData (WithValidation a) where
 
 deriving newtype instance ToHttpApiData Username
 
-deriving newtype instance ToHttpApiData (IdOf "user")
+deriving newtype instance ToHttpApiData (IdOf 'User)
 
 deriving newtype instance ToHttpApiData Slug
 
-deriving newtype instance ToHttpApiData (IdOf "article")
+deriving newtype instance ToHttpApiData (IdOf 'Article)
 
-deriving newtype instance ToHttpApiData (IdOf "comment")
+deriving newtype instance ToHttpApiData (IdOf 'Comment)
 
 deriving newtype instance ToHttpApiData Tag
 
@@ -96,11 +97,11 @@ deriving newtype instance FromJSON Tag
 
 deriving newtype instance FromJSON Slug
 
-deriving newtype instance FromJSON (IdOf "user")
+deriving newtype instance FromJSON (IdOf 'User)
 
-deriving newtype instance FromJSON (IdOf "article")
+deriving newtype instance FromJSON (IdOf 'Article)
 
-instance FromJSON (ContentOf "article")
+instance FromJSON (ContentOf 'Article)
 
 instance FromJSON (UserR "profile") where
   parseJSON v = withObject "UserR profile" (\o -> UserProfile <$> parseJSON v <*> o .: "following") v
@@ -125,7 +126,7 @@ instance FromJSON (Out (ArticleR "withAuthorProfile")) where
 instance FromJSON (Out [ArticleR "withAuthorProfile"]) where
   parseJSON = withObject "Out [ ArticleR withAuthorProfile ]" $ \o -> Out <$> o .: "articles"
 
-deriving newtype instance FromJSON (IdOf "comment")
+deriving newtype instance FromJSON (IdOf 'Comment)
 
 instance FromJSON (CommentR "withAuthorProfile")
 
@@ -138,7 +139,7 @@ instance FromJSON (Out [CommentR "withAuthorProfile"]) where
 instance FromJSON (Out [Tag]) where
   parseJSON = withObject "Out [ Tag ]" $ \o -> Out <$> o .: "tags"
 
-deriving newtype instance FromJSON (TokenOf "user")
+deriving newtype instance FromJSON (TokenOf 'User)
 
 instance FromJSON (UserR "authWithToken") where
   parseJSON v = withObject "UserR authWithToken" (\o -> UserAuthWithToken <$> parseJSON v <*> o .: "token") v
@@ -166,30 +167,30 @@ instance ToJSON Password where
   toJSON (Password pw) = toJSON $ unsafeShowPassword pw
   toEncoding (Password pw) = toEncoding $ unsafeShowPassword pw
 
-instance ToJSON (LoginOf "user")
+instance ToJSON (LoginOf 'User)
 
 deriving newtype instance Eq a => Eq (In a)
 
--- instance ToJSON (In (WithValidation (LoginOf "user")))
-instance ToJSON (In (LoginOf "user")) where
+-- instance ToJSON (In (WithValidation (LoginOf 'User)))
+instance ToJSON (In (LoginOf 'User)) where
   toJSON = wrappedToJSON' "user"
 
-instance ToJSON (CreateOf "user")
+instance ToJSON (CreateOf 'User)
 
-instance ToJSON (In (CreateOf "user")) where
+instance ToJSON (In (CreateOf 'User)) where
   toJSON = wrappedToJSON' "user"
 
-instance ToJSON (CreateOf "article")
+instance ToJSON (CreateOf 'Article)
 
-instance ToJSON (In (CreateOf "article")) where
+instance ToJSON (In (CreateOf 'Article)) where
   toJSON = wrappedToJSON' "article"
 
-instance ToJSON (CreateOf "comment")
+instance ToJSON (CreateOf 'Comment)
 
-instance ToJSON (In (CreateOf "comment")) where
+instance ToJSON (In (CreateOf 'Comment)) where
   toJSON = wrappedToJSON' "comment"
 
-instance ToJSON (Patch (UpdateOf "user")) where
+instance ToJSON (Patch (UpdateOf 'User)) where
   toJSON a =
     let insert' key = HM.insert key . toJSON . SG.getLast
         mayDo = maybe Prelude.id
@@ -200,10 +201,10 @@ instance ToJSON (Patch (UpdateOf "user")) where
         h5 = mayDo (insert' "image") $ a ^. field' @"image"
      in Object $ h1 $ h2 $ h3 $ h4 $ h5 mempty
 
-instance ToJSON (In (Patch (UpdateOf "user"))) where
+instance ToJSON (In (Patch (UpdateOf 'User))) where
   toJSON = wrappedToJSON' "user"
 
-instance ToJSON (Patch (UpdateOf "article")) where
+instance ToJSON (Patch (UpdateOf 'Article)) where
   toJSON a =
     let insert' key = HM.insert key . toJSON . SG.getLast
         mayDo = maybe Prelude.id
@@ -212,10 +213,10 @@ instance ToJSON (Patch (UpdateOf "article")) where
         h3 = mayDo (insert' "body") $ a ^. field' @"body"
      in Object $ h1 $ h2 $ h3 mempty
 
-instance ToJSON (In (Patch (UpdateOf "article"))) where
+instance ToJSON (In (Patch (UpdateOf 'Article))) where
   toJSON = wrappedToJSON' "article"
 
--- toEncoding  = wrappedToEncoding' "article"
+-- toEncoding  = wrappedToEncoding' 'Article
 
 -- | Password
 --
@@ -223,31 +224,31 @@ instance ToJSON (In (Patch (UpdateOf "article"))) where
 instance Eq Password where
   (==) = (==) `on` (\(Password pw) -> unsafeShowPassword pw)
 
-deriving instance Show (UpdateOf "user")
+deriving instance Show (UpdateOf 'User)
 
-deriving instance Show (UpdateOf "article")
+deriving instance Show (UpdateOf 'Article)
 
-deriving instance Eq (LoginOf "user")
+deriving instance Eq (LoginOf 'User)
 
-deriving instance Eq (CreateOf "user")
+deriving instance Eq (CreateOf 'User)
 
-deriving instance Eq (CreateOf "article")
+deriving instance Eq (CreateOf 'Article)
 
-deriving instance Eq (CreateOf "comment")
+deriving instance Eq (CreateOf 'Comment)
 
-deriving instance Eq (UpdateOf "user")
+deriving instance Eq (UpdateOf 'User)
 
 -- for state machine, Set in model
 
 deriving instance Ord Username
 
-deriving instance Ord (IdOf "user")
+deriving instance Ord (IdOf 'User)
 
 deriving instance Ord Slug
 
-deriving instance Ord (IdOf "article")
+deriving instance Ord (IdOf 'Article)
 
-deriving instance Ord (IdOf "comment")
+deriving instance Ord (IdOf 'Comment)
 
 deriving instance Ord Tag
 
@@ -259,15 +260,15 @@ deriving newtype instance ToExpr Body
 
 deriving newtype instance ToExpr Tag
 
-instance ToExpr (CreateOf "article")
+instance ToExpr (CreateOf 'Article)
 
 deriving newtype instance ToExpr Slug
 
-deriving newtype instance ToExpr (IdOf "article")
+deriving newtype instance ToExpr (IdOf 'Article)
 
-instance ToExpr (CreateOf "comment")
+instance ToExpr (CreateOf 'Comment)
 
-deriving newtype instance ToExpr (IdOf "comment")
+deriving newtype instance ToExpr (IdOf 'Comment)
 
 deriving newtype instance ToExpr Email
 
@@ -277,15 +278,15 @@ deriving newtype instance ToExpr Bio
 
 deriving newtype instance ToExpr Image
 
-instance ToExpr (AuthOf "user")
+instance ToExpr (AuthOf 'User)
 
-deriving newtype instance ToExpr (IdOf "user")
+deriving newtype instance ToExpr (IdOf 'User)
 
-instance ToExpr (CreateOf "user")
+instance ToExpr (CreateOf 'User)
 
 instance ToExpr Password where
   toExpr = toExpr . show @Text
 
-instance ToExpr (LoginOf "user")
+instance ToExpr (LoginOf 'User)
 
-deriving newtype instance ToExpr (TokenOf "user")
+deriving newtype instance ToExpr (TokenOf 'User)
