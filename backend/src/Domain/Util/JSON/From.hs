@@ -20,7 +20,7 @@ module Util.JSON.From
   )
 where
 
-import Data.Aeson (FromJSON, Value (Object), withObject, (.:))
+import Data.Aeson (FromJSON, Value, withObject, (.:))
 import Data.Aeson.Types (Object, Parser)
 import Data.HashMap.Strict (keys)
 import Relude.Extra (insertWith)

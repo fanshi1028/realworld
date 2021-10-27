@@ -26,7 +26,6 @@ import HTTP.Util (CreateApi)
 import Relude.Extra (un)
 import Servant
   ( HList (HCons),
-    Header,
     Headers (Headers),
     JSON,
     ReqBody,
@@ -37,11 +36,11 @@ import Servant
     type (:<|>) ((:<|>)),
     type (:>),
   )
-import Servant.Auth.Server (CookieSettings, JWTSettings, SetCookie, acceptLogin)
+import Servant.Auth.Server (CookieSettings, JWTSettings, acceptLogin)
 import qualified Storage.Map
 import Token (E (CreateToken), TokenOf (UserToken))
 import User (UserR (..))
-import Util.Error (Impossible (Impossible), NotAuthorized, ValidationErr)
+import Util.Error (Impossible (Impossible), ValidationErr)
 import Util.JSON.From (In (In))
 import Util.JSON.To (Out (Out))
 import Util.Validation (WithValidation)

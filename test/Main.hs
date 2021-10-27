@@ -3,10 +3,9 @@ module Main where
 
 import App.InMem (newApp)
 import Network.HTTP.Client (defaultManagerSettings, newManager)
-import Network.Wai.Handler.Warp (withApplication)
 import Roundtrip (aesonRoundtripTests)
 import Servant.Client (BaseUrl (BaseUrl), Scheme (Http))
-import StateMachine (prop1, prop2)
+import StateMachine (prop1)
 import Test.Tasty (testGroup)
 import Test.Tasty.Ingredients.Rerun (defaultMainWithRerun)
 import Test.Tasty.QuickCheck (testProperties)

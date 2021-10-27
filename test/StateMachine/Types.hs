@@ -9,7 +9,7 @@ module StateMachine.Types where
 import Data.Functor.Classes (Show1)
 import Domain (Domain (Article, Comment, User))
 import Field.Email (Email)
-import Field.Password (Password (Password))
+import Field.Password (Password)
 import GHC.Generics (Generic1)
 import Orphans ()
 import Storage.Map (CreateOf (..), IdOf (..), Patch, UpdateOf (..))

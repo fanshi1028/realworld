@@ -51,7 +51,7 @@ import Storage.Map
     HasStorage (ContentOf, IdOf),
     IdOf (ArticleId, CommentId, UserId),
     Patch,
-    UpdateOf (ArticleUpdate, UserUpdate),
+    UpdateOf,
     toArticleId,
     toArticlePatch,
     toUserId,

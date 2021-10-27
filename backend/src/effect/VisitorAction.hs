@@ -34,7 +34,7 @@ import Storage.Map (ContentOf (..), HasStorage (IdOf), toArticleId)
 import qualified Storage.Map (E (GetAll, GetById))
 import qualified Storage.Set (E (GetAll))
 import User (UserR (UserProfile))
-import Util.Error (Impossible (Impossible), NotAuthorized, NotFound)
+import Util.Error (Impossible (Impossible), NotFound)
 import Util.Representation (Transform (transform))
 
 -- * Effect

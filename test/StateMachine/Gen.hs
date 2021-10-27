@@ -5,14 +5,10 @@ import Gen.Realistic (arbitraryRealistic, shrinkRealistic)
 import Orphans ()
 import StateMachine.Types
   ( AuthCommand (..),
-    AuthResponse (..),
     Command (..),
     Model (..),
-    Response (..),
     UserCommand (..),
-    UserResponse (..),
     VisitorCommand (..),
-    VisitorResponse (..),
   )
 import Test.QuickCheck (Gen, elements, frequency)
 

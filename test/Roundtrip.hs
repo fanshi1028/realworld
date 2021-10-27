@@ -6,7 +6,7 @@
 module Roundtrip (aesonRoundtripTests) where
 
 import Article (ArticleR)
-import Authentication (AuthOf, LoginOf)
+import Authentication (LoginOf)
 import Comment (CommentR)
 import Data.Aeson (FromJSON, ToJSON, eitherDecode', encode)
 import Data.Typeable (typeRep)
@@ -16,7 +16,7 @@ import Field.Time (Time)
 import Gen.Naive ()
 import Gen.Realistic (Realistic (Realistic))
 import Orphans ()
-import Storage.Map (ContentOf, CreateOf, IdOf, Patch, UpdateOf)
+import Storage.Map (CreateOf, IdOf, Patch, UpdateOf)
 import Test.Aeson.GenericSpecs (defaultSettings, roundtripAndGoldenSpecsWithSettings, roundtripSpecs, sampleSize)
 import Test.Aeson.Internal.Utils (addBrackets)
 import Test.Hspec (Spec, describe)
@@ -72,7 +72,7 @@ simpleRoundtripSpecs = do
   roundtripSpecs $ Proxy @Time
   -- NOTE: Slug is drived from Title, not need to test it?
   -- roundtripSpecs $ Proxy @Slug
-  -- roundtripSpecs $ Proxy @(AritcleR "id")
+  -- roundtripSpecs $ Proxy @(IdOf 'Article)
   roundtripSpecs $ Proxy @(IdOf 'User)
   roundtripSpecs $ Proxy @(IdOf 'Comment)
   roundtripSpecs $ Proxy @(TokenOf 'User)

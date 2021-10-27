@@ -14,7 +14,7 @@ module Storage.Map.Internal.HasStorage where
 
 import Domain (Domain)
 
--- @since 0.2.0.0
+-- | @since 0.2.0.0
 class HasStorage (s :: Domain) where
   -- | need an id for indexing in storage
   data IdOf s

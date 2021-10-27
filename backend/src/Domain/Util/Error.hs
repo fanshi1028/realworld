@@ -13,7 +13,6 @@ module Util.Error where
 
 import Data.Aeson (ToJSON (toEncoding))
 import Data.Aeson.Encoding.Internal (Encoding' (Encoding))
-import GHC.TypeLits (Symbol)
 
 -- | @since 0.1.0.0
 newtype NotFound a

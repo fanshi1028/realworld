@@ -111,10 +111,3 @@ deriving newtype instance Arbitrary (TokenOf 'User)
 instance Arbitrary (UserR "authWithToken") where
   arbitrary = genericArbitrary
   shrink = genericShrink
-
--- instance Arbitrary Password where
---   arbitrary = mkPassword <$> arbitrary
-
--- instance Arbitrary (UserR "login") where
---   arbitrary = genericArbitrary
---   shrink = genericShrink
