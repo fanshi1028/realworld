@@ -32,7 +32,7 @@ import Util.Validation (WithValidation)
 -- | @since 0.2.0.0
 instance HasStorage "user" where
   newtype IdOf "user" = UserId Username deriving (Show, Eq, Hashable, ToJSON)
-  data ContentOf "user" = User
+  data ContentOf "user" = UserContent
     { email :: Email, -- "jake@jake.jake",
     -- token :: UserR "token", -- "jwt.token.here",
       password :: PasswordHash, -- "jakejake"

@@ -33,7 +33,7 @@ import Util.Validation (WithValidation)
 -- | @since 0.2.0.0
 instance HasStorage "article" where
   newtype IdOf "article" = ArticleId Slug deriving (Eq, Show, Hashable, ToJSON)
-  data ContentOf "article" = Article
+  data ContentOf "article" = ArticleContent
     { title :: Title, -- "How to train your dragon",
       description :: Description, -- "Ever wonder how?",
       body :: Body, -- "It takes a Jacobian",

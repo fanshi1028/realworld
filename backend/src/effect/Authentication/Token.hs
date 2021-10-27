@@ -33,7 +33,7 @@ import Field.Time (Time)
 import GHC.Records (getField)
 import GHC.TypeLits (Symbol)
 import qualified Relation.ToOne
-import Storage.Map (ContentOf (User), CreateOf (UserCreate), IdOf (UserId), toUserId)
+import Storage.Map (ContentOf (UserContent), CreateOf (UserCreate), IdOf (UserId), toUserId)
 import qualified Storage.Map
 import qualified Token (E (InvalidateToken))
 import User (UserR (UserAuthWithToken))
@@ -76,7 +76,7 @@ instance
               Nothing ->
                 catchError @(NotFound (IdOf "user"))
                   (send (Storage.Map.GetById uid) >> throwError (AlreadyExists uid))
-                  $ const $ sendIO newSalt <&> \(hashPassword pw -> hash) -> User em hash user (Bio "") (Image "")
+                  $ const $ sendIO newSalt <&> \(hashPassword pw -> hash) -> UserContent em hash user (Bio "") (Image "")
           send $ Storage.Map.Insert (toUserId u) u
           send $ Relation.ToOne.Relate @_ @_ @"of" em uid
           pure $ transform u

@@ -119,7 +119,7 @@ instance
         runNonDetA @[] $ do
           cid <- send (Relation.ToMany.GetRelated @_ @"has" @(IdOf "comment") aid) >>= oneOf
           flip (catchError @(NotFound (IdOf "comment"))) (const $ throwError $ Impossible "comment id not found") $ do
-            Comment {..} <- send $ Storage.Map.GetById cid
+            CommentContent {..} <- send $ Storage.Map.GetById cid
             auth <- transform <$> send (Storage.Map.GetById author)
             pure $ CommentWithAuthorProfile cid createdAt updatedAt body $ UserProfile auth False
       GetTags -> send $ Storage.Set.GetAll @Tag

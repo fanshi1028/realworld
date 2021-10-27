@@ -254,7 +254,7 @@ instance
           send $ Relation.ToMany.Relate @_ @_ @"create" authUserId aid
           t <- send $ Current.GetCurrent @Time
           foldMapA (send . Relation.ManyToMany.Relate @_ @_ @"taggedBy" aid) ts
-          let a = Article tt des bd t t $ toUserId auth
+          let a = ArticleContent tt des bd t t $ toUserId auth
           send (Storage.Map.Insert (toArticleId a) a)
             -- FIXME: Follow his own article?
             $> ArticleWithAuthorProfile a [] False 0 (UserProfile auth True)
@@ -306,7 +306,7 @@ instance
         AddCommentToArticle articleId (CommentCreate txt) -> do
           t <- send $ Current.GetCurrent @Time
           commentId <- CommentId <$> send GenUUID.Generate
-          let a = Comment commentId t t txt (toUserId auth) articleId
+          let a = CommentContent commentId t t txt (toUserId auth) articleId
           send $ Storage.Map.Insert commentId a
           send $ Relation.ToMany.Relate @_ @_ @"has" articleId commentId
           pure $

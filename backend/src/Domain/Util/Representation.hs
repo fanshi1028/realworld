@@ -26,7 +26,7 @@ class Transform a b where
 
 -- | @since 0.2.0.0
 instance Transform (ContentOf "user") (AuthOf "user") where
-  transform (User em _ name bio' img) = UserAuth em name bio' img
+  transform (UserContent em _ name bio' img) = UserAuth em name bio' img
 
 instance Transform (ContentOf "user") (IdOf "user") where
   transform = toUserId

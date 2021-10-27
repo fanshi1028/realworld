@@ -20,7 +20,7 @@ import Util.Validation (NoValidation (..), WithNoValidation, WithValidation)
 -- | @since 0.2.0.0
 instance HasStorage "comment" where
   newtype IdOf "comment" = CommentId UUID deriving (Show, Eq, Hashable, ToJSON)
-  data ContentOf "comment" = Comment
+  data ContentOf "comment" = CommentContent
     { id :: IdOf "comment",
       createdAt :: Time, -- "2016-02-18T03:22:56.637Z",
       updatedAt :: Time, -- "2016-02-18T03:22:56.637Z",
