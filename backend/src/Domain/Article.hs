@@ -15,6 +15,7 @@ module Article where
 
 import Data.Aeson (ToJSON (toEncoding, toJSON), Value (Object))
 import qualified Data.HashMap.Strict as HM
+import Domain (Domain (Article))
 import Field.Tag (Tag)
 import GHC.TypeLits (Symbol)
 import Storage.Map (ContentOf (..), toArticleId)
@@ -30,7 +31,7 @@ data family ArticleR (r :: Symbol)
 --
 -- @since 0.2.0.0
 data instance ArticleR "withAuthorProfile" = ArticleWithAuthorProfile
-  { article :: ContentOf "article",
+  { article :: ContentOf 'Article,
     tagList :: [Tag], -- ["dragons", "training"],
     favorited :: Bool, -- false,
     favoritesCount :: Natural, -- 0,

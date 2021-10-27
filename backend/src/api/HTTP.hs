@@ -22,6 +22,7 @@ import Control.Effect.Catch (Catch)
 import Control.Effect.Lift (Lift)
 import Control.Effect.Sum (Member)
 import Control.Effect.Throw (Throw)
+import Domain (Domain (User))
 import HTTP.Auth.User (AuthUserApi, authUserServer)
 import HTTP.Protected (AuthedApi, authedServer)
 import HTTP.Public (PublicApi, publicServer)
@@ -60,16 +61,16 @@ server ::
     Member VisitorAction.E sig,
     Member UserAction.E sig,
     Member (Lift IO) sig,
-    Member (Token.E "user") sig,
+    Member (Token.E 'User) sig,
     Member (R.Reader JWTSettings) sig,
     Member (R.Reader CookieSettings) sig,
     Member (R.Reader (AuthResult (UserR "authWithToken"))) sig,
     Member (Throw ValidationErr) sig,
     Member (Throw Impossible) sig,
-    Member (Catch (NotAuthorized (TokenOf "user"))) sig,
-    Member (Authentication.E "user") sig,
-    Member (Throw (NotAuthorized (TokenOf "user"))) sig,
-    Member (Storage.Map.E "user") sig
+    Member (Catch (NotAuthorized (TokenOf 'User))) sig,
+    Member (Authentication.E 'User) sig,
+    Member (Throw (NotAuthorized (TokenOf 'User))) sig,
+    Member (Storage.Map.E 'User) sig
   ) =>
   ServerT Api m
 server =

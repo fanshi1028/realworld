@@ -14,11 +14,11 @@ module Authentication (E (..), module X) where
 
 import Authentication.Internal.HasAuth as X
 import Authentication.Internal.HasAuth.User as X
-import GHC.TypeLits (Symbol)
 import Storage.Map (CreateOf)
+import Domain (Domain)
 
 -- | @since 0.2.0.0
-data E (s :: Symbol) (m :: Type -> Type) a where
+data E (s :: Domain) (m :: Type -> Type) a where
   Register :: CreateOf s -> E s m (AuthOf s)
   Login :: LoginOf s -> E s m (AuthOf s)
   Logout :: E s m ()

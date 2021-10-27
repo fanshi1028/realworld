@@ -15,6 +15,7 @@
 -- @since 0.1.0.0
 module HTTP.Util where
 
+import Domain (Domain)
 import Field.Tag (Tag)
 import Field.Username (Username)
 import GHC.TypeLits (Symbol)
@@ -80,44 +81,44 @@ type Cap s r = Capture s (WithValidation r)
 -- | Convenient alias.
 --
 -- @since 0.1.0.0
-type CreateBody (s :: Symbol) = ReqBody '[JSON] (In (WithValidation (CreateOf s)))
+type CreateBody (s :: Domain) = ReqBody '[JSON] (In (WithValidation (CreateOf s)))
 
 -- | Convenient alias.
 --
 -- @since 0.2.0.0
-type UpdateBody (s :: Symbol) = ReqBody '[JSON] (In (WithValidation (Patch (UpdateOf s))))
+type UpdateBody (s :: Domain) = ReqBody '[JSON] (In (WithValidation (Patch (UpdateOf s))))
 
 -- * CRUD
 
 -- ** Create
 
 -- | @since 0.1.0.0
-type CreateApi (s :: Symbol) o = CreateBody s :> Post '[JSON] (Out o)
+type CreateApi (s :: Domain) o = CreateBody s :> Post '[JSON] (Out o)
 
 -- ** Read
 
 -- | @since 0.1.0.0
-type ReadApi (s :: Symbol) o = Get '[JSON] (Out o)
+type ReadApi (s :: Domain) o = Get '[JSON] (Out o)
 
 -- | @since 0.1.0.0
-type ReadManyApi (s :: Symbol) o = Get '[JSON] (Out [o])
+type ReadManyApi (s :: Domain) o = Get '[JSON] (Out [o])
 
 -- ** Update
 
 -- | @since 0.1.0.0
-type UpdateApi (s :: Symbol) o = UpdateBody s :> Put '[JSON] (Out o)
+type UpdateApi (s :: Domain) o = UpdateBody s :> Put '[JSON] (Out o)
 
 -- | @since 0.1.0.0
-type NoBodyUpdateApi (s :: Symbol) o = Post '[JSON] (Out o)
+type NoBodyUpdateApi (s :: Domain) o = Post '[JSON] (Out o)
 
 -- ** Combinations
 
 -- | Update with Delete
 --
 -- @since 0.1.0.0
-type UDApi (s :: Symbol) o = UpdateApi s o :<|> Delete '[JSON] NoContent
+type UDApi (s :: Domain) o = UpdateApi s o :<|> Delete '[JSON] NoContent
 
 -- | For togglable state
 --
 -- @since 0.1.0.0
-type ToggleApi (s :: Symbol) o = NoBodyUpdateApi s o :<|> Delete '[JSON] (Out o)
+type ToggleApi (s :: Domain) o = NoBodyUpdateApi s o :<|> Delete '[JSON] (Out o)

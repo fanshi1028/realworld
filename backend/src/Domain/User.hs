@@ -16,6 +16,7 @@ module User where
 import Authentication (AuthOf)
 import Data.Aeson (ToJSON (toEncoding, toJSON), Value (Object), defaultOptions, genericToJSON)
 import qualified Data.HashMap.Strict as HM
+import Domain (Domain (User))
 import GHC.TypeLits (Symbol)
 import Servant.Auth.Server (ToJWT (encodeJWT))
 import Token (TokenOf)
@@ -52,7 +53,7 @@ data family UserR (r :: Symbol)
 --
 -- @since 0.2.0.0
 data instance UserR "profile" = UserProfile
-  { profile :: AuthOf "user",
+  { profile :: AuthOf 'User,
     following :: Bool
   }
   deriving (Show, Eq, Generic)
@@ -74,7 +75,7 @@ instance ToJSON (Out (UserR "profile")) where
 -- | Representation for auth info
 --
 -- @since 0.2.0.0
-data instance UserR "authWithToken" = UserAuthWithToken (AuthOf "user") (TokenOf "user") deriving (Show, Eq, Generic)
+data instance UserR "authWithToken" = UserAuthWithToken (AuthOf 'User) (TokenOf 'User) deriving (Show, Eq, Generic)
 
 -- | @since 0.2.0.0
 instance ToJSON (UserR "authWithToken") where

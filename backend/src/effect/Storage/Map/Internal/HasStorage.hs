@@ -12,10 +12,10 @@
 -- @since 0.2.0.0
 module Storage.Map.Internal.HasStorage where
 
-import GHC.TypeLits (Symbol)
+import Domain (Domain)
 
 -- @since 0.2.0.0
-class HasStorage (s :: Symbol) where
+class HasStorage (s :: Domain) where
   -- | need an id for indexing in storage
   data IdOf s
 

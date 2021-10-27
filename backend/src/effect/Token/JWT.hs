@@ -23,7 +23,7 @@ import qualified Control.Effect.Reader as R (Reader, ask, asks)
 import Control.Effect.Sum (Member)
 import Control.Effect.Throw (Throw, throwError)
 import Crypto.JOSE (Error)
-import GHC.TypeLits (Symbol)
+import Domain (Domain)
 import Relude.Extra (un)
 import Servant.Auth.Server (CookieSettings (cookieExpires), FromJWT, JWTSettings, ToJWT, makeJWT, verifyJWT)
 import Token (E (CreateToken, DecodeToken, InvalidateToken), TokenOf)
@@ -31,7 +31,7 @@ import Token.JWT.Invalidate (E (Invalidate))
 import Util.Error (NotAuthorized (NotAuthorized))
 
 -- | @since 0.1.0.0
-newtype C (s :: Symbol) (m :: Type -> Type) a = C
+newtype C (s :: Domain) (m :: Type -> Type) a = C
   { run :: m a
   }
   deriving (Functor, Applicative, Monad)

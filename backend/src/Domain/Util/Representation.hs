@@ -14,9 +14,10 @@
 module Util.Representation (Transform (transform)) where
 
 import Authentication (AuthOf (UserAuth))
+import Domain (Domain (Article, Comment, User))
+import GHC.Records (getField)
 import Storage.Map (ContentOf (..), IdOf, toArticleId, toUserId)
 import Storage.Map.Internal.HasStorage.User ()
-import GHC.Records (getField)
 
 -- | Transform between different representation of the same data
 --
@@ -25,14 +26,14 @@ class Transform a b where
   transform :: a -> b
 
 -- | @since 0.2.0.0
-instance Transform (ContentOf "user") (AuthOf "user") where
+instance Transform (ContentOf 'User) (AuthOf 'User) where
   transform (UserContent em _ name bio' img) = UserAuth em name bio' img
 
-instance Transform (ContentOf "user") (IdOf "user") where
+instance Transform (ContentOf 'User) (IdOf 'User) where
   transform = toUserId
 
-instance Transform (ContentOf "article") (IdOf "article") where
+instance Transform (ContentOf 'Article) (IdOf 'Article) where
   transform = toArticleId
 
-instance Transform (ContentOf "comment") (IdOf "comment") where
+instance Transform (ContentOf 'Comment) (IdOf 'Comment) where
   transform = getField @"id"

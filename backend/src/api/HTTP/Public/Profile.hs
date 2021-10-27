@@ -16,6 +16,7 @@ module HTTP.Public.Profile where
 import Control.Algebra (Algebra, send)
 import Control.Effect.Sum (Member)
 import Control.Effect.Throw (Throw, throwError)
+import Domain (Domain (User))
 import HTTP.Util (Cap, ReadApi)
 import Servant (ServerT, type (:>))
 import Storage.Map (IdOf)
@@ -28,7 +29,7 @@ import VisitorAction (E (GetProfile))
 -- * API
 
 -- | @since 0.1.0.0
-type ProfileApi = Cap "username" (IdOf "user") :> ReadApi "user" (UserR "profile")
+type ProfileApi = Cap "username" (IdOf 'User) :> ReadApi 'User (UserR "profile")
 
 -- * Server
 

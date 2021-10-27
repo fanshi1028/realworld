@@ -4,7 +4,7 @@
 -- |
 module Storage.Map.Internal.HasCreate where
 
-import GHC.TypeLits (Symbol)
+import Domain (Domain)
 
-class HasCreate (s :: Symbol) where
+class HasCreate (s :: Domain) where
   data CreateOf s

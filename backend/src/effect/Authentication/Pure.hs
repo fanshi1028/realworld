@@ -20,11 +20,11 @@ import Authentication (E (Login, Logout, Register), HasAuth (LoginOf))
 import Control.Algebra (Algebra (alg), type (:+:) (L, R))
 import Control.Effect.Sum (Member)
 import Control.Effect.Throw (Throw, throwError)
-import GHC.TypeLits (Symbol)
+import Domain (Domain)
 import Util.Error (AlreadyLogin (AlreadyLogin), NotLogin (NotLogin))
 
 -- | @since 0.1.0.0
-newtype C (s :: Symbol) (b :: Bool) m a = C
+newtype C (s :: Domain) (b :: Bool) m a = C
   { run :: m a
   }
   deriving (Functor, Applicative, Monad)

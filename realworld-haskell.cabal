@@ -108,6 +108,7 @@ library backend-domain-internal
   exposed-modules:
     Article
     Comment
+    Domain
     Field.Bio
     Field.Body
     Field.Description

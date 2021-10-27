@@ -15,6 +15,7 @@ module HTTP.Protected.User where
 import Control.Algebra (Algebra, send)
 import Control.Effect.Sum (Member)
 import Control.Effect.Throw (Throw, throwError)
+import Domain (Domain (User))
 import HTTP.Util (ReadApi, UpdateApi)
 import Servant (ServerT, type (:<|>) ((:<|>)))
 import User (UserR)
@@ -27,7 +28,7 @@ import Validation (Validation (Failure, Success))
 -- * API
 
 -- | @since 0.1.0.0
-type UserApi = ReadApi "user" (UserR "authWithToken") :<|> UpdateApi "user" (UserR "authWithToken")
+type UserApi = ReadApi 'User (UserR "authWithToken") :<|> UpdateApi 'User (UserR "authWithToken")
 
 -- * Server
 

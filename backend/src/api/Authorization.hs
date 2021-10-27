@@ -28,6 +28,7 @@ import qualified Control.Carrier.Reader as R (runReader)
 import Control.Carrier.Throw.Either (runThrow)
 import Crypto.JOSE (Error)
 import qualified Data.List as List (lookup)
+import Domain (Domain (User))
 import Network.Wai (Request, requestHeaders)
 import Servant (FromHttpApiData (parseHeader))
 import Servant.Auth.Server (CookieSettings, JWTSettings)
@@ -44,8 +45,8 @@ import Util.Error (NotAuthorized)
 import Util.Representation (Transform (transform))
 
 -- | @since 0.1.0.0
-pattern RequestToken :: TokenOf "user" -> Request
-pattern RequestToken token <- (List.lookup "authorization" . requestHeaders -> Just (parseHeader @(TokenOf "user") -> Right token))
+pattern RequestToken :: TokenOf 'User -> Request
+pattern RequestToken token <- (List.lookup "authorization" . requestHeaders -> Just (parseHeader @(TokenOf 'User) -> Right token))
 
 -- | Make use of 'CookieSettings' and 'JWTSettings' from servant-auth
 --
@@ -60,11 +61,11 @@ instance IsAuth TokenAuth (UserR "authWithToken") where
       RequestToken token ->
         runM
           . runThrow @Error
-          . runThrow @(NotAuthorized (TokenOf "user"))
+          . runThrow @(NotAuthorized (TokenOf 'User))
           . R.runReader cs
           . R.runReader jwts
-          . Token.JWT.Invalidate.Pure.run @(TokenOf "user")
-          . Token.JWT.run @"user"
+          . Token.JWT.Invalidate.Pure.run @(TokenOf 'User)
+          . Token.JWT.run @'User
           >=> \case
             Right (Right auth) -> pure $ pure $ UserAuthWithToken auth token
             _ -> pure mempty
@@ -78,7 +79,7 @@ data TokenAuthInMem
 
 -- | @since 0.1.0.0
 instance IsAuth TokenAuthInMem (UserR "authWithToken") where
-  type AuthArgs TokenAuthInMem = '[TableInMem "user", TableInMem' (TokenOf "user") (IdOf "user")]
+  type AuthArgs TokenAuthInMem = '[TableInMem 'User, TableInMem' (TokenOf 'User) (IdOf 'User)]
   runAuth _ _ userDb tokenDb = Auth.AuthCheck $ \case
     RequestToken token ->
       atomically $

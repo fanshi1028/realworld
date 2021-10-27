@@ -17,6 +17,7 @@ import Comment (CommentR)
 import Control.Algebra (Algebra, send)
 import Control.Effect.Sum (Member)
 import Control.Effect.Throw (Throw, throwError)
+import Domain (Domain (Article))
 import HTTP.Util (Cap, QP, ReadApi, ReadManyApi)
 import Servant (ServerT, type (:<|>) ((:<|>)), type (:>))
 import Storage.Map.Internal.HasStorage.User (IdOf)
@@ -29,10 +30,10 @@ import VisitorAction (E (GetArticle, GetComments, ListArticles))
 
 -- | @since 0.1.0.0
 type ArticleApi =
-  QP "tag" :> QP "author" :> QP "favorited" :> QP "limit" :> QP "offset" :> ReadManyApi "article" (ArticleR "withAuthorProfile")
-    :<|> Cap "slug" (IdOf "article")
-      :> ( ReadApi "article" (ArticleR "withAuthorProfile")
-             :<|> "comments" :> ReadManyApi "article" (CommentR "withAuthorProfile")
+  QP "tag" :> QP "author" :> QP "favorited" :> QP "limit" :> QP "offset" :> ReadManyApi 'Article (ArticleR "withAuthorProfile")
+    :<|> Cap "slug" (IdOf 'Article)
+      :> ( ReadApi 'Article (ArticleR "withAuthorProfile")
+             :<|> "comments" :> ReadManyApi 'Article (CommentR "withAuthorProfile")
          )
 
 -- * Server

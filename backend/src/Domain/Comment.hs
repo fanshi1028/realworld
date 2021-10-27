@@ -14,6 +14,7 @@
 module Comment where
 
 import Data.Aeson (ToJSON (toEncoding, toJSON))
+import Domain (Domain (Comment))
 import Field.Time (Time)
 import GHC.TypeLits (Symbol)
 import Storage.Map (IdOf)
@@ -29,7 +30,7 @@ data family CommentR (r :: Symbol)
 --
 -- @since 0.2.0.0
 data instance CommentR "withAuthorProfile" = CommentWithAuthorProfile
-  { id :: IdOf "comment",
+  { id :: IdOf 'Comment,
     createdAt :: Time, -- "2016-02-18T03:22:56.637Z",
     updatedAt :: Time, -- "2016-02-18T03:22:56.637Z",
     body :: Text, -- "It takes a Jacobian",

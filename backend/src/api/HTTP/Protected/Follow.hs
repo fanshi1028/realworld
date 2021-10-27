@@ -15,6 +15,7 @@ module HTTP.Protected.Follow where
 import Control.Algebra (Algebra, send)
 import Control.Effect.Sum (Member)
 import Control.Effect.Throw (Throw, throwError)
+import Domain (Domain (User))
 import HTTP.Util (Cap, ToggleApi)
 import Servant (ServerT, type (:<|>) ((:<|>)), type (:>))
 import Storage.Map (IdOf)
@@ -27,7 +28,7 @@ import Validation (Validation (Failure, Success))
 -- * API
 
 -- | @since 0.1.0.0
-type FollowApi = Cap "username" (IdOf "user") :> "follow" :> ToggleApi "user" (UserR "profile")
+type FollowApi = Cap "username" (IdOf 'User) :> "follow" :> ToggleApi 'User (UserR "profile")
 
 -- * Server
 

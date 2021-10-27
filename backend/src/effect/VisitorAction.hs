@@ -25,6 +25,7 @@ import Control.Effect.NonDet (oneOf)
 import Control.Effect.Sum (Member)
 import Control.Effect.Throw (Throw, throwError)
 import qualified Current (E)
+import Domain (Domain (Article, Comment, User))
 import Field.Tag (Tag)
 import GHC.Records (getField)
 import qualified Relation.ManyToMany (E (GetRelatedLeft, GetRelatedRight))
@@ -45,11 +46,11 @@ data E (m :: Type -> Type) a where
   -- | Get the profile of the user specified by the id.
   --
   -- @since 0.1.0.0
-  GetProfile :: IdOf "user" -> E m (UserR "profile")
+  GetProfile :: IdOf 'User -> E m (UserR "profile")
   -- | Get the article specified by the id.
   --
   -- @since 0.1.0.0
-  GetArticle :: IdOf "article" -> E m (ArticleR "withAuthorProfile")
+  GetArticle :: IdOf 'Article -> E m (ArticleR "withAuthorProfile")
   -- | Get all the articles.
   --
   -- @since 0.1.0.0
@@ -61,7 +62,7 @@ data E (m :: Type -> Type) a where
   -- | Get all the comments of the article specified by the id.
   --
   -- @since 0.1.0.0
-  GetComments :: IdOf "article" -> E m [CommentR "withAuthorProfile"]
+  GetComments :: IdOf 'Article -> E m [CommentR "withAuthorProfile"]
 
 -- * Carrirer
 
@@ -73,19 +74,19 @@ newtype C m a = C
 
 -- | @since 0.1.0.0
 instance
-  ( Member (Storage.Map.E "user") sig,
-    Member (Storage.Map.E "article") sig,
-    Member (Storage.Map.E "comment") sig,
+  ( Member (Storage.Map.E 'User) sig,
+    Member (Storage.Map.E 'Article) sig,
+    Member (Storage.Map.E 'Comment) sig,
     Member (Storage.Set.E Tag) sig,
-    Member (Relation.ManyToMany.E (IdOf "article") "taggedBy" Tag) sig,
-    Member (Relation.ManyToMany.E (IdOf "user") "favorite" (IdOf "article")) sig,
-    Member (Relation.ManyToMany.E (IdOf "user") "follow" (IdOf "user")) sig,
-    Member (Relation.ToMany.E (IdOf "article") "has" (IdOf "comment")) sig,
+    Member (Relation.ManyToMany.E (IdOf 'Article) "taggedBy" Tag) sig,
+    Member (Relation.ManyToMany.E (IdOf 'User) "favorite" (IdOf 'Article)) sig,
+    Member (Relation.ManyToMany.E (IdOf 'User) "follow" (IdOf 'User)) sig,
+    Member (Relation.ToMany.E (IdOf 'Article) "has" (IdOf 'Comment)) sig,
     Member (Current.E (UserR "authWithToken")) sig,
     Member (Throw Impossible) sig,
     -- Member (Throw (NotAuthorized UserR)) sig,
     -- Member (Catch (NotAuthorized UserR)) sig,
-    Member (Catch (NotFound (IdOf "comment"))) sig,
+    Member (Catch (NotFound (IdOf 'Comment))) sig,
     Algebra sig m
   ) =>
   Algebra (E :+: sig) (C m)
@@ -101,24 +102,24 @@ instance
         ArticleWithAuthorProfile a
           <$> send (Relation.ManyToMany.GetRelatedLeft @_ @"taggedBy" @Tag aid)
           <*> pure False
-          <*> (genericLength <$> send (Relation.ManyToMany.GetRelatedRight @_ @(IdOf "user") @"favorite" aid))
+          <*> (genericLength <$> send (Relation.ManyToMany.GetRelatedRight @_ @(IdOf 'User) @"favorite" aid))
           <*> pure (UserProfile u False)
       ListArticles ->
         runNonDetA @[] $ do
-          a <- send (Storage.Map.GetAll @"article") >>= oneOf
+          a <- send (Storage.Map.GetAll @'Article) >>= oneOf
           let aid = toArticleId a
               uid = getField @"author" a
           u <- transform <$> send (Storage.Map.GetById uid)
           ArticleWithAuthorProfile a
-            <$> send (Relation.ManyToMany.GetRelatedLeft @(IdOf "article") @"taggedBy" @Tag aid)
+            <$> send (Relation.ManyToMany.GetRelatedLeft @(IdOf 'Article) @"taggedBy" @Tag aid)
             <*> pure False
-            <*> (genericLength <$> send (Relation.ManyToMany.GetRelatedRight @_ @(IdOf "user") @"favorite" aid))
+            <*> (genericLength <$> send (Relation.ManyToMany.GetRelatedRight @_ @(IdOf 'User) @"favorite" aid))
             <*> pure (UserProfile u False)
       GetComments aid -> do
         _ <- send $ Storage.Map.GetById aid
         runNonDetA @[] $ do
-          cid <- send (Relation.ToMany.GetRelated @_ @"has" @(IdOf "comment") aid) >>= oneOf
-          flip (catchError @(NotFound (IdOf "comment"))) (const $ throwError $ Impossible "comment id not found") $ do
+          cid <- send (Relation.ToMany.GetRelated @_ @"has" @(IdOf 'Comment) aid) >>= oneOf
+          flip (catchError @(NotFound (IdOf 'Comment))) (const $ throwError $ Impossible "comment id not found") $ do
             CommentContent {..} <- send $ Storage.Map.GetById cid
             auth <- transform <$> send (Storage.Map.GetById author)
             pure $ CommentWithAuthorProfile cid createdAt updatedAt body $ UserProfile auth False

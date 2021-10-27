@@ -10,6 +10,7 @@ module Storage.Map.Internal.HasCreate.User where
 
 import Data.Aeson (FromJSON (parseJSON), defaultOptions, genericParseJSON)
 import Data.Generic.HKD (construct)
+import Domain (Domain (User))
 import Field.Email (Email)
 import Field.Password (Password)
 import Field.Username (Username)
@@ -18,8 +19,8 @@ import Util.JSON.From (In, wrappedParseJSON)
 import Util.Validation (WithValidation)
 
 -- | @since 0.2.0.0
-instance HasCreate "user" where
-  data CreateOf "user" = UserCreate
+instance HasCreate 'User where
+  data CreateOf 'User = UserCreate
     { username :: Username,
       email :: Email,
       password :: Password
@@ -27,17 +28,17 @@ instance HasCreate "user" where
     deriving (Show, Generic)
 
 -- | @since 0.2.0.0
-instance FromJSON (WithValidation (CreateOf "user")) where
+instance FromJSON (WithValidation (CreateOf 'User)) where
   parseJSON = construct <<$>> genericParseJSON defaultOptions
 -- ^
 -- >>> import Data.Aeson (eitherDecode')
--- >>> eitherDecode' @(WithValidation (CreateOf "user")) "{\"username\": \"\", \"email\": \"ff2239fj3902@fiew.mail\", \"password\":\"11fewifwofwwefew\" }"
+-- >>> eitherDecode' @(WithValidation (CreateOf 'User)) "{\"username\": \"\", \"email\": \"ff2239fj3902@fiew.mail\", \"password\":\"11fewifwofwwefew\" }"
 -- Right (Success (UserCreate {username = "", email = "ff2239fj3902@fiew.mail", password = **PASSWORD**}))
 
 -- | @since 0.2.0.0
-instance FromJSON (In (WithValidation (CreateOf "user"))) where
+instance FromJSON (In (WithValidation (CreateOf 'User))) where
   parseJSON = wrappedParseJSON "UserRegister" "user"
 -- ^
 -- >>> import Data.Aeson (eitherDecode')
--- >>> eitherDecode' @(In (WithValidation (CreateOf "user"))) "{ \"user\": {\"username\": \"\", \"email\": \"\", \"password\":\"11\" } }"
+-- >>> eitherDecode' @(In (WithValidation (CreateOf 'User))) "{ \"user\": {\"username\": \"\", \"email\": \"\", \"password\":\"11\" } }"
 -- Right (In (Failure ("null email" :| ["PasswordTooShort 8 2"])))

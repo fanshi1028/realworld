@@ -22,6 +22,7 @@ import Control.Exception.Safe (catch)
 import qualified Crypto.JOSE (Error)
 import qualified Current.IO (run)
 import qualified Current.Reader (run)
+import Domain (Domain (Article, Comment, User))
 import Field.Email (Email)
 import Field.Tag (Tag)
 import Field.Time (Time)
@@ -60,28 +61,28 @@ import qualified VisitorAction (run)
 mkApp ::
   CookieSettings ->
   JWTSettings ->
-  TableInMem "user" ->
-  TableInMem "article" ->
-  TableInMem "comment" ->
+  TableInMem 'User ->
+  TableInMem 'Article ->
+  TableInMem 'Comment ->
   STM.Set Tag ->
   -- | email of user
-  STM.Map Email (IdOf "user") ->
+  STM.Map Email (IdOf 'User) ->
   -- | article has comment
-  Multimap (IdOf "article") (IdOf "comment") ->
+  Multimap (IdOf 'Article) (IdOf 'Comment) ->
   -- | user create article
-  Multimap (IdOf "user") (IdOf "article") ->
+  Multimap (IdOf 'User) (IdOf 'Article) ->
   -- | article tagged by tag
-  Multimap (IdOf "article") Tag ->
+  Multimap (IdOf 'Article) Tag ->
   -- | tag tag article
-  Multimap Tag (IdOf "article") ->
+  Multimap Tag (IdOf 'Article) ->
   -- | user follow user
-  Multimap (IdOf "user") (IdOf "user") ->
+  Multimap (IdOf 'User) (IdOf 'User) ->
   -- | user followed by user
-  Multimap (IdOf "user") (IdOf "user") ->
+  Multimap (IdOf 'User) (IdOf 'User) ->
   -- | user favourite article
-  Multimap (IdOf "user") (IdOf "article") ->
+  Multimap (IdOf 'User) (IdOf 'Article) ->
   -- | article favourited by user
-  Multimap (IdOf "article") (IdOf "user") ->
+  Multimap (IdOf 'Article) (IdOf 'User) ->
   Application
 mkApp cs jwts userDb articleDb commentDb tagDb emailUserIndex db0 db1 db2 db3 db4 db5 db6 db7 =
   serveWithContext (Proxy @Api) (cs :. jwts :. EmptyContext) $
@@ -89,20 +90,20 @@ mkApp cs jwts userDb articleDb commentDb tagDb emailUserIndex db0 db1 db2 db3 db
       (Proxy @Api)
       (Proxy @'[CookieSettings, JWTSettings])
       ( ( runIOinSTM
-            . runError @(Forbidden (IdOf "article"))
-            . runError @(NotAuthorized (IdOf "user"))
+            . runError @(Forbidden (IdOf 'Article))
+            . runError @(NotAuthorized (IdOf 'User))
             . runError @(NotAuthorized ())
-            . runError @(NotAuthorized (TokenOf "user"))
-            . runError @(NotFound (IdOf "article"))
-            . runError @(NotFound (IdOf "comment"))
-            . runError @(NotFound (IdOf "user"))
+            . runError @(NotAuthorized (TokenOf 'User))
+            . runError @(NotFound (IdOf 'Article))
+            . runError @(NotFound (IdOf 'Comment))
+            . runError @(NotFound (IdOf 'User))
             . runError @(NotFound Email)
             . runThrow @(NotFound Tag)
-            . runThrow @(AlreadyExists (IdOf "article"))
-            . runThrow @(AlreadyExists (IdOf "user"))
-            . runThrow @(AlreadyExists (IdOf "comment"))
+            . runThrow @(AlreadyExists (IdOf 'Article))
+            . runThrow @(AlreadyExists (IdOf 'User))
+            . runThrow @(AlreadyExists (IdOf 'Comment))
             . runThrow @(AlreadyExists Email)
-            . runThrow @(AlreadyLogin (LoginOf "user"))
+            . runThrow @(AlreadyLogin (LoginOf 'User))
             . runThrow @(NotLogin ())
             . runThrow @ValidationErr
             . runThrow @RequestedUUIDsTooQuickly
@@ -113,22 +114,22 @@ mkApp cs jwts userDb articleDb commentDb tagDb emailUserIndex db0 db1 db2 db3 db
             . Current.Reader.run
             . R.runReader jwts
             . R.runReader cs
-            . Relation.ToOne.InMem.run @Email @"of" @(IdOf "user") @'IgnoreIfExist emailUserIndex
-            . Relation.ToMany.InMem.run @(IdOf "article") @"has" @(IdOf "comment") db0
-            . Relation.ToMany.InMem.run @(IdOf "user") @"create" @(IdOf "article") db1
-            . Relation.ManyToMany.InMem.run @(IdOf "article") @"taggedBy" @Tag db2 db3
-            . Relation.ManyToMany.InMem.run @(IdOf "user") @"follow" @(IdOf "user") db4 db5
-            . Relation.ManyToMany.InMem.run @(IdOf "user") @"favorite" @(IdOf "article") db6 db7
-            . Storage.Map.InMem.run @"user" userDb
-            . Storage.Map.InMem.run @"article" articleDb
-            . Storage.Map.InMem.run @"comment" commentDb
+            . Relation.ToOne.InMem.run @Email @"of" @(IdOf 'User) @'IgnoreIfExist emailUserIndex
+            . Relation.ToMany.InMem.run @(IdOf 'Article) @"has" @(IdOf 'Comment) db0
+            . Relation.ToMany.InMem.run @(IdOf 'User) @"create" @(IdOf 'Article) db1
+            . Relation.ManyToMany.InMem.run @(IdOf 'Article) @"taggedBy" @Tag db2 db3
+            . Relation.ManyToMany.InMem.run @(IdOf 'User) @"follow" @(IdOf 'User) db4 db5
+            . Relation.ManyToMany.InMem.run @(IdOf 'User) @"favorite" @(IdOf 'Article) db6 db7
+            . Storage.Map.InMem.run @'User userDb
+            . Storage.Map.InMem.run @'Article articleDb
+            . Storage.Map.InMem.run @'Comment commentDb
             . Storage.Set.InMem.run @Tag tagDb
             . Current.IO.run @Time
             . GenUUID.V1.run
-            . ( Token.JWT.run @"user"
-                  >>> Token.JWT.Invalidate.Pure.run @(TokenOf "user")
+            . ( Token.JWT.run @'User
+                  >>> Token.JWT.Invalidate.Pure.run @(TokenOf 'User)
               )
-            . Authentication.Token.run @"user"
+            . Authentication.Token.run @'User
             . VisitorAction.run
             . UserAction.run
             >=> handlerErr err403

@@ -11,10 +11,10 @@ import Data.Aeson (Object)
 import Data.Aeson.Types (Parser)
 import Data.Generic.HKD (HKD)
 import qualified Data.Semigroup as SG (Last)
-import GHC.TypeLits (Symbol)
+import Domain (Domain)
 import Util.JSON.From (acceptOnlyKeys)
 
-class HasUpdate (s :: Symbol) where
+class HasUpdate (s :: Domain) where
   data UpdateOf s
 
 type Patch a = HKD (HKD a SG.Last) Maybe

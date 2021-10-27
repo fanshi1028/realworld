@@ -21,6 +21,7 @@ import Control.Effect.Error (Throw, throwError)
 import Control.Effect.Lift (Lift, sendIO)
 import qualified Control.Effect.Reader as R (Reader, ask)
 import Control.Effect.Sum (Member)
+import Domain (Domain (User))
 import HTTP.Util (CreateApi)
 import Relude.Extra (un)
 import Servant
@@ -53,11 +54,11 @@ import Web.Cookie (setCookieValue)
 --
 -- @since 0.1.0.0
 type AuthUserApi =
-  ( "login" :> ReqBody '[JSON] (In (WithValidation (LoginOf "user")))
+  ( "login" :> ReqBody '[JSON] (In (WithValidation (LoginOf 'User)))
       -- :> Verb 'POST 200 '[JSON] (Headers '[Header "Set-Cookie" SetCookie, Header "Set-Cookie" SetCookie] (Out (UserR "authWithToken")))
       :> Verb 'POST 200 '[JSON] (Out (UserR "authWithToken"))
   )
-    :<|> CreateApi "user" (UserR "authWithToken")
+    :<|> CreateApi 'User (UserR "authWithToken")
 
 -- * Server
 
@@ -69,10 +70,10 @@ authUserServer ::
     Member (R.Reader CookieSettings) sig,
     Member (R.Reader JWTSettings) sig,
     Member (Throw Impossible) sig,
-    Member (Token.E "user") sig,
-    Member (Authentication.E "user") sig,
+    Member (Token.E 'User) sig,
+    Member (Authentication.E 'User) sig,
     -- Member (Throw (NotAuthorized UserR)) sig,
-    Member (Storage.Map.E "user") sig
+    Member (Storage.Map.E 'User) sig
   ) =>
   ServerT AuthUserApi m
 authUserServer =

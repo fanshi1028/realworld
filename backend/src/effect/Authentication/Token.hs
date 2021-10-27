@@ -25,13 +25,13 @@ import Control.Effect.Sum (Member)
 import Control.Effect.Throw (Throw, throwError)
 import qualified Current (E (GetCurrent))
 import Data.Password.Argon2 (PasswordCheck (PasswordCheckFail, PasswordCheckSuccess))
+import Domain (Domain (User))
 import Field.Bio (Bio (Bio))
 import Field.Email (Email)
 import Field.Image (Image (Image))
 import Field.Password (checkPassword, hashPassword, newSalt)
 import Field.Time (Time)
 import GHC.Records (getField)
-import GHC.TypeLits (Symbol)
 import qualified Relation.ToOne
 import Storage.Map (ContentOf (UserContent), CreateOf (UserCreate), IdOf (UserId), toUserId)
 import qualified Storage.Map
@@ -41,7 +41,7 @@ import Util.Error (AlreadyExists (AlreadyExists), NotAuthorized (NotAuthorized),
 import Util.Representation (transform)
 
 -- | @since 0.1.0.0
-newtype C (s :: Symbol) m a = C
+newtype C (s :: Domain) m a = C
   { run :: m a
   }
   deriving (Functor, Applicative, Monad)
@@ -50,18 +50,18 @@ newtype C (s :: Symbol) m a = C
 instance
   ( Algebra sig m,
     Member (Lift IO) sig,
-    Member (Throw (NotAuthorized (IdOf "user"))) sig,
+    Member (Throw (NotAuthorized (IdOf 'User))) sig,
     Member (Current.E (UserR "authWithToken")) sig,
-    Member (Relation.ToOne.E Email "of" (IdOf "user")) sig,
-    Member (Catch (NotFound (IdOf "user"))) sig,
-    Member (Throw (AlreadyExists (IdOf "user"))) sig,
+    Member (Relation.ToOne.E Email "of" (IdOf 'User)) sig,
+    Member (Catch (NotFound (IdOf 'User))) sig,
+    Member (Throw (AlreadyExists (IdOf 'User))) sig,
     Member (Throw (AlreadyExists Email)) sig,
     Member (Current.E Time) sig,
     Member (Throw (NotFound Email)) sig,
-    Member (Storage.Map.E "user") sig,
-    Member (Token.E "user") sig
+    Member (Storage.Map.E 'User) sig,
+    Member (Token.E 'User) sig
   ) =>
-  Algebra (Authentication.E "user" :+: sig) (C "user" m)
+  Algebra (Authentication.E 'User :+: sig) (C 'User m)
   where
   alg _ (L action) ctx =
     (<$ ctx) <$> do
@@ -71,10 +71,10 @@ instance
           -- FIXME: meta data like createdTime and UpdatedTime?
           -- send $ GetCurrent @Time
           u <-
-            send (Relation.ToOne.GetRelated @_ @"of" @(IdOf "user") em) >>= \case
+            send (Relation.ToOne.GetRelated @_ @"of" @(IdOf 'User) em) >>= \case
               Just _ -> throwError $ AlreadyExists em
               Nothing ->
-                catchError @(NotFound (IdOf "user"))
+                catchError @(NotFound (IdOf 'User))
                   (send (Storage.Map.GetById uid) >> throwError (AlreadyExists uid))
                   $ const $ sendIO newSalt <&> \(hashPassword pw -> hash) -> UserContent em hash user (Bio "") (Image "")
           send $ Storage.Map.Insert (toUserId u) u
@@ -84,7 +84,7 @@ instance
           UserAuthWithToken _ t <- send $ Current.GetCurrent @(UserR "authWithToken")
           send $ Token.InvalidateToken t
         Authentication.Login (UserLogin em pw) ->
-          send (Relation.ToOne.GetRelated @_ @"of" @(IdOf "user") em) >>= \case
+          send (Relation.ToOne.GetRelated @_ @"of" @(IdOf 'User) em) >>= \case
             Nothing -> throwError $ NotFound em
             Just uid -> do
               a <- send $ Storage.Map.GetById uid

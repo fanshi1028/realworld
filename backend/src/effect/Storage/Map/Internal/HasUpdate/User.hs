@@ -11,6 +11,7 @@ module Storage.Map.Internal.HasUpdate.User where
 import Data.Aeson (FromJSON (parseJSON), withObject, (.!=), (.:?))
 import Data.Generic.HKD (HKD, build, construct)
 import qualified Data.Semigroup as SG
+import Domain (Domain (User))
 import Field.Bio (Bio)
 import Field.Email (Email)
 import Field.Image (Image)
@@ -21,8 +22,8 @@ import Util.JSON.From (In, wrappedParseJSON)
 import Util.Validation (WithValidation)
 
 -- | @since 0.2.0.0
-instance HasUpdate "user" where
-  data UpdateOf "user" = UserUpdate
+instance HasUpdate 'User where
+  data UpdateOf 'User = UserUpdate
     { email :: Email, -- "jake@jake.jake",
       password :: Password, -- "jakejake"
       username :: Username, -- "jake",
@@ -32,12 +33,12 @@ instance HasUpdate "user" where
     deriving (Generic)
 
 -- | @since 0.2.0.0
-instance FromJSON (WithValidation (Patch (UpdateOf "user"))) where
+instance FromJSON (WithValidation (Patch (UpdateOf 'User))) where
   parseJSON = withObject "UpdateUser" $ \o -> do
     updatableKeys ["email", "password", "username", "bio", "image"] o
     construct
       <$> construct
-        ( build @(HKD (HKD (HKD (UpdateOf "user") SG.Last) Maybe) WithValidation)
+        ( build @(HKD (HKD (HKD (UpdateOf 'User) SG.Last) Maybe) WithValidation)
             (o .:? "email" .!= pure Nothing)
             (o .:? "password" .!= pure Nothing)
             (o .:? "username" .!= pure Nothing)
@@ -46,5 +47,5 @@ instance FromJSON (WithValidation (Patch (UpdateOf "user"))) where
         )
 
 -- | @since 0.2.0.0
-instance FromJSON (In (WithValidation (Patch (UpdateOf "user")))) where
+instance FromJSON (In (WithValidation (Patch (UpdateOf 'User)))) where
   parseJSON = wrappedParseJSON "UserUpdate" "user"
