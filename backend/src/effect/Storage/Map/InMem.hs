@@ -19,9 +19,9 @@ import Control.Algebra (Algebra (alg), type (:+:) (L, R))
 import Control.Effect.Error (Throw, throwError)
 import Control.Effect.Lift (Lift, sendM)
 import Control.Effect.Sum (Member)
+import Domain.Transform (Transform (transform))
 import qualified Focus as FC (Change (Leave, Remove), cases)
 import qualified ListT (fold)
-import Domain.Transform (Transform (transform))
 import qualified StmContainers.Map as STM (Map, delete, focus, insert, listT, lookup)
 import Storage.Map (E (DeleteById, GetAll, GetById, Insert, UpdateById), HasStorage (ContentOf, IdOf))
 import Util.Error (AlreadyExists (AlreadyExists), NotFound (NotFound))
@@ -29,15 +29,17 @@ import Util.Error (AlreadyExists (AlreadyExists), NotFound (NotFound))
 -- | @since 0.2.0.0
 type TableInMem' k v = STM.Map k v
 
+-- | @since 0.2.0.0
 type TableInMem s = STM.Map (IdOf s) (ContentOf s)
 
--- | @since 0.1.0.0
+-- | @since 0.2.0.0
 newtype C s m a = C
-  { run' :: ReaderT (TableInMem s) m a
+  { -- | @since 0.2.0.0
+    run' :: ReaderT (TableInMem s) m a
   }
   deriving (Functor, Applicative, Monad, MonadReader (TableInMem s))
 
--- | @since 0.1.0.0
+-- | @since 0.2.0.0
 instance
   ( Show (IdOf s),
     Eq (IdOf s),
@@ -83,5 +85,10 @@ instance
   {-# INLINE alg #-}
 
 -- | @since 0.1.0.0
-run :: TableInMem s -> C s m a -> m a
+run ::
+  -- | the in-memory db
+  TableInMem s ->
+  -- | the effect stack
+  C s m a ->
+  m a
 run db = run' >>> usingReaderT db

@@ -2,12 +2,12 @@
 {-# LANGUAGE TypeFamilies #-}
 
 -- |
--- Description : Typeclass for effect
+-- Description : Typeclass
 -- Copyright   : (c) 2021 fanshi1028
 -- Maintainer  : jackychany321@gmail.com
 -- Stability   : experimental
 --
--- typeclass for implementing for storage effect
+-- Type family for storage
 --
 -- @since 0.2.0.0
 module Storage.Map.Internal.HasStorage where
@@ -16,8 +16,10 @@ import Domain (Domain)
 
 -- | @since 0.2.0.0
 class HasStorage (s :: Domain) where
-  -- | need an id for indexing in storage
+  -- | @since 0.2.0.0
+  -- Type for id in storage
   data IdOf s
 
-  -- | stuff to store
+  -- | @since 0.2.0.0
+  -- Type for content in storage
   data ContentOf s

@@ -5,7 +5,15 @@
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE TypeSynonymInstances #-}
 
--- | @since 0.2.0.0
+-- |
+-- Description : Instance
+-- Copyright   : (c) 2021 fanshi1028
+-- Maintainer  : jackychany321@gmail.com
+-- Stability   : experimental
+--
+-- Create 'Article' in storage
+--
+-- @since 0.2.0.0
 module Storage.Map.Internal.HasCreate.Article where
 
 import Data.Aeson (FromJSON (parseJSON), Value (Array, Object), defaultOptions, genericParseJSON, withObject)
@@ -18,6 +26,9 @@ import Field.Title (Title)
 import Storage.Map.Internal.HasCreate (HasCreate (CreateOf))
 import Util.JSON.From (In, insert', wrappedParseJSON)
 import Util.Validation (WithValidation)
+
+-- $setup
+-- >>> import Data.Aeson (eitherDecode')
 
 -- | @since 0.2.0.0
 instance HasCreate 'Article where
@@ -36,19 +47,29 @@ instance FromJSON (WithValidation (CreateOf 'Article)) where
       Object . insert' "tagList" (Array mempty)
         >>> genericParseJSON defaultOptions
         >>> fmap construct
+-- ^
+-- ==== Success
+-- >>> eitherDecode' @(WithValidation (CreateOf 'Article)) "{\"title\":\"kkfewoiw\", \"description\": \"fjow\", \"body\": \"hwjowf\"}"
+-- Right (Success (ArticleCreate {title = "kkfewoiw", description = "fjow", body = "hwjowf", tagList = []}))
+--
+-- ==== Fail
+-- >>> eitherDecode' @(WithValidation (CreateOf 'Article)) "{\"title\":\"kkfewoiw\", \"description\": \"fjow\"}"
+-- Left "Error in $: parsing Storage.Map.Internal.HasCreate.Article.CreateOf(ArticleCreate) failed, key \"body\" not found"
+--
+-- >>> eitherDecode' @(WithValidation (CreateOf 'Article)) "{\"title\":\"kkfewoiw\", \"description\": \"fjow\", \"body\": null}"
+-- Left "Error in $.body: parsing Text failed, expected String, but encountered Null"
 
 -- | @since 0.2.0.0
 instance FromJSON (In (WithValidation (CreateOf 'Article))) where
   parseJSON = wrappedParseJSON "ArticleCreate" "article"
 -- ^
--- >>> import Data.Aeson (eitherDecode')
--- >>> eitherDecode' @(WithValidation (CreateOf 'Article)) "{\"title\":\"kkfewoiw\", \"description\": \"fjow\"}"
--- >>> eitherDecode' @(WithValidation (CreateOf 'Article)) "{\"title\":\"kkfewoiw\", \"description\": \"fjow\", \"body\": null}"
--- >>> eitherDecode' @(WithValidation (CreateOf 'Article)) "{\"title\":\"kkfewoiw\", \"description\": \"fjow\", \"body\": \"hwjowf\"}"
+-- ==== Success
+-- >>> eitherDecode' @(In (WithValidation (CreateOf 'Article))) "{\"article\": {\"title\":\"kkfewoiw\", \"description\": \"fjow\", \"body\": \"hwjowf\"}}"
+-- Right (In (Success (ArticleCreate {title = "kkfewoiw", description = "fjow", body = "hwjowf", tagList = []})))
+--
+-- ==== Fail
 -- >>> eitherDecode' @(In (WithValidation (CreateOf 'Article))) "{\"title\":\"kkfjfiw\", \"description\": \"fjow\", \"body\": \"hwjowf\"}"
--- >>> eitherDecode' @(In (WithValidation (CreateOf 'Article))) "{\"article\":\"hi\"}"
--- Left "Error in $: parsing Storage.Map.Internal.HasCreate.Article.CreateOf(ArticleCreate) failed, key \"body\" not found"
--- Left "Error in $.body: parsing Text failed, expected String, but encountered Null"
--- Right (Success (ArticleCreate {title = "kkfewoiw", description = "fjow", body = "hwjowf", tagList = []}))
 -- Left "Error in $: key \"article\" not found"
+--
+-- >>> eitherDecode' @(In (WithValidation (CreateOf 'Article))) "{\"article\":\"hi\"}"
 -- Left "Error in $.article: parsing CreateArticle failed, expected Object, but encountered String"

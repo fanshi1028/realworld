@@ -8,14 +8,14 @@
 {-# LANGUAGE TypeFamilies #-}
 
 -- |
--- Description : Effect
+-- Description : Instance
 -- Copyright   : (c) 2021 fanshi1028
 -- Maintainer  : jackychany321@gmail.com
 -- Stability   : experimental
 --
--- typeclass for implementing for storage effect
+-- Storage for 'Article'
 --
--- | @since 0.2.0.0
+-- @since 0.2.0.0
 module Storage.Map.Internal.HasStorage.Article where
 
 import Data.Aeson (ToJSON)
@@ -52,6 +52,8 @@ deriving via (WithValidation Slug) instance FromHttpApiData (WithValidation (IdO
 
 -- | @since 0.2.0.0
 instance ToJSON (ContentOf 'Article)
+
+-- * Helper
 
 -- | @since 0.2.0.0
 toArticleId :: HasField "title" a Title => a -> IdOf 'Article

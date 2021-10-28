@@ -13,7 +13,7 @@
 -- Maintainer  : jackychany321@gmail.com
 -- Stability   : experimental
 --
--- instance of user storage
+-- Storage for 'User'
 --
 -- @since 0.2.0.0
 module Storage.Map.Internal.HasStorage.User where
@@ -45,6 +45,8 @@ instance HasStorage 'User where
 
 -- | @since 0.2.0.0
 deriving via (WithValidation Username) instance FromHttpApiData (WithValidation (IdOf 'User))
+
+-- * Helper
 
 -- | @since 0.2.0.0
 toUserId :: HasField "username" u Username => u -> IdOf 'User

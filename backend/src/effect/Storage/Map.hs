@@ -23,13 +23,18 @@ import Storage.Map.Internal.HasUpdate.User as X
 
 -- | @since 0.2.0.0
 data E s (m :: Type -> Type) k where
-  -- | Get the data from the storage by its id
+  -- | @since 0.2.0.0
+  -- Get the data from the storage by its id
   GetById :: IdOf s -> E s m (ContentOf s)
-  -- | Get content the data
+  -- | @since 0.2.0.0
+  -- Get content the data
   GetAll :: E s m [ContentOf s]
-  -- | Insert the data
+  -- | @since 0.2.0.0
+  -- Insert the data
   Insert :: IdOf s -> ContentOf s -> E s m ()
-  -- | Update the data in the storage by its id
+  -- | @since 0.2.0.0
+  -- Update the data in the storage by its id
   UpdateById :: IdOf s -> (ContentOf s -> ContentOf s) -> E s m (ContentOf s)
-  -- | Delete the data from the storage by its id
+  -- | @since 0.2.0.0
+  -- Delete the data from the storage by its id
   DeleteById :: IdOf s -> E s m ()

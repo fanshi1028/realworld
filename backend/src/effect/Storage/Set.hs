@@ -11,11 +11,15 @@ module Storage.Set (E (..)) where
 
 -- | @since 0.1.0.0
 data E (e :: Type) (m :: Type -> Type) k where
-  -- | Check if the data is in the storage
+  -- | @since 0.1.0.0
+  -- Check if the data is in the storage
   IsMember :: e -> E e m Bool
-  -- | Get all the data
+  -- | @since 0.1.0.0
+  -- Get all the data
   GetAll :: E e m [e]
-  -- | Insert the data
+  -- | @since 0.1.0.0
+  -- Insert the data
   Insert :: e -> E e m ()
-  -- | Delete the data from the storage
+  -- | @since 0.1.0.0
+  -- Delete the data from the storage
   Delete :: e -> E e m ()

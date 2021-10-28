@@ -18,15 +18,16 @@ import Control.Algebra (Algebra (alg), type (:+:) (L, R))
 import Control.Effect.Error (Throw, throwError)
 import Control.Effect.Lift (Lift, sendM)
 import Control.Effect.Sum (Member)
-import Util.Error (NotFound (NotFound))
 import qualified Focus as FC (Change (Leave, Remove), cases)
 import qualified ListT (fold)
 import qualified StmContainers.Set as STM (Set, focus, insert, listT, lookup)
 import Storage.Set (E (Delete, GetAll, Insert, IsMember))
+import Util.Error (NotFound (NotFound))
 
 -- | @since 0.1.0.0
 newtype C (e :: Type) m a = C
-  { run' :: ReaderT (STM.Set e) m a
+  { -- | @since 0.1.0.0
+    run' :: ReaderT (STM.Set e) m a
   }
   deriving (Functor, Applicative, Monad, MonadReader (STM.Set e))
 
@@ -57,5 +58,10 @@ instance
   {-# INLINE alg #-}
 
 -- | @since 0.1.0.0
-run :: STM.Set e -> C e m a -> m a
+run ::
+  -- | the in-memory db
+  STM.Set e ->
+  -- | effect stack
+  C e m a ->
+  m a
 run db = run' >>> usingReaderT db

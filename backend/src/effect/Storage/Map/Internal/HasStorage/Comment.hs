@@ -7,7 +7,15 @@
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE TypeSynonymInstances #-}
 
--- | @since 0.2.0.0
+-- |
+-- Description : Instance
+-- Copyright   : (c) 2021 fanshi1028
+-- Maintainer  : jackychany321@gmail.com
+-- Stability   : experimental
+--
+-- Storage for 'Comment'
+--
+-- @since 0.2.0.0
 module Storage.Map.Internal.HasStorage.Comment where
 
 import Data.Aeson (FromJSON, ToJSON)

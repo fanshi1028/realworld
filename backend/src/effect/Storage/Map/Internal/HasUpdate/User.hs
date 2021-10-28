@@ -5,7 +5,15 @@
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE TypeSynonymInstances #-}
 
--- | @since 0.2.0.0
+-- |
+-- Description : Instance
+-- Copyright   : (c) 2021 fanshi1028
+-- Maintainer  : jackychany321@gmail.com
+-- Stability   : experimental
+--
+-- Updating in storage for 'User'
+--
+-- @since 0.2.0.0
 module Storage.Map.Internal.HasUpdate.User where
 
 import Data.Aeson (FromJSON (parseJSON), withObject, (.!=), (.:?))
@@ -20,6 +28,9 @@ import Field.Username (Username)
 import Storage.Map.Internal.HasUpdate (HasUpdate (..), Patch, updatableKeys)
 import Util.JSON.From (In, wrappedParseJSON)
 import Util.Validation (WithValidation)
+
+-- $setup
+-- >>> import Data.Aeson (eitherDecode')
 
 -- | @since 0.2.0.0
 instance HasUpdate 'User where
@@ -45,7 +56,26 @@ instance FromJSON (WithValidation (Patch (UpdateOf 'User))) where
             (o .:? "bio" .!= pure Nothing)
             (o .:? "image" .!= pure Nothing)
         )
+-- ^
+-- ==== Success
+-- >>> eitherDecode' @(WithValidation (Patch (UpdateOf 'User))) "{\"email\":\"ewofjowejf@gmai.com\"}"
+-- Right (Success UserUpdate {email = Just (Last {getLast = "ewofjowejf@gmai.com"}), password = Nothing, username = Nothing, bio = Nothing, image = Nothing})
+--
+-- ==== Fail
+-- >>> eitherDecode' @(WithValidation (Patch (UpdateOf 'User))) "{\"notUpdatable\":\"hi\"}"
+-- Left "Error in $: Only keys [\"email\",\"password\",\"username\",\"bio\",\"image\"] are updatable, while we found other keys: [\"notUpdatable\"]"
 
 -- | @since 0.2.0.0
 instance FromJSON (In (WithValidation (Patch (UpdateOf 'User)))) where
   parseJSON = wrappedParseJSON "UserUpdate" "user"
+-- ^
+-- ==== Success
+-- >>> eitherDecode' @(In (WithValidation (Patch (UpdateOf 'User)))) "{\"user\":{\"email\":\"ewofjowejf@gmai.com\"}}"
+-- Right (In (Success UserUpdate {email = Just (Last {getLast = "ewofjowejf@gmai.com"}), password = Nothing, username = Nothing, bio = Nothing, image = Nothing}))
+--
+-- ==== Fail
+-- >>> eitherDecode' @(In (WithValidation (Patch (UpdateOf 'User)))) "{\"email\":\"ewofjowejf@gmai.com\"}"
+-- Left "Error in $: key \"user\" not found"
+--
+-- >>> eitherDecode' @(In (WithValidation (Patch (UpdateOf 'User)))) "{\"user\":{\"notUpdatable\":\"hi\"}}"
+-- Left "Error in $.user: Only keys [\"email\",\"password\",\"username\",\"bio\",\"image\"] are updatable, while we found other keys: [\"notUpdatable\"]"
