@@ -21,6 +21,3 @@ class HasStorage (s :: Domain) where
 
   -- | stuff to store
   data ContentOf s
-
-  -- | input to store
-  data InputOf s
