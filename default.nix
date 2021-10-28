@@ -35,7 +35,7 @@ in pkgs.haskell-nix.project {
   modules = [{
     packages.realworld-haskell.components.exes.realworld-haskell = {
       dontStrip = false;
-      ghcOptions = ["-02"];
+      ghcOptions = ["-O2"];
     };
   }];
 }
