@@ -21,10 +21,10 @@ import Control.Effect.Lift (Lift, sendM)
 import Control.Effect.Sum (Member)
 import qualified Focus as FC (Change (Leave, Remove), cases)
 import qualified ListT (fold)
+import Domain.Transform (Transform (transform))
 import qualified StmContainers.Map as STM (Map, delete, focus, insert, listT, lookup)
 import Storage.Map (E (DeleteById, GetAll, GetById, Insert, UpdateById), HasStorage (ContentOf, IdOf))
 import Util.Error (AlreadyExists (AlreadyExists), NotFound (NotFound))
-import Util.Representation (Transform (transform))
 
 -- | @since 0.2.0.0
 type TableInMem' k v = STM.Map k v

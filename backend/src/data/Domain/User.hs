@@ -10,8 +10,8 @@
 --
 -- Representations for user
 --
--- @since 0.1.0.0
-module User where
+-- @since 0.2.0.0
+module Domain.User where
 
 import Authentication (AuthOf)
 import Data.Aeson (ToJSON (toEncoding, toJSON), Value (Object), defaultOptions, genericToJSON)
@@ -34,7 +34,7 @@ import Util.JSON.To (Out, wrappedToEncoding, wrappedToJSON)
 
 -- | Type family for different representations of users
 --
--- @since 0.1.0.0
+-- @since 0.2.0.0
 data family UserR (r :: Symbol)
 
 -- * profile

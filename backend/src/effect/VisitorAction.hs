@@ -16,8 +16,6 @@
 -- @since 0.1.0.0
 module VisitorAction where
 
-import Article (ArticleR (ArticleWithAuthorProfile))
-import Comment (CommentR (CommentWithAuthorProfile))
 import Control.Algebra (Algebra (alg), send, type (:+:) (L, R))
 import Control.Carrier.NonDet.Church (runNonDetA)
 import Control.Effect.Catch (Catch, catchError)
@@ -30,12 +28,14 @@ import Field.Tag (Tag)
 import GHC.Records (getField)
 import qualified Relation.ManyToMany (E (GetRelatedLeft, GetRelatedRight))
 import qualified Relation.ToMany (E (GetRelated))
+import Domain.Article (ArticleR (ArticleWithAuthorProfile))
+import Domain.Comment (CommentR (CommentWithAuthorProfile))
+import Domain.User (UserR (UserProfile))
 import Storage.Map (ContentOf (..), HasStorage (IdOf), toArticleId)
 import qualified Storage.Map (E (GetAll, GetById))
 import qualified Storage.Set (E (GetAll))
-import User (UserR (UserProfile))
 import Util.Error (Impossible (Impossible), NotFound)
-import Util.Representation (Transform (transform))
+import Domain.Transform (transform)
 
 -- * Effect
 

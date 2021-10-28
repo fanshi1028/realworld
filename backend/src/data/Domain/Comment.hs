@@ -10,20 +10,20 @@
 --
 -- Representations for comment
 --
--- @since 0.1.0.0
-module Comment where
+-- @since 0.2.0.0
+module Domain.Comment where
 
 import Data.Aeson (ToJSON (toEncoding, toJSON))
 import Domain (Domain (Comment))
 import Field.Time (Time)
 import GHC.TypeLits (Symbol)
+import Domain.User (UserR)
 import Storage.Map (IdOf)
-import User (UserR)
 import Util.JSON.To (Out, wrappedToEncoding, wrappedToJSON)
 
 -- | Type family for different representations of comments
 --
--- @since 0.1.0.0
+-- @since 0.2.0.0
 data family CommentR (r :: Symbol)
 
 -- | Representation for output

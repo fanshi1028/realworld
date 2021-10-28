@@ -33,12 +33,12 @@ import Field.Password (checkPassword, hashPassword, newSalt)
 import Field.Time (Time)
 import GHC.Records (getField)
 import qualified Relation.ToOne
+import Domain.User (UserR (UserAuthWithToken))
 import Storage.Map (ContentOf (UserContent), CreateOf (UserCreate), IdOf (UserId), toUserId)
 import qualified Storage.Map
 import qualified Token (E (InvalidateToken))
-import User (UserR (UserAuthWithToken))
 import Util.Error (AlreadyExists (AlreadyExists), NotAuthorized (NotAuthorized), NotFound (NotFound))
-import Util.Representation (transform)
+import Domain.Transform (transform)
 
 -- | @since 0.1.0.0
 newtype C (s :: Domain) m a = C

@@ -27,13 +27,13 @@ module HTTP.Protected.Article
   )
 where
 
-import Article (ArticleR)
-import Comment (CommentR)
 import Control.Algebra (Algebra, send)
 import Control.Effect.Sum (Member)
 import Control.Effect.Throw (Throw, throwError)
 import Domain (Domain (Article, Comment))
 import HTTP.Util (Cap, CreateApi, QP, ReadManyApi, ToggleApi, UDApi)
+import Domain.Article (ArticleR)
+import Domain.Comment (CommentR)
 import Servant (Delete, JSON, NoContent (NoContent), ServerT, type (:<|>) ((:<|>)), type (:>))
 import Storage.Map (IdOf)
 import qualified UserAction (E (AddCommentToArticle, CreateArticle, DeleteArticle, DeleteComment, FavoriteArticle, FeedArticles, UnfavoriteArticle, UpdateArticle))

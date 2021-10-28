@@ -34,8 +34,8 @@ import Data.Password.Argon2 (Password, mkPassword)
 import Data.Password.Validate (ValidationResult (InvalidPassword, ValidPassword), defaultPasswordPolicy_, validatePassword)
 import qualified Data.Semigroup as SG (Last (Last))
 import Data.Time (UTCTime)
-import Util.Error (ValidationErr)
 import Servant (FromHttpApiData (parseQueryParam))
+import Util.Error (ValidationErr)
 import qualified Validation as V (Validation (Failure, Success), failure)
 
 -- | Validate password with default password policy

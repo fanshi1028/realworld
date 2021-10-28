@@ -6,9 +6,7 @@
 -- |
 module Gen.Naive where
 
-import Article (ArticleR (..))
 import Authentication (AuthOf)
-import Comment (CommentR (..))
 import Domain (Domain (Article, Comment, User))
 import Field.Bio (Bio (Bio))
 import Field.Body (Body (Body))
@@ -18,11 +16,13 @@ import Field.Image (Image (Image))
 import Field.Tag (Tag (Tag))
 import Field.Title (Title (Title))
 import Field.Username (Username (Username))
+import Domain.Article (ArticleR (..))
+import Domain.Comment (CommentR (..))
+import Domain.User (UserR (..))
 import Storage.Map (HasStorage (ContentOf), IdOf (..))
 import Test.QuickCheck (Arbitrary (arbitrary, shrink), genericShrink)
 import Test.QuickCheck.Arbitrary.ADT (genericArbitrary)
 import Token (TokenOf (..))
-import User (UserR (..))
 import Util.JSON.To (Out (Out))
 
 -- $setup

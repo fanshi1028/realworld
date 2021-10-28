@@ -10,21 +10,21 @@
 --
 -- Representations for article
 --
--- @since 0.1.0.0
-module Article where
+-- @since 0.2.0.0
+module Domain.Article where
 
 import Data.Aeson (ToJSON (toEncoding, toJSON), Value (Object))
 import qualified Data.HashMap.Strict as HM
 import Domain (Domain (Article))
 import Field.Tag (Tag)
 import GHC.TypeLits (Symbol)
+import Domain.User (UserR)
 import Storage.Map (ContentOf (..), toArticleId)
-import User (UserR)
 import Util.JSON.To (Out, multiWrappedWithCountToEncoding, multiWrappedWithCountToJSON, wrappedToEncoding, wrappedToJSON)
 
 -- | Type family for different representations of articles
 --
--- @since 0.1.0.0
+-- @since 0.2.0.0
 data family ArticleR (r :: Symbol)
 
 -- | Representation for output

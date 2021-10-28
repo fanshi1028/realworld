@@ -21,6 +21,8 @@ import Data.Generics.Product (HasField' (field'), getField)
 import qualified Data.Semigroup as SG (Last (Last, getLast))
 import Data.Set (delete, insert)
 import qualified Data.Set as S (empty, foldl', insert, map, member)
+import Domain.Transform (transform)
+import Domain.User (UserR (..))
 import Field.Slug (titleToSlug)
 import Gen.Naive ()
 import HTTP (Api)
@@ -71,10 +73,8 @@ import Test.StateMachine
 import Test.StateMachine.Logic (member)
 import Test.Tasty.QuickCheck ((===))
 import Token (TokenOf (UserToken))
-import User (UserR (..))
 import Util.JSON.From (In (In))
 import Util.JSON.To (Out (Out))
-import Util.Representation (transform)
 import Util.Validation (WithValidation)
 import Validation (Validation (Failure, Success))
 
@@ -302,7 +302,7 @@ postcondition m cmd res =
                 Forall [m, m'] (findByRef' ref' . articles) .// "the article exists"
                   .&& findByRef' ref''' (comments m) .// "before: the comment exists"
                   .&& Not (findByRef' ref''' $ comments m') .// "after: the comment not existed"
-                  .&& member (ref', ref''') ( articleHasComment m) .// "before: article has the comment"
+                  .&& member (ref', ref''') (articleHasComment m) .// "before: article has the comment"
                   .&& notMember (ref', ref''') (articleHasComment m') .// "after: article didn't has the comment"
                   .&& on (-) commentsL m m' .== 1 .// "after: remove 1 from comments"
                   .&& on (-) hasCommentL m m' .== 1 .// "after: remove 1 from aritcleHasComment"

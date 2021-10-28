@@ -10,8 +10,8 @@
 --
 -- Transforms between different representations of Domain Types.
 --
--- @since 0.1.0.0
-module Util.Representation (Transform (transform)) where
+-- @since 0.2.0.0
+module Domain.Transform (Transform (transform)) where
 
 import Authentication (AuthOf (UserAuth))
 import Domain (Domain (Article, Comment, User))

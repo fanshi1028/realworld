@@ -12,8 +12,8 @@
 -- @since 0.1.0.0
 module HTTP.Public.Article where
 
-import Article (ArticleR)
-import Comment (CommentR)
+import Domain.Article (ArticleR)
+import Domain.Comment (CommentR)
 import Control.Algebra (Algebra, send)
 import Control.Effect.Sum (Member)
 import Control.Effect.Throw (Throw, throwError)

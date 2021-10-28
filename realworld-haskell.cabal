@@ -60,7 +60,7 @@ common prelude
     base hiding (Prelude),
     relude (Relude as Prelude, Relude.Extra)
 
-common backend-domain-deps
+common backend-data-deps
   build-depends:
     , aeson                 ^>=1.5.6
     , higgledy              ^>=0.4.1
@@ -102,13 +102,24 @@ common backend-api-deps
     , validation-selective  ^>=0.1.0
     , wai                   ^>=3.2.3
 
-library backend-domain-internal
-  import:          prelude, backend-domain-deps
-  hs-source-dirs:  backend/src/domain
+library backend-effect-internal
+  import:          prelude, backend-data-deps, backend-effect-deps
+  hs-source-dirs:  backend/src/data backend/src/effect
   exposed-modules:
-    Article
-    Comment
+    Authentication
+    Authentication.Internal.HasAuth
+    Authentication.Internal.HasAuth.User
+    Authentication.Pure
+    Authentication.Token
+    Current
+    Current.IO
+    Current.Pure
+    Current.Reader
     Domain
+    Domain.Article
+    Domain.Comment
+    Domain.Transform
+    Domain.User
     Field.Bio
     Field.Body
     Field.Description
@@ -120,34 +131,6 @@ library backend-domain-internal
     Field.Time
     Field.Title
     Field.Username
-    User
-    Util.Error
-    Util.JSON.From
-    Util.JSON.To
-    Util.Representation
-    Util.Validation
-
-library backend-effect-internal
-  import:          prelude, backend-effect-deps
-
-  if flag(ghcid)
-    import:         backend-domain-deps
-    hs-source-dirs: backend/src/domain
-
-  else
-    build-depends: backend-domain-internal
-
-  hs-source-dirs:  backend/src/effect
-  exposed-modules:
-    Authentication
-    Authentication.Internal.HasAuth
-    Authentication.Internal.HasAuth.User
-    Authentication.Pure
-    Authentication.Token
-    Current
-    Current.IO
-    Current.Pure
-    Current.Reader
     GenUUID
     GenUUID.Pure
     GenUUID.V1
@@ -183,6 +166,10 @@ library backend-effect-internal
     Token.JWT.Invalidate
     Token.JWT.Invalidate.Pure
     UserAction
+    Util.Error
+    Util.JSON.From
+    Util.JSON.To
+    Util.Validation
     VisitorAction
 
 -- other-modules:
@@ -192,13 +179,11 @@ library backend-api-internal
   import:          prelude, backend-api-deps
 
   if flag(ghcid)
-    import:         backend-domain-deps, backend-effect-deps
-    hs-source-dirs: backend/src/domain backend/src/effect
+    import:         backend-data-deps, backend-effect-deps
+    hs-source-dirs: backend/src/data backend/src/effect
 
   else
-    build-depends:
-      , backend-domain-internal
-      , backend-effect-internal
+    build-depends: backend-effect-internal
 
   hs-source-dirs:  backend/src/api
   exposed-modules:
@@ -220,8 +205,8 @@ executable realworld-haskell
   import:         prelude
 
   if flag(ghcid)
-    import:         backend-domain-deps, backend-effect-deps, backend-api-deps
-    hs-source-dirs: backend/src/domain backend/src/effect backend/src/api
+    import:         backend-data-deps, backend-effect-deps, backend-api-deps
+    hs-source-dirs: backend/src/data backend/src/effect backend/src/api
 
   else
     build-depends: backend-api-internal
@@ -237,16 +222,15 @@ executable realworld-haskell
 
 test-suite realworld-haskell-test
   import:
-    prelude, backend-domain-deps, backend-effect-deps, backend-api-deps
+    prelude, backend-data-deps, backend-effect-deps, backend-api-deps
 
   if !flag(ghcid)
     build-depends:
       , backend-api-internal
-      , backend-domain-internal
       , backend-effect-internal
 
   else
-    hs-source-dirs: backend/src/domain backend/src/effect backend/src/api
+    hs-source-dirs: backend/src/data backend/src/effect backend/src/api
 
   type:           exitcode-stdio-1.0
   hs-source-dirs: test

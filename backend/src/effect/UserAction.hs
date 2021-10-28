@@ -18,9 +18,7 @@
 -- @since 0.1.0.0
 module UserAction where
 
-import Article (ArticleR (ArticleWithAuthorProfile))
 import Authentication (AuthOf (..))
-import Comment (CommentR (CommentWithAuthorProfile))
 import Control.Algebra (Algebra (alg), send, type (:+:) (L, R))
 import Control.Carrier.NonDet.Church (runNonDetA)
 import Control.Effect.Catch (Catch)
@@ -44,6 +42,9 @@ import qualified Relation.ManyToMany (E (GetRelatedLeft, GetRelatedRight, IsRela
 import qualified Relation.ToMany (E (GetRelated, IsRelated, Relate, Unrelate, UnrelateByKey))
 import qualified Relation.ToOne (E (GetRelated, Relate, Unrelate))
 import Relude.Extra ((.~))
+import Domain.Article (ArticleR (ArticleWithAuthorProfile))
+import Domain.Comment (CommentR (CommentWithAuthorProfile))
+import Domain.User (UserR (UserAuthWithToken, UserProfile))
 import Storage.Map
   ( ContentOf (..),
     CreateOf (ArticleCreate, CommentCreate),
@@ -58,9 +59,8 @@ import Storage.Map
   )
 import qualified Storage.Map (E (DeleteById, GetById, Insert, UpdateById))
 import qualified Token (E (CreateToken))
-import User (UserR (UserAuthWithToken, UserProfile))
 import Util.Error (AlreadyExists (AlreadyExists), CRUD (U), Forbidden (Forbidden), Impossible (Impossible), NotAuthorized (NotAuthorized), NotFound (NotFound))
-import Util.Representation (Transform (transform))
+import Domain.Transform (Transform (transform))
 import qualified VisitorAction (E (GetProfile))
 
 -- * Effect

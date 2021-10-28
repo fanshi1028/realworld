@@ -19,8 +19,8 @@ import qualified Control.Effect.Reader as R (Reader, ask)
 import Control.Effect.Sum (Member)
 import Control.Effect.Throw (Throw, throwError)
 import Current (E (GetCurrent))
+import Domain.User (UserR)
 import Servant.Auth.Server (AuthResult (Authenticated))
-import User (UserR)
 import Util.Error (NotAuthorized (NotAuthorized))
 
 -- | @since 0.1.0.0

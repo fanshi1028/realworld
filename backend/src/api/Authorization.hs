@@ -29,6 +29,8 @@ import Control.Carrier.Throw.Either (runThrow)
 import Crypto.JOSE (Error)
 import qualified Data.List as List (lookup)
 import Domain (Domain (User))
+import Domain.Transform (Transform (transform))
+import Domain.User (UserR (UserAuthWithToken))
 import Network.Wai (Request, requestHeaders)
 import Servant (FromHttpApiData (parseHeader))
 import Servant.Auth.Server (CookieSettings, JWTSettings)
@@ -40,9 +42,7 @@ import Storage.Map.InMem (TableInMem, TableInMem')
 import Token (E (DecodeToken), TokenOf (..))
 import Token.JWT (run)
 import Token.JWT.Invalidate.Pure (run)
-import User (UserR (UserAuthWithToken))
 import Util.Error (NotAuthorized)
-import Util.Representation (Transform (transform))
 
 -- | @since 0.1.0.0
 pattern RequestToken :: TokenOf 'User -> Request
