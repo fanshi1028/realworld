@@ -30,13 +30,14 @@ import Token (E (CreateToken, DecodeToken, InvalidateToken), TokenOf)
 import Token.JWT.Invalidate (E (Invalidate))
 import Util.Error (NotAuthorized (NotAuthorized))
 
--- | @since 0.1.0.0
+-- | @since 0.2.0.0
 newtype C (s :: Domain) (m :: Type -> Type) a = C
-  { run :: m a
+  { -- | @since 0.2.0.0
+    run :: m a
   }
   deriving (Functor, Applicative, Monad)
 
--- | @since 0.1.0.0
+-- | @since 0.2.0.0
 instance
   ( Member (R.Reader JWTSettings) sig,
     Member (R.Reader CookieSettings) sig,

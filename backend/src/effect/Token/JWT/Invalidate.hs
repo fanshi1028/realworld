@@ -11,5 +11,6 @@ module Token.JWT.Invalidate (E (..)) where
 
 -- | @since 0.1.0.0
 data E token (m :: Type -> Type) a where
-  -- | Invalidate JWT token
+  -- | @since 0.1.0.0
+  -- Invalidate JWT token
   Invalidate :: token -> E token m ()

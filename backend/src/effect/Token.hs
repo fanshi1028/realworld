@@ -15,9 +15,12 @@ import Token.Internal.HasToken.User as X
 
 -- | @since 0.2.0.0
 data E s (m :: Type -> Type) a where
-  -- | Decode token to auth info
+  -- | @since 0.2.0.0
+  -- Decode token to auth info
   DecodeToken :: TokenOf s -> E s m (AuthOf s)
-  -- | Create token from auth info
+  -- | @since 0.2.0.0
+  -- Create token from auth info
   CreateToken :: AuthOf s -> E s m (TokenOf s)
-  -- | Invalidate token
+  -- | @since 0.2.0.0
+  -- Invalidate token
   InvalidateToken :: TokenOf s -> E s m ()
