@@ -4,7 +4,15 @@
 {-# LANGUAGE StandaloneDeriving #-}
 {-# LANGUAGE TypeSynonymInstances #-}
 
--- | @since 0.2.0.0
+-- |
+-- Description : Field
+-- Copyright   : (c) 2021 fanshi1028
+-- Maintainer  : jackychany321@gmail.com
+-- Stability   : experimental
+--
+-- Field for Description
+--
+-- @since 0.2.0.0
 module Field.Description where
 
 import Data.Aeson (FromJSON, ToJSON)

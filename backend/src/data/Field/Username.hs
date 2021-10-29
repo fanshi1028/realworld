@@ -4,7 +4,14 @@
 {-# LANGUAGE StandaloneDeriving #-}
 {-# LANGUAGE TypeSynonymInstances #-}
 
--- | Username
+-- |
+-- Description : Field
+-- Copyright   : (c) 2021 fanshi1028
+-- Maintainer  : jackychany321@gmail.com
+-- Stability   : experimental
+--
+-- Field for Username
+--
 -- @since 0.2.0.0
 module Field.Username where
 

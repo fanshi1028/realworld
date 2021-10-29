@@ -4,7 +4,15 @@
 {-# LANGUAGE StandaloneDeriving #-}
 {-# LANGUAGE TypeSynonymInstances #-}
 
--- | @since 0.2.0.0
+-- |
+-- Description : Field
+-- Copyright   : (c) 2021 fanshi1028
+-- Maintainer  : jackychany321@gmail.com
+-- Stability   : experimental
+--
+-- Field for Slug
+--
+-- @since 0.2.0.0
 module Field.Slug where
 
 import Data.Aeson (FromJSON, ToJSON)
@@ -16,14 +24,12 @@ import Util.Validation (NoValidation (..), WithNoValidation, WithValidation)
 -- | @since 0.2.0.0
 newtype Slug = Slug Text deriving newtype (Show, Eq, ToJSON, Hashable)
 
--- | __FIXME__: Slug need validation?
---
---  @since 0.2.0.0
+-- | @since 0.2.0.0
+-- __FIXME__: Slug need validation?
 deriving via (WithNoValidation Text) instance FromJSON (WithValidation Slug)
 
--- | __FIXME__: Slug need validation?
---
---  @since 0.2.0.0
+-- | @since 0.2.0.0
+-- __FIXME__: Slug need validation?
 deriving via (WithNoValidation Text) instance FromHttpApiData (WithValidation Slug)
 
 -- | @since 0.2.0.0

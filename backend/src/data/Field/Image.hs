@@ -4,7 +4,15 @@
 {-# LANGUAGE StandaloneDeriving #-}
 {-# LANGUAGE TypeSynonymInstances #-}
 
--- | @since 0.2.0.0
+-- |
+-- Description : Field
+-- Copyright   : (c) 2021 fanshi1028
+-- Maintainer  : jackychany321@gmail.com
+-- Stability   : experimental
+--
+-- Field for Image
+--
+-- @since 0.2.0.0
 module Field.Image where
 
 import Data.Aeson (FromJSON, ToJSON)
@@ -12,7 +20,7 @@ import Util.Validation (NoValidation (..), WithNoValidation, WithValidation)
 
 -- | @since 0.2.0.0
 newtype Image
-  = -- | 'Text' is the link of the image
+  = -- | the link of the image
     Image Text
   deriving newtype (Show, Eq, ToJSON, FromJSON)
 
