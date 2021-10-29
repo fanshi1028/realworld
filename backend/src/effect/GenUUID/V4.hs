@@ -9,7 +9,7 @@
 -- Maintainer  : jackychany321@gmail.com
 -- Stability   : experimental
 --
--- Carrier for V4 UUID generation
+-- Carrier for V4 'UUID' generation
 --
 -- @since 0.1.0.0
 module GenUUID.V4 where
@@ -22,7 +22,8 @@ import GenUUID (E (Generate))
 
 -- | @since 0.1.0.0
 newtype C m a = C
-  { run :: m a
+  { -- | @since 0.1.0.0
+    run :: m a
   }
   deriving (Functor, Applicative, Monad)
 

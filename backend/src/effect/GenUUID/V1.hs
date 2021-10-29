@@ -9,7 +9,7 @@
 -- Maintainer  : jackychany321@gmail.com
 -- Stability   : experimental
 --
--- Carrier for V1 UUID generation
+-- Carrier for V1 'UUID' generation
 --
 -- @since 0.1.0.0
 module GenUUID.V1 where
@@ -29,7 +29,8 @@ data RequestedUUIDsTooQuickly = RequestedUUIDsTooQuickly deriving (Show)
 
 -- | @since 0.1.0.0
 newtype C m a = C
-  { run :: m a
+  { -- | @since 0.1.0.0
+    run :: m a
   }
   deriving (Functor, Applicative, Monad)
 
