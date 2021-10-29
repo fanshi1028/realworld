@@ -42,7 +42,8 @@ import Domain.Transform (transform)
 
 -- | @since 0.1.0.0
 newtype C (s :: Domain) m a = C
-  { run :: m a
+  { -- | @since 0.1.0.0
+    run :: m a
   }
   deriving (Functor, Applicative, Monad)
 

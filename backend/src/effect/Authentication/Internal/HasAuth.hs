@@ -2,11 +2,24 @@
 {-# LANGUAGE TypeFamilies #-}
 
 -- |
+-- Description : Typeclass
+-- Copyright   : (c) 2021 fanshi1028
+-- Maintainer  : jackychany321@gmail.com
+-- Stability   : experimental
+--
+-- Type family for auth
+--
+-- @since 0.2.0.0
 module Authentication.Internal.HasAuth where
 
 import Domain (Domain)
 
 -- | @since 0.2.0.0
 class HasAuth (s :: Domain) where
+  -- | @since 0.2.0.0
+  -- Type for login
   data LoginOf s
+
+  -- | @since 0.2.0.0
+  -- Type of auth data
   data AuthOf s
