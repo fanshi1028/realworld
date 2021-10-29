@@ -21,15 +21,9 @@ import GHC.TypeLits (Symbol)
 import Relation.ToOne (E (GetRelated, Relate, Unrelate))
 
 -- | @since 0.1.0.0
-newtype
-  C
-    (r1 :: Type)
-    (r :: Symbol)
-    (r2 :: Type)
-    (b :: Bool)
-    (m :: Type -> Type)
-    a = C
-  { run :: m a
+newtype C (r1 :: Type) (r :: Symbol) (r2 :: Type) (b :: Bool) (m :: Type -> Type) a = C
+  { -- | @since 0.1.0.0
+    run :: m a
   }
   deriving (Functor, Applicative, Monad)
 

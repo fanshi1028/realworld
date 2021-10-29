@@ -69,27 +69,30 @@ type instance ManyRight "taggedBy" = "tagging"
 
 -- | @since 0.1.0.0
 data E (r1 :: Type) (r :: Symbol) (r2 :: Type) (m :: Type -> Type) a where
+  -- | @since 0.1.0.0
   Relate :: r1 -> r2 -> E r1 r r2 m ()
+  -- | @since 0.1.0.0
   Unrelate :: r1 -> r2 -> E r1 r r2 m ()
-  -- | Unrelate every r2 related to the key r1
+  -- | @since 0.1.0.0
   UnrelateByKeyLeft :: r1 -> E r1 r r2 m ()
-  -- | Unrelate every r1 related to the key r2
+  -- | @since 0.1.0.0
   UnrelateByKeyRight :: r2 -> E r1 r r2 m ()
+  -- | @since 0.1.0.0
   IsRelated :: r1 -> r2 -> E r1 r r2 m Bool
-  -- | Get every r2 related to the key r1
+  -- | @since 0.1.0.0
   GetRelatedLeft :: r1 -> E r1 r r2 m [r2]
-  -- | Get every r1 related to the key r2
+  -- | @since 0.1.0.0
   GetRelatedRight :: r2 -> E r1 r r2 m [r1]
 
 -- | @since 0.1.0.0
 newtype C (r1 :: Type) (r :: Symbol) (r2 :: Type) (m :: Type -> Type) a = C
-  { run :: m a
+  { -- | @since 0.1.0.0
+    run :: m a
   }
   deriving (Functor, Applicative, Monad)
 
--- | Work are forworded to the two __one to many__ relations
---
--- @since 0.1.0.0
+-- | @since 0.1.0.0
+-- Work are forworded to the two __one to many__ relations
 instance
   ( Algebra sig m,
     lr ~ ManyLeft r,

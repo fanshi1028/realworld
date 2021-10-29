@@ -15,6 +15,9 @@ import GHC.TypeLits (Symbol)
 
 -- | @since 0.2.0.0
 data E (r1 :: Type) (r :: Symbol) (r2 :: Type) (m :: Type -> Type) a where
+  -- | @since 0.2.0.0
   Relate :: r1 -> r2 -> E r1 r r2 m ()
+  -- | @since 0.2.0.0
   Unrelate :: r1 -> r2 -> E r1 r r2 m ()
+  -- | @since 0.2.0.0
   GetRelated :: r1 -> E r1 r r2 m (Maybe r2)

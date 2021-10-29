@@ -22,22 +22,14 @@ import GHC.TypeLits (Symbol)
 import Relation.ToOne (E (GetRelated, Relate, Unrelate))
 import qualified StmContainers.Map as STM (Map, focus, lookup)
 
--- | Action to token when exists on relation insertion
---
---
--- @since 0.1.0.0
+-- | @since 0.1.0.0
+-- Action to token when exists on relation insertion
 data ExistAction = UpdateIfExist | IgnoreIfExist
 
 -- | @since 0.1.0.0
-newtype
-  C
-    (r1 :: Type)
-    (r :: Symbol)
-    (r2 :: Type)
-    (ex :: ExistAction)
-    (m :: Type -> Type)
-    a = C
-  { run' :: ReaderT (STM.Map r1 r2) m a
+newtype C (r1 :: Type) (r :: Symbol) (r2 :: Type) (ex :: ExistAction) (m :: Type -> Type) a = C
+  { -- | @since 0.1.0.0
+    run' :: ReaderT (STM.Map r1 r2) m a
   }
   deriving (Functor, Applicative, Monad, MonadReader (STM.Map r1 r2))
 
@@ -99,5 +91,11 @@ instance
   {-# INLINE alg #-}
 
 -- | @since 0.1.0.0
-run :: forall r1 r r2 ex a m. STM.Map r1 r2 -> C r1 r r2 ex m a -> m a
+run ::
+  forall r1 r r2 ex a m.
+  -- | the in-memory db
+  STM.Map r1 r2 ->
+  -- | the effect stack
+  C r1 r r2 ex m a ->
+  m a
 run db = run' >>> usingReaderT db

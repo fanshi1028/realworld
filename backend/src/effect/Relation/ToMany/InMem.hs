@@ -23,14 +23,9 @@ import Relation.ToMany (E (GetRelated, IsRelated, Relate, Unrelate, UnrelateByKe
 import qualified StmContainers.Multimap as STM (Multimap, delete, deleteByKey, insert, listTByKey, lookup)
 
 -- | @since 0.1.0.0
-newtype
-  C
-    (r1 :: Type)
-    (r :: Symbol)
-    (r2 :: Type)
-    (m :: Type -> Type)
-    a = C
-  { run' :: ReaderT (STM.Multimap r1 r2) m a
+newtype C (r1 :: Type) (r :: Symbol) (r2 :: Type) (m :: Type -> Type) a = C
+  { -- | @since 0.1.0.0
+    run' :: ReaderT (STM.Multimap r1 r2) m a
   }
   deriving (Functor, Applicative, Monad, MonadReader (STM.Multimap r1 r2))
 
@@ -57,5 +52,11 @@ instance
   {-# INLINE alg #-}
 
 -- | @since 0.1.0.0
-run :: forall r1 r r2 a m. STM.Multimap r1 r2 -> C r1 r r2 m a -> m a
+run ::
+  forall r1 r r2 a m.
+  -- | the in-memory db
+  STM.Multimap r1 r2 ->
+  -- | the effect stack
+  C r1 r r2 m a ->
+  m a
 run db = run' >>> usingReaderT db

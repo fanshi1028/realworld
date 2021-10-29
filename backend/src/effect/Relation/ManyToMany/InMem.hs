@@ -22,8 +22,11 @@ run ::
   ( lr ~ Relation.ManyToMany.ManyLeft r,
     rr ~ Relation.ManyToMany.ManyRight r
   ) =>
+  -- | in-memory db (left key)
   Multimap r1 r2 ->
+  -- | in-memory db (right key)
   Multimap r2 r1 ->
+  -- | effect stack
   Relation.ManyToMany.C r1 r r2 (Relation.ToMany.InMem.C r1 lr r2 (Relation.ToMany.InMem.C r2 rr r1 m)) a ->
   m a
 run db1 db2 =
