@@ -8,6 +8,7 @@
 {-# LANGUAGE ViewPatterns #-}
 
 -- |
+-- Description : Helper
 -- Copyright   : (c) 2021 fanshi1028
 -- Maintainer  : jackychany321@gmail.com
 -- Stability   : experimental
@@ -38,9 +39,11 @@ import Servant (FromHttpApiData (parseQueryParam))
 import Util.Error (ValidationErr)
 import qualified Validation as V (Validation (Failure, Success), failure)
 
--- | Validate password with default password policy
---
--- @since 0.2.0.0
+-- $setup
+-- >>> import Data.Aeson (eitherDecode')
+
+-- | @since 0.2.0.0
+-- Validate password with default password policy
 instance FromJSON (WithValidation Password) where
   parseJSON =
     withText "password" $ \(mkPassword -> pw) -> pure $
@@ -49,6 +52,18 @@ instance FromJSON (WithValidation Password) where
         InvalidPassword irs ->
           maybe (error "Impossible: password must be invalidated with a reason!") V.Failure $
             nonEmpty $ show @Text <$> irs
+-- ^
+-- ==== Success
+-- >>> eitherDecode' @(WithValidation Password) "\"jfoj9343f43f43f\""
+-- Right (Success **PASSWORD**)
+--
+-- ==== Validation Fail
+-- >>> eitherDecode' @(WithValidation Password) "\"jf\""
+-- Right (Failure ("PasswordTooShort 8 2" :| []))
+--
+-- ==== Fail
+-- >>> eitherDecode' @(WithValidation Password) "{}"
+-- Left "Error in $: parsing password failed, expected String, but encountered Object"
 
 -- | @since 0.1.0.0
 instance FromJSON (WithValidation a) => FromJSON (WithValidation [a]) where
@@ -64,15 +79,13 @@ deriving via (WithNoValidation Text) instance FromJSON (WithValidation Text)
 -- | @since 0.1.0.0
 deriving via (WithNoValidation UTCTime) instance FromJSON (WithValidation UTCTime)
 
--- | For parsing partial update patch with 'HKD'
---
--- @since 0.2.0.0
+-- | @since 0.2.0.0
+-- For parsing partial update patch with 'HKD'
 instance (FromJSON a, FromJSON (WithValidation a)) => FromJSON (WithValidation (Maybe (SG.Last a))) where
   parseJSON = (Just . SG.Last <$>) <<$>> parseJSON @(WithValidation a)
 
--- | Helper function for validation
---
--- @since 0.1.0.0
+-- | @since 0.1.0.0
+-- Helper function for validation
 validate ::
   -- | predicate
   (a -> Bool) ->
@@ -83,12 +96,12 @@ validate ::
   V.Validation (NonEmpty e) a
 validate p err raw = if p raw then V.Success raw else V.failure err
 
--- | Convenient type synonym
---
--- @since 0.1.0.0
+-- | @since 0.1.0.0
+-- Convenient type synonym
 type WithValidation = V.Validation ValidationErr
 
--- | An newtype with no validation
+-- | @since 0.1.0.0
+-- An newtype with no validation
 --
 -- Useful for deriving instances like ('FromJSON', 'FromHttpApiData', etc) for type with no validation using __DerivingVia__
 --
@@ -96,27 +109,24 @@ type WithValidation = V.Validation ValidationErr
 --
 -- > deriving via (WithNoValidation a) instance FromJSON (WithValidation a)
 -- > deriving via (WithValidation (NoValidation a)) instance FromJSON (WithValidation a-like)
---
--- @since 0.1.0.0
 newtype NoValidation a = NoValidation a deriving (Generic, FromHttpApiData, FromJSON)
 
--- | Convenient type synonym
+-- | @since 0.1.0.0
+-- Convenient type synonym
 --
 -- __Usage__:
 --
 -- > deriving via (WithNoValidation a) instance FromJSON (WithValidation a-like)
 --
--- @since 0.1.0.0
+-- remember to import the constructor of 'NoValidation', when deriving via 'WithNoValidation'
 type WithNoValidation a = WithValidation (NoValidation a)
 
--- | No Validation when parse from json
---
--- @since 0.1.0.0
+-- | @since 0.1.0.0
+-- No Validation when parse from json
 instance FromJSON a => FromJSON (WithNoValidation a) where
   parseJSON = pure <<$>> parseJSON
 
--- | No Validation when parse from HttpApiData
---
--- @since 0.1.0.0
+-- | @since 0.1.0.0
+-- No Validation when parse from HttpApiData
 instance FromHttpApiData a => FromHttpApiData (WithNoValidation a) where
   parseQueryParam = pure <<$>> parseQueryParam
