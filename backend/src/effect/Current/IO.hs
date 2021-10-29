@@ -22,7 +22,8 @@ import Field.Time (Time)
 
 -- | @since 0.1.0.0
 newtype C e m a = C
-  { run :: m a
+  { -- | @since 0.1.0.0
+    run :: m a
   }
   deriving (Functor, Applicative, Monad)
 
