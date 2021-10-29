@@ -32,6 +32,10 @@ import Data.Generic.HKD (Build (build), Construct (construct), HKD, deconstruct)
 import Data.Generics.Product (HasField' (field'), getField)
 import qualified Data.Semigroup as SG (Last (Last, getLast))
 import Domain (Domain (Article, Comment, User))
+import Domain.Article (ArticleR (ArticleWithAuthorProfile))
+import Domain.Comment (CommentR (CommentWithAuthorProfile))
+import Domain.Transform (Transform (transform))
+import Domain.User (UserR (UserAuthWithToken, UserProfile))
 import Field.Email (Email)
 import Field.Password (hashPassword, newSalt)
 import Field.Slug (titleToSlug)
@@ -42,9 +46,6 @@ import qualified Relation.ManyToMany (E (GetRelatedLeft, GetRelatedRight, IsRela
 import qualified Relation.ToMany (E (GetRelated, IsRelated, Relate, Unrelate, UnrelateByKey))
 import qualified Relation.ToOne (E (GetRelated, Relate, Unrelate))
 import Relude.Extra ((.~))
-import Domain.Article (ArticleR (ArticleWithAuthorProfile))
-import Domain.Comment (CommentR (CommentWithAuthorProfile))
-import Domain.User (UserR (UserAuthWithToken, UserProfile))
 import Storage.Map
   ( ContentOf (..),
     CreateOf (ArticleCreate, CommentCreate),
@@ -60,69 +61,56 @@ import Storage.Map
 import qualified Storage.Map (E (DeleteById, GetById, Insert, UpdateById))
 import qualified Token (E (CreateToken))
 import Util.Error (AlreadyExists (AlreadyExists), CRUD (U), Forbidden (Forbidden), Impossible (Impossible), NotAuthorized (NotAuthorized), NotFound (NotFound))
-import Domain.Transform (Transform (transform))
 import qualified VisitorAction (E (GetProfile))
 
 -- * Effect
 
--- | Actions that can only be carried out by __authenticated__ users.
---
--- @since 0.1.0.0
+-- | @since 0.1.0.0
+-- Actions that can only be carried out by __authenticated__ users.
 data E (m :: Type -> Type) a where
-  -- | Get the info of the current authenticated user.
-  --
-  -- @since 0.1.0.0
+  -- | @since 0.1.0.0
+  -- Get the info of the current authenticated user.
   GetCurrentUser :: E m (UserR "authWithToken")
-  -- | Update the profile of the current authenticated user.
-  --
-  -- @since 0.1.0.0
+  -- | @since 0.1.0.0
+  -- Update the profile of the current authenticated user.
   UpdateUser :: Patch (UpdateOf 'User) -> E m (UserR "authWithToken")
-  -- | Follow the user specified by the id.
-  --
-  -- @since 0.1.0.0
+  -- | @since 0.1.0.0
+  -- Follow the user specified by the id.
   FollowUser :: IdOf 'User -> E m (UserR "profile")
-  -- | Unfollow the user specified by the id.
-  --
-  -- @since 0.1.0.0
+  -- | @since 0.1.0.0
+  -- Unfollow the user specified by the id.
   UnfollowUser :: IdOf 'User -> E m (UserR "profile")
-  -- | Create the article specified by the id.
-  --
-  -- @since 0.1.0.0
+  -- | @since 0.1.0.0
+  -- Create the article specified by the id.
   CreateArticle :: CreateOf 'Article -> E m (ArticleR "withAuthorProfile")
-  -- | Update the authenticated user's own article specified by the id.
-  --
-  -- @since 0.1.0.0
+  -- | @since 0.1.0.0
+  -- Update the authenticated user's own article specified by the id.
   UpdateArticle :: IdOf 'Article -> Patch (UpdateOf 'Article) -> E m (ArticleR "withAuthorProfile")
-  -- | Delete the authenticated user's own article specified by the id.
-  --
-  -- @since 0.1.0.0
+  -- | @since 0.1.0.0
+  -- Delete the authenticated user's own article specified by the id.
   DeleteArticle :: IdOf 'Article -> E m ()
-  -- | Leave a comment to the article specified by the id.
-  --
-  -- @since 0.1.0.0
+  -- | @since 0.1.0.0
+  -- Leave a comment to the article specified by the id.
   AddCommentToArticle :: IdOf 'Article -> CreateOf 'Comment -> E m (CommentR "withAuthorProfile")
-  -- | Delete the authenticated user's own comment specified by the id from the article.
-  --
-  -- @since 0.1.0.0
+  -- | @since 0.1.0.0
+  -- Delete the authenticated user's own comment specified by the id from the article.
   DeleteComment :: IdOf 'Article -> IdOf 'Comment -> E m ()
-  -- | Favorite the aritcle specified by the id.
-  --
-  -- @since 0.1.0.0
+  -- | @since 0.1.0.0
+  -- Favorite the aritcle specified by the id.
   FavoriteArticle :: IdOf 'Article -> E m (ArticleR "withAuthorProfile")
-  -- | Unfavorite the aritcle specified by the id.
-  --
-  -- @since 0.1.0.0
+  -- | @since 0.1.0.0
+  -- Unfavorite the aritcle specified by the id.
   UnfavoriteArticle :: IdOf 'Article -> E m (ArticleR "withAuthorProfile")
-  -- | Get articles feed recommendated for the authenticated user.
-  --
-  -- @since 0.1.0.0
+  -- | @since 0.1.0.0
+  -- Get articles feed recommendated for the authenticated user.
   FeedArticles :: E m [ArticleR "withAuthorProfile"]
 
 -- * Carrirer
 
 -- | @since 0.1.0.0
 newtype C m a = C
-  { run :: m a
+  { -- | @since 0.1.0.0
+    run :: m a
   }
   deriving (Functor, Applicative, Monad)
 

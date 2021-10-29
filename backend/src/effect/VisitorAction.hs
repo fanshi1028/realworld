@@ -24,51 +24,46 @@ import Control.Effect.Sum (Member)
 import Control.Effect.Throw (Throw, throwError)
 import qualified Current (E)
 import Domain (Domain (Article, Comment, User))
+import Domain.Article (ArticleR (ArticleWithAuthorProfile))
+import Domain.Comment (CommentR (CommentWithAuthorProfile))
+import Domain.Transform (transform)
+import Domain.User (UserR (UserProfile))
 import Field.Tag (Tag)
 import GHC.Records (getField)
 import qualified Relation.ManyToMany (E (GetRelatedLeft, GetRelatedRight))
 import qualified Relation.ToMany (E (GetRelated))
-import Domain.Article (ArticleR (ArticleWithAuthorProfile))
-import Domain.Comment (CommentR (CommentWithAuthorProfile))
-import Domain.User (UserR (UserProfile))
 import Storage.Map (ContentOf (..), HasStorage (IdOf), toArticleId)
 import qualified Storage.Map (E (GetAll, GetById))
 import qualified Storage.Set (E (GetAll))
 import Util.Error (Impossible (Impossible), NotFound)
-import Domain.Transform (transform)
 
 -- * Effect
 
--- | Actions that can be carried out by visitor(__unauthenticated__).
---
--- @since 0.1.0.0
+-- | @since 0.1.0.0
+-- Actions that can be carried out by visitor(__unauthenticated__).
 data E (m :: Type -> Type) a where
-  -- | Get the profile of the user specified by the id.
-  --
-  -- @since 0.1.0.0
+  -- | @since 0.1.0.0
+  -- Get the profile of the user specified by the id.
   GetProfile :: IdOf 'User -> E m (UserR "profile")
-  -- | Get the article specified by the id.
-  --
-  -- @since 0.1.0.0
+  -- | @since 0.1.0.0
+  -- Get the article specified by the id.
   GetArticle :: IdOf 'Article -> E m (ArticleR "withAuthorProfile")
-  -- | Get all the articles.
-  --
-  -- @since 0.1.0.0
+  -- | @since 0.1.0.0
+  -- Get all the articles.
   ListArticles :: E m [ArticleR "withAuthorProfile"]
-  -- | Get all the tags.
-  --
-  -- @since 0.1.0.0
+  -- | @since 0.1.0.0
+  -- Get all the tags.
   GetTags :: E m [Tag]
-  -- | Get all the comments of the article specified by the id.
-  --
-  -- @since 0.1.0.0
+  -- | @since 0.1.0.0
+  -- Get all the comments of the article specified by the id.
   GetComments :: IdOf 'Article -> E m [CommentR "withAuthorProfile"]
 
 -- * Carrirer
 
 -- | @since 0.1.0.0
 newtype C m a = C
-  { run :: m a
+  { -- | @since 0.1.0.0
+    run :: m a
   }
   deriving (Functor, Applicative, Monad)
 
