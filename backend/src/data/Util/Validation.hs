@@ -23,6 +23,9 @@ module Util.Validation
     NoValidation (..),
     WithNoValidation,
 
+    -- * Error
+    ValidationErr,
+
     -- * Helpers
     validate,
   )
@@ -36,7 +39,6 @@ import Data.Password.Validate (ValidationResult (InvalidPassword, ValidPassword)
 import qualified Data.Semigroup as SG (Last (Last))
 import Data.Time (UTCTime)
 import Servant (FromHttpApiData (parseQueryParam))
-import Util.Error (ValidationErr)
 import qualified Validation as V (Validation (Failure, Success), failure)
 
 -- $setup
@@ -130,3 +132,7 @@ instance FromJSON a => FromJSON (WithNoValidation a) where
 -- No Validation when parse from HttpApiData
 instance FromHttpApiData a => FromHttpApiData (WithNoValidation a) where
   parseQueryParam = pure <<$>> parseQueryParam
+
+-- | @since 0.2.0.0
+-- Just use 'Text' to represent all validation errors. When it happens, there will be a nonempty list of them.
+type ValidationErr = NonEmpty Text

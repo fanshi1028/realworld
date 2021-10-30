@@ -22,6 +22,7 @@ import Control.Effect.Lift (Lift, sendIO)
 import qualified Control.Effect.Reader as R (Reader, ask)
 import Control.Effect.Sum (Member)
 import Domain (Domain (User))
+import Domain.User (UserR (..))
 import HTTP.Util (CreateApi)
 import Relude.Extra (un)
 import Servant
@@ -37,13 +38,11 @@ import Servant
     type (:>),
   )
 import Servant.Auth.Server (CookieSettings, JWTSettings, acceptLogin)
-import qualified Storage.Map
+import qualified Storage.Map (E)
 import Token (E (CreateToken), TokenOf (UserToken))
-import Domain.User (UserR (..))
-import Util.Error (Impossible (Impossible), ValidationErr)
 import Util.JSON.From (In (In))
 import Util.JSON.To (Out (Out))
-import Util.Validation (WithValidation)
+import Util.Validation (ValidationErr, WithValidation)
 import Validation (validation)
 import Web.Cookie (setCookieValue)
 
@@ -68,10 +67,9 @@ authUserServer ::
     Member (Lift IO) sig,
     Member (R.Reader CookieSettings) sig,
     Member (R.Reader JWTSettings) sig,
-    Member (Throw Impossible) sig,
+    Member (Throw Text) sig,
     Member (Token.E 'User) sig,
     Member (Authentication.E 'User) sig,
-    -- Member (Throw (NotAuthorized UserR)) sig,
     Member (Storage.Map.E 'User) sig
   ) =>
   ServerT AuthUserApi m
@@ -82,15 +80,15 @@ authUserServer =
             acceptLogin <$> R.ask <*> R.ask <*> pure authInfo
               >>= sendIO
               >>= \case
-                Nothing -> throwError $ Impossible "accept login failed"
+                Nothing -> throwError @Text "impossible: accept login failed"
                 Just f -> case f authInfo of
                   -- Headers auth hs@(HCons h _) -> case h of
                   Headers auth (HCons h _) -> case h of
                     Header (UserToken . decodeUtf8 . setCookieValue -> jwt) ->
                       -- pure $ Headers (Out $ UserAuthWithToken auth jwt) hs
                       pure $ Out $ UserAuthWithToken auth jwt
-                    MissingHeader -> throwError $ Impossible "missing header for login"
-                    UndecodableHeader bs -> throwError $ Impossible $ "undecodable header: " <> show bs
+                    MissingHeader -> throwError @Text "impossible: missing header for login"
+                    UndecodableHeader bs -> throwError @Text $ "impossible: undecodable header: " <> show bs
       )
         :<|> ( validateThen Register
                  >=> \auth -> Out . UserAuthWithToken auth <$> send (CreateToken auth)

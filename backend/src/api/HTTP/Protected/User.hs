@@ -20,9 +20,9 @@ import Domain.User (UserR)
 import HTTP.Util (ReadApi, UpdateApi)
 import Servant (ServerT, type (:<|>) ((:<|>)))
 import UserAction (E (GetCurrentUser, UpdateUser))
-import Util.Error (ValidationErr)
 import Util.JSON.From (In (In))
 import Util.JSON.To (Out (Out))
+import Util.Validation (ValidationErr)
 import Validation (Validation (Failure, Success))
 
 -- * API

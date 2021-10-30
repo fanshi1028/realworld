@@ -12,7 +12,7 @@
 -- @since 0.2.0.0
 module App.InMem where
 
-import Authentication (LoginOf)
+import Authentication (AlreadyLogin, NotAuthorized, NotLogin)
 import qualified Authentication.Token (run)
 import Control.Carrier.Error.Either (runError)
 import qualified Control.Carrier.Reader as R (runReader)
@@ -44,15 +44,16 @@ import StmContainers.Multimap (Multimap)
 import qualified StmContainers.Multimap as STM.Multimap (newIO)
 import StmContainers.Set as STM.Set (newIO)
 import qualified StmContainers.Set as STM (Set)
-import Storage.Map (IdOf)
+import Storage.Error (AlreadyExists, NotFound)
+import Storage.Map (CRUD (D, U), Forbidden, IdAlreadyExists, IdNotFound, IdOf)
 import Storage.Map.InMem (TableInMem)
 import qualified Storage.Map.InMem (run)
 import qualified Storage.Set.InMem (run)
-import Token (TokenOf (..))
+import Token (InvalidToken, TokenOf (..))
 import qualified Token.JWT (run)
 import qualified Token.JWT.Invalidate.Pure (run)
 import qualified UserAction (run)
-import Util.Error (AlreadyExists, AlreadyLogin, Forbidden, Impossible, NotAuthorized, NotFound, NotLogin, ValidationErr)
+import Util.Validation (ValidationErr)
 import qualified VisitorAction (run)
 
 -- | @since 0.2.0.0
@@ -89,25 +90,26 @@ mkApp cs jwts userDb articleDb commentDb tagDb emailUserIndex db0 db1 db2 db3 db
       (Proxy @Api)
       (Proxy @'[CookieSettings, JWTSettings])
       ( ( runIOinSTM
-            . runError @(Forbidden (IdOf 'Article))
-            . runError @(NotAuthorized (IdOf 'User))
-            . runError @(NotAuthorized ())
-            . runError @(NotAuthorized (TokenOf 'User))
-            . runError @(NotFound (IdOf 'Article))
-            . runError @(NotFound (IdOf 'Comment))
-            . runError @(NotFound (IdOf 'User))
+            . runError @(Forbidden 'U 'Article)
+            . runError @(Forbidden 'D 'Article)
+            . runError @(Forbidden 'D 'Comment)
+            . runError @(NotAuthorized 'User)
+            . runError @(NotLogin 'User)
+            . runError @(InvalidToken 'User)
+            . runError @(IdNotFound 'Article)
+            . runError @(IdNotFound 'Comment)
+            . runError @(IdNotFound 'User)
             . runError @(NotFound Email)
             . runThrow @(NotFound Tag)
-            . runThrow @(AlreadyExists (IdOf 'Article))
-            . runThrow @(AlreadyExists (IdOf 'User))
-            . runThrow @(AlreadyExists (IdOf 'Comment))
+            . runThrow @(IdAlreadyExists 'Article)
+            . runThrow @(IdAlreadyExists 'User)
+            . runThrow @(IdAlreadyExists 'Comment)
             . runThrow @(AlreadyExists Email)
-            . runThrow @(AlreadyLogin (LoginOf 'User))
-            . runThrow @(NotLogin ())
+            . runThrow @(AlreadyLogin 'User)
             . runThrow @ValidationErr
             . runThrow @RequestedUUIDsTooQuickly
             . runThrow @Crypto.JOSE.Error
-            . runThrow @Impossible
+            . runThrow @Text
             . runTrace
             . R.runReader (Indefinite @(UserR "authWithToken"))
             . Current.Reader.run
@@ -132,6 +134,8 @@ mkApp cs jwts userDb articleDb commentDb tagDb emailUserIndex db0 db1 db2 db3 db
             . VisitorAction.run
             . UserAction.run
             >=> handlerErr err403
+            >=> handlerErr err403
+            >=> handlerErr err403
             >=> handlerErr err401
             >=> handlerErr err401
             >=> handlerErr err401
@@ -144,8 +148,7 @@ mkApp cs jwts userDb articleDb commentDb tagDb emailUserIndex db0 db1 db2 db3 db
             >=> handlerErr err400
             >=> handlerErr err500 -- Comment AlreadyExists use 500
             >=> handlerErr err400
-            >=> handlerErr err401 -- ???? FIXME
-            >=> handlerErr err401
+            >=> handlerErr err400 -- ???? FIXME
             >=> handlerErr err400
             >=> handlerErr err500
             >=> handlerErr err400

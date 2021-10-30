@@ -1,5 +1,8 @@
 {-# LANGUAGE DataKinds #-}
+{-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE StandaloneDeriving #-}
 {-# LANGUAGE TypeFamilies #-}
+{-# LANGUAGE UndecidableInstances #-}
 
 -- |
 -- Description : Effect
@@ -10,7 +13,26 @@
 -- Effect of authentication
 --
 -- @since 0.1.0.0
-module Authentication (E (..), module X) where
+module Authentication
+  ( E (..),
+
+    -- * Error
+
+    -- ** Not Authorized
+    NotAuthorized (..),
+
+    -- ** Not login
+    NotLogin (..),
+
+    -- ** Already login
+    AlreadyLogin (..),
+
+    -- * Typeclass
+
+    -- ** HasAuth
+    module X,
+  )
+where
 
 import Authentication.Internal.HasAuth as X
 import Authentication.Internal.HasAuth.User as X
@@ -25,3 +47,18 @@ data E (s :: Domain) (m :: Type -> Type) a where
   Login :: LoginOf s -> E s m (AuthOf s)
   -- | @since 0.2.0.0
   Logout :: E s m ()
+
+-- | @since 0.2.0.0
+newtype AlreadyLogin (a :: Domain) = AlreadyLogin (LoginOf a)
+
+-- | @since 0.2.0.0
+deriving instance Show (LoginOf a) => Show (AlreadyLogin a)
+
+-- | @since 0.2.0.0
+newtype NotAuthorized (a :: Domain) = NotAuthorized (LoginOf a)
+
+-- | @since 0.2.0.0
+deriving instance Show (LoginOf a) => Show (NotAuthorized a)
+
+-- | @since 0.2.0.0
+data NotLogin (a :: Domain) = NotLogin deriving (Show)

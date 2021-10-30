@@ -21,8 +21,8 @@ import HTTP.Util (Cap, ToggleApi)
 import Servant (ServerT, type (:<|>) ((:<|>)), type (:>))
 import Storage.Map (IdOf)
 import qualified UserAction
-import Util.Error (ValidationErr)
 import Util.JSON.To (Out (Out))
+import Util.Validation (ValidationErr)
 import Validation (Validation (Failure, Success))
 
 -- * API

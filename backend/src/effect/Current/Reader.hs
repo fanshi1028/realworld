@@ -14,14 +14,15 @@
 -- @since 0.1.0.0
 module Current.Reader where
 
+import Authentication (NotLogin (NotLogin))
 import Control.Algebra (Algebra (alg), type (:+:) (L, R))
 import qualified Control.Effect.Reader as R (Reader, ask)
 import Control.Effect.Sum (Member)
 import Control.Effect.Throw (Throw, throwError)
 import Current (E (GetCurrent))
+import Domain (Domain (User))
 import Domain.User (UserR)
 import Servant.Auth.Server (AuthResult (Authenticated))
-import Util.Error (NotAuthorized (NotAuthorized))
 
 -- | @since 0.1.0.0
 newtype C m a = C
@@ -35,7 +36,7 @@ newtype C m a = C
 -- @since 0.2.0.0
 instance
   ( Algebra sig m,
-    Member (Throw (NotAuthorized ())) sig,
+    Member (Throw (NotLogin 'User)) sig,
     Member (R.Reader (AuthResult (UserR "authWithToken"))) sig
   ) =>
   Algebra (E (UserR "authWithToken") :+: sig) (C m)
@@ -43,6 +44,6 @@ instance
   alg _ (L GetCurrent) ctx =
     R.ask >>= \case
       Authenticated u -> pure $ u <$ ctx
-      _ -> throwError $ NotAuthorized ()
+      _ -> throwError $ NotLogin @'User
   alg hdl (R other) ctx = C $ alg (run . hdl) other ctx
   {-# INLINE alg #-}

@@ -26,9 +26,8 @@ import Crypto.JOSE (Error)
 import Domain (Domain)
 import Relude.Extra (un)
 import Servant.Auth.Server (CookieSettings (cookieExpires), FromJWT, JWTSettings, ToJWT, makeJWT, verifyJWT)
-import Token (E (CreateToken, DecodeToken, InvalidateToken), TokenOf)
+import Token (E (CreateToken, DecodeToken, InvalidateToken), InvalidToken (InvalidToken), TokenOf)
 import Token.JWT.Invalidate (E (Invalidate))
-import Util.Error (NotAuthorized (NotAuthorized))
 
 -- | @since 0.2.0.0
 newtype C (s :: Domain) (m :: Type -> Type) a = C
@@ -41,7 +40,7 @@ newtype C (s :: Domain) (m :: Type -> Type) a = C
 instance
   ( Member (R.Reader JWTSettings) sig,
     Member (R.Reader CookieSettings) sig,
-    Member (Throw (NotAuthorized (TokenOf s))) sig,
+    Member (Throw (InvalidToken s)) sig,
     Member (Token.JWT.Invalidate.E (TokenOf s)) sig,
     Member (Throw Error) sig,
     Member (Lift IO) sig,
@@ -56,7 +55,7 @@ instance
     verifyJWT <$> R.ask <*> pure (encodeUtf8 $ un @Text token)
       >>= sendIO
       >>= \case
-        Nothing -> throwError $ NotAuthorized token
+        Nothing -> throwError $ InvalidToken token
         (Just auth) -> pure $ auth <$ ctx
   alg _ (L (CreateToken auth)) ctx =
     makeJWT auth <$> R.ask <*> R.asks cookieExpires

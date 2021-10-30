@@ -16,12 +16,11 @@
 -- @since 0.1.0.0
 module Authentication.Pure where
 
-import Authentication (E (Login, Logout, Register), HasAuth (LoginOf))
+import Authentication (AlreadyLogin (AlreadyLogin), E (Login, Logout, Register), NotLogin (NotLogin))
 import Control.Algebra (Algebra (alg), type (:+:) (L, R))
 import Control.Effect.Sum (Member)
 import Control.Effect.Throw (Throw, throwError)
 import Domain (Domain)
-import Util.Error (AlreadyLogin (AlreadyLogin), NotLogin (NotLogin))
 
 -- | @since 0.1.0.0
 newtype C (s :: Domain) (b :: Bool) m a = C
@@ -31,7 +30,7 @@ newtype C (s :: Domain) (b :: Bool) m a = C
   deriving (Functor, Applicative, Monad)
 
 -- | @since 0.1.0.0
-instance (Algebra sig m, Member (Throw (AlreadyLogin (LoginOf s))) sig) => Algebra (E s :+: sig) (C s 'True m) where
+instance (Algebra sig m, Member (Throw (AlreadyLogin s)) sig) => Algebra (E s :+: sig) (C s 'True m) where
   -- FIXME
   alg _ (L (Register a)) ctx = undefined
   alg _ (L (Login l)) _ = throwError $ AlreadyLogin l
@@ -40,10 +39,10 @@ instance (Algebra sig m, Member (Throw (AlreadyLogin (LoginOf s))) sig) => Algeb
   {-# INLINE alg #-}
 
 -- | @since 0.1.0.0
-instance (Algebra sig m, Member (Throw (NotLogin ())) sig) => Algebra (E s :+: sig) (C s 'False m) where
+instance (Algebra sig m, Member (Throw (NotLogin s)) sig) => Algebra (E s :+: sig) (C s 'False m) where
   -- FIXME
   alg _ (L (Register a)) ctx = undefined
   alg _ (L (Login u)) ctx = pure $ undefined <$ ctx
-  alg _ (L Logout) _ = throwError $ NotLogin ()
+  alg _ (L Logout) _ = throwError $ NotLogin @s
   alg hdl (R other) ctx = C $ alg (run . hdl) other ctx
   {-# INLINE alg #-}

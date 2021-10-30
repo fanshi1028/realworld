@@ -14,6 +14,7 @@
 -- @since 0.1.0.0
 module HTTP where
 
+import Authentication (NotLogin)
 import qualified Authentication (E)
 import Authorization (TokenAuth)
 import Control.Algebra (Algebra)
@@ -31,10 +32,10 @@ import Servant (Get, JSON, ServerT, type (:<|>) ((:<|>)), type (:>))
 import Servant.Auth.Server (Auth, AuthResult, CookieSettings, JWTSettings)
 import Servant.Server (hoistServer)
 import qualified Storage.Map (E)
-import Token (TokenOf)
+import Token (InvalidToken)
 import qualified Token (E)
 import qualified UserAction (E)
-import Util.Error (Impossible, NotAuthorized, ValidationErr)
+import Util.Validation (ValidationErr)
 import qualified VisitorAction (E)
 
 -- * API
@@ -66,10 +67,11 @@ server ::
     Member (R.Reader CookieSettings) sig,
     Member (R.Reader (AuthResult (UserR "authWithToken"))) sig,
     Member (Throw ValidationErr) sig,
-    Member (Throw Impossible) sig,
-    Member (Catch (NotAuthorized (TokenOf 'User))) sig,
+    Member (Throw Text) sig,
+    Member (Catch (InvalidToken 'User)) sig,
     Member (Authentication.E 'User) sig,
-    Member (Throw (NotAuthorized (TokenOf 'User))) sig,
+    Member (Throw (InvalidToken 'User)) sig,
+    Member (Throw (NotLogin 'User)) sig,
     Member (Storage.Map.E 'User) sig
   ) =>
   ServerT Api m

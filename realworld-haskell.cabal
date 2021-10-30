@@ -144,6 +144,7 @@ library backend-effect-internal
     Relation.ToOne.InMem
     Relation.ToOne.Pure
     STMWithUnsafeIO
+    Storage.Error
     Storage.Map
     Storage.Map.InMem
     Storage.Map.Internal.HasCreate
@@ -166,7 +167,6 @@ library backend-effect-internal
     Token.JWT.Invalidate
     Token.JWT.Invalidate.Pure
     UserAction
-    Util.Error
     Util.JSON.From
     Util.JSON.To
     Util.Validation

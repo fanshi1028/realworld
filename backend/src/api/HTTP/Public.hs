@@ -20,7 +20,7 @@ import HTTP.Public.Article (ArticleApi, articleServer)
 import HTTP.Public.Profile (ProfileApi, profileServer)
 import HTTP.Public.Tag (TagApi, tagServer)
 import Servant (ServerT, type (:<|>) ((:<|>)), type (:>))
-import Util.Error (ValidationErr)
+import Util.Validation (ValidationErr)
 import qualified VisitorAction (E)
 
 -- * API
