@@ -27,16 +27,6 @@ instance (ToJSON a, Show a) => ToJSON (NotFound a) where
 -- when a has already existed
 newtype AlreadyExists a = AlreadyExists a deriving (Show)
 
--- | @since 0.2.0.0
--- see 'Forbidden'
-data CRUD = C | R | U | D deriving (Show)
-
--- | @since 0.2.0.0
--- 'CURD' action forbiddened
-data Forbidden a
-  = Forbidden CRUD a
-  deriving (Show)
-
 -- | @since 0.1.0.0
 newtype NotAuthorized a = NotAuthorized a deriving (Show)
 
