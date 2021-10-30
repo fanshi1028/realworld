@@ -35,7 +35,6 @@ import qualified Storage.Map (E)
 import Token (InvalidToken)
 import qualified Token (E)
 import qualified UserAction (E)
-import Util.Error (Impossible)
 import Util.Validation (ValidationErr)
 import qualified VisitorAction (E)
 
@@ -68,7 +67,7 @@ server ::
     Member (R.Reader CookieSettings) sig,
     Member (R.Reader (AuthResult (UserR "authWithToken"))) sig,
     Member (Throw ValidationErr) sig,
-    Member (Throw Impossible) sig,
+    Member (Throw Text) sig,
     Member (Catch (InvalidToken 'User)) sig,
     Member (Authentication.E 'User) sig,
     Member (Throw (InvalidToken 'User)) sig,

@@ -50,7 +50,6 @@ import Storage.Error (AlreadyExists (AlreadyExists), NotFound (NotFound))
 import Storage.Map (CRUD (D, U), ContentOf (..), CreateOf (ArticleCreate, CommentCreate), Forbidden (Forbidden), HasCreate (CreateOf), HasStorage (ContentOf, IdOf), IdAlreadyExists, IdNotFound, IdOf (ArticleId, CommentId, UserId), Patch, UpdateOf, toArticleId, toArticlePatch, toUserId)
 import qualified Storage.Map (E (DeleteById, GetById, Insert, UpdateById))
 import qualified Token (E (CreateToken))
-import Util.Error (Impossible (Impossible))
 import qualified VisitorAction (E (GetProfile))
 
 -- * Effect
@@ -119,7 +118,7 @@ instance
     Member (Throw (Forbidden 'U 'Article)) sig,
     Member (Throw (Forbidden 'D 'Article)) sig,
     Member (Throw (Forbidden 'D 'Comment)) sig,
-    Member (Throw Impossible) sig,
+    Member (Throw Text) sig,
     Member (Current.E Time) sig,
     Member GenUUID.E sig,
     Member (Relation.ManyToMany.E (IdOf 'User) "follow" (IdOf 'User)) sig,
@@ -335,7 +334,7 @@ instance
               >>= oneOf
               >>= send . Relation.ToMany.GetRelated @(IdOf 'User) @"create"
               >>= oneOf
-          flip (catchError @(IdNotFound 'Article)) (const $ throwError $ Impossible "article id not found") $ do
+          flip (catchError @(IdNotFound 'Article)) (const $ throwError @Text "impossible: article id not found") $ do
             a <- send $ Storage.Map.GetById articleId
             let authorId = getField @"author" a
             -- TODO: factor out logic for author profile

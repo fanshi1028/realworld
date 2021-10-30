@@ -35,7 +35,6 @@ import qualified Relation.ToMany (E (GetRelated))
 import Storage.Map (ContentOf (..), HasStorage (IdOf), IdNotFound, toArticleId)
 import qualified Storage.Map (E (GetAll, GetById))
 import qualified Storage.Set (E (GetAll))
-import Util.Error (Impossible (Impossible))
 
 -- * Effect
 
@@ -78,9 +77,7 @@ instance
     Member (Relation.ManyToMany.E (IdOf 'User) "follow" (IdOf 'User)) sig,
     Member (Relation.ToMany.E (IdOf 'Article) "has" (IdOf 'Comment)) sig,
     Member (Current.E (UserR "authWithToken")) sig,
-    Member (Throw Impossible) sig,
-    -- Member (Throw (NotAuthorized UserR)) sig,
-    -- Member (Catch (NotAuthorized UserR)) sig,
+    Member (Throw Text) sig,
     Member (Catch (IdNotFound 'Comment)) sig,
     Algebra sig m
   ) =>
@@ -114,7 +111,7 @@ instance
         _ <- send $ Storage.Map.GetById aid
         runNonDetA @[] $ do
           cid <- send (Relation.ToMany.GetRelated @_ @"has" @(IdOf 'Comment) aid) >>= oneOf
-          flip (catchError @(IdNotFound 'Comment)) (const $ throwError $ Impossible "comment id not found") $ do
+          flip (catchError @(IdNotFound 'Comment)) (const $ throwError @Text "impossible: comment id not found") $ do
             CommentContent {..} <- send $ Storage.Map.GetById cid
             auth <- transform <$> send (Storage.Map.GetById author)
             pure $ CommentWithAuthorProfile cid createdAt updatedAt body $ UserProfile auth False

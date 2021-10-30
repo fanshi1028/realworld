@@ -53,7 +53,6 @@ import Token (InvalidToken, TokenOf (..))
 import qualified Token.JWT (run)
 import qualified Token.JWT.Invalidate.Pure (run)
 import qualified UserAction (run)
-import Util.Error (Impossible)
 import Util.Validation (ValidationErr)
 import qualified VisitorAction (run)
 
@@ -110,7 +109,7 @@ mkApp cs jwts userDb articleDb commentDb tagDb emailUserIndex db0 db1 db2 db3 db
             . runThrow @ValidationErr
             . runThrow @RequestedUUIDsTooQuickly
             . runThrow @Crypto.JOSE.Error
-            . runThrow @Impossible
+            . runThrow @Text
             . runTrace
             . R.runReader (Indefinite @(UserR "authWithToken"))
             . Current.Reader.run
