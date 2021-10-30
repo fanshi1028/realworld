@@ -35,7 +35,8 @@ import qualified Storage.Map (E)
 import Token (InvalidToken)
 import qualified Token (E)
 import qualified UserAction (E)
-import Util.Error (Impossible, ValidationErr)
+import Util.Error (Impossible)
+import Util.Validation (ValidationErr)
 import qualified VisitorAction (E)
 
 -- * API

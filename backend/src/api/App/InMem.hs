@@ -53,7 +53,8 @@ import Token (InvalidToken, TokenOf (..))
 import qualified Token.JWT (run)
 import qualified Token.JWT.Invalidate.Pure (run)
 import qualified UserAction (run)
-import Util.Error (Impossible, ValidationErr)
+import Util.Error (Impossible)
+import Util.Validation (ValidationErr)
 import qualified VisitorAction (run)
 
 -- | @since 0.2.0.0

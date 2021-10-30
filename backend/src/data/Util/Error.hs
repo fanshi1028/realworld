@@ -18,7 +18,3 @@ newtype Impossible
   = -- | 'Text' to provide context, in case the __IMPOSSIBLE__ really happens
     Impossible Text
   deriving (Show)
-
--- | @since 0.1.0.0
--- Just use 'Text' to represent all validation errors. When it happens, there will be a nonempty list of them.
-type ValidationErr = NonEmpty Text

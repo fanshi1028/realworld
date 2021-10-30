@@ -22,6 +22,7 @@ import Control.Effect.Lift (Lift, sendIO)
 import qualified Control.Effect.Reader as R (Reader, ask)
 import Control.Effect.Sum (Member)
 import Domain (Domain (User))
+import Domain.User (UserR (..))
 import HTTP.Util (CreateApi)
 import Relude.Extra (un)
 import Servant
@@ -39,11 +40,10 @@ import Servant
 import Servant.Auth.Server (CookieSettings, JWTSettings, acceptLogin)
 import qualified Storage.Map
 import Token (E (CreateToken), TokenOf (UserToken))
-import Domain.User (UserR (..))
-import Util.Error (Impossible (Impossible), ValidationErr)
+import Util.Error (Impossible (Impossible))
 import Util.JSON.From (In (In))
 import Util.JSON.To (Out (Out))
-import Util.Validation (WithValidation)
+import Util.Validation (ValidationErr, WithValidation)
 import Validation (validation)
 import Web.Cookie (setCookieValue)
 

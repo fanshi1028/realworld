@@ -20,7 +20,7 @@ import HTTP.Protected.Follow (FollowApi, followServer)
 import HTTP.Protected.User (UserApi, userServer)
 import Servant (ServerT, type (:<|>) ((:<|>)), type (:>))
 import qualified UserAction (E)
-import Util.Error (ValidationErr)
+import Util.Validation (ValidationErr)
 
 -- * API
 

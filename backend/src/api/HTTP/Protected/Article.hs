@@ -37,10 +37,10 @@ import HTTP.Util (Cap, CreateApi, QP, ReadManyApi, ToggleApi, UDApi)
 import Servant (Delete, JSON, NoContent (NoContent), ServerT, type (:<|>) ((:<|>)), type (:>))
 import Storage.Map (IdOf)
 import qualified UserAction (E (AddCommentToArticle, CreateArticle, DeleteArticle, DeleteComment, FavoriteArticle, FeedArticles, UnfavoriteArticle, UpdateArticle))
-import Util.Error (ValidationErr)
 import Util.JSON.From (In (In))
 import Util.JSON.To (Out (Out))
 import Validation (Validation (Failure, Success))
+import Util.Validation (ValidationErr)
 
 -- |  @since 0.1.0.0
 type CommentApi =
