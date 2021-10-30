@@ -19,7 +19,7 @@ jobs:
       uses: rikhuijzer/cache-install@v1.0.8
       with:
         key: key-${{ hashFiles('default.nix') }}-${{ hashFiles('realworld-haskell.cabal') }}
-        nix_file: 'default.nix'
+        nix_file: 'shell.nix'
 
     - name: nix build
       run: nix-build -j4 -A realworld-haskell.components.exes.realworld-haskell
