@@ -21,5 +21,8 @@ jobs:
         key: key-${{ hashFiles('default.nix') }}-${{ hashFiles('realworld-haskell.cabal') }}
         nix_file: 'shell.nix'
 
+    - name: run-test
+      run: nix-shell --run "cabal test --test-show-details=direct"
+
     - name: nix build
       run: nix-build -j4 -A realworld-haskell.components.exes.realworld-haskell
