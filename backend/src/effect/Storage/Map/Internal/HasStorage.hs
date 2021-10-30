@@ -28,6 +28,8 @@ class HasStorage (s :: Domain) where
 
 -- * Error
 
+-- ** Forbiden
+
 -- | @since 0.2.0.0
 -- see 'Forbidden'
 data CRUD
@@ -51,3 +53,9 @@ newtype Forbidden (crud :: CRUD) (a :: Domain) = Forbidden (IdOf a)
 
 -- | @since 0.2.0.0
 deriving instance Show (IdOf a) => Show (Forbidden crud a)
+
+-- ** Already exists
+
+-- | @since 0.2.0.0
+-- error when a has already existed
+newtype AlreadyExists a = AlreadyExists a deriving (Show)

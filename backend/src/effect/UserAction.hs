@@ -46,10 +46,10 @@ import qualified Relation.ManyToMany (E (GetRelatedLeft, GetRelatedRight, IsRela
 import qualified Relation.ToMany (E (GetRelated, IsRelated, Relate, Unrelate, UnrelateByKey))
 import qualified Relation.ToOne (E (GetRelated, Relate, Unrelate))
 import Relude.Extra ((.~))
-import Storage.Map (CRUD (U), ContentOf (..), CreateOf (ArticleCreate, CommentCreate), Forbidden (Forbidden), HasCreate (CreateOf), HasStorage (ContentOf, IdOf), IdOf (ArticleId, CommentId, UserId), Patch, UpdateOf, toArticleId, toArticlePatch, toUserId)
+import Storage.Map (AlreadyExists (AlreadyExists), CRUD (U), ContentOf (..), CreateOf (ArticleCreate, CommentCreate), Forbidden (Forbidden), HasCreate (CreateOf), HasStorage (ContentOf, IdOf), IdOf (ArticleId, CommentId, UserId), Patch, UpdateOf, toArticleId, toArticlePatch, toUserId)
 import qualified Storage.Map (E (DeleteById, GetById, Insert, UpdateById))
 import qualified Token (E (CreateToken))
-import Util.Error (AlreadyExists (AlreadyExists), Impossible (Impossible), NotAuthorized (NotAuthorized), NotFound (NotFound))
+import Util.Error (Impossible (Impossible), NotAuthorized (NotAuthorized), NotFound (NotFound))
 import qualified VisitorAction (E (GetProfile))
 
 -- * Effect

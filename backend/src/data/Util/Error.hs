@@ -24,10 +24,6 @@ instance (ToJSON a, Show a) => ToJSON (NotFound a) where
   toEncoding = Encoding . show
 
 -- | @since 0.1.0.0
--- when a has already existed
-newtype AlreadyExists a = AlreadyExists a deriving (Show)
-
--- | @since 0.1.0.0
 newtype NotAuthorized a = NotAuthorized a deriving (Show)
 
 -- | @since 0.1.0.0

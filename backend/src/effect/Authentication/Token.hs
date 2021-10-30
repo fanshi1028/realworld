@@ -26,6 +26,8 @@ import Control.Effect.Throw (Throw, throwError)
 import qualified Current (E (GetCurrent))
 import Data.Password.Argon2 (PasswordCheck (PasswordCheckFail, PasswordCheckSuccess))
 import Domain (Domain (User))
+import Domain.Transform (transform)
+import Domain.User (UserR (UserAuthWithToken))
 import Field.Bio (Bio (Bio))
 import Field.Email (Email)
 import Field.Image (Image (Image))
@@ -33,12 +35,10 @@ import Field.Password (checkPassword, hashPassword, newSalt)
 import Field.Time (Time)
 import GHC.Records (getField)
 import qualified Relation.ToOne
-import Domain.User (UserR (UserAuthWithToken))
-import Storage.Map (ContentOf (UserContent), CreateOf (UserCreate), IdOf (UserId), toUserId)
+import Storage.Map (AlreadyExists (AlreadyExists), ContentOf (UserContent), CreateOf (UserCreate), IdOf (UserId), toUserId)
 import qualified Storage.Map
 import qualified Token (E (InvalidateToken))
-import Util.Error (AlreadyExists (AlreadyExists), NotAuthorized (NotAuthorized), NotFound (NotFound))
-import Domain.Transform (transform)
+import Util.Error (NotAuthorized (NotAuthorized), NotFound (NotFound))
 
 -- | @since 0.1.0.0
 newtype C (s :: Domain) m a = C
