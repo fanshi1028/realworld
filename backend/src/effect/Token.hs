@@ -1,3 +1,8 @@
+{-# LANGUAGE DataKinds #-}
+{-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE StandaloneDeriving #-}
+{-# LANGUAGE UndecidableInstances #-}
+
 -- |
 -- Description : Effect
 -- Copyright   : (c) 2021 fanshi1028
@@ -7,9 +12,23 @@
 -- Effect for token
 --
 -- @since 0.1.0.0
-module Token (E (..), module X) where
+module Token
+  ( E (..),
+
+    -- * Error
+
+    -- ** Invalid token
+    InvalidToken (..),
+
+    -- * Typeclass
+
+    -- ** HasToken
+    module X,
+  )
+where
 
 import Authentication (HasAuth (AuthOf))
+import Domain (Domain)
 import Token.Internal.HasToken as X
 import Token.Internal.HasToken.User as X
 
@@ -24,3 +43,9 @@ data E s (m :: Type -> Type) a where
   -- | @since 0.2.0.0
   -- Invalidate token
   InvalidateToken :: TokenOf s -> E s m ()
+
+-- | @since 0.2.0.0
+newtype InvalidToken (a :: Domain) = InvalidToken (TokenOf a)
+
+-- | @since 0.2.0.0
+deriving instance Show (TokenOf a) => Show (InvalidToken a)

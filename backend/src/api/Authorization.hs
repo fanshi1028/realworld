@@ -39,10 +39,9 @@ import Servant.Auth.Server.Internal.Class (IsAuth (AuthArgs, runAuth))
 import qualified StmContainers.Map as STM (lookup)
 import Storage.Map (IdOf)
 import Storage.Map.InMem (TableInMem, TableInMem')
-import Token (E (DecodeToken), TokenOf (..))
+import Token (E (DecodeToken), InvalidToken, TokenOf (..))
 import Token.JWT (run)
 import Token.JWT.Invalidate.Pure (run)
-import Util.Error (NotAuthorized)
 
 -- | @since 0.1.0.0
 -- extract token from request
@@ -61,7 +60,7 @@ instance IsAuth TokenAuth (UserR "authWithToken") where
       RequestToken token ->
         runM
           . runThrow @Error
-          . runThrow @(NotAuthorized (TokenOf 'User))
+          . runThrow @(InvalidToken 'User)
           . R.runReader cs
           . R.runReader jwts
           . Token.JWT.Invalidate.Pure.run @(TokenOf 'User)

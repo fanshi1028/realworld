@@ -15,7 +15,7 @@
 -- @since 0.1.0.0
 module Authentication.Token where
 
-import Authentication (LoginOf (UserLogin))
+import Authentication (LoginOf (UserLogin), NotAuthorized (NotAuthorized))
 import qualified Authentication (E (Login, Logout, Register))
 import Control.Algebra (Algebra (alg), send, type (:+:) (L, R))
 import Control.Effect.Catch (Catch)
@@ -39,7 +39,6 @@ import Storage.Error (AlreadyExists (AlreadyExists), NotFound (NotFound))
 import Storage.Map (ContentOf (UserContent), CreateOf (UserCreate), IdAlreadyExists, IdNotFound, IdOf (UserId), toUserId)
 import qualified Storage.Map
 import qualified Token (E (InvalidateToken))
-import Util.Error (NotAuthorized (NotAuthorized))
 
 -- | @since 0.1.0.0
 newtype C (s :: Domain) m a = C
@@ -52,7 +51,7 @@ newtype C (s :: Domain) m a = C
 instance
   ( Algebra sig m,
     Member (Lift IO) sig,
-    Member (Throw (NotAuthorized (IdOf 'User))) sig,
+    Member (Throw (NotAuthorized 'User)) sig,
     Member (Current.E (UserR "authWithToken")) sig,
     Member (Relation.ToOne.E Email "of" (IdOf 'User)) sig,
     Member (Catch (IdNotFound 'User)) sig,
@@ -85,13 +84,13 @@ instance
         Authentication.Logout -> do
           UserAuthWithToken _ t <- send $ Current.GetCurrent @(UserR "authWithToken")
           send $ Token.InvalidateToken t
-        Authentication.Login (UserLogin em pw) ->
+        Authentication.Login ul@(UserLogin em pw) ->
           send (Relation.ToOne.GetRelated @_ @"of" @(IdOf 'User) em) >>= \case
             Nothing -> throwError $ NotFound em
             Just uid -> do
               a <- send $ Storage.Map.GetById uid
               case checkPassword pw $ getField @"password" a of
                 PasswordCheckSuccess -> pure $ transform a
-                PasswordCheckFail -> throwError $ NotAuthorized uid
+                PasswordCheckFail -> throwError $ NotAuthorized ul
   alg hdl (R other) ctx = C $ alg (run . hdl) other ctx
   {-# INLINE alg #-}

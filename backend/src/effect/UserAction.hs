@@ -47,10 +47,10 @@ import qualified Relation.ToMany (E (GetRelated, IsRelated, Relate, Unrelate, Un
 import qualified Relation.ToOne (E (GetRelated, Relate, Unrelate))
 import Relude.Extra ((.~))
 import Storage.Error (AlreadyExists (AlreadyExists), NotFound (NotFound))
-import Storage.Map (CRUD (U), ContentOf (..), CreateOf (ArticleCreate, CommentCreate), Forbidden (Forbidden), HasCreate (CreateOf), HasStorage (ContentOf, IdOf), IdAlreadyExists, IdNotFound, IdOf (ArticleId, CommentId, UserId), Patch, UpdateOf, toArticleId, toArticlePatch, toUserId)
+import Storage.Map (CRUD (D, U), ContentOf (..), CreateOf (ArticleCreate, CommentCreate), Forbidden (Forbidden), HasCreate (CreateOf), HasStorage (ContentOf, IdOf), IdAlreadyExists, IdNotFound, IdOf (ArticleId, CommentId, UserId), Patch, UpdateOf, toArticleId, toArticlePatch, toUserId)
 import qualified Storage.Map (E (DeleteById, GetById, Insert, UpdateById))
 import qualified Token (E (CreateToken))
-import Util.Error (Impossible (Impossible), NotAuthorized (NotAuthorized))
+import Util.Error (Impossible (Impossible))
 import qualified VisitorAction (E (GetProfile))
 
 -- * Effect
@@ -116,8 +116,9 @@ instance
     Member (Throw (AlreadyExists Email)) sig,
     Member (Catch (IdNotFound 'Article)) sig,
     Member (Throw (IdNotFound 'Comment)) sig,
-    Member (Throw (NotAuthorized (IdOf 'User))) sig,
     Member (Throw (Forbidden 'U 'Article)) sig,
+    Member (Throw (Forbidden 'D 'Article)) sig,
+    Member (Throw (Forbidden 'D 'Comment)) sig,
     Member (Throw Impossible) sig,
     Member (Current.E Time) sig,
     Member GenUUID.E sig,
@@ -240,7 +241,7 @@ instance
         UpdateArticle articleId update ->
           send (Storage.Map.GetById articleId) >>= \case
             orig
-              | getField @"author" orig /= authUserId -> throwError $ Forbidden @U articleId
+              | getField @"author" orig /= authUserId -> throwError $ Forbidden @'U articleId
               | otherwise -> do
                 let m_new_aid = ArticleId . titleToSlug . SG.getLast <$> getField @"title" update
                 tags <- send (Relation.ManyToMany.GetRelatedLeft @_ @"taggedBy" @Tag articleId)
@@ -281,7 +282,7 @@ instance
                 send $ Relation.ToMany.Unrelate @_ @_ @"create" authUserId articleId
                 send $ Relation.ToMany.UnrelateByKey @_ @"has" @(IdOf 'Comment) articleId
                 send $ Relation.ManyToMany.UnrelateByKeyRight @_ @(IdOf 'User) @"favorite" articleId
-              | otherwise -> throwError $ NotAuthorized authUserId
+              | otherwise -> throwError $ Forbidden @'D articleId
         AddCommentToArticle articleId (CommentCreate txt) -> do
           t <- send $ Current.GetCurrent @Time
           commentId <- CommentId <$> send GenUUID.Generate
@@ -302,7 +303,7 @@ instance
                   | auid == authUserId -> do
                     send $ Storage.Map.DeleteById commentId
                     send $ Relation.ToMany.Unrelate @_ @_ @"has" articleId commentId
-                  | otherwise -> throwError $ NotAuthorized authUserId
+                  | otherwise -> throwError $ Forbidden @'D commentId
         FavoriteArticle articleId -> do
           a <- send $ Storage.Map.GetById articleId
           send $ Relation.ManyToMany.Relate @_ @_ @"favorite" authUserId articleId
