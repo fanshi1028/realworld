@@ -32,10 +32,10 @@ import Field.Tag (Tag)
 import GHC.Records (getField)
 import qualified Relation.ManyToMany (E (GetRelatedLeft, GetRelatedRight))
 import qualified Relation.ToMany (E (GetRelated))
-import Storage.Map (ContentOf (..), HasStorage (IdOf), toArticleId)
+import Storage.Map (ContentOf (..), HasStorage (IdOf), IdNotFound, toArticleId)
 import qualified Storage.Map (E (GetAll, GetById))
 import qualified Storage.Set (E (GetAll))
-import Util.Error (Impossible (Impossible), NotFound)
+import Util.Error (Impossible (Impossible))
 
 -- * Effect
 
@@ -81,7 +81,7 @@ instance
     Member (Throw Impossible) sig,
     -- Member (Throw (NotAuthorized UserR)) sig,
     -- Member (Catch (NotAuthorized UserR)) sig,
-    Member (Catch (NotFound (IdOf 'Comment))) sig,
+    Member (Catch (IdNotFound 'Comment)) sig,
     Algebra sig m
   ) =>
   Algebra (E :+: sig) (C m)
@@ -114,7 +114,7 @@ instance
         _ <- send $ Storage.Map.GetById aid
         runNonDetA @[] $ do
           cid <- send (Relation.ToMany.GetRelated @_ @"has" @(IdOf 'Comment) aid) >>= oneOf
-          flip (catchError @(NotFound (IdOf 'Comment))) (const $ throwError $ Impossible "comment id not found") $ do
+          flip (catchError @(IdNotFound 'Comment)) (const $ throwError $ Impossible "comment id not found") $ do
             CommentContent {..} <- send $ Storage.Map.GetById cid
             auth <- transform <$> send (Storage.Map.GetById author)
             pure $ CommentWithAuthorProfile cid createdAt updatedAt body $ UserProfile auth False

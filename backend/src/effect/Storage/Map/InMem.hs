@@ -23,8 +23,8 @@ import Domain.Transform (Transform (transform))
 import qualified Focus as FC (Change (Leave, Remove), cases)
 import qualified ListT (fold)
 import qualified StmContainers.Map as STM (Map, delete, focus, insert, listT, lookup)
-import Storage.Map (AlreadyExists (AlreadyExists), E (DeleteById, GetAll, GetById, Insert, UpdateById), HasStorage (ContentOf, IdOf))
-import Util.Error (NotFound (NotFound))
+import Storage.Error (AlreadyExists (AlreadyExists), NotFound (NotFound))
+import Storage.Map (E (DeleteById, GetAll, GetById, Insert, UpdateById), HasStorage (ContentOf, IdOf), IdAlreadyExists, IdNotFound)
 
 -- | @since 0.2.0.0
 type TableInMem' k v = STM.Map k v
@@ -45,8 +45,8 @@ instance
     Eq (IdOf s),
     Hashable (IdOf s),
     Member (Lift STM) sig,
-    Member (Throw (NotFound (IdOf s))) sig,
-    Member (Throw (AlreadyExists (IdOf s))) sig,
+    Member (Throw (IdNotFound s)) sig,
+    Member (Throw (IdAlreadyExists s)) sig,
     Transform (ContentOf s) (IdOf s),
     Algebra sig m
   ) =>

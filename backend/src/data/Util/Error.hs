@@ -12,17 +12,6 @@
 -- @since 0.1.0.0
 module Util.Error where
 
-import Data.Aeson (ToJSON (toEncoding))
-import Data.Aeson.Encoding.Internal (Encoding' (Encoding))
-
--- | @since 0.1.0.0
--- when a is not found
-newtype NotFound a = NotFound a deriving (Show, Generic)
-
--- | @since 0.1.0.0
-instance (ToJSON a, Show a) => ToJSON (NotFound a) where
-  toEncoding = Encoding . show
-
 -- | @since 0.1.0.0
 newtype NotAuthorized a = NotAuthorized a deriving (Show)
 

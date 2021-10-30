@@ -21,8 +21,8 @@ import Control.Effect.Sum (Member)
 import qualified Focus as FC (Change (Leave, Remove), cases)
 import qualified ListT (fold)
 import qualified StmContainers.Set as STM (Set, focus, insert, listT, lookup)
+import Storage.Error (NotFound (NotFound))
 import Storage.Set (E (Delete, GetAll, Insert, IsMember))
-import Util.Error (NotFound (NotFound))
 
 -- | @since 0.1.0.0
 newtype C (e :: Type) m a = C

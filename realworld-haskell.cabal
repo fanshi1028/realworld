@@ -144,6 +144,7 @@ library backend-effect-internal
     Relation.ToOne.InMem
     Relation.ToOne.Pure
     STMWithUnsafeIO
+    Storage.Error
     Storage.Map
     Storage.Map.InMem
     Storage.Map.Internal.HasCreate

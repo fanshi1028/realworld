@@ -46,10 +46,11 @@ import qualified Relation.ManyToMany (E (GetRelatedLeft, GetRelatedRight, IsRela
 import qualified Relation.ToMany (E (GetRelated, IsRelated, Relate, Unrelate, UnrelateByKey))
 import qualified Relation.ToOne (E (GetRelated, Relate, Unrelate))
 import Relude.Extra ((.~))
-import Storage.Map (AlreadyExists (AlreadyExists), CRUD (U), ContentOf (..), CreateOf (ArticleCreate, CommentCreate), Forbidden (Forbidden), HasCreate (CreateOf), HasStorage (ContentOf, IdOf), IdOf (ArticleId, CommentId, UserId), Patch, UpdateOf, toArticleId, toArticlePatch, toUserId)
+import Storage.Error (AlreadyExists (AlreadyExists), NotFound (NotFound))
+import Storage.Map (CRUD (U), ContentOf (..), CreateOf (ArticleCreate, CommentCreate), Forbidden (Forbidden), HasCreate (CreateOf), HasStorage (ContentOf, IdOf), IdAlreadyExists, IdNotFound, IdOf (ArticleId, CommentId, UserId), Patch, UpdateOf, toArticleId, toArticlePatch, toUserId)
 import qualified Storage.Map (E (DeleteById, GetById, Insert, UpdateById))
 import qualified Token (E (CreateToken))
-import Util.Error (Impossible (Impossible), NotAuthorized (NotAuthorized), NotFound (NotFound))
+import Util.Error (Impossible (Impossible), NotAuthorized (NotAuthorized))
 import qualified VisitorAction (E (GetProfile))
 
 -- * Effect
@@ -109,12 +110,12 @@ instance
     Member (Storage.Map.E 'User) sig,
     Member (Storage.Map.E 'Article) sig,
     Member (Storage.Map.E 'Comment) sig,
-    Member (Catch (NotFound (IdOf 'User))) sig,
-    Member (Throw (AlreadyExists (IdOf 'Article))) sig,
-    Member (Throw (AlreadyExists (IdOf 'User))) sig,
+    Member (Catch (IdNotFound 'User)) sig,
+    Member (Throw (IdAlreadyExists 'Article)) sig,
+    Member (Throw (IdAlreadyExists 'User)) sig,
     Member (Throw (AlreadyExists Email)) sig,
-    Member (Catch (NotFound (IdOf 'Article))) sig,
-    Member (Throw (NotFound (IdOf 'Comment))) sig,
+    Member (Catch (IdNotFound 'Article)) sig,
+    Member (Throw (IdNotFound 'Comment)) sig,
     Member (Throw (NotAuthorized (IdOf 'User))) sig,
     Member (Throw (Forbidden 'U 'Article)) sig,
     Member (Throw Impossible) sig,
@@ -156,7 +157,7 @@ instance
               checkUid uid
                 | uid == authUserId = pure ()
                 | otherwise =
-                  catchError @(NotFound (IdOf 'User))
+                  catchError @(IdNotFound 'User)
                     (send (Storage.Map.GetById uid) >> throwError (AlreadyExists uid))
                     $ const $ pure ()
 
@@ -226,7 +227,7 @@ instance
             $> UserProfile (transform targetUser) False
         CreateArticle (ArticleCreate tt des bd ts) -> do
           let aid = ArticleId $ titleToSlug tt
-          catchError @(NotFound (IdOf 'Article))
+          catchError @(IdNotFound 'Article)
             (send (Storage.Map.GetById aid) >> throwError (AlreadyExists aid))
             $ const $ pure ()
           send $ Relation.ToMany.Relate @_ @_ @"create" authUserId aid
@@ -247,7 +248,7 @@ instance
                 case m_new_aid of
                   Just new_aid
                     | new_aid /= articleId -> do
-                      catchError @(NotFound (IdOf 'Article))
+                      catchError @(IdNotFound 'Article)
                         (send (Storage.Map.GetById new_aid) >> throwError (AlreadyExists new_aid))
                         $ const $ pure ()
                       send $ Relation.ToMany.Unrelate @_ @_ @"create" authUserId articleId
@@ -333,7 +334,7 @@ instance
               >>= oneOf
               >>= send . Relation.ToMany.GetRelated @(IdOf 'User) @"create"
               >>= oneOf
-          flip (catchError @(NotFound (IdOf 'Article))) (const $ throwError $ Impossible "article id not found") $ do
+          flip (catchError @(IdNotFound 'Article)) (const $ throwError $ Impossible "article id not found") $ do
             a <- send $ Storage.Map.GetById articleId
             let authorId = getField @"author" a
             -- TODO: factor out logic for author profile

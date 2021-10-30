@@ -35,10 +35,11 @@ import Field.Password (checkPassword, hashPassword, newSalt)
 import Field.Time (Time)
 import GHC.Records (getField)
 import qualified Relation.ToOne
-import Storage.Map (AlreadyExists (AlreadyExists), ContentOf (UserContent), CreateOf (UserCreate), IdOf (UserId), toUserId)
+import Storage.Error (AlreadyExists (AlreadyExists), NotFound (NotFound))
+import Storage.Map (ContentOf (UserContent), CreateOf (UserCreate), IdAlreadyExists, IdNotFound, IdOf (UserId), toUserId)
 import qualified Storage.Map
 import qualified Token (E (InvalidateToken))
-import Util.Error (NotAuthorized (NotAuthorized), NotFound (NotFound))
+import Util.Error (NotAuthorized (NotAuthorized))
 
 -- | @since 0.1.0.0
 newtype C (s :: Domain) m a = C
@@ -54,8 +55,8 @@ instance
     Member (Throw (NotAuthorized (IdOf 'User))) sig,
     Member (Current.E (UserR "authWithToken")) sig,
     Member (Relation.ToOne.E Email "of" (IdOf 'User)) sig,
-    Member (Catch (NotFound (IdOf 'User))) sig,
-    Member (Throw (AlreadyExists (IdOf 'User))) sig,
+    Member (Catch (IdNotFound 'User)) sig,
+    Member (Throw (IdAlreadyExists 'User)) sig,
     Member (Throw (AlreadyExists Email)) sig,
     Member (Current.E Time) sig,
     Member (Throw (NotFound Email)) sig,

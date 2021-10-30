@@ -1,3 +1,7 @@
+{-# LANGUAGE DataKinds #-}
+{-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE StandaloneDeriving #-}
+
 -- |
 -- Description : Effect
 -- Copyright   : (c) 2021 fanshi1028
@@ -7,8 +11,10 @@
 -- Effect to store data as a map
 --
 -- @since 0.2.0.0
-module Storage.Map (E (..), module X) where
+module Storage.Map (E (..), module X, CRUD (..), Forbidden (..), IdAlreadyExists, IdNotFound) where
 
+import Domain (Domain)
+import Storage.Error (AlreadyExists, NotFound)
 import Storage.Map.Internal.HasCreate as X
 import Storage.Map.Internal.HasCreate.Article as X
 import Storage.Map.Internal.HasCreate.Comment as X
@@ -38,3 +44,41 @@ data E s (m :: Type -> Type) k where
   -- | @since 0.2.0.0
   -- Delete the data from the storage by its id
   DeleteById :: IdOf s -> E s m ()
+
+-- * Error
+
+-- ** Forbiden
+
+-- | @since 0.2.0.0
+-- see 'Forbidden'
+data CRUD
+  = -- | @since 0.2.0.0
+    -- create
+    C
+  | -- | @since 0.2.0.0
+    -- read
+    R
+  | -- | @since 0.2.0.0
+    -- update
+    U
+  | -- | @since 0.2.0.0
+    -- delete
+    D
+  deriving (Show)
+
+-- | @since 0.2.0.0
+-- error of 'CRUD' action forbiddened on 'Domain'
+newtype Forbidden (crud :: CRUD) (a :: Domain) = Forbidden (IdOf a)
+
+-- | @since 0.2.0.0
+deriving instance Show (IdOf a) => Show (Forbidden crud a)
+
+-- ** Already exists
+
+-- | @since 0.2.0.0
+type IdAlreadyExists a = AlreadyExists (IdOf a)
+
+-- ** Not found
+
+-- | @since 0.2.0.0
+type IdNotFound a = NotFound (IdOf a)
