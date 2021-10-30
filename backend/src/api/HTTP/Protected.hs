@@ -15,12 +15,12 @@ module HTTP.Protected where
 import Control.Algebra (Algebra)
 import Control.Effect.Sum (Member)
 import Control.Effect.Throw (Throw)
-import Util.Error (ValidationErr)
 import HTTP.Protected.Article (ArticleApi, articleServer)
 import HTTP.Protected.Follow (FollowApi, followServer)
 import HTTP.Protected.User (UserApi, userServer)
 import Servant (ServerT, type (:<|>) ((:<|>)), type (:>))
 import qualified UserAction (E)
+import Util.Error (ValidationErr)
 
 -- * API
 

@@ -23,6 +23,7 @@ import qualified Crypto.JOSE (Error)
 import qualified Current.IO (run)
 import qualified Current.Reader (run)
 import Domain (Domain (Article, Comment, User))
+import Domain.User (UserR)
 import Field.Email (Email)
 import Field.Tag (Tag)
 import Field.Time (Time)
@@ -50,13 +51,11 @@ import qualified Storage.Set.InMem (run)
 import Token (TokenOf (..))
 import qualified Token.JWT (run)
 import qualified Token.JWT.Invalidate.Pure (run)
-import Domain.User (UserR)
 import qualified UserAction (run)
 import Util.Error (AlreadyExists, AlreadyLogin, Forbidden, Impossible, NotAuthorized, NotFound, NotLogin, ValidationErr)
 import qualified VisitorAction (run)
 
 -- | @since 0.2.0.0
---
 -- create app by supplying settings and databases(in memory)
 mkApp ::
   CookieSettings ->
@@ -164,8 +163,7 @@ mkApp cs jwts userDb articleDb commentDb tagDb emailUserIndex db0 db1 db2 db3 db
     handlerErr status = handlerErr' (\e -> throwSTM $ status {errBody = show e})
 
 -- | @since 0.2.0.0
---
--- create app with default settings
+-- create in-memory app with default settings
 newApp :: IO Application
 newApp =
   mkApp defaultCookieSettings . defaultJWTSettings

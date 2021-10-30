@@ -23,10 +23,10 @@ import Control.Effect.Lift (Lift)
 import Control.Effect.Sum (Member)
 import Control.Effect.Throw (Throw)
 import Domain (Domain (User))
+import Domain.User (UserR)
 import HTTP.Auth.User (AuthUserApi, authUserServer)
 import HTTP.Protected (AuthedApi, authedServer)
 import HTTP.Public (PublicApi, publicServer)
-import Domain.User (UserR)
 import Servant (Get, JSON, ServerT, type (:<|>) ((:<|>)), type (:>))
 import Servant.Auth.Server (Auth, AuthResult, CookieSettings, JWTSettings)
 import Servant.Server (hoistServer)
@@ -39,13 +39,12 @@ import qualified VisitorAction (E)
 
 -- * API
 
--- | __NOTE__: This part of api
+-- | @since 0.1.0.0
+-- all api
+--
+-- __NOTE__: This part of api is for health check
 --
 -- > Get '[JSON] Text
---
--- is for health check
---
--- @since 0.1.0.0
 type Api =
   "api"
     :> ( Auth '[TokenAuth] (UserR "authWithToken") :> (PublicApi :<|> AuthedApi)
@@ -56,6 +55,7 @@ type Api =
 -- * Server
 
 -- | @since 0.1.0.0
+-- all server
 server ::
   ( Algebra sig m,
     Member VisitorAction.E sig,

@@ -16,11 +16,11 @@ module HTTP.Public where
 import Control.Algebra (Algebra)
 import Control.Effect.Sum (Member)
 import Control.Effect.Throw (Throw)
-import Util.Error (ValidationErr)
 import HTTP.Public.Article (ArticleApi, articleServer)
 import HTTP.Public.Profile (ProfileApi, profileServer)
 import HTTP.Public.Tag (TagApi, tagServer)
 import Servant (ServerT, type (:<|>) ((:<|>)), type (:>))
+import Util.Error (ValidationErr)
 import qualified VisitorAction (E)
 
 -- * API

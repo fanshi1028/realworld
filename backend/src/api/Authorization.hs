@@ -45,12 +45,12 @@ import Token.JWT.Invalidate.Pure (run)
 import Util.Error (NotAuthorized)
 
 -- | @since 0.1.0.0
+-- extract token from request
 pattern RequestToken :: TokenOf 'User -> Request
 pattern RequestToken token <- (List.lookup "authorization" . requestHeaders -> Just (parseHeader @(TokenOf 'User) -> Right token))
 
--- | Make use of 'CookieSettings' and 'JWTSettings' from servant-auth
---
--- @since 0.1.0.0
+-- | @since 0.1.0.0
+-- make use of 'CookieSettings' and 'JWTSettings' from servant-auth
 data TokenAuth
 
 -- | @since 0.1.0.0
@@ -72,9 +72,8 @@ instance IsAuth TokenAuth (UserR "authWithToken") where
           $ send $ DecodeToken token
       _ -> pure mempty
 
--- | Use hand-roll in-memory storage to facilitate auth process
---
--- @since 0.1.0.0
+-- | @since 0.1.0.0
+-- Use hand-roll in-memory storage to facilitate auth process
 data TokenAuthInMem
 
 -- | @since 0.1.0.0
