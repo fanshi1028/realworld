@@ -11,21 +11,47 @@
 -- Effect to store data as a map
 --
 -- @since 0.2.0.0
-module Storage.Map (E (..), module X, CRUD (..), Forbidden (..), IdAlreadyExists, IdNotFound) where
+module Storage.Map
+  ( E (..),
+
+    -- * Error
+
+    -- ** Forbidden
+    CRUD (..),
+    Forbidden (..),
+
+    -- ** Id already exists
+    IdAlreadyExists,
+
+    -- ** Id not found
+    IdNotFound,
+
+    -- * Typeclass
+
+    -- ** HasStorage
+    module X,
+
+    -- ** HasCreate
+    module Y,
+
+    -- ** HasUpdate
+    module Z,
+  )
+where
 
 import Domain (Domain)
 import Storage.Error (AlreadyExists, NotFound)
-import Storage.Map.Internal.HasCreate as X
-import Storage.Map.Internal.HasCreate.Article as X
-import Storage.Map.Internal.HasCreate.Comment as X
-import Storage.Map.Internal.HasCreate.User as X
+import Storage.Map.Internal.HasCreate as Y
+import Storage.Map.Internal.HasCreate.Article as Y
+import Storage.Map.Internal.HasCreate.Comment as Y
+import Storage.Map.Internal.HasCreate.User as Y
 import Storage.Map.Internal.HasStorage as X
 import Storage.Map.Internal.HasStorage.Article as X
 import Storage.Map.Internal.HasStorage.Comment as X
 import Storage.Map.Internal.HasStorage.User as X
-import Storage.Map.Internal.HasUpdate as X
-import Storage.Map.Internal.HasUpdate.Article as X
-import Storage.Map.Internal.HasUpdate.User as X
+import Storage.Map.Internal.HasUpdate as Z
+import Storage.Map.Internal.HasUpdate.Article as Z
+import Storage.Map.Internal.HasUpdate.User as Z
 
 -- | @since 0.2.0.0
 data E s (m :: Type -> Type) k where
@@ -44,10 +70,6 @@ data E s (m :: Type -> Type) k where
   -- | @since 0.2.0.0
   -- Delete the data from the storage by its id
   DeleteById :: IdOf s -> E s m ()
-
--- * Error
-
--- ** Forbiden
 
 -- | @since 0.2.0.0
 -- see 'Forbidden'
@@ -73,12 +95,10 @@ newtype Forbidden (crud :: CRUD) (a :: Domain) = Forbidden (IdOf a)
 -- | @since 0.2.0.0
 deriving instance Show (IdOf a) => Show (Forbidden crud a)
 
--- ** Already exists
-
 -- | @since 0.2.0.0
+-- convienient type alias
 type IdAlreadyExists a = AlreadyExists (IdOf a)
 
--- ** Not found
-
 -- | @since 0.2.0.0
+-- convienient type alias
 type IdNotFound a = NotFound (IdOf a)
