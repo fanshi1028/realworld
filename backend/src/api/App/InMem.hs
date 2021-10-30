@@ -159,7 +159,6 @@ mkApp cs jwts userDb articleDb commentDb tagDb emailUserIndex db0 db1 db2 db3 db
   where
     -- NOTE: Helpers for handle errors in form of nested either
     handlerErr' handler = either handler pure
-    -- handlerErr status = handlerErr' (\e -> throwError $ status {errBody = show e})
     handlerErr status = handlerErr' (\e -> throwSTM $ status {errBody = show e})
 
 -- | @since 0.2.0.0
