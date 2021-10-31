@@ -2,7 +2,7 @@
 { checkMaterialization ? false }:
 let
   project = import ./default.nix;
-  index-state = "2021-10-07T00:00:00Z";
+  index-state = project.index-state;
   materializedDir = ./materialized;
 in project.shellFor {
   # ALL of these arguments are optional.
