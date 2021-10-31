@@ -22,7 +22,11 @@ jobs:
         extraPullNames: nix-community
 
     - name: run-test
-      run: nix-shell --run "cabal test --test-show-details=direct"
+      run: |
+        nix-build -j4 -o test-result -A realworld-haskell.components.tests.realworld-haskell-test
+        ./test-result/bin/realworld-haskell-test
 
     - name: nix build
-      run: nix-build -j4 -A realworld-haskell.components.exes.realworld-haskell
+      if: ${{ success() }}
+      run: |
+        nix-build -j4 -o exe-result -A realworld-haskell.components.exes.realworld-haskell
