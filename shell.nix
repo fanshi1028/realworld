@@ -1,8 +1,9 @@
 # shell.nix
-let project = import ./default.nix;
-    index-state = "2021-10-07T00:00:00Z";
-    checkMaterialization = false;
-    materializedDir = ./materialized;
+{ checkMaterialization ? false }:
+let
+  project = import ./default.nix;
+  index-state = "2021-10-07T00:00:00Z";
+  materializedDir = ./materialized;
 in project.shellFor {
   # ALL of these arguments are optional.
 
