@@ -1,4 +1,4 @@
-with (import ./pkgs.nix).haskell-nix;
+with (import ./nix/pkgs.nix).haskell-nix;
 project {
   # 'cleanGit' cleans a source directory based on the files known by git
   src = haskellLib.cleanGit {
