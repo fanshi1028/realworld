@@ -72,7 +72,7 @@ in project.shellFor {
   # See overlays/tools.nix for more details
 
   # Some you may need to get some other way.
-  buildInputs = [ ];
+  buildInputs = with import ./nix/pkgs.nix; [ postgresql_13 sqls ];
 
   # Sellect cross compilers to include.
   crossPlatforms = ps:

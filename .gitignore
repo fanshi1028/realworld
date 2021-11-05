@@ -39,3 +39,4 @@ node_modules/
 /.tasty-rerun-log
 /materialized/
 /result
+/backend/postgres/data/

@@ -90,8 +90,8 @@ common backend-api-deps
     , servant               ^>=0.18.3
     , servant-auth-server   ^>=0.4.6
     , servant-server        ^>=0.18.3
-    , streamly              ^>=0.8.0
     , servant-streamly      ^>=0.1.0
+    , streamly              ^>=0.8.0
     , time                  ^>=1.9.3
     , validation-selective  ^>=0.1.0
     , wai                   ^>=3.2.3
@@ -110,10 +110,25 @@ common backend-in-mem-carrier-deps
     , servant-auth-server  ^>=0.4.6
     , servant-server       ^>=0.18.3
     , stm-containers       ^>=1.2
+    , streamly             ^>=0.8.0
     , time                 ^>=1.9.3
     , uuid                 ^>=1.3.15
     , wai                  ^>=3.2.3
-    , streamly             ^>=0.8.0
+
+common backend-rel8-carrier-deps
+  build-depends:
+    , cryptonite           ^>=0.29
+    , fused-effects        ^>=1.1.1
+    , generic-lens         ^>=2.2.0
+    , hasql                ^>=1.4.5
+    , hasql-transaction    ^>=1.0.1
+    , jose                 ^>=0.8.4
+    , password             ^>=3.0.0
+    , rel8                 ^>=1.1.0
+    , safe-exceptions      ^>=0.1.7
+    , servant-auth-server  ^>=0.4.6
+    , servant-server       ^>=0.18.3
+    , uuid                 ^>=1.3.15
 
 library backend-data-internal
   import:          prelude, backend-data-deps
@@ -155,6 +170,7 @@ library backend-data-internal
     Token.HasToken
     Token.Internal.HasToken
     Token.Internal.HasToken.User
+    Util.Impossible
     Util.JSON.From
     Util.JSON.To
     Util.Sort
@@ -231,7 +247,7 @@ library backend-in-mem-carrier-internal
       , backend-data-internal
       , backend-effect-internal
 
-  hs-source-dirs:  backend/src/carrier
+  hs-source-dirs:  backend/src/carrier/mem
   exposed-modules:
     InMem.App
     InMem.Authentication.User
@@ -254,19 +270,53 @@ library backend-in-mem-carrier-internal
     InMem.UserAction.Many
     InMem.VisitorAction
 
+library backend-rel8-carrier-internal
+  import:          prelude, backend-rel8-carrier-deps
+
+  if flag(ghcid)
+    import:         backend-data-deps, backend-effect-deps, backend-api-deps
+    hs-source-dirs: backend/src/data backend/src/effect backend/src/api
+
+  else
+    build-depends:
+      , backend-api-internal
+      , backend-data-internal
+      , backend-effect-internal
+
+  hs-source-dirs:  backend/src/carrier/rel8
+  exposed-modules:
+    InRel8.App
+    InRel8.Authentication.User
+    InRel8.OptionalAuthAction
+    InRel8.OptionalAuthAction.Many
+    InRel8.Sql
+    InRel8.Storage
+    InRel8.Storage.Internal.Field
+    InRel8.Storage.Schema.Article
+    InRel8.Storage.Schema.ArticleHasTag
+    InRel8.Storage.Schema.Comment
+    InRel8.Storage.Schema.Tag
+    InRel8.Storage.Schema.User
+    InRel8.Storage.Schema.UserFavoriteArticle
+    InRel8.Storage.Schema.UserFollowUser
+    InRel8.Storage.Schema.Util
+    InRel8.UserAction
+    InRel8.UserAction.Many
+    InRel8.VisitorAction
+
 executable realworld-haskell
   import:         prelude
 
   if flag(ghcid)
     import:
-      backend-data-deps, backend-effect-deps, backend-api-deps, backend-in-mem-carrier-deps
+      backend-data-deps, backend-effect-deps, backend-api-deps, backend-in-mem-carrier-deps, backend-rel8-carrier-deps
 
     hs-source-dirs:
       backend/src/data backend/src/effect backend/src/api
-      backend/src/carrier
+      backend/src/carrier/mem backend/src/carrier/rel8
 
   else
-    build-depends: backend-in-mem-carrier-internal
+    build-depends: backend-in-mem-carrier-internal, backend-rel8-carrier-internal
 
   main-is:        Main.hs
   hs-source-dirs: backend/app
@@ -279,17 +329,20 @@ executable realworld-haskell
 
 test-suite realworld-haskell-test
   import:
-    prelude, backend-data-deps, backend-effect-deps, backend-api-deps, backend-in-mem-carrier-deps
+    prelude, backend-data-deps, backend-effect-deps, backend-api-deps, backend-in-mem-carrier-deps, backend-rel8-carrier-deps
 
   if !flag(ghcid)
     build-depends:
+      , backend-api-internal
       , backend-data-internal
       , backend-effect-internal
-      , backend-api-internal
       , backend-in-mem-carrier-internal
+      , backend-rel8-carrier-internal
 
   else
-    hs-source-dirs: backend/src/data backend/src/effect backend/src/api backend/src/carrier
+    hs-source-dirs:
+      backend/src/data backend/src/effect backend/src/api
+      backend/src/carrier/mem backend/src/carrier/rel8
 
   type:           exitcode-stdio-1.0
   hs-source-dirs: test
