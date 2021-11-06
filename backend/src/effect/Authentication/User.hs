@@ -13,35 +13,34 @@
 -- Carrier using token
 --
 -- @since 0.1.0.0
-module Authentication.Token where
+module Authentication.User where
 
-import Authentication (LoginOf (UserLogin), NotAuthorized (NotAuthorized))
-import qualified Authentication (E (Login, Logout, Register))
+import Authentication (LoginOf (UserLogin), NotAuthorized (BadPassword, NoSuchUser))
+import qualified Authentication (E (Login, Register))
 import Control.Algebra (Algebra (alg), send, type (:+:) (L, R))
 import Control.Effect.Catch (Catch)
 import Control.Effect.Error (catchError)
 import Control.Effect.Lift (Lift, sendIO)
+import qualified Control.Effect.Reader as R (Reader)
 import Control.Effect.Sum (Member)
 import Control.Effect.Throw (Throw, throwError)
-import qualified Current (E (GetCurrent))
 import Data.Password.Argon2 (PasswordCheck (PasswordCheckFail, PasswordCheckSuccess))
 import Domain (Domain (User))
 import Domain.Transform (transform)
-import Domain.User (UserR (UserAuthWithToken))
+import Domain.User (UserR)
 import Field.Bio (Bio (Bio))
 import Field.Email (Email)
 import Field.Image (Image (Image))
 import Field.Password (checkPassword, hashPassword, newSalt)
-import Field.Time (Time)
 import GHC.Records (getField)
 import qualified Relation.ToOne
-import Storage.Error (AlreadyExists (AlreadyExists), NotFound (NotFound))
+import Servant.Auth.Server (AuthResult)
+import Storage.Error (AlreadyExists (AlreadyExists), NotFound)
 import Storage.Map (ContentOf (UserContent), CreateOf (UserCreate), IdAlreadyExists, IdNotFound, IdOf (UserId), toUserId)
 import qualified Storage.Map
-import qualified Token (E (InvalidateToken))
 
 -- | @since 0.1.0.0
-newtype C (s :: Domain) m a = C
+newtype C m a = C
   { -- | @since 0.1.0.0
     run :: m a
   }
@@ -51,18 +50,15 @@ newtype C (s :: Domain) m a = C
 instance
   ( Algebra sig m,
     Member (Lift IO) sig,
-    Member (Throw (NotAuthorized 'User)) sig,
-    Member (Current.E (UserR "authWithToken")) sig,
     Member (Relation.ToOne.E Email "of" (IdOf 'User)) sig,
     Member (Catch (IdNotFound 'User)) sig,
     Member (Throw (IdAlreadyExists 'User)) sig,
     Member (Throw (AlreadyExists Email)) sig,
-    Member (Current.E Time) sig,
-    Member (Throw (NotFound Email)) sig,
+    Member (Throw (NotAuthorized 'User)) sig,
     Member (Storage.Map.E 'User) sig,
-    Member (Token.E 'User) sig
+    Member (R.Reader (AuthResult (UserR "authWithToken"))) sig
   ) =>
-  Algebra (Authentication.E 'User :+: sig) (C 'User m)
+  Algebra (Authentication.E 'User :+: sig) (C m)
   where
   alg _ (L action) ctx =
     (<$ ctx) <$> do
@@ -81,16 +77,13 @@ instance
           send $ Storage.Map.Insert (toUserId u) u
           send $ Relation.ToOne.Relate @_ @_ @"of" em uid
           pure $ transform u
-        Authentication.Logout -> do
-          UserAuthWithToken _ t <- send $ Current.GetCurrent @(UserR "authWithToken")
-          send $ Token.InvalidateToken t
-        Authentication.Login ul@(UserLogin em pw) ->
+        Authentication.Login (UserLogin em pw) ->
           send (Relation.ToOne.GetRelated @_ @"of" @(IdOf 'User) em) >>= \case
-            Nothing -> throwError $ NotFound em
+            Nothing -> throwError $ NoSuchUser @'User
             Just uid -> do
               a <- send $ Storage.Map.GetById uid
               case checkPassword pw $ getField @"password" a of
                 PasswordCheckSuccess -> pure $ transform a
-                PasswordCheckFail -> throwError $ NotAuthorized ul
+                PasswordCheckFail -> throwError $ BadPassword @'User
   alg hdl (R other) ctx = C $ alg (run . hdl) other ctx
   {-# INLINE alg #-}

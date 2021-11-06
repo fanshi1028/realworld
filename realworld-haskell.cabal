@@ -85,7 +85,6 @@ common backend-effect-deps
     , servant-auth-server   ^>=0.4.6
     , singleton-bool        ^>=0.1.6
     , stm-containers        ^>=1.2
-    , time                  ^>=1.9.3
     , unordered-containers  ^>=0.2.14
     , uuid                  ^>=1.3.15
 
@@ -101,6 +100,7 @@ common backend-api-deps
     , uuid                  ^>=1.3.15
     , validation-selective  ^>=0.1.0
     , wai                   ^>=3.2.3
+    , time                  ^>=1.9.3
 
 library backend-effect-internal
   import:          prelude, backend-data-deps, backend-effect-deps
@@ -109,12 +109,7 @@ library backend-effect-internal
     Authentication
     Authentication.Internal.HasAuth
     Authentication.Internal.HasAuth.User
-    Authentication.Pure
-    Authentication.Token
-    Current
-    Current.IO
-    Current.Pure
-    Current.Reader
+    Authentication.User
     Domain
     Domain.Article
     Domain.Comment

@@ -22,7 +22,6 @@ import Control.Effect.Catch (Catch, catchError)
 import Control.Effect.NonDet (oneOf)
 import Control.Effect.Sum (Member)
 import Control.Effect.Throw (Throw, throwError)
-import qualified Current (E)
 import Domain (Domain (Article, Comment, User))
 import Domain.Article (ArticleR (ArticleWithAuthorProfile))
 import Domain.Comment (CommentR (CommentWithAuthorProfile))
@@ -76,7 +75,6 @@ instance
     Member (Relation.ManyToMany.E (IdOf 'User) "favorite" (IdOf 'Article)) sig,
     Member (Relation.ManyToMany.E (IdOf 'User) "follow" (IdOf 'User)) sig,
     Member (Relation.ToMany.E (IdOf 'Article) "has" (IdOf 'Comment)) sig,
-    Member (Current.E (UserR "authWithToken")) sig,
     Member (Throw Text) sig,
     Member (Catch (IdNotFound 'Comment)) sig,
     Algebra sig m

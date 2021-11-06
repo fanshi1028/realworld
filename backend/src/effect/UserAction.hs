@@ -18,16 +18,17 @@
 -- @since 0.1.0.0
 module UserAction where
 
-import Authentication (AuthOf (..))
+import Authentication (AuthOf (..), NotAuthorized, NotLogin (NotLogin))
+import qualified Authentication as AuthErr (NotAuthorized (BadPassword, NoSuchUser))
 import Control.Algebra (Algebra (alg), send, type (:+:) (L, R))
 import Control.Carrier.NonDet.Church (runNonDetA)
 import Control.Effect.Catch (Catch)
 import Control.Effect.Error (catchError)
 import Control.Effect.Lift (Lift, sendIO)
 import Control.Effect.NonDet (oneOf)
+import qualified Control.Effect.Reader as R (Reader, ask)
 import Control.Effect.Sum (Member)
 import Control.Effect.Throw (Throw, throwError)
-import qualified Current (E (GetCurrent))
 import Data.Generic.HKD (Build (build), Construct (construct), HKD, deconstruct)
 import Data.Generics.Product (HasField' (field'), getField)
 import qualified Data.Semigroup as SG (Last (Last, getLast))
@@ -46,6 +47,7 @@ import qualified Relation.ManyToMany (E (GetRelatedLeft, GetRelatedRight, IsRela
 import qualified Relation.ToMany (E (GetRelated, IsRelated, Relate, Unrelate, UnrelateByKey))
 import qualified Relation.ToOne (E (GetRelated, Relate, Unrelate))
 import Relude.Extra ((.~))
+import Servant.Auth.Server (AuthResult (Authenticated, BadPassword, Indefinite, NoSuchUser))
 import Storage.Error (AlreadyExists (AlreadyExists), NotFound (NotFound))
 import Storage.Map (CRUD (D, U), ContentOf (..), CreateOf (ArticleCreate, CommentCreate), Forbidden (Forbidden), HasCreate (CreateOf), HasStorage (ContentOf, IdOf), IdAlreadyExists, IdNotFound, IdOf (ArticleId, CommentId, UserId), Patch, UpdateOf, toArticleId, toArticlePatch, toUserId)
 import qualified Storage.Map (E (DeleteById, GetById, Insert, UpdateById))
@@ -119,7 +121,7 @@ instance
     Member (Throw (Forbidden 'D 'Article)) sig,
     Member (Throw (Forbidden 'D 'Comment)) sig,
     Member (Throw Text) sig,
-    Member (Current.E Time) sig,
+    Member (R.Reader Time) sig,
     Member GenUUID.E sig,
     Member (Relation.ManyToMany.E (IdOf 'User) "follow" (IdOf 'User)) sig,
     Member (Relation.ManyToMany.E (IdOf 'User) "favorite" (IdOf 'Article)) sig,
@@ -127,7 +129,9 @@ instance
     Member (Relation.ToMany.E (IdOf 'Article) "has" (IdOf 'Comment)) sig,
     Member (Relation.ToMany.E (IdOf 'User) "create" (IdOf 'Article)) sig,
     Member (Relation.ToOne.E Email "of" (IdOf 'User)) sig,
-    Member (Current.E (UserR "authWithToken")) sig,
+    Member (Throw (NotLogin 'User)) sig,
+    Member (Throw (NotAuthorized 'User)) sig,
+    Member (R.Reader (AuthResult (UserR "authWithToken"))) sig,
     Member VisitorAction.E sig,
     Member (Lift IO) sig,
     Algebra sig m
@@ -136,7 +140,12 @@ instance
   where
   alg _ (L action) ctx =
     (<$ ctx) <$> do
-      authOut@(UserAuthWithToken auth _) <- send Current.GetCurrent
+      authOut@(UserAuthWithToken auth _) <-
+        R.ask >>= \case
+          Authenticated u -> pure u
+          BadPassword -> throwError $ AuthErr.BadPassword @'User
+          NoSuchUser -> throwError $ AuthErr.NoSuchUser @'User
+          Indefinite -> throwError $ NotLogin @'User
       let authUserId = toUserId auth
       case action of
         GetCurrentUser -> pure authOut
@@ -231,7 +240,7 @@ instance
             (send (Storage.Map.GetById aid) >> throwError (AlreadyExists aid))
             $ const $ pure ()
           send $ Relation.ToMany.Relate @_ @_ @"create" authUserId aid
-          t <- send $ Current.GetCurrent @Time
+          t <- R.ask @Time
           foldMapA (send . Relation.ManyToMany.Relate @_ @_ @"taggedBy" aid) ts
           let a = ArticleContent tt des bd t t $ toUserId auth
           send (Storage.Map.Insert (toArticleId a) a)
@@ -283,7 +292,7 @@ instance
                 send $ Relation.ManyToMany.UnrelateByKeyRight @_ @(IdOf 'User) @"favorite" articleId
               | otherwise -> throwError $ Forbidden @'D articleId
         AddCommentToArticle articleId (CommentCreate txt) -> do
-          t <- send $ Current.GetCurrent @Time
+          t <- R.ask @Time
           commentId <- CommentId <$> send GenUUID.Generate
           let a = CommentContent commentId t t txt (toUserId auth) articleId
           send $ Storage.Map.Insert commentId a
