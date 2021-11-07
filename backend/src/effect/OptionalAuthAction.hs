@@ -84,8 +84,8 @@ instance
   alg _ (L action) ctx =
     (<$ ctx) <$> case action of
       GetProfile uid ->
-        UserProfile
-          <$> (transform <$> send (Storage.Map.GetById uid))
+        UserProfile . transform
+          <$> send (Storage.Map.GetById uid)
           <*> ( R.ask >>= \case
                   Just (UserAuthWithToken (toUserId -> authId) _) -> do
                     _ <- send $ Storage.Map.GetById authId
@@ -94,31 +94,26 @@ instance
               )
       GetArticle aid -> do
         a <- send $ Storage.Map.GetById aid
-        let uid = getField @"author" a
-        u <- transform <$> send (Storage.Map.GetById uid)
         ArticleWithAuthorProfile a
           <$> send (Relation.ManyToMany.GetRelatedLeft @_ @"taggedBy" @Tag aid)
           <*> pure False
           <*> (genericLength <$> send (Relation.ManyToMany.GetRelatedRight @_ @(IdOf 'User) @"favorite" aid))
-          <*> send (GetProfile u)
+          <*> send (GetProfile $ getField @"author" a)
       ListArticles ->
         runNonDetA @[] $ do
           a <- send (Storage.Map.GetAll @'Article) >>= oneOf
           let aid = toArticleId a
-              uid = getField @"author" a
-          u <- transform <$> send (Storage.Map.GetById uid)
           ArticleWithAuthorProfile a
             <$> send (Relation.ManyToMany.GetRelatedLeft @(IdOf 'Article) @"taggedBy" @Tag aid)
             <*> pure False
             <*> (genericLength <$> send (Relation.ManyToMany.GetRelatedRight @_ @(IdOf 'User) @"favorite" aid))
-            <*> send (GetProfile u)
+            <*> send (GetProfile $ getField @"author" a)
       GetComments aid -> do
         _ <- send $ Storage.Map.GetById aid
         runNonDetA @[] $ do
           cid <- send (Relation.ToMany.GetRelated @_ @"has" @(IdOf 'Comment) aid) >>= oneOf
           flip (catchError @(IdNotFound 'Comment)) (const $ throwError @Text "impossible: comment id not found") $ do
             CommentContent {..} <- send $ Storage.Map.GetById cid
-            auth <- transform <$> send (Storage.Map.GetById author)
-            CommentWithAuthorProfile cid createdAt updatedAt body <$> send (GetProfile auth)
+            CommentWithAuthorProfile cid createdAt updatedAt body <$> send (GetProfile author)
   alg hdl (R other) ctx = C $ alg (run . hdl) other ctx
   {-# INLINE alg #-}

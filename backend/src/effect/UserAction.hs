@@ -218,7 +218,6 @@ instance
           case construct $ deconstruct (deconstruct orig) <> update' of
             Nothing -> error "Impossible: Missing field when update"
             Just (construct -> SG.Last r) -> send (Storage.Map.Insert (toUserId r) r) $> transform r
-
         FollowUser targetUserId -> do
           targetUser <- send $ Storage.Map.GetById targetUserId
           send $ Relation.ManyToMany.Relate @_ @_ @"follow" authUserId targetUserId
@@ -259,7 +258,6 @@ instance
                         >>= traverse_
                           ( \cid -> do
                               send $ Relation.ToMany.Relate @_ @_ @"has" new_aid cid
-                              -- send $ Storage.Map.UpdateById cid (\c -> c & field' @'Article .~ new_aid)
                               send $ Storage.Map.UpdateById cid (\c -> c {article = new_aid})
                           )
                       send $ Relation.ToMany.UnrelateByKey @_ @"has" @(IdOf 'Comment) articleId
@@ -313,10 +311,7 @@ instance
             <$> send (Relation.ManyToMany.GetRelatedLeft @_ @"taggedBy" @Tag articleId)
             <*> send (Relation.ManyToMany.IsRelated @_ @_ @"favorite" authUserId articleId)
             <*> (genericLength <$> send (Relation.ManyToMany.GetRelatedRight @_ @(IdOf 'User) @"favorite" articleId))
-            <*> ( UserProfile . transform
-                    <$> send (Storage.Map.GetById authorId)
-                    <*> send (Relation.ManyToMany.IsRelated @_ @_ @"follow" authUserId authorId)
-                )
+            <*> send (OptionalAuthAction.GetProfile authorId)
         UnfavoriteArticle articleId -> do
           a <- send $ Storage.Map.GetById articleId
           send $ Relation.ManyToMany.Unrelate @_ @_ @"favorite" authUserId articleId
@@ -325,10 +320,7 @@ instance
             <$> send (Relation.ManyToMany.GetRelatedLeft @_ @"taggedBy" @Tag articleId)
             <*> send (Relation.ManyToMany.IsRelated @_ @_ @"favorite" authUserId articleId)
             <*> (genericLength <$> send (Relation.ManyToMany.GetRelatedRight @_ @(IdOf 'User) @"favorite" articleId))
-            <*> ( UserProfile . transform
-                    <$> send (Storage.Map.GetById authorId)
-                    <*> send (Relation.ManyToMany.IsRelated @_ @_ @"follow" authUserId authorId)
-                )
+            <*> send (OptionalAuthAction.GetProfile authorId)
         -- FIXME feed order
         FeedArticles -> runNonDetA @[] $ do
           articleId <-
@@ -339,14 +331,10 @@ instance
           flip (catchError @(IdNotFound 'Article)) (const $ throwError @Text "impossible: article id not found") $ do
             a <- send $ Storage.Map.GetById articleId
             let authorId = getField @"author" a
-            -- TODO: factor out logic for author profile
             ArticleWithAuthorProfile a
               <$> send (Relation.ManyToMany.GetRelatedLeft @_ @"taggedBy" @Tag articleId)
               <*> send (Relation.ManyToMany.IsRelated @_ @_ @"favorite" authUserId articleId)
               <*> (genericLength <$> send (Relation.ManyToMany.GetRelatedRight @_ @(IdOf 'User) @"favorite" articleId))
-              <*> ( UserProfile . transform
-                      <$> send (Storage.Map.GetById authorId)
-                      <*> send (Relation.ManyToMany.IsRelated @_ @_ @"follow" authUserId authorId)
-                  )
+              <*> send (OptionalAuthAction.GetProfile authorId)
   alg hdl (R other) ctx = C $ alg (run . hdl) other ctx
   {-# INLINE alg #-}
