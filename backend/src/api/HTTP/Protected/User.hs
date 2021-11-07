@@ -16,9 +16,10 @@ import Control.Algebra (Algebra, send)
 import Control.Effect.Sum (Member)
 import Control.Effect.Throw (Throw, throwError)
 import Domain (Domain (User))
-import Domain.User (UserR)
+import Domain.User (UserR (UserAuthWithToken))
 import HTTP.Util (ReadApi, UpdateApi)
 import Servant (ServerT, type (:<|>) ((:<|>)))
+import Token (E (CreateToken))
 import UserAction (E (GetCurrentUser, UpdateUser))
 import Util.JSON.From (In (In))
 import Util.JSON.To (Out (Out))
@@ -36,6 +37,7 @@ type UserApi = ReadApi 'User (UserR "authWithToken") :<|> UpdateApi 'User (UserR
 userServer ::
   ( Algebra sig m,
     Member (Throw ValidationErr) sig,
+    Member (Token.E 'User) sig,
     Member UserAction.E sig
   ) =>
   ServerT UserApi m
@@ -43,5 +45,7 @@ userServer =
   Out <$> send GetCurrentUser
     :<|> ( \case
              In (Failure err) -> throwError err
-             In (Success a) -> Out <$> send (UpdateUser a)
+             In (Success a) -> do
+               newUser <- send (UpdateUser a)
+               Out . UserAuthWithToken newUser <$> send (CreateToken newUser)
          )

@@ -15,7 +15,7 @@
 -- @since 0.1.0.0
 module Authentication.User where
 
-import Authentication (LoginOf (UserLogin), NotAuthorized (BadPassword, NoSuchUser))
+import Authentication (E, LoginOf (UserLogin), NotAuthorized (BadPassword, NoSuchUser), NotLogin)
 import qualified Authentication (E (Login, Register))
 import Control.Algebra (Algebra (alg), send, type (:+:) (L, R))
 import Control.Effect.Catch (Catch)
@@ -33,8 +33,7 @@ import Field.Email (Email)
 import Field.Image (Image (Image))
 import Field.Password (checkPassword, hashPassword, newSalt)
 import GHC.Records (getField)
-import qualified Relation.ToOne
-import Servant.Auth.Server (AuthResult)
+import qualified Relation.ToOne (E (GetRelated, Relate))
 import Storage.Error (AlreadyExists (AlreadyExists), NotFound)
 import Storage.Map (ContentOf (UserContent), CreateOf (UserCreate), IdAlreadyExists, IdNotFound, IdOf (UserId), toUserId)
 import qualified Storage.Map
@@ -56,7 +55,8 @@ instance
     Member (Throw (AlreadyExists Email)) sig,
     Member (Throw (NotAuthorized 'User)) sig,
     Member (Storage.Map.E 'User) sig,
-    Member (R.Reader (AuthResult (UserR "authWithToken"))) sig
+    Member (Throw (NotLogin 'User)) sig,
+    Member (R.Reader (Maybe (UserR "authWithToken"))) sig
   ) =>
   Algebra (Authentication.E 'User :+: sig) (C m)
   where

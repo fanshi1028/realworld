@@ -11,7 +11,7 @@
 -- API & Server to read user's profile
 --
 -- @since 0.1.0.0
-module HTTP.Public.Profile where
+module HTTP.OptionalAuth.Profile where
 
 import Control.Algebra (Algebra, send)
 import Control.Effect.Sum (Member)
@@ -19,12 +19,12 @@ import Control.Effect.Throw (Throw, throwError)
 import Domain (Domain (User))
 import Domain.User (UserR)
 import HTTP.Util (Cap, ReadApi)
+import OptionalAuthAction (E (GetProfile))
 import Servant (ServerT, type (:>))
 import Storage.Map (IdOf)
 import Util.JSON.To (Out (Out))
 import Util.Validation (ValidationErr)
 import Validation (Validation (Failure, Success))
-import VisitorAction (E (GetProfile))
 
 -- * API
 
@@ -36,7 +36,7 @@ type ProfileApi = Cap "username" (IdOf 'User) :> ReadApi 'User (UserR "profile")
 -- | @since 0.1.0.0
 profileServer ::
   ( Algebra sig m,
-    Member VisitorAction.E sig,
+    Member OptionalAuthAction.E sig,
     Member (Throw ValidationErr) sig
   ) =>
   ServerT ProfileApi m

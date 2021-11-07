@@ -28,13 +28,14 @@ import Field.Tag (Tag)
 import GenUUID.V1 (RequestedUUIDsTooQuickly)
 import qualified GenUUID.V1 (run)
 import HTTP (Api, server)
+import qualified OptionalAuthAction (run)
 import qualified Relation.ManyToMany.InMem (run)
 import qualified Relation.ToMany.InMem (run)
 import Relation.ToOne.InMem (ExistAction (IgnoreIfExist))
 import qualified Relation.ToOne.InMem (run)
 import STMWithUnsafeIO (runIOinSTM)
 import Servant (Application, Context (EmptyContext, (:.)), ServerError (errBody), err400, err401, err404, err500, hoistServerWithContext, serveWithContext, throwError)
-import Servant.Auth.Server (AuthResult (Indefinite), CookieSettings, JWTSettings, defaultCookieSettings, defaultJWTSettings, generateKey)
+import Servant.Auth.Server (CookieSettings, JWTSettings, defaultCookieSettings, defaultJWTSettings, generateKey)
 import Servant.Server (err403)
 import StmContainers.Map as STM.Map (newIO)
 import qualified StmContainers.Map as STM (Map)
@@ -91,6 +92,7 @@ mkApp cs jwts userDb articleDb commentDb tagDb emailUserIndex db0 db1 db2 db3 db
           t <- liftIO getCurrentTime
           ( eff
               & UserAction.run
+              & OptionalAuthAction.run
               & VisitorAction.run
               & Authentication.User.run
               & ( Token.JWT.run @'User
@@ -110,7 +112,7 @@ mkApp cs jwts userDb articleDb commentDb tagDb emailUserIndex db0 db1 db2 db3 db
               & Relation.ToMany.InMem.run @(IdOf 'User) @"create" @(IdOf 'Article) db1
               & R.runReader jwts
               & R.runReader cs
-              & R.runReader (Indefinite @(UserR "authWithToken"))
+              & R.runReader (Nothing @(UserR "authWithToken"))
               & runTrace
               & runThrow @Text
               & runError @(Forbidden 'D 'Article)

@@ -440,7 +440,7 @@ semantics =
           Left ce -> pure $ FailResponse $ show ce
           Right (Out r) -> pure $ f r
       runNoContent req res = run' req >>= either (pure . FailResponse . show) (const $ pure res)
-      (apis :<|> login :<|> register) :<|> _healthcheck = client $ Proxy @Api
+      (apis :<|> (login :<|> register) :<|> getTags) :<|> _healthcheck = client $ Proxy @Api
    in \case
         AuthCommand m_ref ac ->
           case ac of
@@ -453,10 +453,8 @@ semantics =
                     (reference $ getField @"password" cr)
                     $ reference t
             Login em pw -> run (login $ In $ pure $ UserLogin (concrete em) $ concrete pw) $ const $ AuthResponse LoggedIn
-            -- FIXME: No logout api
-            Logout -> undefined
         VisitorCommand m_ref vc ->
-          let (getProfile :<|> (listArticles :<|> withArticle) :<|> getTags) :<|> _ = apis $ maybe (UserToken "") concrete m_ref
+          let (getProfile :<|> (listArticles :<|> withArticle)) :<|> _ = apis $ maybe (UserToken "") concrete m_ref
            in case vc of
                 GetProfile ref -> run (getProfile $ pure $ concrete ref) $ const $ VisitorResponse GotProfile
                 GetArticle ref ->

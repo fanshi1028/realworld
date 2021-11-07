@@ -19,7 +19,6 @@
 module UserAction where
 
 import Authentication (AuthOf (..), NotAuthorized, NotLogin (NotLogin))
-import qualified Authentication as AuthErr (NotAuthorized (BadPassword, NoSuchUser))
 import Control.Algebra (Algebra (alg), send, type (:+:) (L, R))
 import Control.Carrier.NonDet.Church (runNonDetA)
 import Control.Effect.Catch (Catch)
@@ -43,28 +42,26 @@ import Field.Slug (titleToSlug)
 import Field.Tag (Tag)
 import Field.Time (Time)
 import qualified GenUUID (E (Generate))
+import qualified OptionalAuthAction (E (GetProfile))
 import qualified Relation.ManyToMany (E (GetRelatedLeft, GetRelatedRight, IsRelated, Relate, Unrelate, UnrelateByKeyLeft, UnrelateByKeyRight))
 import qualified Relation.ToMany (E (GetRelated, IsRelated, Relate, Unrelate, UnrelateByKey))
 import qualified Relation.ToOne (E (GetRelated, Relate, Unrelate))
 import Relude.Extra ((.~))
-import Servant.Auth.Server (AuthResult (Authenticated, BadPassword, Indefinite, NoSuchUser))
 import Storage.Error (AlreadyExists (AlreadyExists), NotFound (NotFound))
 import Storage.Map (CRUD (D, U), ContentOf (..), CreateOf (ArticleCreate, CommentCreate), Forbidden (Forbidden), HasCreate (CreateOf), HasStorage (ContentOf, IdOf), IdAlreadyExists, IdNotFound, IdOf (ArticleId, CommentId, UserId), Patch, UpdateOf, toArticleId, toArticlePatch, toUserId)
 import qualified Storage.Map (E (DeleteById, GetById, Insert, UpdateById))
-import qualified Token (E (CreateToken))
-import qualified VisitorAction (E (GetProfile))
 
 -- * Effect
 
--- | @since 0.1.0.0
+-- | @since 0.3.0.0
 -- Actions that can only be carried out by __authenticated__ users.
 data E (m :: Type -> Type) a where
   -- | @since 0.1.0.0
   -- Get the info of the current authenticated user.
   GetCurrentUser :: E m (UserR "authWithToken")
-  -- | @since 0.1.0.0
+  -- | @since 0.3.0.0
   -- Update the profile of the current authenticated user.
-  UpdateUser :: Patch (UpdateOf 'User) -> E m (UserR "authWithToken")
+  UpdateUser :: Patch (UpdateOf 'User) -> E m (AuthOf 'User)
   -- | @since 0.1.0.0
   -- Follow the user specified by the id.
   FollowUser :: IdOf 'User -> E m (UserR "profile")
@@ -107,8 +104,7 @@ newtype C m a = C
 
 -- | @since 0.2.0.0
 instance
-  ( Member (Token.E 'User) sig,
-    Member (Storage.Map.E 'User) sig,
+  ( Member (Storage.Map.E 'User) sig,
     Member (Storage.Map.E 'Article) sig,
     Member (Storage.Map.E 'Comment) sig,
     Member (Catch (IdNotFound 'User)) sig,
@@ -131,8 +127,8 @@ instance
     Member (Relation.ToOne.E Email "of" (IdOf 'User)) sig,
     Member (Throw (NotLogin 'User)) sig,
     Member (Throw (NotAuthorized 'User)) sig,
-    Member (R.Reader (AuthResult (UserR "authWithToken"))) sig,
-    Member VisitorAction.E sig,
+    Member (R.Reader (Maybe (UserR "authWithToken"))) sig,
+    Member OptionalAuthAction.E sig,
     Member (Lift IO) sig,
     Algebra sig m
   ) =>
@@ -142,10 +138,8 @@ instance
     (<$ ctx) <$> do
       authOut@(UserAuthWithToken auth _) <-
         R.ask >>= \case
-          Authenticated u -> pure u
-          BadPassword -> throwError $ AuthErr.BadPassword @'User
-          NoSuchUser -> throwError $ AuthErr.NoSuchUser @'User
-          Indefinite -> throwError $ NotLogin @'User
+          Just auth -> pure auth
+          Nothing -> throwError $ NotLogin @'User
       let authUserId = toUserId auth
       case action of
         GetCurrentUser -> pure authOut
@@ -221,11 +215,10 @@ instance
                 (pure $ getField @"bio" update)
                 (pure $ getField @"image" update)
 
-          newAuth <- case construct $ deconstruct (deconstruct orig) <> update' of
+          case construct $ deconstruct (deconstruct orig) <> update' of
             Nothing -> error "Impossible: Missing field when update"
             Just (construct -> SG.Last r) -> send (Storage.Map.Insert (toUserId r) r) $> transform r
 
-          UserAuthWithToken newAuth <$> send (Token.CreateToken newAuth)
         FollowUser targetUserId -> do
           targetUser <- send $ Storage.Map.GetById targetUserId
           send $ Relation.ManyToMany.Relate @_ @_ @"follow" authUserId targetUserId
@@ -281,7 +274,7 @@ instance
                   Nothing -> error "Impossible: Missing field when update"
                   Just (construct -> SG.Last r) -> send (Storage.Map.Insert (toArticleId r) r) $> r
                 ArticleWithAuthorProfile a tags (authUserId `elem` fus) (genericLength fus)
-                  <$> send (VisitorAction.GetProfile $ getField @"author" orig)
+                  <$> send (OptionalAuthAction.GetProfile $ getField @"author" orig)
         DeleteArticle articleId ->
           send (Storage.Map.GetById articleId) >>= \case
             (getField @"author" -> auid)

@@ -130,6 +130,7 @@ library backend-effect-internal
     GenUUID.Pure
     GenUUID.V1
     GenUUID.V4
+    OptionalAuthAction
     Relation.ManyToMany
     Relation.ManyToMany.InMem
     Relation.ToMany
@@ -190,9 +191,10 @@ library backend-api-internal
     HTTP.Protected.Article
     HTTP.Protected.Follow
     HTTP.Protected.User
+    HTTP.OptionalAuth
+    HTTP.OptionalAuth.Article
+    HTTP.OptionalAuth.Profile
     HTTP.Public
-    HTTP.Public.Article
-    HTTP.Public.Profile
     HTTP.Public.Tag
     HTTP.Util
 

@@ -15,10 +15,12 @@ module HTTP.Protected where
 import Control.Algebra (Algebra)
 import Control.Effect.Sum (Member)
 import Control.Effect.Throw (Throw)
+import Domain (Domain (User))
 import HTTP.Protected.Article (ArticleApi, articleServer)
 import HTTP.Protected.Follow (FollowApi, followServer)
 import HTTP.Protected.User (UserApi, userServer)
 import Servant (ServerT, type (:<|>) ((:<|>)), type (:>))
+import Token (E)
 import qualified UserAction (E)
 import Util.Validation (ValidationErr)
 
@@ -36,7 +38,8 @@ type AuthedApi =
 authedServer ::
   ( Algebra sig m,
     Member UserAction.E sig,
-    Member (Throw ValidationErr) sig
+    Member (Throw ValidationErr) sig,
+    Member (Token.E 'User) sig
   ) =>
   ServerT AuthedApi m
 authedServer = userServer :<|> followServer :<|> articleServer
