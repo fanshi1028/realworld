@@ -66,19 +66,18 @@ server ::
     Member VisitorAction.E sig,
     Member OptionalAuthAction.E sig,
     Member UserAction.E sig,
-    Member (Lift IO) sig,
-    Member (Token.E 'User) sig,
     Member (R.Reader JWTSettings) sig,
     Member (R.Reader CookieSettings) sig,
-    Member (Throw ValidationErr) sig,
-    Member (Throw Text) sig,
-    Member (Catch (InvalidToken 'User)) sig,
-    Member (Authentication.E 'User) sig,
-    Member (Throw (InvalidToken 'User)) sig,
-    Member (Throw (NotLogin 'User)) sig,
+    Member (R.Reader (Maybe (UserR "authWithToken"))) sig,
     Member (Storage.Map.E 'User) sig,
+    Member (Authentication.E 'User) sig,
+    Member (Token.E 'User) sig,
+    Member (Throw Text) sig,
+    Member (Throw ValidationErr) sig,
+    Member (Throw (NotLogin 'User)) sig,
     Member (Throw (AuthErr.NotAuthorized 'User)) sig,
-    Member (R.Reader (Maybe (UserR "authWithToken"))) sig
+    Member (Catch (InvalidToken 'User)) sig,
+    Member (Lift IO) sig
   ) =>
   ServerT Api m
 server =
