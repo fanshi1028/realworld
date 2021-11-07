@@ -58,17 +58,18 @@ instance IsAuth TokenAuth (UserR "authWithToken") where
   runAuth _ _ cs jwts = Auth.AuthCheck $
     \case
       RequestToken token ->
-        runM
-          . runThrow @Error
-          . runThrow @(InvalidToken 'User)
-          . R.runReader cs
-          . R.runReader jwts
-          . Token.JWT.Invalidate.Pure.run @(TokenOf 'User)
-          . Token.JWT.run @'User
-          >=> \case
+        DecodeToken token
+          & send
+          & Token.JWT.run @'User
+          & Token.JWT.Invalidate.Pure.run @(TokenOf 'User)
+          & R.runReader jwts
+          & R.runReader cs
+          & runThrow @(InvalidToken 'User)
+          & runThrow @Error
+          & runM
+          >>= \case
             Right (Right auth) -> pure $ pure $ UserAuthWithToken auth token
             _ -> pure mempty
-          $ send $ DecodeToken token
       _ -> pure mempty
 
 -- | @since 0.1.0.0
