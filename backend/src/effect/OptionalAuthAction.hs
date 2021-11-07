@@ -4,6 +4,7 @@
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE UndecidableInstances #-}
+{-# LANGUAGE ViewPatterns #-}
 
 -- |
 -- Description : Effect & Carrier
@@ -16,22 +17,24 @@
 -- @since 0.3.0.0
 module OptionalAuthAction where
 
+import Authentication (AuthOf (..))
 import Control.Algebra (Algebra (alg), send, type (:+:) (L, R))
 import Control.Carrier.NonDet.Church (runNonDetA)
 import Control.Effect.Catch (Catch, catchError)
 import Control.Effect.NonDet (oneOf)
+import qualified Control.Effect.Reader as R
 import Control.Effect.Sum (Member)
 import Control.Effect.Throw (Throw, throwError)
 import Domain (Domain (Article, Comment, User))
 import Domain.Article (ArticleR (ArticleWithAuthorProfile))
 import Domain.Comment (CommentR (CommentWithAuthorProfile))
 import Domain.Transform (transform)
-import Domain.User (UserR (UserProfile))
+import Domain.User (UserR (UserAuthWithToken, UserProfile))
 import Field.Tag (Tag)
 import GHC.Records (getField)
-import qualified Relation.ManyToMany (E (GetRelatedLeft, GetRelatedRight))
+import qualified Relation.ManyToMany (E (GetRelatedLeft, GetRelatedRight, IsRelated))
 import qualified Relation.ToMany (E (GetRelated))
-import Storage.Map (ContentOf (..), HasStorage (IdOf), IdNotFound, toArticleId)
+import Storage.Map (ContentOf (..), HasStorage (IdOf), IdNotFound, toArticleId, toUserId)
 import qualified Storage.Map (E (GetAll, GetById))
 import Prelude hiding (id)
 
@@ -73,14 +76,22 @@ instance
     Member (Relation.ToMany.E (IdOf 'Article) "has" (IdOf 'Comment)) sig,
     Member (Throw Text) sig,
     Member (Catch (IdNotFound 'Comment)) sig,
+    Member (R.Reader (Maybe (UserR "authWithToken"))) sig,
     Algebra sig m
   ) =>
   Algebra (E :+: sig) (C m)
   where
   alg _ (L action) ctx =
     (<$ ctx) <$> case action of
-      -- FIXME: options auth? following?
-      GetProfile uid -> send (Storage.Map.GetById uid) <&> flip UserProfile False . transform
+      GetProfile uid ->
+        UserProfile
+          <$> (transform <$> send (Storage.Map.GetById uid))
+          <*> ( R.ask >>= \case
+                  Just (UserAuthWithToken (toUserId -> authId) _) -> do
+                    _ <- send $ Storage.Map.GetById authId
+                    send $ Relation.ManyToMany.IsRelated @_ @_ @"follow" authId uid
+                  Nothing -> pure False
+              )
       GetArticle aid -> do
         a <- send $ Storage.Map.GetById aid
         let uid = getField @"author" a
@@ -89,7 +100,7 @@ instance
           <$> send (Relation.ManyToMany.GetRelatedLeft @_ @"taggedBy" @Tag aid)
           <*> pure False
           <*> (genericLength <$> send (Relation.ManyToMany.GetRelatedRight @_ @(IdOf 'User) @"favorite" aid))
-          <*> pure (UserProfile u False)
+          <*> send (GetProfile u)
       ListArticles ->
         runNonDetA @[] $ do
           a <- send (Storage.Map.GetAll @'Article) >>= oneOf
@@ -100,7 +111,7 @@ instance
             <$> send (Relation.ManyToMany.GetRelatedLeft @(IdOf 'Article) @"taggedBy" @Tag aid)
             <*> pure False
             <*> (genericLength <$> send (Relation.ManyToMany.GetRelatedRight @_ @(IdOf 'User) @"favorite" aid))
-            <*> pure (UserProfile u False)
+            <*> send (GetProfile u)
       GetComments aid -> do
         _ <- send $ Storage.Map.GetById aid
         runNonDetA @[] $ do
@@ -108,6 +119,6 @@ instance
           flip (catchError @(IdNotFound 'Comment)) (const $ throwError @Text "impossible: comment id not found") $ do
             CommentContent {..} <- send $ Storage.Map.GetById cid
             auth <- transform <$> send (Storage.Map.GetById author)
-            pure $ CommentWithAuthorProfile cid createdAt updatedAt body $ UserProfile auth False
+            CommentWithAuthorProfile cid createdAt updatedAt body <$> send (GetProfile auth)
   alg hdl (R other) ctx = C $ alg (run . hdl) other ctx
   {-# INLINE alg #-}
