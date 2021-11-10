@@ -14,21 +14,24 @@
 -- @since 0.2.0.0
 module Token.Internal.HasToken.User where
 
-import Data.Aeson (ToJSON)
+import Data.Aeson (ToJSON (toJSON))
 import Domain (Domain (User))
 import Servant (FromHttpApiData (parseUrlPiece))
 import Token.Internal.HasToken (HasToken (..))
 
--- | @since 0.2.0.0
+-- | @since 0.3.0.0
 instance HasToken 'User where
-  newtype TokenOf 'User = UserToken Text deriving (Show, Eq, Hashable, ToJSON)
+  newtype TokenOf 'User = UserToken ByteString deriving (Show, Eq, Hashable)
+
+instance ToJSON (TokenOf 'User) where
+  toJSON (UserToken bs) = toJSON $ decodeUtf8 @Text bs
 
 -- | @since 0.2.0.0
 instance FromHttpApiData (TokenOf 'User) where
   parseUrlPiece =
     parseUrlPiece @Text >=> \case
       (words -> [prefix, token])
-        | (prefix == "Token") -> pure $ UserToken token
+        | (prefix == "Token") -> pure $ UserToken $ encodeUtf8 token
       _ -> Left "Authentication Header should be in format: \"Authorization: Token jwt.token.here\""
 -- ^
 -- Supposed to be used for Authorization header but not in url path

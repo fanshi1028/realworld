@@ -2,6 +2,7 @@
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE PatternSynonyms #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE ViewPatterns #-}
 
@@ -26,8 +27,8 @@ import Control.Algebra (send)
 import Control.Carrier.Lift (runM)
 import qualified Control.Carrier.Reader as R (runReader)
 import Control.Carrier.Throw.Either (runThrow)
-import Crypto.JOSE (Error)
 import qualified Data.List as List (lookup)
+import Data.Time.Clock (getCurrentTime)
 import Domain (Domain (User))
 import Domain.Transform (Transform (transform))
 import Domain.User (UserR (UserAuthWithToken))
@@ -39,9 +40,9 @@ import Servant.Auth.Server.Internal.Class (IsAuth (AuthArgs, runAuth))
 import qualified StmContainers.Map as STM (lookup)
 import Storage.Map (IdOf)
 import Storage.Map.InMem (TableInMem, TableInMem')
-import Token (E (DecodeToken), InvalidToken, TokenOf (..))
-import Token.JWT (run)
-import Token.JWT.Invalidate.Pure (run)
+import Token (TokenOf (..))
+import Token.Decode (E (DecodeToken), InvalidToken)
+import Token.Decode.JWT (run)
 
 -- | @since 0.1.0.0
 -- extract token from request
@@ -55,20 +56,20 @@ data TokenAuth
 -- | @since 0.1.0.0
 instance IsAuth TokenAuth (UserR "authWithToken") where
   type AuthArgs TokenAuth = '[CookieSettings, JWTSettings]
-  runAuth _ _ cs jwts = Auth.AuthCheck $
+  runAuth _ _ _ jwts = Auth.AuthCheck $
     \case
-      RequestToken token ->
-        runM
-          . runThrow @Error
-          . runThrow @(InvalidToken 'User)
-          . R.runReader cs
-          . R.runReader jwts
-          . Token.JWT.Invalidate.Pure.run @(TokenOf 'User)
-          . Token.JWT.run @'User
-          >=> \case
-            Right (Right auth) -> pure $ pure $ UserAuthWithToken auth token
+      RequestToken token -> do
+        time <- getCurrentTime
+        DecodeToken token
+          & send
+          & Token.Decode.JWT.run @'User
+          & R.runReader time
+          & R.runReader jwts
+          & runThrow @(InvalidToken 'User)
+          & runM
+          >>= \case
+            Right auth -> pure $ pure $ UserAuthWithToken auth token
             _ -> pure mempty
-          $ send $ DecodeToken token
       _ -> pure mempty
 
 -- | @since 0.1.0.0

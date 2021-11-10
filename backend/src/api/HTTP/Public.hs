@@ -8,36 +8,28 @@
 -- Maintainer  : jackychany321@gmail.com
 -- Stability   : experimental
 --
--- Public API & Server, for visitors, or optionally-authed.
+-- Public API & Server, for visitors.
 --
 -- @since 0.1.0.0
 module HTTP.Public where
 
 import Control.Algebra (Algebra)
 import Control.Effect.Sum (Member)
-import Control.Effect.Throw (Throw)
-import HTTP.Public.Article (ArticleApi, articleServer)
-import HTTP.Public.Profile (ProfileApi, profileServer)
 import HTTP.Public.Tag (TagApi, tagServer)
-import Servant (ServerT, type (:<|>) ((:<|>)), type (:>))
-import Util.Validation (ValidationErr)
+import Servant (ServerT, type (:>))
 import qualified VisitorAction (E)
 
 -- * API
 
--- | @since 0.1.0.0
-type PublicApi =
-  "profiles" :> ProfileApi
-    :<|> "articles" :> ArticleApi
-    :<|> "tags" :> TagApi
+-- | @since 0.3.0.0
+type PublicApi = "tags" :> TagApi
 
 -- * Server
 
--- | @since 0.1.0.0
+-- | @since 0.3.0.0
 publicServer ::
   ( Algebra sig m,
-    Member VisitorAction.E sig,
-    Member (Throw ValidationErr) sig
+    Member VisitorAction.E sig
   ) =>
   ServerT PublicApi m
-publicServer = profileServer :<|> articleServer :<|> tagServer
+publicServer = tagServer

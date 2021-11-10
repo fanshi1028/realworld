@@ -10,7 +10,7 @@
 -- API & Server to read articles and comments
 --
 -- @since 0.1.0.0
-module HTTP.Public.Article where
+module HTTP.OptionalAuth.Article where
 
 import Control.Algebra (Algebra, send)
 import Control.Effect.Sum (Member)
@@ -19,12 +19,12 @@ import Domain (Domain (Article))
 import Domain.Article (ArticleR)
 import Domain.Comment (CommentR)
 import HTTP.Util (Cap, QP, ReadApi, ReadManyApi)
+import OptionalAuthAction (E (GetArticle, GetComments, ListArticles))
 import Servant (ServerT, type (:<|>) ((:<|>)), type (:>))
 import Storage.Map.Internal.HasStorage.User (IdOf)
 import Util.JSON.To (Out (Out))
 import Util.Validation (ValidationErr)
 import Validation (Validation (Failure, Success))
-import VisitorAction (E (GetArticle, GetComments, ListArticles))
 
 -- * API
 
@@ -41,7 +41,7 @@ type ArticleApi =
 -- | @since 0.1.0.0
 articleServer ::
   ( Algebra sig m,
-    Member VisitorAction.E sig,
+    Member OptionalAuthAction.E sig,
     Member (Throw ValidationErr) sig
   ) =>
   ServerT ArticleApi m
@@ -50,7 +50,7 @@ articleServer =
   (\_ _ _ _ _ -> Out <$> send ListArticles)
     :<|> ( \case
              Success aid ->
-               Out <$> send (VisitorAction.GetArticle aid)
+               Out <$> send (OptionalAuthAction.GetArticle aid)
                  :<|> (Out <$> send (GetComments aid))
              Failure err -> throwError err :<|> throwError err
          )

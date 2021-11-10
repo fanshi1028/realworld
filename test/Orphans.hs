@@ -22,6 +22,9 @@ import Data.Password.Argon2 (unsafeShowPassword)
 import qualified Data.Semigroup as SG (getLast)
 import Data.Sequence ((<|))
 import Domain (Domain (Article, Comment, User))
+import Domain.Article (ArticleR (..))
+import Domain.Comment (CommentR (..))
+import Domain.User (UserR (..))
 import Field.Bio (Bio (Bio))
 import Field.Body (Body (Body))
 import Field.Description (Description (Description))
@@ -35,9 +38,6 @@ import Field.Username (Username (Username))
 import GHC.Records (getField)
 import HTTP.Util (Limit (Limit), Offset (Offset))
 import Network.HTTP.Types (hAuthorization)
-import Domain.Article (ArticleR (..))
-import Domain.Comment (CommentR (..))
-import Domain.User (UserR (..))
 import Servant (ToHttpApiData (toUrlPiece), type (:>))
 import Servant.Auth.Server (Auth)
 import Servant.Client (HasClient (Client, clientWithRoute))
@@ -64,7 +64,7 @@ instance (HasTokenAuth auths, HasClient m api) => HasClient m (Auth auths a :> a
     clientWithRoute m (Proxy :: Proxy api) $
       req
         { requestHeaders =
-            (hAuthorization, "Token " <> encodeUtf8 t) <| requestHeaders req
+            (hAuthorization, "Token " <> t) <| requestHeaders req
         }
 
 wrappedParseJSON' :: FromJSON a => String -> Text -> Value -> Parser (Out a)
@@ -139,7 +139,8 @@ instance FromJSON (Out [CommentR "withAuthorProfile"]) where
 instance FromJSON (Out [Tag]) where
   parseJSON = withObject "Out [ Tag ]" $ \o -> Out <$> o .: "tags"
 
-deriving newtype instance FromJSON (TokenOf 'User)
+instance FromJSON (TokenOf 'User) where
+  parseJSON = UserToken . encodeUtf8 <<$>> parseJSON @Text
 
 instance FromJSON (UserR "authWithToken") where
   parseJSON v = withObject "UserR authWithToken" (\o -> UserAuthWithToken <$> parseJSON v <*> o .: "token") v

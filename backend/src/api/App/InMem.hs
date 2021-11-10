@@ -13,30 +13,32 @@
 module App.InMem where
 
 import Authentication (AlreadyLogin, NotAuthorized, NotLogin)
-import qualified Authentication.Token (run)
+import qualified Authentication.User (run)
 import Control.Carrier.Error.Either (runError)
+import Control.Carrier.Lift (runM)
 import qualified Control.Carrier.Reader as R (runReader)
+import qualified Control.Carrier.State.Strict as S (evalState)
 import Control.Carrier.Throw.Either (runThrow)
 import Control.Carrier.Trace.Returning (runTrace)
 import Control.Exception.Safe (catch)
+import qualified Cookie.Xsrf (run)
 import qualified Crypto.JOSE (Error)
-import qualified Current.IO (run)
-import qualified Current.Reader (run)
+import Crypto.JWT (SystemDRG, getSystemDRG)
+import Data.Time (getCurrentTime)
+import Data.UUID.V1 (nextUUID)
 import Domain (Domain (Article, Comment, User))
 import Domain.User (UserR)
 import Field.Email (Email)
+import Field.Password (newSalt)
 import Field.Tag (Tag)
-import Field.Time (Time)
-import GenUUID.V1 (RequestedUUIDsTooQuickly)
-import qualified GenUUID.V1 (run)
 import HTTP (Api, server)
+import qualified OptionalAuthAction (run)
 import qualified Relation.ManyToMany.InMem (run)
 import qualified Relation.ToMany.InMem (run)
 import Relation.ToOne.InMem (ExistAction (IgnoreIfExist))
 import qualified Relation.ToOne.InMem (run)
-import STMWithUnsafeIO (runIOinSTM)
 import Servant (Application, Context (EmptyContext, (:.)), ServerError (errBody), err400, err401, err404, err500, hoistServerWithContext, serveWithContext, throwError)
-import Servant.Auth.Server (AuthResult (Indefinite), CookieSettings, JWTSettings, defaultCookieSettings, defaultJWTSettings, generateKey)
+import Servant.Auth.Server (CookieSettings, JWTSettings, defaultCookieSettings, defaultJWTSettings, generateKey)
 import Servant.Server (err403)
 import StmContainers.Map as STM.Map (newIO)
 import qualified StmContainers.Map as STM (Map)
@@ -49,9 +51,9 @@ import Storage.Map (CRUD (D, U), Forbidden, IdAlreadyExists, IdNotFound, IdOf)
 import Storage.Map.InMem (TableInMem)
 import qualified Storage.Map.InMem (run)
 import qualified Storage.Set.InMem (run)
-import Token (InvalidToken, TokenOf (..))
-import qualified Token.JWT (run)
-import qualified Token.JWT.Invalidate.Pure (run)
+import Token (TokenOf (..))
+import qualified Token.Create.JWT (run)
+import Token.Decode (InvalidToken)
 import qualified UserAction (run)
 import Util.Validation (ValidationErr)
 import qualified VisitorAction (run)
@@ -89,74 +91,77 @@ mkApp cs jwts userDb articleDb commentDb tagDb emailUserIndex db0 db1 db2 db3 db
     hoistServerWithContext
       (Proxy @Api)
       (Proxy @'[CookieSettings, JWTSettings])
-      ( ( runIOinSTM
-            . runError @(Forbidden 'U 'Article)
-            . runError @(Forbidden 'D 'Article)
-            . runError @(Forbidden 'D 'Comment)
-            . runError @(NotAuthorized 'User)
-            . runError @(NotLogin 'User)
-            . runError @(InvalidToken 'User)
-            . runError @(IdNotFound 'Article)
-            . runError @(IdNotFound 'Comment)
-            . runError @(IdNotFound 'User)
-            . runError @(NotFound Email)
-            . runThrow @(NotFound Tag)
-            . runThrow @(IdAlreadyExists 'Article)
-            . runThrow @(IdAlreadyExists 'User)
-            . runThrow @(IdAlreadyExists 'Comment)
-            . runThrow @(AlreadyExists Email)
-            . runThrow @(AlreadyLogin 'User)
-            . runThrow @ValidationErr
-            . runThrow @RequestedUUIDsTooQuickly
-            . runThrow @Crypto.JOSE.Error
-            . runThrow @Text
-            . runTrace
-            . R.runReader (Indefinite @(UserR "authWithToken"))
-            . Current.Reader.run
-            . R.runReader jwts
-            . R.runReader cs
-            . Relation.ToOne.InMem.run @Email @"of" @(IdOf 'User) @'IgnoreIfExist emailUserIndex
-            . Relation.ToMany.InMem.run @(IdOf 'Article) @"has" @(IdOf 'Comment) db0
-            . Relation.ToMany.InMem.run @(IdOf 'User) @"create" @(IdOf 'Article) db1
-            . Relation.ManyToMany.InMem.run @(IdOf 'Article) @"taggedBy" @Tag db2 db3
-            . Relation.ManyToMany.InMem.run @(IdOf 'User) @"follow" @(IdOf 'User) db4 db5
-            . Relation.ManyToMany.InMem.run @(IdOf 'User) @"favorite" @(IdOf 'Article) db6 db7
-            . Storage.Map.InMem.run @'User userDb
-            . Storage.Map.InMem.run @'Article articleDb
-            . Storage.Map.InMem.run @'Comment commentDb
-            . Storage.Set.InMem.run @Tag tagDb
-            . Current.IO.run @Time
-            . GenUUID.V1.run
-            . ( Token.JWT.run @'User
-                  >>> Token.JWT.Invalidate.Pure.run @(TokenOf 'User)
-              )
-            . Authentication.Token.run @'User
-            . VisitorAction.run
-            . UserAction.run
-            >=> handlerErr err403
-            >=> handlerErr err403
-            >=> handlerErr err403
-            >=> handlerErr err401
-            >=> handlerErr err401
-            >=> handlerErr err401
-            >=> handlerErr err404
-            >=> handlerErr err404
-            >=> handlerErr err404
-            >=> handlerErr err404
-            >=> handlerErr err404
-            >=> handlerErr err400
-            >=> handlerErr err400
-            >=> handlerErr err500 -- Comment AlreadyExists use 500
-            >=> handlerErr err400
-            >=> handlerErr err400 -- ???? FIXME
-            >=> handlerErr err400
-            >=> handlerErr err500
-            >=> handlerErr err400
-            >=> handlerErr err500
-            >=> pure . snd
-        )
-          >>> atomically
-          >>> (`catch` throwError)
+      ( \eff -> do
+          time <- liftIO getCurrentTime
+          uuid <- liftIO nextUUID >>= maybe (throwError $ err500 {errBody = "RequestedUUIDsTooQuickly"}) pure
+          gen <- liftIO getSystemDRG
+          ( eff
+              & UserAction.run @SystemDRG
+              & OptionalAuthAction.run
+              & VisitorAction.run
+              & Token.Create.JWT.run @'User @SystemDRG
+              & Cookie.Xsrf.run @SystemDRG
+              & Authentication.User.run @SystemDRG
+              & Storage.Map.InMem.run @'User userDb
+              & Storage.Map.InMem.run @'Article articleDb
+              & Storage.Map.InMem.run @'Comment commentDb
+              & Storage.Set.InMem.run @Tag tagDb
+              & Relation.ManyToMany.InMem.run @(IdOf 'Article) @"taggedBy" @Tag db2 db3
+              & Relation.ManyToMany.InMem.run @(IdOf 'User) @"follow" @(IdOf 'User) db4 db5
+              & Relation.ManyToMany.InMem.run @(IdOf 'User) @"favorite" @(IdOf 'Article) db6 db7
+              & Relation.ToOne.InMem.run @Email @"of" @(IdOf 'User) @'IgnoreIfExist emailUserIndex
+              & Relation.ToMany.InMem.run @(IdOf 'Article) @"has" @(IdOf 'Comment) db0
+              & Relation.ToMany.InMem.run @(IdOf 'User) @"create" @(IdOf 'Article) db1
+              & R.runReader uuid
+              & R.runReader time
+              & R.runReader jwts
+              & R.runReader cs
+              & R.runReader (Nothing @(UserR "authWithToken"))
+              & S.evalState gen
+              & runTrace
+              & runThrow @Text
+              & runError @(Forbidden 'D 'Article)
+              & runError @(Forbidden 'U 'Article)
+              & runError @(Forbidden 'D 'Comment)
+              & runError @(NotAuthorized 'User)
+              & runError @(NotLogin 'User)
+              & runError @(InvalidToken 'User)
+              & runError @(IdNotFound 'Article)
+              & runError @(IdNotFound 'Comment)
+              & runError @(IdNotFound 'User)
+              & runError @(NotFound Email)
+              & runThrow @(NotFound Tag)
+              & runThrow @(IdAlreadyExists 'User)
+              & runThrow @(IdAlreadyExists 'Article)
+              & runThrow @(IdAlreadyExists 'Comment)
+              & runThrow @(AlreadyExists Email)
+              & runThrow @(AlreadyLogin 'User)
+              & runThrow @ValidationErr
+              & runThrow @Crypto.JOSE.Error
+              & runM
+              >>= handlerErr err403
+              >>= handlerErr err403
+              >>= handlerErr err403
+              >>= handlerErr err401
+              >>= handlerErr err401
+              >>= handlerErr err401
+              >>= handlerErr err404
+              >>= handlerErr err404
+              >>= handlerErr err404
+              >>= handlerErr err404
+              >>= handlerErr err404
+              >>= handlerErr err400
+              >>= handlerErr err400
+              >>= handlerErr err500 -- Comment AlreadyExists use 500
+              >>= handlerErr err400
+              >>= handlerErr err400 -- ???? FIXME
+              >>= handlerErr err400
+              >>= handlerErr err400
+              >>= handlerErr err500
+              <&> snd
+            )
+            & atomically
+            & (`catch` throwError)
       )
       server
   where
