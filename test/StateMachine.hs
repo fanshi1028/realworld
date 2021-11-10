@@ -29,7 +29,7 @@ import HTTP (Api)
 import Network.HTTP.Client (Manager)
 import Network.Wai.Handler.Warp (withApplication)
 import Orphans ()
-import Servant (Application, type (:<|>) ((:<|>)))
+import Servant (Application, Headers (Headers), type (:<|>) ((:<|>)))
 import Servant.Client (BaseUrl, ClientEnv, ClientError, ClientM, client, mkClientEnv, runClientM)
 import StateMachine.Gen (generator, shrinker)
 import StateMachine.Types
@@ -210,7 +210,7 @@ postcondition m cmd res =
         (AuthCommand m_ref ac, AuthResponse ar) ->
           Boolean (and $ on (==) <$> authInv <*> pure m <*> pure m') .// "auth command invariant"
             .&& case (ac, ar) of
-              (Register cr, Registered ref em pw t) ->
+              (Register cr, Registered ref em pw _t) ->
                 findByRef ref (users m) .== Nothing .// "before: the user not existed"
                   .&& findByRef ref (users m') .== Just cr .// "after: the user exists"
                   .&& findByRef ref (emails m) .== Nothing .// "before: the email not existed"
@@ -328,7 +328,7 @@ mock m =
           Failure err -> Left $ show err
           Success a' -> pure a'
    in \case
-        AuthCommand m_ref ac -> maybe (pure $ FailResponse "") (AuthResponse <$>) $
+        AuthCommand _m_ref ac -> maybe (pure $ FailResponse "") (AuthResponse <$>) $
           case ac of
             Register cr -> do
               _ <- rightToMaybe $ validate cr
@@ -442,7 +442,7 @@ semantics =
       runNoContent req res = run' req >>= either (pure . FailResponse . show) (const $ pure res)
       (apis :<|> (login :<|> register) :<|> getTags) :<|> _healthcheck = client $ Proxy @Api
    in \case
-        AuthCommand m_ref ac ->
+        AuthCommand _m_ref ac ->
           case ac of
             Register cr ->
               run (register $ In $ pure cr) $ \(UserAuthWithToken u t) ->
@@ -452,7 +452,12 @@ semantics =
                     (reference $ getField @"email" cr)
                     (reference $ getField @"password" cr)
                     $ reference t
-            Login em pw -> run (login $ In $ pure $ UserLogin (concrete em) $ concrete pw) $ const $ AuthResponse LoggedIn
+            Login em pw ->
+              run' (login $ In $ pure $ UserLogin (concrete em) $ concrete pw) >>= \case
+                Left ce -> pure $ FailResponse $ show ce
+                Right (Headers (Out _) _) -> pure $ AuthResponse LoggedIn
+            -- FIXME no logout command right now
+            Logout -> undefined
         VisitorCommand m_ref vc ->
           let (getProfile :<|> (listArticles :<|> withArticle)) :<|> _ = apis $ maybe (UserToken "") concrete m_ref
            in case vc of
