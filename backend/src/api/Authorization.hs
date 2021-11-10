@@ -67,9 +67,9 @@ instance IsAuth TokenAuth (UserR "authWithToken") where
           & R.runReader jwts
           & runThrow @(InvalidToken 'User)
           & runM
-          >>= \case
-            Right auth -> pure $ pure $ UserAuthWithToken auth token
-            _ -> pure mempty
+          <&> \case
+            Right auth -> pure $ UserAuthWithToken auth token
+            _ -> mempty
       _ -> pure mempty
 
 -- | @since 0.1.0.0
