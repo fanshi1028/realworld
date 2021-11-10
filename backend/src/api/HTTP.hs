@@ -21,9 +21,9 @@ import Authorization (TokenAuth)
 import Control.Algebra (Algebra)
 import qualified Control.Carrier.Reader as R (Reader, local)
 import Control.Effect.Catch (Catch)
-import Control.Effect.Lift (Lift)
 import Control.Effect.Sum (Member)
 import Control.Effect.Throw (Throw, throwError)
+import qualified Cookie.Xsrf (E)
 import Domain (Domain (User))
 import Domain.User (UserR)
 import HTTP.Auth.User (AuthUserApi, authUserServer)
@@ -35,8 +35,8 @@ import Servant (Get, JSON, ServerT, type (:<|>) ((:<|>)), type (:>))
 import Servant.Auth.Server (Auth, AuthResult (Authenticated, BadPassword, Indefinite, NoSuchUser), CookieSettings, JWTSettings)
 import Servant.Server (hoistServer)
 import qualified Storage.Map (E)
-import Token (InvalidToken)
-import qualified Token (E)
+import qualified Token.Create (E)
+import Token.Decode (InvalidToken)
 import qualified UserAction (E)
 import Util.Validation (ValidationErr)
 import qualified VisitorAction (E)
@@ -66,18 +66,18 @@ server ::
     Member VisitorAction.E sig,
     Member OptionalAuthAction.E sig,
     Member UserAction.E sig,
+    Member Cookie.Xsrf.E sig,
     Member (R.Reader JWTSettings) sig,
     Member (R.Reader CookieSettings) sig,
     Member (R.Reader (Maybe (UserR "authWithToken"))) sig,
     Member (Storage.Map.E 'User) sig,
     Member (Authentication.E 'User) sig,
-    Member (Token.E 'User) sig,
+    Member (Token.Create.E 'User) sig,
     Member (Throw Text) sig,
     Member (Throw ValidationErr) sig,
     Member (Throw (NotLogin 'User)) sig,
     Member (Throw (AuthErr.NotAuthorized 'User)) sig,
-    Member (Catch (InvalidToken 'User)) sig,
-    Member (Lift IO) sig
+    Member (Catch (InvalidToken 'User)) sig
   ) =>
   ServerT Api m
 server =

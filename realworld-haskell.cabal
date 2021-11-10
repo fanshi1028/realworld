@@ -75,6 +75,8 @@ common backend-data-deps
 
 common backend-effect-deps
   build-depends:
+    , cookie                ^>=0.4.5
+    , cryptonite            ^>=0.29
     , focus                 ^>=1.0.3
     , fused-effects         ^>=1.1.1
     , generic-lens          ^>=2.2.0
@@ -91,16 +93,17 @@ common backend-effect-deps
 common backend-api-deps
   build-depends:
     , cookie                ^>=0.4.5
+    , cryptonite            ^>=0.29
     , fused-effects         ^>=1.1.1
     , jose                  ^>=0.8.4
     , safe-exceptions       ^>=0.1.7
     , servant-auth-server   ^>=0.4.6
     , servant-server        ^>=0.18.3
     , stm-containers        ^>=1.2
+    , time                  ^>=1.9.3
     , uuid                  ^>=1.3.15
     , validation-selective  ^>=0.1.0
     , wai                   ^>=3.2.3
-    , time                  ^>=1.9.3
 
 library backend-effect-internal
   import:          prelude, backend-data-deps, backend-effect-deps
@@ -110,6 +113,7 @@ library backend-effect-internal
     Authentication.Internal.HasAuth
     Authentication.Internal.HasAuth.User
     Authentication.User
+    Cookie.Xsrf
     Domain
     Domain.Article
     Domain.Comment
@@ -126,10 +130,6 @@ library backend-effect-internal
     Field.Time
     Field.Title
     Field.Username
-    GenUUID
-    GenUUID.Pure
-    GenUUID.V1
-    GenUUID.V4
     OptionalAuthAction
     Relation.ManyToMany
     Relation.ManyToMany.InMem
@@ -139,7 +139,6 @@ library backend-effect-internal
     Relation.ToOne
     Relation.ToOne.InMem
     Relation.ToOne.Pure
-    STMWithUnsafeIO
     Storage.Error
     Storage.Map
     Storage.Map.InMem
@@ -157,11 +156,14 @@ library backend-effect-internal
     Storage.Set
     Storage.Set.InMem
     Token
+    Token.Create
+    Token.Create.JWT
+    Token.Decode
+    Token.Decode.JWT
     Token.Internal.HasToken
     Token.Internal.HasToken.User
-    Token.JWT
-    Token.JWT.Invalidate
-    Token.JWT.Invalidate.Pure
+    Token.Invalidate
+    Token.Invalidate.JWT
     UserAction
     Util.JSON.From
     Util.JSON.To
@@ -187,13 +189,13 @@ library backend-api-internal
     Authorization
     HTTP
     HTTP.Auth.User
+    HTTP.OptionalAuth
+    HTTP.OptionalAuth.Article
+    HTTP.OptionalAuth.Profile
     HTTP.Protected
     HTTP.Protected.Article
     HTTP.Protected.Follow
     HTTP.Protected.User
-    HTTP.OptionalAuth
-    HTTP.OptionalAuth.Article
-    HTTP.OptionalAuth.Profile
     HTTP.Public
     HTTP.Public.Tag
     HTTP.Util

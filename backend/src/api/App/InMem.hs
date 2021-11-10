@@ -15,25 +15,28 @@ module App.InMem where
 import Authentication (AlreadyLogin, NotAuthorized, NotLogin)
 import qualified Authentication.User (run)
 import Control.Carrier.Error.Either (runError)
+import Control.Carrier.Lift (runM)
 import qualified Control.Carrier.Reader as R (runReader)
+import qualified Control.Carrier.State.Strict as S (evalState)
 import Control.Carrier.Throw.Either (runThrow)
 import Control.Carrier.Trace.Returning (runTrace)
 import Control.Exception.Safe (catch)
+import qualified Cookie.Xsrf (run)
 import qualified Crypto.JOSE (Error)
+import Crypto.JWT (SystemDRG, getSystemDRG)
 import Data.Time (getCurrentTime)
+import Data.UUID.V1 (nextUUID)
 import Domain (Domain (Article, Comment, User))
 import Domain.User (UserR)
 import Field.Email (Email)
+import Field.Password (newSalt)
 import Field.Tag (Tag)
-import GenUUID.V1 (RequestedUUIDsTooQuickly)
-import qualified GenUUID.V1 (run)
 import HTTP (Api, server)
 import qualified OptionalAuthAction (run)
 import qualified Relation.ManyToMany.InMem (run)
 import qualified Relation.ToMany.InMem (run)
 import Relation.ToOne.InMem (ExistAction (IgnoreIfExist))
 import qualified Relation.ToOne.InMem (run)
-import STMWithUnsafeIO (runIOinSTM)
 import Servant (Application, Context (EmptyContext, (:.)), ServerError (errBody), err400, err401, err404, err500, hoistServerWithContext, serveWithContext, throwError)
 import Servant.Auth.Server (CookieSettings, JWTSettings, defaultCookieSettings, defaultJWTSettings, generateKey)
 import Servant.Server (err403)
@@ -48,9 +51,9 @@ import Storage.Map (CRUD (D, U), Forbidden, IdAlreadyExists, IdNotFound, IdOf)
 import Storage.Map.InMem (TableInMem)
 import qualified Storage.Map.InMem (run)
 import qualified Storage.Set.InMem (run)
-import Token (InvalidToken, TokenOf (..))
-import qualified Token.JWT (run)
-import qualified Token.JWT.Invalidate.Pure (run)
+import Token (TokenOf (..))
+import qualified Token.Create.JWT (run)
+import Token.Decode (InvalidToken)
 import qualified UserAction (run)
 import Util.Validation (ValidationErr)
 import qualified VisitorAction (run)
@@ -89,17 +92,16 @@ mkApp cs jwts userDb articleDb commentDb tagDb emailUserIndex db0 db1 db2 db3 db
       (Proxy @Api)
       (Proxy @'[CookieSettings, JWTSettings])
       ( \eff -> do
-          t <- liftIO getCurrentTime
+          time <- liftIO getCurrentTime
+          uuid <- liftIO nextUUID >>= maybe (throwError $ err500 {errBody = "RequestedUUIDsTooQuickly"}) pure
+          gen <- liftIO getSystemDRG
           ( eff
-              & UserAction.run
+              & UserAction.run @SystemDRG
               & OptionalAuthAction.run
               & VisitorAction.run
-              & Authentication.User.run
-              & ( Token.JWT.run @'User
-                    >>> Token.JWT.Invalidate.Pure.run @(TokenOf 'User)
-                )
-              & GenUUID.V1.run
-              & R.runReader t
+              & Token.Create.JWT.run @'User @SystemDRG
+              & Cookie.Xsrf.run @SystemDRG
+              & Authentication.User.run @SystemDRG
               & Storage.Map.InMem.run @'User userDb
               & Storage.Map.InMem.run @'Article articleDb
               & Storage.Map.InMem.run @'Comment commentDb
@@ -110,9 +112,12 @@ mkApp cs jwts userDb articleDb commentDb tagDb emailUserIndex db0 db1 db2 db3 db
               & Relation.ToOne.InMem.run @Email @"of" @(IdOf 'User) @'IgnoreIfExist emailUserIndex
               & Relation.ToMany.InMem.run @(IdOf 'Article) @"has" @(IdOf 'Comment) db0
               & Relation.ToMany.InMem.run @(IdOf 'User) @"create" @(IdOf 'Article) db1
+              & R.runReader uuid
+              & R.runReader time
               & R.runReader jwts
               & R.runReader cs
               & R.runReader (Nothing @(UserR "authWithToken"))
+              & S.evalState gen
               & runTrace
               & runThrow @Text
               & runError @(Forbidden 'D 'Article)
@@ -132,9 +137,8 @@ mkApp cs jwts userDb articleDb commentDb tagDb emailUserIndex db0 db1 db2 db3 db
               & runThrow @(AlreadyExists Email)
               & runThrow @(AlreadyLogin 'User)
               & runThrow @ValidationErr
-              & runThrow @RequestedUUIDsTooQuickly
               & runThrow @Crypto.JOSE.Error
-              & runIOinSTM
+              & runM
               >>= handlerErr err403
               >>= handlerErr err403
               >>= handlerErr err403
@@ -152,7 +156,6 @@ mkApp cs jwts userDb articleDb commentDb tagDb emailUserIndex db0 db1 db2 db3 db
               >>= handlerErr err400
               >>= handlerErr err400 -- ???? FIXME
               >>= handlerErr err400
-              >>= handlerErr err500
               >>= handlerErr err400
               >>= handlerErr err500
               <&> snd

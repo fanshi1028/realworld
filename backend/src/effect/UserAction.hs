@@ -23,14 +23,16 @@ import Control.Algebra (Algebra (alg), send, type (:+:) (L, R))
 import Control.Carrier.NonDet.Church (runNonDetA)
 import Control.Effect.Catch (Catch)
 import Control.Effect.Error (catchError)
-import Control.Effect.Lift (Lift, sendIO)
 import Control.Effect.NonDet (oneOf)
 import qualified Control.Effect.Reader as R (Reader, ask)
+import qualified Control.Effect.State as S (State, get, put)
 import Control.Effect.Sum (Member)
 import Control.Effect.Throw (Throw, throwError)
+import Crypto.Random (DRG, getRandomBytes, withDRG)
 import Data.Generic.HKD (Build (build), Construct (construct), HKD, deconstruct)
 import Data.Generics.Product (HasField' (field'), getField)
 import qualified Data.Semigroup as SG (Last (Last, getLast))
+import Data.UUID (UUID)
 import Domain (Domain (Article, Comment, User))
 import Domain.Article (ArticleR (ArticleWithAuthorProfile))
 import Domain.Comment (CommentR (CommentWithAuthorProfile))
@@ -41,7 +43,6 @@ import Field.Password (hashPassword, newSalt)
 import Field.Slug (titleToSlug)
 import Field.Tag (Tag)
 import Field.Time (Time)
-import qualified GenUUID (E (Generate))
 import qualified OptionalAuthAction (E (GetProfile))
 import qualified Relation.ManyToMany (E (GetRelatedLeft, GetRelatedRight, IsRelated, Relate, Unrelate, UnrelateByKeyLeft, UnrelateByKeyRight))
 import qualified Relation.ToMany (E (GetRelated, IsRelated, Relate, Unrelate, UnrelateByKey))
@@ -96,7 +97,7 @@ data E (m :: Type -> Type) a where
 -- * Carrirer
 
 -- | @since 0.1.0.0
-newtype C m a = C
+newtype C gen m a = C
   { -- | @since 0.1.0.0
     run :: m a
   }
@@ -118,7 +119,7 @@ instance
     Member (Throw (Forbidden 'D 'Comment)) sig,
     Member (Throw Text) sig,
     Member (R.Reader Time) sig,
-    Member GenUUID.E sig,
+    Member (R.Reader UUID) sig,
     Member (Relation.ManyToMany.E (IdOf 'User) "follow" (IdOf 'User)) sig,
     Member (Relation.ManyToMany.E (IdOf 'User) "favorite" (IdOf 'Article)) sig,
     Member (Relation.ManyToMany.E (IdOf 'Article) "taggedBy" Tag) sig,
@@ -129,10 +130,11 @@ instance
     Member (Throw (NotAuthorized 'User)) sig,
     Member (R.Reader (Maybe (UserR "authWithToken"))) sig,
     Member OptionalAuthAction.E sig,
-    Member (Lift IO) sig,
+    Member (S.State gen) sig,
+    DRG gen,
     Algebra sig m
   ) =>
-  Algebra (UserAction.E :+: sig) (C m)
+  Algebra (UserAction.E :+: sig) (C gen m)
   where
   alg _ (L action) ctx =
     (<$ ctx) <$> do
@@ -208,7 +210,11 @@ instance
               build @(HKD (HKD (ContentOf 'User) SG.Last) Maybe)
                 (pure m_newEm)
                 ( case getField @"password" update of
-                    Just (SG.Last pwNew) -> Just . SG.Last . hashPassword pwNew <$> sendIO newSalt
+                    Just (SG.Last pwNew) -> do
+                      g <- S.get @gen
+                      let (salt, g') = withDRG g $ newSalt <$> getRandomBytes 16
+                      S.put g'
+                      pure $ Just $ SG.Last $ hashPassword pwNew salt
                     Nothing -> pure Nothing
                 )
                 (pure m_newName)
@@ -284,7 +290,7 @@ instance
               | otherwise -> throwError $ Forbidden @'D articleId
         AddCommentToArticle articleId (CommentCreate txt) -> do
           t <- R.ask @Time
-          commentId <- CommentId <$> send GenUUID.Generate
+          commentId <- CommentId <$> R.ask
           let a = CommentContent commentId t t txt (toUserId auth) articleId
           send $ Storage.Map.Insert commentId a
           send $ Relation.ToMany.Relate @_ @_ @"has" articleId commentId

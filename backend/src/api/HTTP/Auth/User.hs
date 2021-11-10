@@ -1,8 +1,5 @@
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE FlexibleContexts #-}
-{-# LANGUAGE NamedFieldPuns #-}
-{-# LANGUAGE RecordWildCards #-}
-{-# LANGUAGE ViewPatterns #-}
 
 -- |
 -- Description : API & Server
@@ -15,36 +12,39 @@
 -- @since 0.1.0.0
 module HTTP.Auth.User where
 
-import Authentication (E (Login, Register), HasAuth (LoginOf))
+import Authentication (AuthOf, E (Login, Register), HasAuth (LoginOf))
 import Control.Algebra (Algebra, send)
 import Control.Effect.Error (Throw, throwError)
-import Control.Effect.Lift (Lift, sendIO)
 import qualified Control.Effect.Reader as R (Reader, ask)
 import Control.Effect.Sum (Member)
+import Cookie.Xsrf (E (CreateXsrfCookie))
 import Domain (Domain (User))
 import Domain.User (UserR (..))
 import HTTP.Util (CreateApi)
 import Relude.Extra (un)
 import Servant
-  ( HList (HCons),
-    Headers (Headers),
+  ( AddHeader,
+    Header,
+    Headers,
     JSON,
     ReqBody,
-    ResponseHeader (Header, MissingHeader, UndecodableHeader),
     ServerT,
     StdMethod (POST),
     Verb,
+    addHeader,
     type (:<|>) ((:<|>)),
     type (:>),
   )
-import Servant.Auth.Server (CookieSettings, JWTSettings, acceptLogin)
+import Servant.Auth.Server (CookieSettings, JWTSettings)
+import Servant.Auth.Server.Internal.Cookie (applyCookieSettings, applySessionCookieSettings)
 import qualified Storage.Map (E)
-import Token (E (CreateToken), TokenOf (UserToken))
+import Token (TokenOf (UserToken))
+import Token.Create (E (CreateToken))
 import Util.JSON.From (In (In))
 import Util.JSON.To (Out (Out))
 import Util.Validation (ValidationErr, WithValidation)
 import Validation (validation)
-import Web.Cookie (setCookieValue)
+import Web.Cookie (SetCookie, def, setCookieValue)
 
 -- * API
 
@@ -53,8 +53,7 @@ import Web.Cookie (setCookieValue)
 -- @since 0.1.0.0
 type AuthUserApi =
   ( "login" :> ReqBody '[JSON] (In (WithValidation (LoginOf 'User)))
-      -- :> Verb 'POST 200 '[JSON] (Headers '[Header "Set-Cookie" SetCookie, Header "Set-Cookie" SetCookie] (Out (UserR "authWithToken")))
-      :> Verb 'POST 200 '[JSON] (Out (UserR "authWithToken"))
+      :> Verb 'POST 200 '[JSON] (Headers '[Header "Set-Cookie" SetCookie, Header "Set-Cookie" SetCookie] (Out (UserR "authWithToken")))
   )
     :<|> CreateApi 'User (UserR "authWithToken")
 
@@ -64,31 +63,31 @@ type AuthUserApi =
 authUserServer ::
   ( Algebra sig m,
     Member (Throw ValidationErr) sig,
-    Member (Lift IO) sig,
     Member (R.Reader CookieSettings) sig,
     Member (R.Reader JWTSettings) sig,
     Member (Throw Text) sig,
-    Member (Token.E 'User) sig,
+    Member (Token.Create.E 'User) sig,
     Member (Authentication.E 'User) sig,
-    Member (Storage.Map.E 'User) sig
+    Member (Storage.Map.E 'User) sig,
+    Member Cookie.Xsrf.E sig,
+    AddHeader "Set-Cookie" SetCookie (AuthOf 'User) withOneCookie,
+    AddHeader "Set-Cookie" SetCookie withOneCookie withTwoCookies
   ) =>
   ServerT AuthUserApi m
 authUserServer =
   let validateThen action = validation (throwError @ValidationErr) (send . action) . un
    in ( validateThen Login
           >=> \authInfo -> do
-            acceptLogin <$> R.ask <*> R.ask <*> pure authInfo
-              >>= sendIO
-              >>= \case
-                Nothing -> throwError @Text "impossible: accept login failed"
-                Just f -> case f authInfo of
-                  -- Headers auth hs@(HCons h _) -> case h of
-                  Headers auth (HCons h _) -> case h of
-                    Header (UserToken . decodeUtf8 . setCookieValue -> jwt) ->
-                      -- pure $ Headers (Out $ UserAuthWithToken auth jwt) hs
-                      pure $ Out $ UserAuthWithToken auth jwt
-                    MissingHeader -> throwError @Text "impossible: missing header for login"
-                    UndecodableHeader bs -> throwError @Text $ "impossible: undecodable header: " <> show bs
+            token@(UserToken jwt) <- send $ CreateToken authInfo
+            cookieSettings <- R.ask
+            xsrfCookie <- send CreateXsrfCookie
+            let sessionCookie =
+                  applySessionCookieSettings cookieSettings $
+                    applyCookieSettings cookieSettings $ def {setCookieValue = jwt}
+            pure $
+              addHeader sessionCookie $
+                addHeader xsrfCookie $
+                  Out $ UserAuthWithToken authInfo token
       )
         :<|> ( validateThen Register
                  >=> \auth -> Out . UserAuthWithToken auth <$> send (CreateToken auth)

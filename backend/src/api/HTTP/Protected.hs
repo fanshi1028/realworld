@@ -20,7 +20,7 @@ import HTTP.Protected.Article (ArticleApi, articleServer)
 import HTTP.Protected.Follow (FollowApi, followServer)
 import HTTP.Protected.User (UserApi, userServer)
 import Servant (ServerT, type (:<|>) ((:<|>)), type (:>))
-import Token (E)
+import qualified Token.Create (E)
 import qualified UserAction (E)
 import Util.Validation (ValidationErr)
 
@@ -39,7 +39,7 @@ authedServer ::
   ( Algebra sig m,
     Member UserAction.E sig,
     Member (Throw ValidationErr) sig,
-    Member (Token.E 'User) sig
+    Member (Token.Create.E 'User) sig
   ) =>
   ServerT AuthedApi m
 authedServer = userServer :<|> followServer :<|> articleServer

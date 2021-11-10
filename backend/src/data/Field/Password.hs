@@ -13,11 +13,11 @@
 -- Field for Password
 --
 -- @since 0.2.0.0
-module Field.Password (Password (Password), PasswordHash (PasswordHash), hashPassword, checkPassword, newSalt) where
+module Field.Password (Password (Password), PasswordHash (PasswordHash), Salt (Salt), hashPassword, checkPassword, newSalt) where
 
 import Data.Aeson (FromJSON (parseJSON))
 import Data.Password.Argon2 (Argon2, PasswordCheck, defaultParams, hashPasswordWithSalt, mkPassword)
-import qualified Data.Password.Argon2 as Argon2 (Password, PasswordHash, Salt, checkPassword, newSalt)
+import qualified Data.Password.Argon2 as Argon2 (Password, PasswordHash, Salt (Salt), checkPassword)
 import Util.Validation (WithValidation)
 
 -- | @since 0.2.0.0
@@ -28,8 +28,8 @@ instance FromJSON Argon2.Password where
 newtype Salt = Salt (Argon2.Salt Argon2) deriving newtype (Show)
 
 -- | @since 0.2.0.0
-newSalt :: MonadIO m => m Salt
-newSalt = Salt <$> Argon2.newSalt
+newSalt :: ByteString -> Salt
+newSalt = Salt . Argon2.Salt
 
 -- | @since 0.2.0.0
 newtype Password = Password Argon2.Password deriving newtype (Show, FromJSON)

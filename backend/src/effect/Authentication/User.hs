@@ -1,6 +1,7 @@
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE UndecidableInstances #-}
 {-# LANGUAGE ViewPatterns #-}
 
@@ -20,10 +21,11 @@ import qualified Authentication (E (Login, Register))
 import Control.Algebra (Algebra (alg), send, type (:+:) (L, R))
 import Control.Effect.Catch (Catch)
 import Control.Effect.Error (catchError)
-import Control.Effect.Lift (Lift, sendIO)
 import qualified Control.Effect.Reader as R (Reader)
+import qualified Control.Effect.State as S (State, get, put)
 import Control.Effect.Sum (Member)
 import Control.Effect.Throw (Throw, throwError)
+import Crypto.Random (DRG, getRandomBytes, withDRG)
 import Data.Password.Argon2 (PasswordCheck (PasswordCheckFail, PasswordCheckSuccess))
 import Domain (Domain (User))
 import Domain.Transform (transform)
@@ -39,7 +41,7 @@ import Storage.Map (ContentOf (UserContent), CreateOf (UserCreate), IdAlreadyExi
 import qualified Storage.Map
 
 -- | @since 0.1.0.0
-newtype C m a = C
+newtype C gen m a = C
   { -- | @since 0.1.0.0
     run :: m a
   }
@@ -48,7 +50,6 @@ newtype C m a = C
 -- | @since 0.1.0.0
 instance
   ( Algebra sig m,
-    Member (Lift IO) sig,
     Member (Relation.ToOne.E Email "of" (IdOf 'User)) sig,
     Member (Catch (IdNotFound 'User)) sig,
     Member (Throw (IdAlreadyExists 'User)) sig,
@@ -56,9 +57,11 @@ instance
     Member (Throw (NotAuthorized 'User)) sig,
     Member (Storage.Map.E 'User) sig,
     Member (Throw (NotLogin 'User)) sig,
-    Member (R.Reader (Maybe (UserR "authWithToken"))) sig
+    Member (S.State gen) sig,
+    Member (R.Reader (Maybe (UserR "authWithToken"))) sig,
+    DRG gen
   ) =>
-  Algebra (Authentication.E 'User :+: sig) (C m)
+  Algebra (Authentication.E 'User :+: sig) (C gen m)
   where
   alg _ (L action) ctx =
     (<$ ctx) <$> do
@@ -70,10 +73,13 @@ instance
           u <-
             send (Relation.ToOne.GetRelated @_ @"of" @(IdOf 'User) em) >>= \case
               Just _ -> throwError $ AlreadyExists em
-              Nothing ->
+              Nothing -> do
+                g <- S.get @gen
+                let (salt, g') = withDRG g $ newSalt <$> getRandomBytes 16
+                S.put g'
                 catchError @(NotFound (IdOf 'User))
                   (send (Storage.Map.GetById uid) >> throwError (AlreadyExists uid))
-                  $ const $ sendIO newSalt <&> \(hashPassword pw -> hash) -> UserContent em hash user (Bio "") (Image "")
+                  $ const $ pure $ UserContent em (hashPassword pw salt) user (Bio "") $ Image ""
           send $ Storage.Map.Insert (toUserId u) u
           send $ Relation.ToOne.Relate @_ @_ @"of" em uid
           pure $ transform u

@@ -9,24 +9,27 @@
 -- Maintainer  : jackychany321@gmail.com
 -- Stability   : experimental
 --
--- Carrier in pure
+-- Carrier for invalidating JWT token (pure for now)
 --
--- @since 0.1.0.0
-module GenUUID.Pure where
+-- @since 0.3.0.0
+module Token.Invalidate.JWT where
 
 import Control.Algebra (Algebra (alg), type (:+:) (L, R))
-import Data.UUID (nil)
-import GenUUID (E (Generate))
+import Domain (Domain)
+import Token.Invalidate (E (InvalidateToken))
 
--- | @since 0.1.0.0
-newtype C m a = C
-  { -- | since 0.1.0.0
+-- | @since 0.3.0.0
+newtype C (s :: Domain) (m :: Type -> Type) a = C
+  { -- | @since 0.3.0.0
     run :: m a
   }
   deriving (Functor, Applicative, Monad)
 
--- | @since 0.1.0.0
-instance (Algebra sig m) => Algebra (E :+: sig) (C m) where
-  alg _ (L Generate) ctx = pure $ nil <$ ctx
+-- | @since 0.3.0.0
+instance
+  (Algebra sig m) =>
+  Algebra (E s :+: sig) (C s m)
+  where
+  alg _ (L (InvalidateToken _)) ctx = pure $ () <$ ctx
   alg hdl (R other) ctx = C $ alg (run . hdl) other ctx
   {-# INLINE alg #-}
