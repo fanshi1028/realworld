@@ -138,11 +138,10 @@ instance
   where
   alg _ (L action) ctx =
     (<$ ctx) <$> do
-      authOut@(UserAuthWithToken auth _) <-
+      authOut@(UserAuthWithToken auth@(toUserId -> authUserId) _) <-
         R.ask >>= \case
           Just auth -> pure auth
           Nothing -> throwError $ NotLogin @'User
-      let authUserId = toUserId auth
       case action of
         GetCurrentUser -> pure authOut
         UpdateUser update -> do
@@ -240,7 +239,7 @@ instance
           send $ Relation.ToMany.Relate @_ @_ @"create" authUserId aid
           t <- R.ask @Time
           foldMapA (send . Relation.ManyToMany.Relate @_ @_ @"taggedBy" aid) ts
-          let a = ArticleContent tt des bd t t $ toUserId auth
+          let a = ArticleContent tt des bd t t authUserId
           send (Storage.Map.Insert (toArticleId a) a)
             -- FIXME: Follow his own article?
             $> ArticleWithAuthorProfile a [] False 0 (UserProfile auth True)
@@ -291,7 +290,7 @@ instance
         AddCommentToArticle articleId (CommentCreate txt) -> do
           t <- R.ask @Time
           commentId <- CommentId <$> R.ask
-          let a = CommentContent commentId t t txt (toUserId auth) articleId
+          let a = CommentContent commentId t t txt authUserId articleId
           send $ Storage.Map.Insert commentId a
           send $ Relation.ToMany.Relate @_ @_ @"has" articleId commentId
           pure $
@@ -310,18 +309,16 @@ instance
                     send $ Relation.ToMany.Unrelate @_ @_ @"has" articleId commentId
                   | otherwise -> throwError $ Forbidden @'D commentId
         FavoriteArticle articleId -> do
-          a <- send $ Storage.Map.GetById articleId
+          a@(getField @"author" -> authorId) <- send $ Storage.Map.GetById articleId
           send $ Relation.ManyToMany.Relate @_ @_ @"favorite" authUserId articleId
-          let authorId = getField @"author" a
           ArticleWithAuthorProfile a
             <$> send (Relation.ManyToMany.GetRelatedLeft @_ @"taggedBy" @Tag articleId)
             <*> send (Relation.ManyToMany.IsRelated @_ @_ @"favorite" authUserId articleId)
             <*> (genericLength <$> send (Relation.ManyToMany.GetRelatedRight @_ @(IdOf 'User) @"favorite" articleId))
             <*> send (OptionalAuthAction.GetProfile authorId)
         UnfavoriteArticle articleId -> do
-          a <- send $ Storage.Map.GetById articleId
+          a@(getField @"author" -> authorId) <- send $ Storage.Map.GetById articleId
           send $ Relation.ManyToMany.Unrelate @_ @_ @"favorite" authUserId articleId
-          let authorId = getField @"author" a
           ArticleWithAuthorProfile a
             <$> send (Relation.ManyToMany.GetRelatedLeft @_ @"taggedBy" @Tag articleId)
             <*> send (Relation.ManyToMany.IsRelated @_ @_ @"favorite" authUserId articleId)
@@ -335,8 +332,7 @@ instance
               >>= send . Relation.ToMany.GetRelated @(IdOf 'User) @"create"
               >>= oneOf
           flip (catchError @(IdNotFound 'Article)) (const $ throwError @Text "impossible: article id not found") $ do
-            a <- send $ Storage.Map.GetById articleId
-            let authorId = getField @"author" a
+            a@(getField @"author" -> authorId) <- send $ Storage.Map.GetById articleId
             ArticleWithAuthorProfile a
               <$> send (Relation.ManyToMany.GetRelatedLeft @_ @"taggedBy" @Tag articleId)
               <*> send (Relation.ManyToMany.IsRelated @_ @_ @"favorite" authUserId articleId)

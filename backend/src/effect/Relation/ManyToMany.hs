@@ -31,7 +31,7 @@ module Relation.ManyToMany
 where
 
 import Control.Algebra (Algebra (alg), send, type (:+:) (L, R))
-import Control.Carrier.NonDet.Church (runNonDetA)
+import Control.Carrier.NonDet.Church (runNonDetM)
 import Control.Effect.NonDet (oneOf)
 import Control.Effect.Sum (Member)
 import GHC.TypeLits (Symbol)
@@ -110,18 +110,16 @@ instance
       Unrelate r1 r2 -> do
         send $ Relation.ToMany.Unrelate @_ @_ @lr r1 r2
         send $ Relation.ToMany.Unrelate @_ @_ @rr r2 r1
-      UnrelateByKeyLeft r1 -> void $
-        runNonDetA @[] $ do
-          send (Relation.ToMany.GetRelated @_ @lr @r2 r1)
-            >>= oneOf
-            >>= send . \r2 -> Relation.ToMany.Unrelate @_ @_ @rr r2 r1
-          send $ Relation.ToMany.UnrelateByKey @_ @lr @r2 r1
-      UnrelateByKeyRight r2 -> void $
-        runNonDetA @[] $ do
-          send (Relation.ToMany.GetRelated @_ @rr @r1 r2)
-            >>= oneOf
-            >>= send . \r1 -> Relation.ToMany.Unrelate @_ @_ @lr r1 r2
-          send $ Relation.ToMany.UnrelateByKey @_ @rr @r1 r2
+      UnrelateByKeyLeft r1 -> runNonDetM id $ do
+        send (Relation.ToMany.GetRelated @_ @lr @r2 r1)
+          >>= oneOf
+          >>= send . \r2 -> Relation.ToMany.Unrelate @_ @_ @rr r2 r1
+        send $ Relation.ToMany.UnrelateByKey @_ @lr @r2 r1
+      UnrelateByKeyRight r2 -> runNonDetM id $ do
+        send (Relation.ToMany.GetRelated @_ @rr @r1 r2)
+          >>= oneOf
+          >>= send . \r1 -> Relation.ToMany.Unrelate @_ @_ @lr r1 r2
+        send $ Relation.ToMany.UnrelateByKey @_ @rr @r1 r2
       IsRelated r1 r2 -> send $ Relation.ToMany.IsRelated @_ @_ @lr r1 r2
       GetRelatedLeft r1 -> send $ Relation.ToMany.GetRelated @_ @lr @r2 r1
       GetRelatedRight r2 -> send $ Relation.ToMany.GetRelated @_ @rr @r1 r2
