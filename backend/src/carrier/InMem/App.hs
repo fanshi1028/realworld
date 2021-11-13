@@ -33,8 +33,10 @@ import Field.Time (getCurrentTime)
 import HTTP (Api, server)
 import qualified InMem.Authentication.User (run)
 import InMem.OptionalAuthAction (runOptionalAuthActionInMem)
+import InMem.OptionalAuthAction.Many (runOptionalAuthActionManyInMem)
 import InMem.Storage (TableInMem)
-import InMem.UserAction (UserActionInMemC (runUserActionInMem), runUserActionInMem)
+import InMem.UserAction (runUserActionInMem)
+import InMem.UserAction.Many (runUserActionManyInMem)
 import InMem.VisitorAction (runVisitorActionInMem)
 import Paging (Limit (Limit), Offset (Offset))
 import Servant (Application, Context (EmptyContext, (:.)), ServerError (errBody), err400, err401, err404, err500, hoistServerWithContext, serveWithContext, throwError)
@@ -93,9 +95,11 @@ mkApp cs jwts userDb articleDb commentDb tagDb emailUserIndex db0 db1 db2 db3 db
           uuid <- liftIO nextUUID >>= maybe (throwError $ err500 {errBody = "RequestedUUIDsTooQuickly"}) pure
           gen <- liftIO getSystemDRG
           ( eff
+              & runUserActionManyInMem @[]
               & runUserActionInMem @SystemDRG
+              & runOptionalAuthActionManyInMem @[]
               & runOptionalAuthActionInMem
-              & runVisitorActionInMem
+              & runVisitorActionInMem @[]
               & Token.Create.JWT.run @'User @SystemDRG
               & Cookie.Xsrf.run @SystemDRG
               & InMem.Authentication.User.run @SystemDRG

@@ -54,6 +54,3 @@ data UserActionE (m :: Type -> Type) a where
   -- | @since 0.1.0.0
   -- Unfavorite the aritcle specified by the id.
   UnfavoriteArticle :: IdOf 'Article -> UserActionE m (ArticleR "withAuthorProfile")
-  -- | @since 0.1.0.0
-  -- Get articles feed recommendated for the authenticated user.
-  FeedArticles :: UserActionE m [ArticleR "withAuthorProfile"]

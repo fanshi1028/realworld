@@ -24,6 +24,7 @@ import Paging (Limit, Offset)
 import Servant (ServerT, type (:<|>) ((:<|>)), type (:>))
 import qualified Token.Create (E)
 import UserAction (UserActionE)
+import UserAction.Many (UserActionManyE)
 import Util.Validation (ValidationErr)
 
 -- * API
@@ -42,6 +43,7 @@ authedServer ::
     Member UserActionE sig,
     Member (R.Reader Limit) sig,
     Member (R.Reader Offset) sig,
+    Member (UserActionManyE []) sig,
     Member (Throw ValidationErr) sig,
     Member (Token.Create.E 'User) sig
   ) =>

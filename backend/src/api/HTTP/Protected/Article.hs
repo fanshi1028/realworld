@@ -45,11 +45,11 @@ import UserAction
         DeleteArticle,
         DeleteComment,
         FavoriteArticle,
-        FeedArticles,
         UnfavoriteArticle,
         UpdateArticle
-      ),
+      )
   )
+import UserAction.Many (UserActionManyE (FeedArticles))
 import Util.JSON.From (In (In))
 import Util.JSON.To (Out (Out))
 import Util.Validation (ValidationErr)
@@ -78,9 +78,10 @@ type ArticleApi =
 articleServer ::
   ( Algebra sig m,
     Member UserActionE sig,
-    Member (Throw ValidationErr) sig,
+    Member (UserActionManyE []) sig,
     Member (R.Reader Limit) sig,
-    Member (R.Reader Offset) sig
+    Member (R.Reader Offset) sig,
+    Member (Throw ValidationErr) sig
   ) =>
   ServerT ArticleApi m
 articleServer =

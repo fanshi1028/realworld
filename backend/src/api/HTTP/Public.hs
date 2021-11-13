@@ -29,7 +29,7 @@ type PublicApi = "tags" :> TagApi
 -- | @since 0.3.0.0
 publicServer ::
   ( Algebra sig m,
-    Member VisitorActionE sig
+    Member (VisitorActionE []) sig
   ) =>
   ServerT PublicApi m
 publicServer = tagServer

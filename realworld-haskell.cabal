@@ -170,6 +170,7 @@ library backend-effect-internal
     Authentication
     Cookie.Xsrf
     OptionalAuthAction
+    OptionalAuthAction.Many
     Token.Create
     Token.Create.JWT
     Token.Decode
@@ -177,6 +178,7 @@ library backend-effect-internal
     Token.Invalidate
     Token.Invalidate.JWT
     UserAction
+    UserAction.Many
     VisitorAction
 
 -- other-modules:
@@ -229,6 +231,7 @@ library backend-in-mem-carrier-internal
     InMem.Authentication.User
     InMem.Authorization
     InMem.OptionalAuthAction
+    InMem.OptionalAuthAction.Many
     InMem.Relation
     InMem.Relation.Internal.ManyToMany
     InMem.Relation.Internal.ManyToMany.Favorite
@@ -242,6 +245,7 @@ library backend-in-mem-carrier-internal
     InMem.Relation.Internal.ToOne.EmailOfUser
     InMem.Storage
     InMem.UserAction
+    InMem.UserAction.Many
     InMem.VisitorAction
 
 executable realworld-haskell

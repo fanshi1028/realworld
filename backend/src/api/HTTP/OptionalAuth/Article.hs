@@ -20,7 +20,8 @@ import Domain (Domain (Article))
 import Domain.Article (ArticleR)
 import Domain.Comment (CommentR)
 import HTTP.Util (Cap, QP, ReadApi, ReadManyApi)
-import OptionalAuthAction (OptionalAuthActionE (GetArticle, GetComments, ListArticles))
+import OptionalAuthAction (OptionalAuthActionE (GetArticle))
+import OptionalAuthAction.Many (OptionalAuthActionManyE (GetComments, ListArticles))
 import Paging (Limit, Offset, Paging (LimitOffSet), paging)
 import Servant (ServerT, type (:<|>) ((:<|>)), type (:>))
 import Storage.Map (IdOf)
@@ -44,6 +45,7 @@ type ArticleApi =
 articleServer ::
   ( Algebra sig m,
     Member OptionalAuthActionE sig,
+    Member (OptionalAuthActionManyE []) sig,
     Member (Throw ValidationErr) sig,
     Member (R.Reader Limit) sig,
     Member (R.Reader Offset) sig
@@ -59,13 +61,13 @@ articleServer =
           (\(act, p) -> paging p <$> send act)
           ( liftA2
               (,)
-              (ListArticles <$> sequenceA mTag <*> sequenceA mAuthor <*> sequenceA mFavBy)
+              (ListArticles @[] <$> sequenceA mTag <*> sequenceA mAuthor <*> sequenceA mFavBy)
               (LimitOffSet <$> vLimit <*> vOffset)
           )
   )
     :<|> ( \case
              Success aid ->
-               Out <$> send (OptionalAuthAction.GetArticle aid)
+               Out <$> send (GetArticle aid)
                  :<|> (Out <$> send (GetComments aid))
              Failure err -> throwError err :<|> throwError err
          )

@@ -28,5 +28,5 @@ type TagApi = Get '[JSON] (Out [Tag])
 -- * Server
 
 -- | @since 0.1.0.0
-tagServer :: (Member VisitorActionE sig, Algebra sig m) => ServerT TagApi m
+tagServer :: (Member (VisitorActionE []) sig, Algebra sig m) => ServerT TagApi m
 tagServer = Out <$> send GetTags

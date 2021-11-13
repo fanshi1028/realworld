@@ -24,7 +24,7 @@ import qualified StmContainers.Set as STMSet (Set)
 import VisitorAction (VisitorActionE (GetTags))
 
 -- | @since 0.3.0.0
-newtype VisitorActionInMemC m a = VisitorActionInMemC
+newtype VisitorActionInMemC (f :: Type -> Type) m a = VisitorActionInMemC
   { -- | @since 0.3.0.0
     runVisitorActionInMem :: m a
   }
@@ -36,7 +36,7 @@ instance
     Member (Lift STM) sig,
     Member (R.Reader (STMSet.Set Tag)) sig
   ) =>
-  Algebra (VisitorActionE :+: sig) (VisitorActionInMemC m)
+  Algebra (VisitorActionE [] :+: sig) (VisitorActionInMemC [] m)
   where
   alg _ (L GetTags) ctx = (<$ ctx) <$> getAllSetInMem @_ @_ @Tag
   alg hdl (R other) ctx = VisitorActionInMemC $ alg (runVisitorActionInMem . hdl) other ctx

@@ -31,6 +31,7 @@ import HTTP.OptionalAuth (OptionallyAuthedApi, optionallyAuthedServer)
 import HTTP.Protected (AuthedApi, authedServer)
 import HTTP.Public (PublicApi, publicServer)
 import OptionalAuthAction (OptionalAuthActionE)
+import OptionalAuthAction.Many (OptionalAuthActionManyE)
 import Paging (Limit, Offset)
 import Servant (Get, JSON, ServerT, type (:<|>) ((:<|>)), type (:>))
 import Servant.Auth.Server (Auth, AuthResult (Authenticated, BadPassword, Indefinite, NoSuchUser), CookieSettings, JWTSettings)
@@ -38,6 +39,7 @@ import Servant.Server (hoistServer)
 import qualified Token.Create (E)
 import Token.Decode (InvalidToken)
 import UserAction (UserActionE)
+import UserAction.Many (UserActionManyE)
 import Util.Validation (ValidationErr)
 import VisitorAction (VisitorActionE)
 
@@ -63,9 +65,11 @@ type Api =
 -- all server
 server ::
   ( Algebra sig m,
-    Member VisitorActionE sig,
+    Member (VisitorActionE []) sig,
     Member OptionalAuthActionE sig,
+    Member (OptionalAuthActionManyE []) sig,
     Member UserActionE sig,
+    Member (UserActionManyE []) sig,
     Member Cookie.Xsrf.E sig,
     Member (R.Reader JWTSettings) sig,
     Member (R.Reader CookieSettings) sig,

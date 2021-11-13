@@ -20,6 +20,7 @@ import Control.Effect.Throw (Throw)
 import HTTP.OptionalAuth.Article (ArticleApi, articleServer)
 import HTTP.OptionalAuth.Profile (ProfileApi, profileServer)
 import OptionalAuthAction (OptionalAuthActionE)
+import OptionalAuthAction.Many (OptionalAuthActionManyE)
 import Paging (Limit, Offset)
 import Servant (ServerT, type (:<|>) ((:<|>)), type (:>))
 import Util.Validation (ValidationErr)
@@ -39,6 +40,7 @@ optionallyAuthedServer ::
     Member OptionalAuthActionE sig,
     Member (R.Reader Limit) sig,
     Member (R.Reader Offset) sig,
+    Member (OptionalAuthActionManyE []) sig,
     Member (Throw ValidationErr) sig
   ) =>
   ServerT OptionallyAuthedApi m

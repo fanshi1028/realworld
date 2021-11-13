@@ -13,8 +13,7 @@ import Field.Tag (Tag)
 
 -- | @since 0.3.0.0
 -- Actions that can be carried out by visitor(__unauthenticated__).
-data VisitorActionE (m :: Type -> Type) a where
+data VisitorActionE f (m :: Type -> Type) a where
   -- | @since 0.3.0.0
   -- Get all the tags.
-  GetTags :: VisitorActionE m [Tag]
-
+  GetTags :: VisitorActionE f m (f Tag)

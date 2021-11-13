@@ -20,10 +20,8 @@ module InMem.UserAction where
 
 import Authentication.HasAuth (AuthOf (..), NotAuthorized, NotLogin (NotLogin))
 import Control.Algebra (Algebra (alg), send, type (:+:) (L, R))
-import Control.Carrier.NonDet.Church (runNonDetA)
 import Control.Effect.Catch (Catch)
 import Control.Effect.Error (catchError)
-import Control.Effect.NonDet (oneOf)
 import qualified Control.Effect.Reader as R (Reader, ask)
 import qualified Control.Effect.State as S (State, get, put)
 import Control.Effect.Sum (Member)
@@ -64,7 +62,7 @@ import OptionalAuthAction (OptionalAuthActionE (GetProfile))
 import Relude.Extra ((.~), (^.))
 import Storage.Error (AlreadyExists (AlreadyExists), NotFound (NotFound))
 import Storage.Map (CRUD (D, U), ContentOf (..), CreateOf (ArticleCreate, CommentCreate), Forbidden (Forbidden), HasStorage (ContentOf), IdAlreadyExists, IdNotFound, IdOf (ArticleId, CommentId, UserId), toArticleId, toArticlePatch, toUserId)
-import UserAction (UserActionE (AddCommentToArticle, CreateArticle, DeleteArticle, DeleteComment, FavoriteArticle, FeedArticles, FollowUser, GetCurrentUser, UnfavoriteArticle, UnfollowUser, UpdateArticle, UpdateUser))
+import UserAction (UserActionE (AddCommentToArticle, CreateArticle, DeleteArticle, DeleteComment, FavoriteArticle, FollowUser, GetCurrentUser, UnfavoriteArticle, UnfollowUser, UpdateArticle, UpdateUser))
 
 -- | @since 0.3.0.0
 newtype UserActionInMemC gen m a = UserActionInMemC
@@ -314,19 +312,5 @@ instance
             <*> isRelatedManyToMany @"UserFavoriteArticle" authUserId articleId
             <*> (genericLength <$> getRelatedRightManyToMany @"UserFavoriteArticle" articleId)
             <*> send (OptionalAuthAction.GetProfile authorId)
-        -- FIXME feed order
-        FeedArticles -> runNonDetA @[] $ do
-          articleId <-
-            getRelatedLeftManyToMany @"UserFollowUser" authUserId
-              >>= oneOf
-              >>= getRelatedToMany @"UserCreateArticle"
-              >>= oneOf
-          flip (catchError @(IdNotFound 'Article)) (const $ throwError @Text "impossible: article id not found") $ do
-            a@(getField @"author" -> authorId) <- getByIdMapInMem articleId
-            ArticleWithAuthorProfile a
-              <$> getRelatedLeftManyToMany @"ArticleTaggedByTag" articleId
-              <*> isRelatedManyToMany @"UserFavoriteArticle" authUserId articleId
-              <*> (genericLength <$> getRelatedRightManyToMany @"UserFavoriteArticle" articleId)
-              <*> send (OptionalAuthAction.GetProfile authorId)
   alg hdl (R other) ctx = UserActionInMemC $ alg (runUserActionInMem . hdl) other ctx
   {-# INLINE alg #-}
