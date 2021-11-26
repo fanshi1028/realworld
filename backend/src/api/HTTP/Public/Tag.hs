@@ -16,17 +16,20 @@ module HTTP.Public.Tag where
 import Control.Algebra (Algebra, send)
 import Control.Effect.Sum (Member)
 import Field.Tag (Tag)
-import Servant (Get, JSON, ServerT)
+import Servant (Get, JSON, NoFraming, ServerT, SourceIO, StreamGet, type (:<|>) ((:<|>)), type (:>))
+import Servant.Types.SourceT (source)
 import Util.JSON.To (Out (Out))
 import VisitorAction (VisitorActionE (GetTags))
 
 -- * API
 
--- | @since 0.1.0.0
-type TagApi = Get '[JSON] (Out [Tag])
+-- | @since 0.3.0.0
+type TagApi = Get '[JSON] (Out [Tag]) :<|> "stream" :> StreamGet NoFraming JSON (SourceIO Tag)
 
 -- * Server
 
--- | @since 0.1.0.0
+-- | @since 0.3.0.0
 tagServer :: (Member (VisitorActionE []) sig, Algebra sig m) => ServerT TagApi m
-tagServer = Out <$> send GetTags
+tagServer =
+  let tags = send $ GetTags @[]
+   in Out <$> tags :<|> (source <$> tags)

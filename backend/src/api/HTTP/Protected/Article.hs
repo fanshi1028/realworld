@@ -37,6 +37,7 @@ import Domain.Comment (CommentR)
 import HTTP.Util (Cap, CreateApi, QP, ReadManyApi, ToggleApi, UDApi)
 import Paging (HasPaging (paging), Limit, Offset, Paging (LimitOffSet))
 import Servant (Delete, JSON, NoContent (NoContent), ServerT, type (:<|>) ((:<|>)), type (:>))
+import Servant.Types.SourceT (source)
 import Storage.Map (IdOf)
 import UserAction
   ( UserActionE
@@ -92,12 +93,11 @@ articleServer =
         :<|> ( \mLimit mOffset -> do
                  vLimit <- R.ask <&> \lim -> fromMaybe (pure lim) mLimit
                  vOffset <- R.ask <&> \off -> fromMaybe (pure off) mOffset
-                 Out
-                   <$> do
-                     validation
-                       (throwError @ValidationErr)
-                       (\p -> paging p <$> send FeedArticles)
-                       (LimitOffSet <$> vLimit <*> vOffset)
+                 let fa = validation
+                           (throwError @ValidationErr)
+                           (\p -> paging p <$> send FeedArticles)
+                           (LimitOffSet <$> vLimit <*> vOffset)
+                  in Out <$> fa :<|> (source <$> fa)
              )
         :<|> ( \case
                  Success aid ->

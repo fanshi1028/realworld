@@ -19,7 +19,7 @@ import Field.Tag (Tag)
 import Field.Username (Username)
 import GHC.TypeLits (Symbol)
 import Paging (Limit, Offset)
-import Servant (Capture, Delete, Get, JSON, NoContent, Post, Put, QueryParam, ReqBody, type (:<|>), type (:>))
+import Servant (Capture, Delete, FromHttpApiData, Get, JSON, NoContent, NoFraming, Post, Put, QueryParam, ReqBody, SourceIO, StreamGet, type (:<|>), type (:>))
 import Storage.Map (CreateOf, Patch, UpdateOf)
 import Util.JSON.From (In)
 import Util.JSON.To (Out)
@@ -86,8 +86,8 @@ type CreateApi (s :: Domain) o = CreateBody s :> Post '[JSON] (Out o)
 -- | @since 0.1.0.0
 type ReadApi (s :: Domain) o = Get '[JSON] (Out o)
 
--- | @since 0.1.0.0
-type ReadManyApi (s :: Domain) o = Get '[JSON] (Out [o])
+-- | @since 0.3.0.0
+type ReadManyApi (s :: Domain) o = Get '[JSON] (Out [o]) :<|> "stream" :> StreamGet NoFraming JSON (SourceIO o)
 
 -- ** Update
 

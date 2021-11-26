@@ -86,8 +86,11 @@ common backend-api-deps
   build-depends:
     , cookie                ^>=0.4.5
     , fused-effects         ^>=1.1.1
+    , servant               ^>=0.18.3
     , servant-auth-server   ^>=0.4.6
     , servant-server        ^>=0.18.3
+    , streamly              ^>=0.8.0
+    , servant-streamly      ^>=0.1.0
     , time                  ^>=1.9.3
     , validation-selective  ^>=0.1.0
     , wai                   ^>=3.2.3

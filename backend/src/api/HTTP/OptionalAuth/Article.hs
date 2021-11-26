@@ -24,6 +24,7 @@ import OptionalAuthAction (OptionalAuthActionE (GetArticle))
 import OptionalAuthAction.Many (OptionalAuthActionManyE (GetComments, ListArticles))
 import Paging (Limit, Offset, Paging (LimitOffSet), paging)
 import Servant (ServerT, type (:<|>) ((:<|>)), type (:>))
+import Servant.Types.SourceT (source)
 import Storage.Map (IdOf)
 import Util.JSON.To (Out (Out))
 import Util.Validation (ValidationErr)
@@ -55,19 +56,21 @@ articleServer =
   ( \mTag mAuthor mFavBy mLimit mOffset -> do
       vLimit <- R.ask >>= \lim -> pure $ fromMaybe (pure lim) mLimit
       vOffset <- R.ask >>= \off -> pure $ fromMaybe (pure off) mOffset
-      Out
-        <$> validation
-          (throwError @ValidationErr)
-          (\(act, p) -> paging p <$> send act)
-          ( liftA2
-              (,)
-              (ListArticles @[] <$> sequenceA mTag <*> sequenceA mAuthor <*> sequenceA mFavBy)
-              (LimitOffSet <$> vLimit <*> vOffset)
-          )
+      let la = validation
+                (throwError @ValidationErr)
+                (\(act, p) -> paging p <$> send act)
+                ( liftA2
+                  (,)
+                  (ListArticles @[] <$> sequenceA mTag <*> sequenceA mAuthor <*> sequenceA mFavBy)
+                  (LimitOffSet <$> vLimit <*> vOffset)
+                )
+       in Out <$> la :<|> (source <$> la)
   )
     :<|> ( \case
              Success aid ->
                Out <$> send (GetArticle aid)
-                 :<|> (Out <$> send (GetComments aid))
-             Failure err -> throwError err :<|> throwError err
+                 :<|> ( let gc = send $ GetComments aid
+                         in Out <$> gc :<|> (source <$> gc)
+                      )
+             Failure err -> throwError err :<|> throwError err :<|> throwError err
          )
