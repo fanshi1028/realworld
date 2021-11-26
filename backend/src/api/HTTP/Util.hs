@@ -83,11 +83,11 @@ type CreateApi (s :: Domain) o = CreateBody s :> Post '[JSON] (Out o)
 
 -- ** Read
 
--- | @since 0.1.0.0
-type ReadApi (s :: Domain) o = Get '[JSON] (Out o)
+-- | @since 0.3.0.0
+type ReadApi o = Get '[JSON] (Out o)
 
 -- | @since 0.3.0.0
-type ReadManyApi (s :: Domain) o = Get '[JSON] (Out [o]) :<|> "stream" :> StreamGet NoFraming JSON (SourceIO o)
+type ReadManyApi o = ReadApi [o] :<|> "stream" :> StreamGet NoFraming JSON (SourceIO o)
 
 -- ** Update
 

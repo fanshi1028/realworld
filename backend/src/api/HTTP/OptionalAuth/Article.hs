@@ -32,12 +32,12 @@ import Validation (Validation (Failure, Success), validation)
 
 -- * API
 
--- | @since 0.1.0.0
+-- | @since 0.3.0.0
 type ArticleApi =
-  QP "tag" :> QP "author" :> QP "favorited" :> QP "limit" :> QP "offset" :> ReadManyApi 'Article (ArticleR "withAuthorProfile")
+  QP "tag" :> QP "author" :> QP "favorited" :> QP "limit" :> QP "offset" :> ReadManyApi (ArticleR "withAuthorProfile")
     :<|> Cap "slug" (IdOf 'Article)
-      :> ( ReadApi 'Article (ArticleR "withAuthorProfile")
-             :<|> "comments" :> ReadManyApi 'Article (CommentR "withAuthorProfile")
+      :> ( ReadApi (ArticleR "withAuthorProfile")
+             :<|> "comments" :> ReadManyApi (CommentR "withAuthorProfile")
          )
 
 -- * Server

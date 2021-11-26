@@ -28,8 +28,8 @@ import Validation (Validation (Failure, Success))
 
 -- * API
 
--- | @since 0.1.0.0
-type ProfileApi = Cap "username" (IdOf 'User) :> ReadApi 'User (UserR "profile")
+-- | @since 0.3.0.0
+type ProfileApi = Cap "username" (IdOf 'User) :> ReadApi (UserR "profile")
 
 -- * Server
 

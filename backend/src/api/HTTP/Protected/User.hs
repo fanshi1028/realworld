@@ -28,8 +28,8 @@ import Validation (Validation (Failure, Success))
 
 -- * API
 
--- | @since 0.1.0.0
-type UserApi = ReadApi 'User (UserR "authWithToken") :<|> UpdateApi 'User (UserR "authWithToken")
+-- | @since 0.3.0.0
+type UserApi = ReadApi (UserR "authWithToken") :<|> UpdateApi 'User (UserR "authWithToken")
 
 -- * Server
 

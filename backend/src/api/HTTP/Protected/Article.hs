@@ -64,10 +64,10 @@ type CommentApi =
 -- | @since 0.1.0.0
 type FavoriteApi = ToggleApi 'Article (ArticleR "withAuthorProfile")
 
--- | @since 0.1.0.0
+-- | @since 0.3.0.0
 type ArticleApi =
   CreateApi 'Article (ArticleR "withAuthorProfile")
-    :<|> "feed" :> QP "limit" :> QP "offset" :> ReadManyApi 'Article (ArticleR "withAuthorProfile")
+    :<|> "feed" :> QP "limit" :> QP "offset" :> ReadManyApi (ArticleR "withAuthorProfile")
     :<|> ( Cap "slug" (IdOf 'Article)
              :> ( UDApi 'Article (ArticleR "withAuthorProfile")
                     :<|> "comments" :> CommentApi
