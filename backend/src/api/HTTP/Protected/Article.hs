@@ -61,8 +61,8 @@ type CommentApi =
   Cap "id" (IdOf 'Comment) :> Delete '[JSON] NoContent
     :<|> CreateApi 'Comment (CommentR "withAuthorProfile")
 
--- | @since 0.1.0.0
-type FavoriteApi = ToggleApi 'Article (ArticleR "withAuthorProfile")
+-- | @since 0.3.0.0
+type FavoriteApi = ToggleApi (ArticleR "withAuthorProfile")
 
 -- | @since 0.3.0.0
 type ArticleApi =

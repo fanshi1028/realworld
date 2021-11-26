@@ -95,7 +95,7 @@ type ReadManyApi o = ReadApi [o] :<|> "stream" :> StreamGet NoFraming JSON (Sour
 type UpdateApi (s :: Domain) o = UpdateBody s :> Put '[JSON] (Out o)
 
 -- | @since 0.1.0.0
-type NoBodyUpdateApi (s :: Domain) o = Post '[JSON] (Out o)
+type NoBodyUpdateApi o = Post '[JSON] (Out o)
 
 -- ** Combinations
 
@@ -107,4 +107,4 @@ type UDApi (s :: Domain) o = UpdateApi s o :<|> Delete '[JSON] NoContent
 -- | For togglable state
 --
 -- @since 0.1.0.0
-type ToggleApi (s :: Domain) o = NoBodyUpdateApi s o :<|> Delete '[JSON] (Out o)
+type ToggleApi o = NoBodyUpdateApi o :<|> Delete '[JSON] (Out o)

@@ -27,8 +27,8 @@ import Validation (Validation (Failure, Success))
 
 -- * API
 
--- | @since 0.1.0.0
-type FollowApi = Cap "username" (IdOf 'User) :> "follow" :> ToggleApi 'User (UserR "profile")
+-- | @since 0.3.0.0
+type FollowApi = Cap "username" (IdOf 'User) :> "follow" :> ToggleApi (UserR "profile")
 
 -- * Server
 
