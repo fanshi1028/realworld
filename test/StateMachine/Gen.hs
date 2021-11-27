@@ -80,6 +80,7 @@ shrinker _ =
       UserCommand m_ref <$> case uc of
         GetCurrentUser -> []
         UpdateUser ur -> UpdateUser <$> shrinkRealistic ur
+        FollowUser _ -> []
         UnfollowUser _ -> []
         CreateArticle ar -> CreateArticle <$> shrinkRealistic ar
         UpdateArticle ref ar -> UpdateArticle ref <$> shrinkRealistic ar
