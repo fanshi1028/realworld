@@ -34,6 +34,7 @@ import Relude.Extra (un, (^.))
 import Servant (Application, Headers (Headers), type (:<|>) ((:<|>)))
 import Servant.Client (BaseUrl, ClientEnv, ClientError, mkClientEnv)
 import Servant.Client.Streaming (ClientM, client, withClientM)
+import Servant.Types.SourceT (runSourceT)
 import StateMachine.Gen (generator, shrinker)
 import StateMachine.Types
   ( AuthCommand (..),
@@ -41,6 +42,7 @@ import StateMachine.Types
     Command (..),
     Model (..),
     Response (..),
+    StreamMode (HasStreaming, NoStreaming),
     UserCommand (..),
     UserResponse (..),
     VisitorCommand (..),
@@ -177,7 +179,7 @@ transition m cm res = case (cm, res) of
           & field' @"articleHasComment" %~ delete (ref', ref'')
       (FavoriteArticle ref', FavoritedArticle) -> m & field' @"userFavoriteArticle" %~ insert (ref, ref')
       (UnfavoriteArticle ref', UnfavoritedArticle) -> m & field' @"userFavoriteArticle" %~ delete (ref, ref')
-      (FeedArticles, _) -> m
+      (FeedArticles _, _) -> m
       _failed -> m
   _failed -> m
 
@@ -311,7 +313,7 @@ postcondition m cmd res =
                 Forall [m, m'] (findByRef' ref' . articles) .// "the article exists"
                   .&& notMember (ref'', ref') (userFavoriteArticle m') .// "after: user unfavorites the article"
                   .&& Boolean (and $ on (==) <$> favoriteInv <*> pure m <*> pure m') .// "favorite invariant"
-              (FeedArticles, FeededArticles) -> m .== m' .// "same model"
+              (FeedArticles _, FeededArticles) -> m .== m' .// "same model"
               _ -> error "user postcondition error"
         _ -> error "postcondition error"
 
@@ -424,7 +426,7 @@ mock m =
             UnfavoriteArticle ref -> do
               _ <- findByRef ref $ articles m
               pure $ pure UnfavoritedArticle
-            FeedArticles -> pure $ pure FeededArticles
+            FeedArticles _ -> pure $ pure FeededArticles
 
 semantics :: Command Concrete -> ReaderT ClientEnv IO (Response Concrete)
 semantics =
@@ -434,6 +436,14 @@ semantics =
         run' req >>= \case
           Left ce -> pure $ FailResponse $ show ce
           Right (Out r) -> pure $ f r
+      runStream req f =
+        run' req >>= \case
+          Left ce -> pure $ FailResponse $ show ce
+          Right stream ->
+            liftIO $
+              runExceptT (runSourceT @IO stream) >>= \case
+                Left ce -> pure $ FailResponse $ show ce
+                Right r -> pure $ f r
       runNoContent req res = run' req >>= either (pure . FailResponse . show) (const $ pure res)
       (apis :<|> (login :<|> register) :<|> (getTags :<|> getTagsStream)) :<|> _healthcheck = client $ Proxy @Api
    in \case
@@ -459,13 +469,26 @@ semantics =
                   let getArticle :<|> _ = withArticle $ pure $ concrete ref
                    in run getArticle $ const $ VisitorResponse GotArticle
                 -- FIXME: gen query param ?
-                ListArticles (fmap pure -> mTags) ((pure . un . concrete <$>) -> mAuthor) ((pure . un . concrete <$>) -> mFav) ->
+                ListArticles (fmap pure -> mTags) ((pure . un . concrete <$>) -> mAuthor) ((pure . un . concrete <$>) -> mFav) stream ->
                   let listArticlesNoStream :<|> listArticlesStream = listArticles Nothing Nothing Nothing Nothing Nothing
-                   in run (listArticlesNoStream mTags mAuthor mFav Nothing Nothing) $ const $ VisitorResponse ListedArticles
-                GetTags -> run getTags $ const $ VisitorResponse GotTags
-                GetComments ref ->
+                   in ( case stream of
+                          NoStreaming -> run (listArticlesNoStream mTags mAuthor mFav Nothing Nothing)
+                          HasStreaming -> runStream listArticlesStream
+                      )
+                        $ const $ VisitorResponse ListedArticles
+                GetTags stream ->
+                  ( case stream of
+                      NoStreaming -> run getTags
+                      HasStreaming -> runStream getTagsStream
+                  )
+                    $ const $ VisitorResponse GotTags
+                GetComments ref stream ->
                   let _ :<|> (getComments :<|> getCommentsStream) = withArticle $ pure $ concrete ref
-                   in run getComments $ const $ VisitorResponse GotComments
+                   in ( case stream of
+                          NoStreaming -> run getComments
+                          HasStreaming -> runStream getCommentsStream
+                      )
+                        $ const $ VisitorResponse GotComments
         UserCommand m_ref uc ->
           case m_ref of
             Nothing -> pure $ FailResponse ""
@@ -505,9 +528,13 @@ semantics =
                     UnfavoriteArticle ref' ->
                       let _ :<|> _ :<|> (_ :<|> unfavoriteArticle) = withArticle $ pure $ concrete ref'
                        in run unfavoriteArticle $ const $ UserResponse UnfavoritedArticle
-                    FeedArticles ->
+                    FeedArticles stream ->
                       let feedArticlesNoStream :<|> feedArticlesStream = feedArticles Nothing Nothing
-                       in run feedArticlesNoStream $ const $ UserResponse FeededArticles
+                       in ( case stream of
+                              NoStreaming -> run feedArticlesNoStream
+                              HasStreaming -> runStream feedArticlesStream
+                          )
+                            $ const $ UserResponse FeededArticles
 
 sm :: StateMachine Model Command (ReaderT ClientEnv IO) Response
 sm = StateMachine initModel transition precondition postcondition Nothing generator shrinker semantics mock noCleanup

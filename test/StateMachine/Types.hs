@@ -14,17 +14,23 @@ import Field.Tag (Tag)
 import GHC.Generics (Generic1)
 import Orphans ()
 import Storage.Map (CreateOf (..), IdOf (..), Patch, UpdateOf (..))
+import Test.QuickCheck (Arbitrary, arbitrary, arbitraryBoundedEnum)
 import Test.StateMachine (CommandNames, Concrete, Reference, ToExpr, cmdName, cmdNames)
 import qualified Test.StateMachine.Types.Rank2 as R2
 import Text.Show (showString, showsPrec)
 import Token.HasToken (TokenOf (..))
 
+data StreamMode = NoStreaming | HasStreaming deriving (Show, Bounded, Enum)
+
+instance Arbitrary StreamMode where
+  arbitrary = arbitraryBoundedEnum
+
 data VisitorCommand r
   = GetProfile (Reference (IdOf 'User) r)
   | GetArticle (Reference (IdOf 'Article) r)
-  | ListArticles (Maybe Tag) (Maybe (Reference (IdOf 'User) r)) (Maybe (Reference (IdOf 'User) r))
-  | GetTags
-  | GetComments (Reference (IdOf 'Article) r)
+  | ListArticles (Maybe Tag) (Maybe (Reference (IdOf 'User) r)) (Maybe (Reference (IdOf 'User) r)) StreamMode
+  | GetTags StreamMode
+  | GetComments (Reference (IdOf 'Article) r) StreamMode
   deriving (Show)
 
 instance CommandNames VisitorCommand
@@ -61,7 +67,7 @@ data UserCommand r
   | DeleteComment (Reference (IdOf 'Article) r) (Reference (IdOf 'Comment) r)
   | FavoriteArticle (Reference (IdOf 'Article) r)
   | UnfavoriteArticle (Reference (IdOf 'Article) r)
-  | FeedArticles
+  | FeedArticles StreamMode
   deriving (Show)
 
 instance CommandNames UserCommand

@@ -10,7 +10,7 @@ import StateMachine.Types
     UserCommand (..),
     VisitorCommand (..),
   )
-import Test.QuickCheck (Gen, elements, frequency, oneof)
+import Test.QuickCheck (Arbitrary (arbitrary), Gen, elements, frequency, oneof)
 
 generator :: Model r -> Maybe (Gen (Command r))
 generator m =
@@ -37,10 +37,11 @@ generator m =
                 <$> (if null $ toList $ tags m then pure Nothing else genMaybe genTag)
                   <*> (if null $ toList $ users m then pure Nothing else genMaybe genUsers)
                   <*> (if null $ toList $ users m then pure Nothing else genMaybe genUsers)
+                  <*> arbitrary
             ),
-            (1, pure GetTags),
+            (1, GetTags <$> arbitrary),
             (if null $ articles m then 0 else 1, GetArticle <$> genArticles),
-            (if null $ articles m then 0 else 1, GetComments <$> genArticles)
+            (if null $ articles m then 0 else 1, GetComments <$> genArticles <*> arbitrary)
           ]
       genAuthCommand =
         frequency
@@ -64,7 +65,7 @@ generator m =
             (if null (comments m) || null (articles m) then 0 else 1, DeleteComment <$> genArticles <*> genComments),
             (if null $ articles m then 0 else 1, FavoriteArticle <$> genArticles),
             (if null $ articles m then 0 else 1, UnfavoriteArticle <$> genArticles),
-            (1, pure FeedArticles)
+            (1, FeedArticles <$> arbitrary)
           ]
    in pure $
         frequency
@@ -94,4 +95,4 @@ shrinker _ =
         DeleteComment _ _ -> []
         FavoriteArticle _ -> []
         UnfavoriteArticle _ -> []
-        FeedArticles -> []
+        FeedArticles _ -> []
