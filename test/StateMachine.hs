@@ -32,7 +32,8 @@ import Network.Wai.Handler.Warp (withApplication)
 import Orphans ()
 import Relude.Extra (un, (^.))
 import Servant (Application, Headers (Headers), type (:<|>) ((:<|>)))
-import Servant.Client (BaseUrl, ClientEnv, ClientError, ClientM, client, mkClientEnv, runClientM)
+import Servant.Client (BaseUrl, ClientEnv, ClientError, mkClientEnv)
+import Servant.Client.Streaming (ClientM, client, withClientM)
 import StateMachine.Gen (generator, shrinker)
 import StateMachine.Types
   ( AuthCommand (..),
@@ -428,13 +429,13 @@ mock m =
 semantics :: Command Concrete -> ReaderT ClientEnv IO (Response Concrete)
 semantics =
   let run' :: forall a. ClientM a -> ReaderT ClientEnv IO (Either ClientError a)
-      run' req = ask >>= liftIO . runClientM req
+      run' req = ask >>= liftIO . flip (withClientM req) pure
       run req f =
         run' req >>= \case
           Left ce -> pure $ FailResponse $ show ce
           Right (Out r) -> pure $ f r
       runNoContent req res = run' req >>= either (pure . FailResponse . show) (const $ pure res)
-      (apis :<|> (login :<|> register) :<|> getTags) :<|> _healthcheck = client $ Proxy @Api
+      (apis :<|> (login :<|> register) :<|> (getTags :<|> getTagsStream)) :<|> _healthcheck = client $ Proxy @Api
    in \case
         AuthCommand _m_ref ac ->
           case ac of
@@ -459,12 +460,11 @@ semantics =
                    in run getArticle $ const $ VisitorResponse GotArticle
                 -- FIXME: gen query param ?
                 ListArticles (fmap pure -> mTags) ((pure . un . concrete <$>) -> mAuthor) ((pure . un . concrete <$>) -> mFav) ->
-                  run
-                    (listArticles mTags mAuthor mFav Nothing Nothing)
-                    $ const $ VisitorResponse ListedArticles
+                  let listArticlesNoStream :<|> listArticlesStream = listArticles Nothing Nothing Nothing Nothing Nothing
+                   in run (listArticlesNoStream mTags mAuthor mFav Nothing Nothing) $ const $ VisitorResponse ListedArticles
                 GetTags -> run getTags $ const $ VisitorResponse GotTags
                 GetComments ref ->
-                  let _ :<|> getComments = withArticle $ pure $ concrete ref
+                  let _ :<|> (getComments :<|> getCommentsStream) = withArticle $ pure $ concrete ref
                    in run getComments $ const $ VisitorResponse GotComments
         UserCommand m_ref uc ->
           case m_ref of
@@ -505,7 +505,9 @@ semantics =
                     UnfavoriteArticle ref' ->
                       let _ :<|> _ :<|> (_ :<|> unfavoriteArticle) = withArticle $ pure $ concrete ref'
                        in run unfavoriteArticle $ const $ UserResponse UnfavoritedArticle
-                    FeedArticles -> run (feedArticles Nothing Nothing) $ const $ UserResponse FeededArticles
+                    FeedArticles ->
+                      let feedArticlesNoStream :<|> feedArticlesStream = feedArticles Nothing Nothing
+                       in run feedArticlesNoStream $ const $ UserResponse FeededArticles
 
 sm :: StateMachine Model Command (ReaderT ClientEnv IO) Response
 sm = StateMachine initModel transition precondition postcondition Nothing generator shrinker semantics mock noCleanup
