@@ -284,6 +284,8 @@ instance
               | (auid == authUserId) -> do
                 send $ Storage.Map.DeleteById articleId
                 send $ Relation.ToMany.Unrelate @_ @_ @"create" authUserId articleId
+                send (Relation.ToMany.GetRelated @_ @"has" @(IdOf 'Comment) articleId)
+                  >>= traverse_ (send . Storage.Map.DeleteById)
                 send $ Relation.ToMany.UnrelateByKey @_ @"has" @(IdOf 'Comment) articleId
                 send $ Relation.ManyToMany.UnrelateByKeyRight @_ @(IdOf 'User) @"favorite" articleId
               | otherwise -> throwError $ Forbidden @'D articleId
