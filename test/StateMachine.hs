@@ -436,15 +436,15 @@ semantics =
         run' req >>= \case
           Left ce -> pure $ FailResponse $ show ce
           Right (Out r) -> pure $ f r
-      runStream req f =
-        run' req >>= \case
-          Left ce -> pure $ FailResponse $ show ce
-          Right stream ->
-            liftIO $
-              runExceptT (runSourceT @IO stream) >>= \case
-                Left ce -> pure $ FailResponse $ show ce
-                Right r -> pure $ f r
       runNoContent req res = run' req >>= either (pure . FailResponse . show) (const $ pure res)
+      runStream req f =
+        ask >>= \env -> liftIO $
+          withClientM req env $ \case
+            Left ce -> pure $ FailResponse $ show ce
+            Right stream ->
+              runExceptT (runSourceT stream) <&> \case
+                Left ce -> FailResponse $ fromString ce
+                Right r -> f r
       (apis :<|> (login :<|> register) :<|> (getTags :<|> getTagsStream)) :<|> _healthcheck = client $ Proxy @Api
    in \case
         AuthCommand _m_ref ac ->
