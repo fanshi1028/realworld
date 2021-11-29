@@ -38,8 +38,8 @@ generator m =
       genAuthCommand =
         frequency
           [ (if null $ users m then 3 else 1, Register <$> arbitraryRealistic),
-            (if null $ credentials m then 0 else 1, uncurry Login <$> genCredentials),
-            (0, pure Logout)
+            (if null $ credentials m then 0 else 1, uncurry Login <$> genCredentials)
+            -- (0, pure Logout)
           ]
       genUserCommand =
         frequency
@@ -74,7 +74,7 @@ shrinker _ =
       AuthCommand m_ref <$> case ac of
         Register ur -> Register <$> shrinkRealistic ur
         Login _ _ -> []
-        Logout -> []
+        -- Logout -> []
     VisitorCommand _ _ -> []
     UserCommand m_ref uc ->
       UserCommand m_ref <$> case uc of
