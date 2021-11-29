@@ -392,7 +392,7 @@ mock m =
               pure $ pure UnfollowedUser
             CreateArticle ca -> do
               _ <- rightToMaybe $ validate ca
-              guard $ all ((/= toArticleId ca) . ArticleId . titleToSlug . getField @"title" . snd) $ articles m
+              guard $ all (((/=) `on` toArticleId) ca . snd) $ articles m
               pure $ CreatedArticle <$> genSym
             UpdateArticle ref ar -> do
               let validate' v = case v of

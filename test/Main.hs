@@ -6,9 +6,9 @@ import Network.HTTP.Client (defaultManagerSettings, newManager)
 import Roundtrip (aesonRoundtripTests)
 import Servant.Client (BaseUrl (BaseUrl), Scheme (Http))
 import StateMachine (prop1)
-import Test.Tasty (testGroup)
+import Test.Tasty (localOption, testGroup)
 import Test.Tasty.Ingredients.Rerun (defaultMainWithRerun)
-import Test.Tasty.QuickCheck (testProperties)
+import Test.Tasty.QuickCheck (QuickCheckReplay (QuickCheckReplay), testProperties)
 
 -- * Main
 
@@ -24,9 +24,11 @@ main = do
     testGroup
       "tests"
       [ specs,
-        testProperties "state machine: " $
-          [ ("seq", prop1 newApp mgr mkUrl)
-          -- NOTE: current state machine is not build for concurrency
-          -- ("parallel", prop2 newApp mgr mkUrl)
-          ]
+        localOption (QuickCheckReplay Nothing) $
+          testProperties
+            "state machine: "
+            [ ("seq", prop1 newApp mgr mkUrl)
+            -- NOTE: current state machine is not build for concurrency
+            -- ("parallel", prop2 newApp mgr mkUrl)
+            ]
       ]
