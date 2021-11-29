@@ -47,7 +47,7 @@ import qualified OptionalAuthAction (E (GetProfile))
 import qualified Relation.ManyToMany (E (GetRelatedLeft, GetRelatedRight, IsRelated, Relate, Unrelate, UnrelateByKeyLeft, UnrelateByKeyRight))
 import qualified Relation.ToMany (E (GetRelated, IsRelated, Relate, Unrelate, UnrelateByKey))
 import qualified Relation.ToOne (E (GetRelated, Relate, Unrelate))
-import Relude.Extra ((.~))
+import Relude.Extra ((.~), (^.))
 import Storage.Error (AlreadyExists (AlreadyExists), NotFound (NotFound))
 import Storage.Map (CRUD (D, U), ContentOf (..), CreateOf (ArticleCreate, CommentCreate), Forbidden (Forbidden), HasCreate (CreateOf), HasStorage (ContentOf, IdOf), IdAlreadyExists, IdNotFound, IdOf (ArticleId, CommentId, UserId), Patch, UpdateOf, toArticleId, toArticlePatch, toUserId)
 import qualified Storage.Map (E (DeleteById, GetById, Insert, UpdateById))
@@ -124,6 +124,7 @@ instance
     Member (Relation.ManyToMany.E (IdOf 'User) "favorite" (IdOf 'Article)) sig,
     Member (Relation.ManyToMany.E (IdOf 'Article) "taggedBy" Tag) sig,
     Member (Relation.ToMany.E (IdOf 'Article) "has" (IdOf 'Comment)) sig,
+    Member (Relation.ToMany.E (IdOf 'User) "create" (IdOf 'Comment)) sig,
     Member (Relation.ToMany.E (IdOf 'User) "create" (IdOf 'Article)) sig,
     Member (Relation.ToOne.E Email "of" (IdOf 'User)) sig,
     Member (Throw (NotLogin 'User)) sig,
@@ -189,6 +190,14 @@ instance
                       send $ Storage.Map.UpdateById aid (\a -> a & field' @"author" .~ newId)
                   )
               send $ Relation.ToMany.UnrelateByKey @_ @"create" @(IdOf 'Article) authUserId
+
+              send (Relation.ToMany.GetRelated @_ @"create" @(IdOf 'Comment) authUserId)
+                >>= traverse_
+                  ( \cid -> do
+                      send $ Relation.ToMany.Relate @_ @_ @"create" newId cid
+                      send $ Storage.Map.UpdateById cid (\a -> a & field' @"author" .~ newId)
+                  )
+              send $ Relation.ToMany.UnrelateByKey @_ @"create" @(IdOf 'Comment) authUserId
 
               send (Relation.ManyToMany.GetRelatedLeft @_ @"favorite" @(IdOf 'Article) authUserId)
                 >>= traverse_ (send . Relation.ManyToMany.Relate @_ @_ @"favorite" newId)
@@ -284,9 +293,16 @@ instance
               | (auid == authUserId) -> do
                 send $ Storage.Map.DeleteById articleId
                 send $ Relation.ToMany.Unrelate @_ @_ @"create" authUserId articleId
+
                 send (Relation.ToMany.GetRelated @_ @"has" @(IdOf 'Comment) articleId)
-                  >>= traverse_ (send . Storage.Map.DeleteById)
+                  >>= traverse_
+                    ( \cid -> do
+                        uid <- (^. field' @"author") <$> send (Storage.Map.GetById cid)
+                        send $ Relation.ToMany.Unrelate @_ @_ @"create" uid cid
+                        send $ Storage.Map.DeleteById cid
+                    )
                 send $ Relation.ToMany.UnrelateByKey @_ @"has" @(IdOf 'Comment) articleId
+
                 send $ Relation.ManyToMany.UnrelateByKeyRight @_ @(IdOf 'User) @"favorite" articleId
               | otherwise -> throwError $ Forbidden @'D articleId
         AddCommentToArticle articleId (CommentCreate txt) -> do
@@ -295,6 +311,7 @@ instance
           let a = CommentContent commentId t t txt authUserId articleId
           send $ Storage.Map.Insert commentId a
           send $ Relation.ToMany.Relate @_ @_ @"has" articleId commentId
+          send $ Relation.ToMany.Relate @_ @_ @"create" authUserId commentId
           pure $
             CommentWithAuthorProfile commentId t t txt $
               -- FIXME is th current user following himself??
@@ -309,6 +326,7 @@ instance
                   | auid == authUserId -> do
                     send $ Storage.Map.DeleteById commentId
                     send $ Relation.ToMany.Unrelate @_ @_ @"has" articleId commentId
+                    send $ Relation.ToMany.Unrelate @_ @_ @"create" authUserId commentId
                   | otherwise -> throwError $ Forbidden @'D commentId
         FavoriteArticle articleId -> do
           a@(getField @"author" -> authorId) <- send $ Storage.Map.GetById articleId

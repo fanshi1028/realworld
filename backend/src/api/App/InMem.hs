@@ -83,8 +83,10 @@ mkApp ::
   Multimap (IdOf 'User) (IdOf 'Article) ->
   -- | article favourited by user
   Multimap (IdOf 'Article) (IdOf 'User) ->
+  -- | user created comment
+  Multimap (IdOf 'User) (IdOf 'Comment) ->
   Application
-mkApp cs jwts userDb articleDb commentDb tagDb emailUserIndex db0 db1 db2 db3 db4 db5 db6 db7 =
+mkApp cs jwts userDb articleDb commentDb tagDb emailUserIndex db0 db1 db2 db3 db4 db5 db6 db7 db8 =
   serveWithContext (Proxy @Api) (cs :. jwts :. EmptyContext) $
     hoistServerWithContext
       (Proxy @Api)
@@ -108,6 +110,7 @@ mkApp cs jwts userDb articleDb commentDb tagDb emailUserIndex db0 db1 db2 db3 db
               & Relation.ManyToMany.InMem.run @(IdOf 'User) @"follow" @(IdOf 'User) db4 db5
               & Relation.ManyToMany.InMem.run @(IdOf 'User) @"favorite" @(IdOf 'Article) db6 db7
               & Relation.ToOne.InMem.run @Email @"of" @(IdOf 'User) emailUserIndex
+              & Relation.ToMany.InMem.run @(IdOf 'User) @"create" @(IdOf 'Comment) db8
               & Relation.ToMany.InMem.run @(IdOf 'Article) @"has" @(IdOf 'Comment) db0
               & Relation.ToMany.InMem.run @(IdOf 'User) @"create" @(IdOf 'Article) db1
               & R.runReader uuid
@@ -178,6 +181,7 @@ newApp =
     <*> STM.Map.newIO
     <*> STM.Set.newIO
     <*> STM.Map.newIO
+    <*> STM.Multimap.newIO
     <*> STM.Multimap.newIO
     <*> STM.Multimap.newIO
     <*> STM.Multimap.newIO
