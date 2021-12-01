@@ -15,6 +15,8 @@ import Domain (Domain (Article, User))
 import Domain.Article (ArticleR)
 import Domain.Comment (CommentR)
 import Domain.User (UserR)
+import Field.Tag (Tag)
+import Field.Username (Username)
 import Storage.Map (IdOf)
 
 -- | @since 0.3.0.0
@@ -28,7 +30,7 @@ data OptionalAuthActionE (m :: Type -> Type) a where
   GetArticle :: IdOf 'Article -> OptionalAuthActionE m (ArticleR "withAuthorProfile")
   -- | @since 0.3.0.0
   -- Get all the articles.
-  ListArticles :: OptionalAuthActionE m [ArticleR "withAuthorProfile"]
+  ListArticles :: Maybe Tag -> Maybe Username -> Maybe Username -> OptionalAuthActionE m [ArticleR "withAuthorProfile"]
   -- | @since 0.3.0.0
   -- Get all the comments of the article specified by the id.
   GetComments :: IdOf 'Article -> OptionalAuthActionE m [CommentR "withAuthorProfile"]

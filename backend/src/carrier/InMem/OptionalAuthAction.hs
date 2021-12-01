@@ -22,7 +22,7 @@ import Control.Algebra (Algebra (alg), send, type (:+:) (L, R))
 import Control.Carrier.NonDet.Church (runNonDetA)
 import Control.Effect.Catch (Catch, catchError)
 import Control.Effect.NonDet (oneOf)
-import qualified Control.Effect.Reader as R
+import qualified Control.Effect.Reader as R (Reader, ask)
 import Control.Effect.Sum (Member)
 import Control.Effect.Throw (Throw, throwError)
 import Domain (Domain (Article, Comment, User))
@@ -41,7 +41,7 @@ import InMem.Relation
   )
 import InMem.Storage (MapInMemE, getAllMapInMem, getByIdMapInMem)
 import OptionalAuthAction (OptionalAuthActionE (GetArticle, GetComments, GetProfile, ListArticles))
-import Storage.Map (ContentOf (..), IdNotFound, toUserId)
+import Storage.Map (ContentOf (..), IdNotFound, IdOf (UserId), toUserId)
 import Prelude hiding (id)
 
 -- | @since 0.3.0.0
@@ -82,17 +82,37 @@ instance
         a <- getByIdMapInMem aid
         ArticleWithAuthorProfile a
           <$> getRelatedLeftManyToMany @"ArticleTaggedByTag" aid
-          <*> pure False
+          <*> ( R.ask >>= \case
+                  Just (UserAuthWithToken (toUserId -> authId) _) -> do
+                    _ <- getByIdMapInMem authId
+                    isRelatedManyToMany @"UserFavoriteArticle" authId aid
+                  Nothing -> pure False
+              )
           <*> (genericLength <$> getRelatedRightManyToMany @"UserFavoriteArticle" aid)
           <*> send (GetProfile $ getField @"author" a)
-      ListArticles ->
+      ListArticles mTag mAuthor mFav ->
         runNonDetA @[] $ do
+          let mkPred :: forall a b. (a -> b -> Bool) -> Maybe a -> Predicate b
+              mkPred pp = maybe mempty (Predicate . pp)
+              predGuard :: forall m a. (Alternative m, Monad m) => Predicate a -> m a -> m a
+              predGuard (getPredicate -> p) ma = do
+                a <- ma
+                guard $ p a
+                pure a
           (aid, a) <- getAllMapInMem @'Article >>= oneOf
-          ArticleWithAuthorProfile a
-            <$> getRelatedLeftManyToMany @"ArticleTaggedByTag" aid
-            <*> pure False
-            <*> (genericLength <$> getRelatedRightManyToMany @"UserFavoriteArticle" aid)
-            <*> send (GetProfile $ getField @"author" a)
+          favBy <- getRelatedRightManyToMany @"UserFavoriteArticle" aid
+          follow <-
+            R.ask >>= \case
+              Just (UserAuthWithToken (toUserId -> authId) _) -> do
+                _ <- getByIdMapInMem authId
+                pure $ authId `elem` favBy
+              Nothing -> pure False
+          case mFav of
+            Nothing -> pure ()
+            Just (elem . UserId -> check) -> guard $ check favBy
+          tags <- predGuard (mkPred elem mTag) (getRelatedLeftManyToMany @"ArticleTaggedByTag" aid)
+          ArticleWithAuthorProfile a tags follow (genericLength favBy)
+            <$> (predGuard (mkPred ((==) . UserId) mAuthor) (pure $ getField @"author" a) >>= send . GetProfile)
       GetComments aid -> do
         _ <- getByIdMapInMem aid
         runNonDetA @[] $ do

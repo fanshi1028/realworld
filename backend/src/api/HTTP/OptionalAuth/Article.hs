@@ -24,7 +24,7 @@ import Servant (ServerT, type (:<|>) ((:<|>)), type (:>))
 import Storage.Map (IdOf)
 import Util.JSON.To (Out (Out))
 import Util.Validation (ValidationErr)
-import Validation (Validation (Failure, Success))
+import Validation (Validation (Failure, Success), validation)
 
 -- * API
 
@@ -47,7 +47,13 @@ articleServer ::
   ServerT ArticleApi m
 articleServer =
   -- FIXME
-  (\_ _ _ _ _ -> Out <$> send ListArticles)
+  ( \mTag mAuthor mFavBy _ _ ->
+      Out
+        <$> validation
+          (throwError @ValidationErr)
+          send
+          (ListArticles <$> sequenceA mTag <*> sequenceA mAuthor <*> sequenceA mFavBy)
+  )
     :<|> ( \case
              Success aid ->
                Out <$> send (OptionalAuthAction.GetArticle aid)
