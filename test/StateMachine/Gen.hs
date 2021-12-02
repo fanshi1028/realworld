@@ -10,15 +10,17 @@ import StateMachine.Types
     UserCommand (..),
     VisitorCommand (..),
   )
-import Test.QuickCheck (Gen, elements, frequency)
+import Test.QuickCheck (Gen, elements, frequency, oneof)
 
 generator :: Model r -> Maybe (Gen (Command r))
 generator m =
-  let genRef = elements . map fst
+  let genMaybe g = oneof [pure Nothing, Just <$> g]
+      genRef = elements . map fst
       genUsers = genRef $ users m
       genArticles = genRef $ articles m
       genComments = genRef $ comments m
       genCredentials = elements $ credentials m
+      genTag = elements $ toList $ tags m
       genTokens =
         if null $ tokens m
           then pure Nothing
@@ -30,7 +32,12 @@ generator m =
       genVisitCommand =
         frequency
           [ (if null $ users m then 0 else 1, GetProfile <$> genUsers),
-            (1, pure ListArticles),
+            ( 1,
+              ListArticles
+                <$> (if null $ toList $ tags m then pure Nothing else genMaybe genTag)
+                  <*> (if null $ toList $ users m then pure Nothing else genMaybe genUsers)
+                  <*> (if null $ toList $ users m then pure Nothing else genMaybe genUsers)
+            ),
             (1, pure GetTags),
             (if null $ articles m then 0 else 1, GetArticle <$> genArticles),
             (if null $ articles m then 0 else 1, GetComments <$> genArticles)

@@ -4,6 +4,7 @@
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE NamedFieldPuns #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE StandaloneDeriving #-}
 {-# LANGUAGE TypeFamilies #-}
@@ -19,7 +20,7 @@ import Data.Aeson (FromJSON, ToJSON, eitherDecode, encode)
 import Data.Functor.Classes (Eq1, Ord1)
 import Data.Generics.Product (HasField' (field'), getField)
 import qualified Data.Semigroup as SG (Last (Last, getLast))
-import Data.Set (delete, insert)
+import Data.Set (delete, insert, isSubsetOf)
 import qualified Data.Set as S (empty, foldl', insert, map, member)
 import Domain.Transform (transform)
 import Domain.User (UserR (..))
@@ -29,6 +30,7 @@ import HTTP (Api)
 import Network.HTTP.Client (Manager)
 import Network.Wai.Handler.Warp (withApplication)
 import Orphans ()
+import Relude.Extra (un, (^.))
 import Servant (Application, Headers (Headers), type (:<|>) ((:<|>)))
 import Servant.Client (BaseUrl, ClientEnv, ClientError, ClientM, client, mkClientEnv, runClientM)
 import StateMachine.Gen (generator, shrinker)
@@ -80,7 +82,7 @@ import Util.Validation (WithValidation)
 import Validation (Validation (Failure, Success))
 
 initModel :: Model r
-initModel = Model mempty mempty mempty mempty mempty S.empty S.empty S.empty S.empty S.empty mempty
+initModel = Model mempty mempty mempty mempty mempty S.empty S.empty S.empty S.empty S.empty mempty S.empty
 
 transition :: (Eq1 r, Ord1 r) => Model r -> Command r -> Response r -> Model r
 transition m cm res = case (cm, res) of
@@ -141,6 +143,7 @@ transition m cm res = case (cm, res) of
         m
           & field' @"articles" %~ ((ref', cr) :)
           & field' @"userCreateArticle" %~ insert (ref, ref')
+          & field' @"tags" %~ (<> (cr ^. field' @"tagList" & fromList))
       (UpdateArticle ref' au, UpdatedArticle m_aid) ->
         case m_aid of
           Nothing -> m
@@ -198,13 +201,14 @@ postcondition m cmd res =
       hasCommentL = length . articleHasComment
       createArticleL = length . userCreateArticle
       tokensL = length . tokens
+      tagsL = length . tags
 
-      allL = [usersL, emailsL, credentialsL, articlesL, commentsL, followL, favoriteL, hasCommentL, createArticleL, tokensL]
-      authInv = [articlesL, commentsL, followL, favoriteL, hasCommentL, createArticleL]
-      followInv = [emailsL, credentialsL, usersL, articlesL, commentsL, favoriteL, hasCommentL, createArticleL, tokensL]
+      allL = [usersL, emailsL, credentialsL, articlesL, commentsL, followL, favoriteL, hasCommentL, createArticleL, tokensL, tagsL]
+      authInv = [articlesL, commentsL, followL, favoriteL, hasCommentL, createArticleL, tagsL]
+      followInv = [emailsL, credentialsL, usersL, articlesL, commentsL, favoriteL, hasCommentL, createArticleL, tokensL, tagsL]
       articleInv = [emailsL, credentialsL, usersL, followL, tokensL]
-      commentInv = [emailsL, credentialsL, usersL, articlesL, followL, favoriteL, createArticleL, tokensL]
-      favoriteInv = [emailsL, credentialsL, usersL, articlesL, commentsL, followL, hasCommentL, createArticleL, tokensL]
+      commentInv = [emailsL, credentialsL, usersL, articlesL, followL, favoriteL, createArticleL, tokensL, tagsL]
+      favoriteInv = [emailsL, credentialsL, usersL, articlesL, commentsL, followL, hasCommentL, createArticleL, tokensL, tagsL]
    in case (cmd, res) of
         (_, FailResponse _) -> m .== m' .// "same model"
         (AuthCommand _m_ref ac, AuthResponse ar) ->
@@ -227,7 +231,7 @@ postcondition m cmd res =
           m .== m' .// "same model" .&& case (vc, vr) of
             (GetProfile ref', GotProfile) -> Forall [m, m'] (findByRef' ref' . users) .// "the user exist"
             (GetArticle ref', GotArticle) -> Forall [m, m'] (findByRef' ref' . articles) .// "the article exists"
-            (ListArticles, ListedArticles) -> Top
+            (ListArticles {}, ListedArticles) -> Top
             (GetTags, GotTags) -> Top
             (GetComments ref', GotComments) -> Forall [m, m'] (findByRef' ref' . articles) .// "the article exists"
             _ -> error "visitor postcondition error"
@@ -254,13 +258,14 @@ postcondition m cmd res =
                 Forall [m, m'] (findByRef' ref' . users) .// "the user exists"
                   .&& notMember (ref'', ref') (userFollowUser m') .// "after: unfollowed the user"
                   .&& Boolean (and $ on (==) <$> followInv <*> pure m <*> pure m') .// "follow invariant"
-              (CreateArticle _, CreatedArticle ref') ->
+              (CreateArticle ArticleCreate {tagList}, CreatedArticle ref') ->
                 findByRef' ref' (articles m') .// "after: the article exists"
                   .&& Not (findByRef' ref' $ articles m) .// "before: the article not existed"
                   .&& member (ref'', ref') (userCreateArticle m') .// "after: user created the article"
                   .&& notMember (ref'', ref') (userCreateArticle m) .// "before: user didn't created the article"
                   .&& on (-) articlesL m' m .== 1 .// "after: added 1 to articles"
                   .&& on (-) createArticleL m' m .== 1 .// "after: added 1 to userCreateArticle"
+                  .&& Boolean (fromList tagList `isSubsetOf` tags m') .// "after: have tags"
                   .&& Boolean (and $ on (==) <$> commentsL : favoriteL : hasCommentL : articleInv <*> pure m <*> pure m') .// "article invariant"
               (UpdateArticle ref' _, UpdatedArticle m_ref) ->
                 let new_aid = fromMaybe ref' m_ref
@@ -333,7 +338,7 @@ mock m =
           GetArticle ref -> do
             _ <- findByRef ref $ articles m
             pure $ pure GotArticle
-          ListArticles -> pure $ pure ListedArticles
+          ListArticles {} -> pure $ pure ListedArticles
           GetTags -> pure $ pure GotTags
           GetComments ref -> do
             _ <- findByRef ref $ articles m
@@ -361,7 +366,7 @@ mock m =
               case m_uid of
                 Just new_un
                   | o_un == new_un -> pure ()
-                  | otherwise -> guard $ all (\(_, getField @"username" -> un) -> un /= new_un) $ users m
+                  | otherwise -> guard $ all (\(_, getField @"username" -> un') -> un' /= new_un) $ users m
                 Nothing -> pure ()
               case m_em of
                 Just new_em
@@ -453,7 +458,10 @@ semantics =
                   let getArticle :<|> _ = withArticle $ pure $ concrete ref
                    in run getArticle $ const $ VisitorResponse GotArticle
                 -- FIXME: gen query param ?
-                ListArticles -> run (listArticles Nothing Nothing Nothing Nothing Nothing) $ const $ VisitorResponse ListedArticles
+                ListArticles (fmap pure -> mTags) ((pure . un . concrete <$>) -> mAuthor) ((pure . un . concrete <$>) -> mFav) ->
+                  run
+                    (listArticles mTags mAuthor mFav Nothing Nothing)
+                    $ const $ VisitorResponse ListedArticles
                 GetTags -> run getTags $ const $ VisitorResponse GotTags
                 GetComments ref ->
                   let _ :<|> getComments = withArticle $ pure $ concrete ref

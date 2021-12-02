@@ -10,6 +10,7 @@ import Data.Functor.Classes (Show1)
 import Domain (Domain (Article, Comment, User))
 import Field.Email (Email)
 import Field.Password (Password)
+import Field.Tag (Tag)
 import GHC.Generics (Generic1)
 import Orphans ()
 import Storage.Map (CreateOf (..), IdOf (..), Patch, UpdateOf (..))
@@ -21,7 +22,7 @@ import Token.HasToken (TokenOf (..))
 data VisitorCommand r
   = GetProfile (Reference (IdOf 'User) r)
   | GetArticle (Reference (IdOf 'Article) r)
-  | ListArticles
+  | ListArticles (Maybe Tag) (Maybe (Reference (IdOf 'User) r)) (Maybe (Reference (IdOf 'User) r))
   | GetTags
   | GetComments (Reference (IdOf 'Article) r)
   deriving (Show)
@@ -178,7 +179,8 @@ data Model r = Model
     articleHasComment :: Set (Reference (IdOf 'Article) r, Reference (IdOf 'Comment) r),
     userCreateComment :: Set (Reference (IdOf 'User) r, Reference (IdOf 'Comment) r),
     userCreateArticle :: Set (Reference (IdOf 'User) r, Reference (IdOf 'Article) r),
-    tokens :: [(Reference (TokenOf 'User) r, Reference Email r)]
+    tokens :: [(Reference (TokenOf 'User) r, Reference Email r)],
+    tags :: Set Tag
   }
   deriving (Show, Eq, Generic)
 
