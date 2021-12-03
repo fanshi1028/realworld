@@ -140,6 +140,7 @@ library backend-effect-internal
     Relation.ToOne.InMem
     Relation.ToOne.Pure
     Storage.Error
+    Storage.InMem
     Storage.Map
     Storage.Map.InMem
     Storage.Map.Internal.HasCreate
