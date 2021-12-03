@@ -37,7 +37,7 @@ import Servant
   )
 import Servant.Auth.Server (CookieSettings, JWTSettings)
 import Servant.Auth.Server.Internal.Cookie (applyCookieSettings, applySessionCookieSettings)
-import qualified Storage.Map (E)
+import Storage.InMem (MapInMemE)
 import Token (TokenOf (UserToken))
 import Token.Create (E (CreateToken))
 import Util.JSON.From (In (In))
@@ -68,7 +68,7 @@ authUserServer ::
     Member (Throw Text) sig,
     Member (Token.Create.E 'User) sig,
     Member (Authentication.E 'User) sig,
-    Member (Storage.Map.E 'User) sig,
+    MapInMemE 'User sig,
     Member Cookie.Xsrf.E sig,
     AddHeader "Set-Cookie" SetCookie (AuthOf 'User) withOneCookie,
     AddHeader "Set-Cookie" SetCookie withOneCookie withTwoCookies

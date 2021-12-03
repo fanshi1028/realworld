@@ -34,7 +34,7 @@ import qualified OptionalAuthAction
 import Servant (Get, JSON, ServerT, type (:<|>) ((:<|>)), type (:>))
 import Servant.Auth.Server (Auth, AuthResult (Authenticated, BadPassword, Indefinite, NoSuchUser), CookieSettings, JWTSettings)
 import Servant.Server (hoistServer)
-import qualified Storage.Map (E)
+import Storage.InMem (MapInMemE)
 import qualified Token.Create (E)
 import Token.Decode (InvalidToken)
 import qualified UserAction (E)
@@ -70,7 +70,7 @@ server ::
     Member (R.Reader JWTSettings) sig,
     Member (R.Reader CookieSettings) sig,
     Member (R.Reader (Maybe (UserR "authWithToken"))) sig,
-    Member (Storage.Map.E 'User) sig,
+    MapInMemE 'User sig,
     Member (Authentication.E 'User) sig,
     Member (Token.Create.E 'User) sig,
     Member (Throw Text) sig,

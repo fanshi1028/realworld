@@ -1,4 +1,8 @@
+{-# LANGUAGE ConstraintKinds #-}
+{-# LANGUAGE DataKinds #-}
 {-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE StandaloneDeriving #-}
 
 -- |
 -- Description : Helper
@@ -12,13 +16,24 @@
 module Storage.InMem
   ( -- * Set storage in memory effect
 
-    -- * Helper
+    -- ** Helper
     isMemberSetInMem,
     getAllSetInMem,
     insertSetInMem,
     deleteSetInMem,
 
+    -- ** Constraint
+    SetInMemE,
+
     -- * Map storage in memory effect
+
+    -- ** Type alias
+    TableInMem,
+
+    -- ** Constraint
+    MapInMemE',
+    MapInMemE,
+
     -- ** Helper
     getAllMapInMem,
     getByIdMapInMem,
@@ -33,42 +48,51 @@ import Control.Effect.Error (Throw, throwError)
 import Control.Effect.Lift (Lift, sendM)
 import qualified Control.Effect.Reader as R (Reader, ask)
 import Control.Effect.Sum (Member)
+import Domain (Domain)
 import Domain.Transform (Transform, transform)
 import qualified Focus as FC (Change (Leave, Remove), cases)
 import qualified ListT (fold, toList)
 import qualified StmContainers.Map as STMMap (Map, delete, focus, insert, listT, lookup)
 import qualified StmContainers.Set as STMSet (Set, focus, insert, listT, lookup)
 import Storage.Error (AlreadyExists (AlreadyExists), NotFound (NotFound))
+import Storage.Map (HasStorage (ContentOf), IdOf)
 
+-- | @since 0.3.0.0
 isMemberSetInMem ::
-  ( Member (Lift STM) sig,
-    Algebra sig m,
-    Eq item,
+  ( Eq item,
     Hashable item,
+    Algebra sig m,
+    Member (Lift STM) sig,
     Member (R.Reader (STMSet.Set item)) sig
   ) =>
   item ->
   m Bool
 isMemberSetInMem e = R.ask >>= sendM . STMSet.lookup e
+{-# INLINE isMemberSetInMem #-}
 
+-- | @since 0.3.0.0
 getAllSetInMem :: (Algebra sig m, Member (Lift STM) sig, Member (R.Reader (STMSet.Set item)) sig) => m [item]
 getAllSetInMem = R.ask >>= sendM . ListT.fold (\r e -> pure $ e : r) [] . STMSet.listT
+{-# INLINE getAllSetInMem #-}
 
+-- | @since 0.3.0.0
 insertSetInMem ::
-  ( Member (Lift STM) sig,
+  ( Eq item,
+    Hashable item,
+    Member (Lift STM) sig,
     Member (R.Reader (STMSet.Set item)) sig,
-    Algebra sig m,
-    Eq item,
-    Hashable item
+    Algebra sig m
   ) =>
   item ->
   m ()
 insertSetInMem e = R.ask >>= sendM . STMSet.insert e
+{-# INLINE insertSetInMem #-}
 
+-- | @since 0.3.0.0
 deleteSetInMem ::
-  ( Algebra sig m,
+  ( Eq item,
     Hashable item,
-    Eq item,
+    Algebra sig m,
     Member (R.Reader (STMSet.Set item)) sig,
     Member (Throw (NotFound item)) sig,
     Member (Lift STM) sig
@@ -79,66 +103,92 @@ deleteSetInMem e =
   R.ask
     >>= sendM . STMSet.focus (FC.cases (Nothing, FC.Leave) (const (Just (), FC.Remove))) e
     >>= maybe (throwError $ NotFound e) pure
+{-# INLINE deleteSetInMem #-}
 
-_try ::
-  ( Algebra sig m,
-    Hashable a,
-    Eq a,
-    Member (Throw (NotFound a)) sig,
+-- | @since 0.3.0.0
+type SetInMemE item sig =
+  ( Eq item,
+    Hashable item,
+    Member (R.Reader (STMSet.Set item)) sig,
+    Member (Throw (NotFound item)) sig,
+    Member (Lift STM) sig
+  )
+
+-- | @since 0.3.0.0
+type TableInMem s = STMMap.Map (IdOf s) (ContentOf s)
+
+-- | @since 0.3.0.0
+getAllMapInMem ::
+  ( Member (R.Reader (TableInMem d)) sig,
+    Algebra sig m,
     Member (Lift STM) sig
   ) =>
-  (value -> (Maybe c, FC.Change value)) ->
-  a ->
-  STMMap.Map a value ->
-  m c
-_try action id' = sendM . STMMap.focus (FC.cases (Nothing, FC.Leave) action) id' >=> maybe (throwError $ NotFound id') pure
-
-getAllMapInMem :: (Algebra sig m, Member (Lift STM) sig, Member (R.Reader (STMMap.Map key v)) sig) => m [(key, v)]
+  m [(IdOf d, ContentOf d)]
 getAllMapInMem = R.ask >>= sendM . ListT.toList . STMMap.listT
+{-# INLINE getAllMapInMem #-}
 
+-- | @since 0.3.0.0
 getByIdMapInMem ::
-  ( Algebra sig m,
-    Hashable key,
-    Eq key,
-    Member (R.Reader (STMMap.Map key v)) sig,
-    Member (Throw (NotFound key)) sig,
+  ( Hashable (IdOf d),
+    Eq (IdOf d),
+    Algebra sig m,
+    Member (R.Reader (TableInMem d)) sig,
+    Member (Throw (NotFound (IdOf d))) sig,
     Member (Lift STM) sig
   ) =>
-  key ->
-  m v
+  IdOf d ->
+  m (ContentOf d)
 getByIdMapInMem id' =
   R.ask
     >>= sendM . STMMap.lookup id'
     >>= maybe (throwError $ NotFound id') pure
+{-# INLINE getByIdMapInMem #-}
 
-insertMapInMem :: (Member (Lift STM) sig, Algebra sig m, Eq key, Hashable key, Member (R.Reader (STMMap.Map key value)) sig) => key -> value -> m ()
-insertMapInMem key value = R.ask >>= sendM . STMMap.insert value key
-
-deleteByIdMapInMem ::
-  ( Hashable k,
+-- | @since 0.3.0.0
+insertMapInMem ::
+  ( Eq (IdOf d),
+    Hashable (IdOf d),
     Algebra sig m,
-    Eq k,
-    Member (Throw (NotFound k)) sig,
-    Member (Lift STM) sig
-  ) =>
-  k ->
-  STMMap.Map k v ->
-  m ()
-deleteByIdMapInMem = _try $ const (Just (), FC.Remove)
-
-updateByIdMapInMem ::
-  ( Algebra sig m,
-    Hashable key,
-    Eq key,
-    Member (R.Reader (STMMap.Map key v)) sig,
-    Transform v key,
     Member (Lift STM) sig,
-    Member (Throw (AlreadyExists key)) sig,
-    Member (Throw (NotFound key)) sig
+    Member (R.Reader (TableInMem d)) sig
   ) =>
-  key ->
-  (v -> v) ->
-  m v
+  IdOf d ->
+  ContentOf d ->
+  m ()
+insertMapInMem key value = R.ask >>= sendM . STMMap.insert value key
+{-# INLINE insertMapInMem #-}
+
+-- | @since 0.3.0.0
+deleteByIdMapInMem ::
+  ( Hashable (IdOf d),
+    Eq (IdOf d),
+    Algebra sig m,
+    Member (Throw (NotFound (IdOf d))) sig,
+    Member (Lift STM) sig,
+    Member (R.Reader (TableInMem d)) sig
+  ) =>
+  IdOf d ->
+  m (ContentOf d)
+deleteByIdMapInMem id' =
+  R.ask
+    >>= sendM . STMMap.focus (FC.cases (Nothing, FC.Leave) (\v -> (Just v, FC.Remove))) id'
+    >>= maybe (throwError $ NotFound id') pure
+{-# INLINE deleteByIdMapInMem #-}
+
+-- | @since 0.3.0.0
+updateByIdMapInMem ::
+  ( Hashable (IdOf d),
+    Eq (IdOf d),
+    Transform (ContentOf d) (IdOf d),
+    Algebra sig m,
+    Member (R.Reader (TableInMem d)) sig,
+    Member (Lift STM) sig,
+    Member (Throw (AlreadyExists (IdOf d))) sig,
+    Member (Throw (NotFound (IdOf d))) sig
+  ) =>
+  IdOf d ->
+  (ContentOf d -> ContentOf d) ->
+  m (ContentOf d)
 updateByIdMapInMem id' updateF = do
   stmMap <- R.ask
   sendM (STMMap.lookup id' stmMap)
@@ -154,3 +204,18 @@ updateByIdMapInMem id' updateF = do
                   sendM (STMMap.lookup newId stmMap) >>= \case
                     Just _ -> throwError $ AlreadyExists newId
                     Nothing -> sendM $ STMMap.delete id' stmMap >> STMMap.insert new newId stmMap
+{-# INLINE updateByIdMapInMem #-}
+
+-- | @since 0.3.0.0
+type MapInMemE' key value sig =
+  ( Eq key,
+    Hashable key,
+    Transform value key,
+    Member (Lift STM) sig,
+    Member (R.Reader (STMMap.Map key value)) sig,
+    Member (Throw (AlreadyExists key)) sig,
+    Member (Throw (NotFound key)) sig
+  )
+
+-- | @since 0.3.0.0
+type MapInMemE (d :: Domain) sig = MapInMemE' (IdOf d) (ContentOf d) sig

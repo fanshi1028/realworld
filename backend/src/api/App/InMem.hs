@@ -45,9 +45,8 @@ import qualified StmContainers.Multimap as STM.Multimap (newIO)
 import StmContainers.Set as STM.Set (newIO)
 import qualified StmContainers.Set as STM (Set)
 import Storage.Error (AlreadyExists, NotFound)
+import Storage.InMem (TableInMem)
 import Storage.Map (CRUD (D, U), Forbidden, IdAlreadyExists, IdNotFound, IdOf)
-import Storage.Map.InMem (TableInMem)
-import qualified Storage.Map.InMem (run)
 import Token (TokenOf (..))
 import qualified Token.Create.JWT (run)
 import Token.Decode (InvalidToken)
@@ -101,9 +100,6 @@ mkApp cs jwts userDb articleDb commentDb tagDb emailUserIndex db0 db1 db2 db3 db
               & Token.Create.JWT.run @'User @SystemDRG
               & Cookie.Xsrf.run @SystemDRG
               & Authentication.User.run @SystemDRG
-              & Storage.Map.InMem.run @'User userDb
-              & Storage.Map.InMem.run @'Article articleDb
-              & Storage.Map.InMem.run @'Comment commentDb
               & Relation.ManyToMany.InMem.run @(IdOf 'Article) @"taggedBy" @Tag db2 db3
               & Relation.ManyToMany.InMem.run @(IdOf 'User) @"follow" @(IdOf 'User) db4 db5
               & Relation.ManyToMany.InMem.run @(IdOf 'User) @"favorite" @(IdOf 'Article) db6 db7
@@ -111,6 +107,9 @@ mkApp cs jwts userDb articleDb commentDb tagDb emailUserIndex db0 db1 db2 db3 db
               & Relation.ToMany.InMem.run @(IdOf 'User) @"create" @(IdOf 'Comment) db8
               & Relation.ToMany.InMem.run @(IdOf 'Article) @"has" @(IdOf 'Comment) db0
               & Relation.ToMany.InMem.run @(IdOf 'User) @"create" @(IdOf 'Article) db1
+              & R.runReader userDb
+              & R.runReader articleDb
+              & R.runReader commentDb
               & R.runReader tagDb
               & R.runReader uuid
               & R.runReader time

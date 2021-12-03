@@ -142,7 +142,6 @@ library backend-effect-internal
     Storage.Error
     Storage.InMem
     Storage.Map
-    Storage.Map.InMem
     Storage.Map.Internal.HasCreate
     Storage.Map.Internal.HasCreate.Article
     Storage.Map.Internal.HasCreate.Comment

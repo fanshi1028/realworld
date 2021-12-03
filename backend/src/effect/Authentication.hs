@@ -37,7 +37,7 @@ where
 import Authentication.Internal.HasAuth as X
 import Authentication.Internal.HasAuth.User as X
 import Domain (Domain)
-import Storage.Map (CreateOf)
+import Storage.Map.Internal.HasCreate (CreateOf)
 
 -- | @since 0.3.0.0
 data E (s :: Domain) (m :: Type -> Type) a where

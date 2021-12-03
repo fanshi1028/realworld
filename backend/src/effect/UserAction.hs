@@ -49,8 +49,8 @@ import qualified Relation.ToMany (E (GetRelated, IsRelated, Relate, Unrelate, Un
 import qualified Relation.ToOne (E (GetRelated, Relate, Unrelate))
 import Relude.Extra ((.~), (^.))
 import Storage.Error (AlreadyExists (AlreadyExists), NotFound (NotFound))
+import Storage.InMem (MapInMemE, deleteByIdMapInMem, getByIdMapInMem, insertMapInMem, updateByIdMapInMem)
 import Storage.Map (CRUD (D, U), ContentOf (..), CreateOf (ArticleCreate, CommentCreate), Forbidden (Forbidden), HasCreate (CreateOf), HasStorage (ContentOf, IdOf), IdAlreadyExists, IdNotFound, IdOf (ArticleId, CommentId, UserId), Patch, UpdateOf, toArticleId, toArticlePatch, toUserId)
-import qualified Storage.Map (E (DeleteById, GetById, Insert, UpdateById))
 
 -- * Effect
 
@@ -105,9 +105,9 @@ newtype C gen m a = C
 
 -- | @since 0.2.0.0
 instance
-  ( Member (Storage.Map.E 'User) sig,
-    Member (Storage.Map.E 'Article) sig,
-    Member (Storage.Map.E 'Comment) sig,
+  ( MapInMemE 'User sig,
+    MapInMemE 'Article sig,
+    MapInMemE 'Comment sig,
     Member (Catch (IdNotFound 'User)) sig,
     Member (Throw (IdAlreadyExists 'Article)) sig,
     Member (Throw (IdAlreadyExists 'User)) sig,
@@ -147,7 +147,7 @@ instance
         GetCurrentUser -> pure authOut
         UpdateUser update -> do
           -- FIXME GetCurrent (User) should return all(with token?) as it is internal, so that we can avoid looking by authUserId again like below
-          orig <- send $ Storage.Map.GetById authUserId
+          orig <- getByIdMapInMem authUserId
           let m_newEm = getField @"email" update
               m_newName = getField @"username" update
               o_em = getField @"email" orig
@@ -163,7 +163,7 @@ instance
                 | uid == authUserId = pure ()
                 | otherwise =
                   catchError @(IdNotFound 'User)
-                    (send (Storage.Map.GetById uid) >> throwError (AlreadyExists uid))
+                    (getByIdMapInMem uid >> throwError (AlreadyExists uid))
                     $ const $ pure ()
 
           case m_newName of
@@ -187,7 +187,7 @@ instance
                 >>= traverse_
                   ( \aid -> do
                       send $ Relation.ToMany.Relate @_ @_ @"create" newId aid
-                      send $ Storage.Map.UpdateById aid (\a -> a & field' @"author" .~ newId)
+                      updateByIdMapInMem aid (field' @"author" .~ newId)
                   )
               send $ Relation.ToMany.UnrelateByKey @_ @"create" @(IdOf 'Article) authUserId
 
@@ -195,7 +195,7 @@ instance
                 >>= traverse_
                   ( \cid -> do
                       send $ Relation.ToMany.Relate @_ @_ @"create" newId cid
-                      send $ Storage.Map.UpdateById cid (\a -> a & field' @"author" .~ newId)
+                      updateByIdMapInMem cid (& field' @"author" .~ newId)
                   )
               send $ Relation.ToMany.UnrelateByKey @_ @"create" @(IdOf 'Comment) authUserId
 
@@ -211,7 +211,7 @@ instance
                 >>= traverse_ (send . \rus -> Relation.ManyToMany.Relate @_ @_ @"follow" rus newId)
               send $ Relation.ManyToMany.UnrelateByKeyRight @_ @(IdOf 'User) @"follow" authUserId
 
-              send $ Storage.Map.DeleteById authUserId
+              void $ deleteByIdMapInMem authUserId
 
           update' <-
             construct $
@@ -231,29 +231,29 @@ instance
 
           case construct $ deconstruct (deconstruct orig) <> update' of
             Nothing -> error "Impossible: Missing field when update"
-            Just (construct -> SG.Last r) -> send (Storage.Map.Insert (toUserId r) r) $> transform r
+            Just (construct -> SG.Last r) -> insertMapInMem (toUserId r) r $> transform r
         FollowUser targetUserId -> do
-          targetUser <- send $ Storage.Map.GetById targetUserId
+          targetUser <- getByIdMapInMem targetUserId
           send $ Relation.ManyToMany.Relate @_ @_ @"follow" authUserId targetUserId
           pure $ UserProfile (transform targetUser) True
         UnfollowUser targetUserId -> do
-          targetUser <- send $ Storage.Map.GetById targetUserId
+          targetUser <- getByIdMapInMem targetUserId
           send (Relation.ManyToMany.Unrelate @_ @_ @"follow" authUserId targetUserId)
             $> UserProfile (transform targetUser) False
         CreateArticle (ArticleCreate tt des bd ts) -> do
           let aid = ArticleId $ titleToSlug tt
           catchError @(IdNotFound 'Article)
-            (send (Storage.Map.GetById aid) >> throwError (AlreadyExists aid))
+            (getByIdMapInMem aid >> throwError (AlreadyExists aid))
             $ const $ pure ()
           send $ Relation.ToMany.Relate @_ @_ @"create" authUserId aid
           t <- R.ask @Time
           foldMapA (send . Relation.ManyToMany.Relate @_ @_ @"taggedBy" aid) ts
           let a = ArticleContent tt des bd t t authUserId
-          send (Storage.Map.Insert (toArticleId a) a)
+          insertMapInMem (toArticleId a) a
             -- FIXME: Follow his own article?
             $> ArticleWithAuthorProfile a [] False 0 (UserProfile auth True)
         UpdateArticle articleId update ->
-          send (Storage.Map.GetById articleId) >>= \case
+          getByIdMapInMem articleId >>= \case
             orig
               | getField @"author" orig /= authUserId -> throwError $ Forbidden @'U articleId
               | otherwise -> do
@@ -264,7 +264,7 @@ instance
                   Just new_aid
                     | new_aid /= articleId -> do
                       catchError @(IdNotFound 'Article)
-                        (send (Storage.Map.GetById new_aid) >> throwError (AlreadyExists new_aid))
+                        (getByIdMapInMem new_aid >> throwError (AlreadyExists new_aid))
                         $ const $ pure ()
                       send $ Relation.ToMany.Unrelate @_ @_ @"create" authUserId articleId
                       send $ Relation.ToMany.Relate @_ @_ @"create" authUserId new_aid
@@ -272,34 +272,34 @@ instance
                         >>= traverse_
                           ( \cid -> do
                               send $ Relation.ToMany.Relate @_ @_ @"has" new_aid cid
-                              send $ Storage.Map.UpdateById cid (\c -> c {article = new_aid})
+                              updateByIdMapInMem cid $ \c -> c {article = new_aid}
                           )
                       send $ Relation.ToMany.UnrelateByKey @_ @"has" @(IdOf 'Comment) articleId
                       traverse_ (send . \u -> Relation.ManyToMany.Relate @_ @_ @"favorite" u new_aid) fus
                       send $ Relation.ManyToMany.UnrelateByKeyRight @_ @(IdOf 'User) @"favorite" articleId
                       traverse_ (send . Relation.ManyToMany.Relate @_ @_ @"taggedBy" new_aid) tags
                       send $ Relation.ManyToMany.UnrelateByKeyLeft @_ @"taggedBy" @Tag articleId
-                      send $ Storage.Map.DeleteById articleId
+                      void $ deleteByIdMapInMem articleId
                     | otherwise -> pure ()
                   Nothing -> pure ()
                 a <- case construct $ deconstruct (deconstruct orig) <> toArticlePatch update of
                   Nothing -> error "Impossible: Missing field when update"
-                  Just (construct -> SG.Last r) -> send (Storage.Map.Insert (toArticleId r) r) $> r
+                  Just (construct -> SG.Last r) -> insertMapInMem (toArticleId r) r $> r
                 ArticleWithAuthorProfile a tags (authUserId `elem` fus) (genericLength fus)
                   <$> send (OptionalAuthAction.GetProfile $ getField @"author" orig)
         DeleteArticle articleId ->
-          send (Storage.Map.GetById articleId) >>= \case
+          getByIdMapInMem articleId >>= \case
             (getField @"author" -> auid)
               | (auid == authUserId) -> do
-                send $ Storage.Map.DeleteById articleId
+                void $ deleteByIdMapInMem articleId
                 send $ Relation.ToMany.Unrelate @_ @_ @"create" authUserId articleId
 
                 send (Relation.ToMany.GetRelated @_ @"has" @(IdOf 'Comment) articleId)
                   >>= traverse_
                     ( \cid -> do
-                        uid <- (^. field' @"author") <$> send (Storage.Map.GetById cid)
+                        uid <- (^. field' @"author") <$> getByIdMapInMem cid
                         send $ Relation.ToMany.Unrelate @_ @_ @"create" uid cid
-                        send $ Storage.Map.DeleteById cid
+                        deleteByIdMapInMem cid
                     )
                 send $ Relation.ToMany.UnrelateByKey @_ @"has" @(IdOf 'Comment) articleId
 
@@ -309,7 +309,7 @@ instance
           t <- R.ask @Time
           commentId <- CommentId <$> R.ask
           let a = CommentContent commentId t t txt authUserId articleId
-          send $ Storage.Map.Insert commentId a
+          insertMapInMem commentId a
           send $ Relation.ToMany.Relate @_ @_ @"has" articleId commentId
           send $ Relation.ToMany.Relate @_ @_ @"create" authUserId commentId
           pure $
@@ -317,19 +317,19 @@ instance
               -- FIXME is th current user following himself??
               UserProfile auth True
         DeleteComment articleId commentId -> do
-          void $ send $ Storage.Map.GetById articleId
+          void $ getByIdMapInMem articleId
           send (Relation.ToMany.IsRelated @_ @_ @"has" articleId commentId) >>= \case
             False -> throwError $ NotFound commentId
             True ->
-              send (Storage.Map.GetById commentId) >>= \case
+              getByIdMapInMem commentId >>= \case
                 (getField @"author" -> auid)
                   | auid == authUserId -> do
-                    send $ Storage.Map.DeleteById commentId
+                    void $ deleteByIdMapInMem commentId
                     send $ Relation.ToMany.Unrelate @_ @_ @"has" articleId commentId
                     send $ Relation.ToMany.Unrelate @_ @_ @"create" authUserId commentId
                   | otherwise -> throwError $ Forbidden @'D commentId
         FavoriteArticle articleId -> do
-          a@(getField @"author" -> authorId) <- send $ Storage.Map.GetById articleId
+          a@(getField @"author" -> authorId) <- getByIdMapInMem articleId
           send $ Relation.ManyToMany.Relate @_ @_ @"favorite" authUserId articleId
           ArticleWithAuthorProfile a
             <$> send (Relation.ManyToMany.GetRelatedLeft @_ @"taggedBy" @Tag articleId)
@@ -337,7 +337,7 @@ instance
             <*> (genericLength <$> send (Relation.ManyToMany.GetRelatedRight @_ @(IdOf 'User) @"favorite" articleId))
             <*> send (OptionalAuthAction.GetProfile authorId)
         UnfavoriteArticle articleId -> do
-          a@(getField @"author" -> authorId) <- send $ Storage.Map.GetById articleId
+          a@(getField @"author" -> authorId) <- getByIdMapInMem articleId
           send $ Relation.ManyToMany.Unrelate @_ @_ @"favorite" authUserId articleId
           ArticleWithAuthorProfile a
             <$> send (Relation.ManyToMany.GetRelatedLeft @_ @"taggedBy" @Tag articleId)
@@ -352,7 +352,7 @@ instance
               >>= send . Relation.ToMany.GetRelated @(IdOf 'User) @"create"
               >>= oneOf
           flip (catchError @(IdNotFound 'Article)) (const $ throwError @Text "impossible: article id not found") $ do
-            a@(getField @"author" -> authorId) <- send $ Storage.Map.GetById articleId
+            a@(getField @"author" -> authorId) <- getByIdMapInMem articleId
             ArticleWithAuthorProfile a
               <$> send (Relation.ManyToMany.GetRelatedLeft @_ @"taggedBy" @Tag articleId)
               <*> send (Relation.ManyToMany.IsRelated @_ @_ @"favorite" authUserId articleId)

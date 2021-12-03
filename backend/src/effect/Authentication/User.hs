@@ -37,8 +37,8 @@ import Field.Password (checkPassword, hashPassword, newSalt)
 import GHC.Records (getField)
 import qualified Relation.ToOne (E (GetRelated, Relate))
 import Storage.Error (AlreadyExists (AlreadyExists), NotFound)
-import Storage.Map (ContentOf (UserContent), CreateOf (UserCreate), IdAlreadyExists, IdNotFound, IdOf (UserId), toUserId)
-import qualified Storage.Map
+import Storage.InMem (MapInMemE, getByIdMapInMem, insertMapInMem)
+import Storage.Map (ContentOf (..), CreateOf (UserCreate), IdAlreadyExists, IdNotFound, IdOf (UserId), toUserId)
 
 -- | @since 0.1.0.0
 newtype C gen m a = C
@@ -49,17 +49,17 @@ newtype C gen m a = C
 
 -- | @since 0.1.0.0
 instance
-  ( Algebra sig m,
+  ( DRG gen,
+    Algebra sig m,
+    MapInMemE 'User sig,
     Member (Relation.ToOne.E Email "of" (IdOf 'User)) sig,
     Member (Catch (IdNotFound 'User)) sig,
     Member (Throw (IdAlreadyExists 'User)) sig,
     Member (Throw (AlreadyExists Email)) sig,
     Member (Throw (NotAuthorized 'User)) sig,
-    Member (Storage.Map.E 'User) sig,
     Member (Throw (NotLogin 'User)) sig,
     Member (S.State gen) sig,
-    Member (R.Reader (Maybe (UserR "authWithToken"))) sig,
-    DRG gen
+    Member (R.Reader (Maybe (UserR "authWithToken"))) sig
   ) =>
   Algebra (Authentication.E 'User :+: sig) (C gen m)
   where
@@ -78,16 +78,16 @@ instance
                 let (salt, g') = withDRG g $ newSalt <$> getRandomBytes 16
                 S.put g'
                 catchError @(NotFound (IdOf 'User))
-                  (send (Storage.Map.GetById uid) >> throwError (AlreadyExists uid))
+                  (getByIdMapInMem uid >> throwError (AlreadyExists uid))
                   $ const $ pure $ UserContent em (hashPassword pw salt) user (Bio "") $ Image ""
-          send $ Storage.Map.Insert (toUserId u) u
+          insertMapInMem (toUserId u) u
           send $ Relation.ToOne.Relate @_ @_ @"of" em uid
           pure $ transform u
         Authentication.Login (UserLogin em pw) ->
           send (Relation.ToOne.GetRelated @_ @"of" @(IdOf 'User) em) >>= \case
             Nothing -> throwError $ NoSuchUser @'User
             Just uid -> do
-              a <- send $ Storage.Map.GetById uid
+              a <- getByIdMapInMem uid
               case checkPassword pw $ getField @"password" a of
                 PasswordCheckSuccess -> pure $ transform a
                 PasswordCheckFail -> throwError $ BadPassword @'User

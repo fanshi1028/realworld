@@ -38,8 +38,9 @@ import Servant.Auth.Server (CookieSettings, JWTSettings)
 import qualified Servant.Auth.Server as Auth (AuthCheck (AuthCheck))
 import Servant.Auth.Server.Internal.Class (IsAuth (AuthArgs, runAuth))
 import qualified StmContainers.Map as STM (lookup)
+import qualified StmContainers.Map as STMMap (Map)
+import Storage.InMem (TableInMem)
 import Storage.Map (IdOf)
-import Storage.Map.InMem (TableInMem, TableInMem')
 import Token (TokenOf (..))
 import Token.Decode (E (DecodeToken), InvalidToken)
 import Token.Decode.JWT (run)
@@ -78,7 +79,7 @@ data TokenAuthInMem
 
 -- | @since 0.1.0.0
 instance IsAuth TokenAuthInMem (UserR "authWithToken") where
-  type AuthArgs TokenAuthInMem = '[TableInMem 'User, TableInMem' (TokenOf 'User) (IdOf 'User)]
+  type AuthArgs TokenAuthInMem = '[TableInMem 'User, STMMap.Map (TokenOf 'User) (IdOf 'User)]
   runAuth _ _ userDb tokenDb = Auth.AuthCheck $ \case
     RequestToken token ->
       atomically $

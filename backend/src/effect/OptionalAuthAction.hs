@@ -34,8 +34,8 @@ import Field.Tag (Tag)
 import GHC.Records (getField)
 import qualified Relation.ManyToMany (E (GetRelatedLeft, GetRelatedRight, IsRelated))
 import qualified Relation.ToMany (E (GetRelated))
-import Storage.Map (ContentOf (..), HasStorage (IdOf), IdNotFound, toArticleId, toUserId)
-import qualified Storage.Map (E (GetAll, GetById))
+import Storage.InMem (MapInMemE, getAllMapInMem, getByIdMapInMem)
+import Storage.Map (ContentOf (..), HasStorage (IdOf), IdNotFound, toUserId)
 import Prelude hiding (id)
 
 -- * Effect
@@ -67,9 +67,9 @@ newtype C m a = C
 
 -- | @since 0.3.0.0
 instance
-  ( Member (Storage.Map.E 'User) sig,
-    Member (Storage.Map.E 'Article) sig,
-    Member (Storage.Map.E 'Comment) sig,
+  ( MapInMemE 'User sig,
+    MapInMemE 'Article sig,
+    MapInMemE 'Comment sig,
     Member (Relation.ManyToMany.E (IdOf 'Article) "taggedBy" Tag) sig,
     Member (Relation.ManyToMany.E (IdOf 'User) "favorite" (IdOf 'Article)) sig,
     Member (Relation.ManyToMany.E (IdOf 'User) "follow" (IdOf 'User)) sig,
@@ -85,15 +85,15 @@ instance
     (<$ ctx) <$> case action of
       GetProfile uid ->
         UserProfile . transform
-          <$> send (Storage.Map.GetById uid)
+          <$> getByIdMapInMem uid
           <*> ( R.ask >>= \case
                   Just (UserAuthWithToken (toUserId -> authId) _) -> do
-                    _ <- send $ Storage.Map.GetById authId
+                    _ <- getByIdMapInMem authId
                     send $ Relation.ManyToMany.IsRelated @_ @_ @"follow" authId uid
                   Nothing -> pure False
               )
       GetArticle aid -> do
-        a <- send $ Storage.Map.GetById aid
+        a <- getByIdMapInMem aid
         ArticleWithAuthorProfile a
           <$> send (Relation.ManyToMany.GetRelatedLeft @_ @"taggedBy" @Tag aid)
           <*> pure False
@@ -101,19 +101,18 @@ instance
           <*> send (GetProfile $ getField @"author" a)
       ListArticles ->
         runNonDetA @[] $ do
-          a <- send (Storage.Map.GetAll @'Article) >>= oneOf
-          let aid = toArticleId a
+          (aid, a) <- getAllMapInMem @'Article >>= oneOf
           ArticleWithAuthorProfile a
             <$> send (Relation.ManyToMany.GetRelatedLeft @(IdOf 'Article) @"taggedBy" @Tag aid)
             <*> pure False
             <*> (genericLength <$> send (Relation.ManyToMany.GetRelatedRight @_ @(IdOf 'User) @"favorite" aid))
             <*> send (GetProfile $ getField @"author" a)
       GetComments aid -> do
-        _ <- send $ Storage.Map.GetById aid
+        _ <- getByIdMapInMem aid
         runNonDetA @[] $ do
           cid <- send (Relation.ToMany.GetRelated @_ @"has" @(IdOf 'Comment) aid) >>= oneOf
           flip (catchError @(IdNotFound 'Comment)) (const $ throwError @Text "impossible: comment id not found") $ do
-            CommentContent {..} <- send $ Storage.Map.GetById cid
+            CommentContent {..} <- getByIdMapInMem cid
             CommentWithAuthorProfile cid createdAt updatedAt body <$> send (GetProfile author)
   alg hdl (R other) ctx = C $ alg (run . hdl) other ctx
   {-# INLINE alg #-}
