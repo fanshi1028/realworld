@@ -10,18 +10,21 @@
 --
 -- @since 0.3.0.0
 module Storage.InMem
-  ( -- * Set storage in memory effect helper
-    setInMemIsMember,
-    setInMemGetAll,
-    setInMemInsert,
-    setInMemDelete,
+  ( -- * Set storage in memory effect
 
-    -- * Map storage in memory effect helper
-    mapInMemGetAll,
-    mapInMemGetById,
-    mapInMemInsert,
-    mapInMemDeleteById,
-    mapInMemUpdateById,
+    -- * Helper
+    isMemberSetInMem,
+    getAllSetInMem,
+    insertSetInMem,
+    deleteSetInMem,
+
+    -- * Map storage in memory effect
+    -- ** Helper
+    getAllMapInMem,
+    getByIdMapInMem,
+    insertMapInMem,
+    deleteByIdMapInMem,
+    updateByIdMapInMem,
   )
 where
 
@@ -37,7 +40,7 @@ import qualified StmContainers.Map as STMMap (Map, delete, focus, insert, listT,
 import qualified StmContainers.Set as STMSet (Set, focus, insert, listT, lookup)
 import Storage.Error (AlreadyExists (AlreadyExists), NotFound (NotFound))
 
-setInMemIsMember ::
+isMemberSetInMem ::
   ( Member (Lift STM) sig,
     Algebra sig m,
     Eq item,
@@ -46,12 +49,12 @@ setInMemIsMember ::
   ) =>
   item ->
   m Bool
-setInMemIsMember e = R.ask >>= sendM . STMSet.lookup e
+isMemberSetInMem e = R.ask >>= sendM . STMSet.lookup e
 
-setInMemGetAll :: (Algebra sig m, Member (Lift STM) sig, Member (R.Reader (STMSet.Set item)) sig) => m [item]
-setInMemGetAll = R.ask >>= sendM . ListT.fold (\r e -> pure $ e : r) [] . STMSet.listT
+getAllSetInMem :: (Algebra sig m, Member (Lift STM) sig, Member (R.Reader (STMSet.Set item)) sig) => m [item]
+getAllSetInMem = R.ask >>= sendM . ListT.fold (\r e -> pure $ e : r) [] . STMSet.listT
 
-setInMemInsert ::
+insertSetInMem ::
   ( Member (Lift STM) sig,
     Member (R.Reader (STMSet.Set item)) sig,
     Algebra sig m,
@@ -60,9 +63,9 @@ setInMemInsert ::
   ) =>
   item ->
   m ()
-setInMemInsert e = R.ask >>= sendM . STMSet.insert e
+insertSetInMem e = R.ask >>= sendM . STMSet.insert e
 
-setInMemDelete ::
+deleteSetInMem ::
   ( Algebra sig m,
     Hashable item,
     Eq item,
@@ -72,7 +75,7 @@ setInMemDelete ::
   ) =>
   item ->
   m ()
-setInMemDelete e =
+deleteSetInMem e =
   R.ask
     >>= sendM . STMSet.focus (FC.cases (Nothing, FC.Leave) (const (Just (), FC.Remove))) e
     >>= maybe (throwError $ NotFound e) pure
@@ -90,10 +93,10 @@ _try ::
   m c
 _try action id' = sendM . STMMap.focus (FC.cases (Nothing, FC.Leave) action) id' >=> maybe (throwError $ NotFound id') pure
 
-mapInMemGetAll :: (Algebra sig m, Member (Lift STM) sig, Member (R.Reader (STMMap.Map key v)) sig) => m [(key, v)]
-mapInMemGetAll = R.ask >>= sendM . ListT.toList . STMMap.listT
+getAllMapInMem :: (Algebra sig m, Member (Lift STM) sig, Member (R.Reader (STMMap.Map key v)) sig) => m [(key, v)]
+getAllMapInMem = R.ask >>= sendM . ListT.toList . STMMap.listT
 
-mapInMemGetById ::
+getByIdMapInMem ::
   ( Algebra sig m,
     Hashable key,
     Eq key,
@@ -103,15 +106,15 @@ mapInMemGetById ::
   ) =>
   key ->
   m v
-mapInMemGetById id' =
+getByIdMapInMem id' =
   R.ask
     >>= sendM . STMMap.lookup id'
     >>= maybe (throwError $ NotFound id') pure
 
-mapInMemInsert :: (Member (Lift STM) sig, Algebra sig m, Eq key, Hashable key, Member (R.Reader (STMMap.Map key value)) sig) => key -> value -> m ()
-mapInMemInsert key value = R.ask >>= sendM . STMMap.insert value key
+insertMapInMem :: (Member (Lift STM) sig, Algebra sig m, Eq key, Hashable key, Member (R.Reader (STMMap.Map key value)) sig) => key -> value -> m ()
+insertMapInMem key value = R.ask >>= sendM . STMMap.insert value key
 
-mapInMemDeleteById ::
+deleteByIdMapInMem ::
   ( Hashable k,
     Algebra sig m,
     Eq k,
@@ -121,9 +124,9 @@ mapInMemDeleteById ::
   k ->
   STMMap.Map k v ->
   m ()
-mapInMemDeleteById = _try $ const (Just (), FC.Remove)
+deleteByIdMapInMem = _try $ const (Just (), FC.Remove)
 
-mapInMemUpdateById ::
+updateByIdMapInMem ::
   ( Algebra sig m,
     Hashable key,
     Eq key,
@@ -136,7 +139,7 @@ mapInMemUpdateById ::
   key ->
   (v -> v) ->
   m v
-mapInMemUpdateById id' updateF = do
+updateByIdMapInMem id' updateF = do
   stmMap <- R.ask
   sendM (STMMap.lookup id' stmMap)
     >>= \case

@@ -20,7 +20,7 @@ import qualified Control.Effect.Reader as R (Reader)
 import Control.Effect.Sum (Member)
 import Field.Tag (Tag)
 import qualified StmContainers.Set as STMSet (Set)
-import Storage.InMem (setInMemGetAll)
+import Storage.InMem (getAllSetInMem)
 
 -- * Effect
 
@@ -48,6 +48,6 @@ instance
   ) =>
   Algebra (VisitorActionE :+: sig) (VisitorActionInMemC m)
   where
-  alg _ (L GetTags) ctx = (<$ ctx) <$> setInMemGetAll @_ @_ @Tag
+  alg _ (L GetTags) ctx = (<$ ctx) <$> getAllSetInMem @_ @_ @Tag
   alg hdl (R other) ctx = VisitorActionInMemC $ alg (runVisitorActionInMem . hdl) other ctx
   {-# INLINE alg #-}
