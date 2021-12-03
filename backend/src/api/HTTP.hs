@@ -39,7 +39,7 @@ import qualified Token.Create (E)
 import Token.Decode (InvalidToken)
 import qualified UserAction (E)
 import Util.Validation (ValidationErr)
-import qualified VisitorAction (E)
+import VisitorAction (VisitorActionE)
 
 -- * API
 
@@ -63,7 +63,7 @@ type Api =
 -- all server
 server ::
   ( Algebra sig m,
-    Member VisitorAction.E sig,
+    Member VisitorActionE sig,
     Member OptionalAuthAction.E sig,
     Member UserAction.E sig,
     Member Cookie.Xsrf.E sig,

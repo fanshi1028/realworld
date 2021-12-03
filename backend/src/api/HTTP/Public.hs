@@ -17,7 +17,7 @@ import Control.Algebra (Algebra)
 import Control.Effect.Sum (Member)
 import HTTP.Public.Tag (TagApi, tagServer)
 import Servant (ServerT, type (:>))
-import qualified VisitorAction (E)
+import VisitorAction (VisitorActionE)
 
 -- * API
 
@@ -29,7 +29,7 @@ type PublicApi = "tags" :> TagApi
 -- | @since 0.3.0.0
 publicServer ::
   ( Algebra sig m,
-    Member VisitorAction.E sig
+    Member VisitorActionE sig
   ) =>
   ServerT PublicApi m
 publicServer = tagServer

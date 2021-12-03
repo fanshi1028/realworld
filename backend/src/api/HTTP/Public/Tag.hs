@@ -18,7 +18,7 @@ import Control.Effect.Sum (Member)
 import Field.Tag (Tag)
 import Servant (Get, JSON, ServerT)
 import Util.JSON.To (Out (Out))
-import qualified VisitorAction (E (GetTags))
+import VisitorAction (VisitorActionE (GetTags))
 
 -- * API
 
@@ -28,5 +28,5 @@ type TagApi = Get '[JSON] (Out [Tag])
 -- * Server
 
 -- | @since 0.1.0.0
-tagServer :: (Member VisitorAction.E sig, Algebra sig m) => ServerT TagApi m
-tagServer = Out <$> send VisitorAction.GetTags
+tagServer :: (Member VisitorActionE sig, Algebra sig m) => ServerT TagApi m
+tagServer = Out <$> send GetTags

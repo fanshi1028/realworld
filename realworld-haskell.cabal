@@ -154,8 +154,6 @@ library backend-effect-internal
     Storage.Map.Internal.HasUpdate
     Storage.Map.Internal.HasUpdate.Article
     Storage.Map.Internal.HasUpdate.User
-    Storage.Set
-    Storage.Set.InMem
     Token
     Token.Create
     Token.Create.JWT
