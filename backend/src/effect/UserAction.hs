@@ -44,9 +44,9 @@ import Field.Slug (titleToSlug)
 import Field.Tag (Tag)
 import Field.Time (Time)
 import qualified OptionalAuthAction (E (GetProfile))
+import Relation.InMem (ToOneRelationE, getRelatedToOne, relateToOne, unrelateToOne)
 import qualified Relation.ManyToMany (E (GetRelatedLeft, GetRelatedRight, IsRelated, Relate, Unrelate, UnrelateByKeyLeft, UnrelateByKeyRight))
 import qualified Relation.ToMany (E (GetRelated, IsRelated, Relate, Unrelate, UnrelateByKey))
-import qualified Relation.ToOne (E (GetRelated, Relate, Unrelate))
 import Relude.Extra ((.~), (^.))
 import Storage.Error (AlreadyExists (AlreadyExists), NotFound (NotFound))
 import Storage.InMem (MapInMemE, deleteByIdMapInMem, getByIdMapInMem, insertMapInMem, updateByIdMapInMem)
@@ -126,7 +126,7 @@ instance
     Member (Relation.ToMany.E (IdOf 'Article) "has" (IdOf 'Comment)) sig,
     Member (Relation.ToMany.E (IdOf 'User) "create" (IdOf 'Comment)) sig,
     Member (Relation.ToMany.E (IdOf 'User) "create" (IdOf 'Article)) sig,
-    Member (Relation.ToOne.E Email "of" (IdOf 'User)) sig,
+    ToOneRelationE "EmailOfUser" sig,
     Member (Throw (NotLogin 'User)) sig,
     Member (Throw (NotAuthorized 'User)) sig,
     Member (R.Reader (Maybe (UserR "authWithToken"))) sig,
@@ -156,7 +156,7 @@ instance
               checkEmail em
                 | em == o_em = pure ()
                 | otherwise =
-                  send (Relation.ToOne.GetRelated @_ @"of" @(IdOf 'User) em) >>= \case
+                  getRelatedToOne @"EmailOfUser" em >>= \case
                     Just _ -> throwError $ AlreadyExists em
                     Nothing -> pure ()
               checkUid uid
@@ -171,17 +171,17 @@ instance
               case m_newEm of
                 Just (SG.Last newEm) -> do
                   checkEmail newEm
-                  send $ Relation.ToOne.Unrelate @_ @_ @"of" o_em authUserId
-                  send $ Relation.ToOne.Relate @_ @_ @"of" newEm authUserId
+                  unrelateToOne @"EmailOfUser" o_em authUserId
+                  relateToOne @"EmailOfUser" newEm authUserId
                 Nothing -> pure ()
             Just (SG.Last (UserId -> newId)) -> do
               checkUid newId
-              send $ Relation.ToOne.Unrelate @_ @_ @"of" o_em authUserId
+              unrelateToOne @"EmailOfUser" o_em authUserId
               case m_newEm of
                 Just (SG.Last newEm) -> do
                   checkEmail newEm
-                  send $ Relation.ToOne.Relate @_ @_ @"of" newEm newId
-                Nothing -> send $ Relation.ToOne.Relate @_ @_ @"of" o_em newId
+                  relateToOne @"EmailOfUser" newEm newId
+                Nothing -> relateToOne @"EmailOfUser" o_em newId
 
               send (Relation.ToMany.GetRelated @_ @"create" @(IdOf 'Article) authUserId)
                 >>= traverse_

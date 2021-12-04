@@ -131,14 +131,15 @@ library backend-effect-internal
     Field.Title
     Field.Username
     OptionalAuthAction
+    Relation.InMem
+    Relation.Internal.ToOne
+    Relation.Internal.ToOne.EmailOfUser
     Relation.ManyToMany
     Relation.ManyToMany.InMem
     Relation.ToMany
     Relation.ToMany.InMem
     Relation.ToMany.Pure
     Relation.ToOne
-    Relation.ToOne.InMem
-    Relation.ToOne.Pure
     Storage.Error
     Storage.InMem
     Storage.Map

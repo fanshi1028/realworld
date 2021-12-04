@@ -18,7 +18,7 @@ module Authentication.User where
 
 import Authentication (E, LoginOf (UserLogin), NotAuthorized (BadPassword, NoSuchUser), NotLogin)
 import qualified Authentication (E (Login, Register))
-import Control.Algebra (Algebra (alg), send, type (:+:) (L, R))
+import Control.Algebra (Algebra (alg), type (:+:) (L, R))
 import Control.Effect.Catch (Catch)
 import Control.Effect.Error (catchError)
 import qualified Control.Effect.Reader as R (Reader)
@@ -35,7 +35,7 @@ import Field.Email (Email)
 import Field.Image (Image (Image))
 import Field.Password (checkPassword, hashPassword, newSalt)
 import GHC.Records (getField)
-import qualified Relation.ToOne (E (GetRelated, Relate))
+import Relation.InMem (ToOneRelationE, getRelatedToOne, relateToOne)
 import Storage.Error (AlreadyExists (AlreadyExists), NotFound)
 import Storage.InMem (MapInMemE, getByIdMapInMem, insertMapInMem)
 import Storage.Map (ContentOf (..), CreateOf (UserCreate), IdAlreadyExists, IdNotFound, IdOf (UserId), toUserId)
@@ -52,7 +52,7 @@ instance
   ( DRG gen,
     Algebra sig m,
     MapInMemE 'User sig,
-    Member (Relation.ToOne.E Email "of" (IdOf 'User)) sig,
+    ToOneRelationE "EmailOfUser" sig,
     Member (Catch (IdNotFound 'User)) sig,
     Member (Throw (IdAlreadyExists 'User)) sig,
     Member (Throw (AlreadyExists Email)) sig,
@@ -71,7 +71,7 @@ instance
           -- FIXME: meta data like createdTime and UpdatedTime?
           -- send $ GetCurrent @Time
           u <-
-            send (Relation.ToOne.GetRelated @_ @"of" @(IdOf 'User) em) >>= \case
+            getRelatedToOne @"EmailOfUser" em >>= \case
               Just _ -> throwError $ AlreadyExists em
               Nothing -> do
                 g <- S.get @gen
@@ -81,10 +81,10 @@ instance
                   (getByIdMapInMem uid >> throwError (AlreadyExists uid))
                   $ const $ pure $ UserContent em (hashPassword pw salt) user (Bio "") $ Image ""
           insertMapInMem (toUserId u) u
-          send $ Relation.ToOne.Relate @_ @_ @"of" em uid
+          relateToOne @"EmailOfUser" em uid
           pure $ transform u
         Authentication.Login (UserLogin em pw) ->
-          send (Relation.ToOne.GetRelated @_ @"of" @(IdOf 'User) em) >>= \case
+          getRelatedToOne @"EmailOfUser" em >>= \case
             Nothing -> throwError $ NoSuchUser @'User
             Just uid -> do
               a <- getByIdMapInMem uid

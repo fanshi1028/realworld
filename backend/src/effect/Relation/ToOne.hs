@@ -1,23 +1,17 @@
-{-# LANGUAGE DataKinds #-}
-
 -- |
--- Description : Effect
+-- Description : Typeclass & Instances
 -- Copyright   : (c) 2021 fanshi1028
 -- Maintainer  : jackychany321@gmail.com
 -- Stability   : experimental
 --
--- Effect of one to one relation
+-- ToOne Relation
 --
--- @since 0.1.0.0
-module Relation.ToOne (E (..)) where
+-- @since 0.3.0.0
+module Relation.ToOne
+  ( -- * Typeclass
+    module X,
+  )
+where
 
-import GHC.TypeLits (Symbol)
-
--- | @since 0.2.0.0
-data E (r1 :: Type) (r :: Symbol) (r2 :: Type) (m :: Type -> Type) a where
-  -- | @since 0.2.0.0
-  Relate :: r1 -> r2 -> E r1 r r2 m ()
-  -- | @since 0.2.0.0
-  Unrelate :: r1 -> r2 -> E r1 r r2 m ()
-  -- | @since 0.2.0.0
-  GetRelated :: r1 -> E r1 r r2 m (Maybe r2)
+import Relation.Internal.ToOne as X
+import Relation.Internal.ToOne.EmailOfUser as X ()

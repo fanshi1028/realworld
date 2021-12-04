@@ -20,6 +20,7 @@ import qualified Control.Carrier.Reader as R (runReader)
 import qualified Control.Carrier.State.Strict as S (evalState)
 import Control.Carrier.Throw.Either (runThrow)
 import Control.Carrier.Trace.Returning (runTrace)
+import Control.Effect.Labelled (runLabelled)
 import Control.Exception.Safe (catch)
 import qualified Cookie.Xsrf (run)
 import qualified Crypto.JOSE (Error)
@@ -34,7 +35,6 @@ import HTTP (Api, server)
 import qualified OptionalAuthAction (run)
 import qualified Relation.ManyToMany.InMem (run)
 import qualified Relation.ToMany.InMem (run)
-import qualified Relation.ToOne.InMem (run)
 import Servant (Application, Context (EmptyContext, (:.)), ServerError (errBody), err400, err401, err404, err500, hoistServerWithContext, serveWithContext, throwError)
 import Servant.Auth.Server (CookieSettings, JWTSettings, defaultCookieSettings, defaultJWTSettings, generateKey)
 import Servant.Server (err403)
@@ -103,10 +103,10 @@ mkApp cs jwts userDb articleDb commentDb tagDb emailUserIndex db0 db1 db2 db3 db
               & Relation.ManyToMany.InMem.run @(IdOf 'Article) @"taggedBy" @Tag db2 db3
               & Relation.ManyToMany.InMem.run @(IdOf 'User) @"follow" @(IdOf 'User) db4 db5
               & Relation.ManyToMany.InMem.run @(IdOf 'User) @"favorite" @(IdOf 'Article) db6 db7
-              & Relation.ToOne.InMem.run @Email @"of" @(IdOf 'User) emailUserIndex
               & Relation.ToMany.InMem.run @(IdOf 'User) @"create" @(IdOf 'Comment) db8
               & Relation.ToMany.InMem.run @(IdOf 'Article) @"has" @(IdOf 'Comment) db0
               & Relation.ToMany.InMem.run @(IdOf 'User) @"create" @(IdOf 'Article) db1
+              & (runLabelled @"EmailOfUser" >>> R.runReader emailUserIndex)
               & R.runReader userDb
               & R.runReader articleDb
               & R.runReader commentDb
