@@ -30,10 +30,14 @@ import Domain.Article (ArticleR (ArticleWithAuthorProfile))
 import Domain.Comment (CommentR (CommentWithAuthorProfile))
 import Domain.Transform (transform)
 import Domain.User (UserR (UserAuthWithToken, UserProfile))
-import Field.Tag (Tag)
 import GHC.Records (getField)
-import qualified Relation.ManyToMany (E (GetRelatedLeft, GetRelatedRight, IsRelated))
-import qualified Relation.ToMany (E (GetRelated))
+import Relation.ManyToMany
+  ( ManyToManyRelationE,
+    getRelatedLeftManyToMany,
+    getRelatedRightManyToMany,
+    isRelatedManyToMany,
+  )
+import Relation.ToMany (ToMany (..), ToManyRelationE)
 import Storage.InMem (MapInMemE, getAllMapInMem, getByIdMapInMem)
 import Storage.Map (ContentOf (..), HasStorage (IdOf), IdNotFound, toUserId)
 import Prelude hiding (id)
@@ -70,10 +74,10 @@ instance
   ( MapInMemE 'User sig,
     MapInMemE 'Article sig,
     MapInMemE 'Comment sig,
-    Member (Relation.ManyToMany.E (IdOf 'Article) "taggedBy" Tag) sig,
-    Member (Relation.ManyToMany.E (IdOf 'User) "favorite" (IdOf 'Article)) sig,
-    Member (Relation.ManyToMany.E (IdOf 'User) "follow" (IdOf 'User)) sig,
-    Member (Relation.ToMany.E (IdOf 'Article) "has" (IdOf 'Comment)) sig,
+    ManyToManyRelationE "ArticleTaggedByTag" sig,
+    ManyToManyRelationE "UserFavoriteArticle" sig,
+    ManyToManyRelationE "UserFollowUser" sig,
+    ToManyRelationE "ArticleHasComment" sig,
     Member (Throw Text) sig,
     Member (Catch (IdNotFound 'Comment)) sig,
     Member (R.Reader (Maybe (UserR "authWithToken"))) sig,
@@ -89,28 +93,28 @@ instance
           <*> ( R.ask >>= \case
                   Just (UserAuthWithToken (toUserId -> authId) _) -> do
                     _ <- getByIdMapInMem authId
-                    send $ Relation.ManyToMany.IsRelated @_ @_ @"follow" authId uid
+                    isRelatedManyToMany @"UserFollowUser" authId uid
                   Nothing -> pure False
               )
       GetArticle aid -> do
         a <- getByIdMapInMem aid
         ArticleWithAuthorProfile a
-          <$> send (Relation.ManyToMany.GetRelatedLeft @_ @"taggedBy" @Tag aid)
+          <$> getRelatedLeftManyToMany @"ArticleTaggedByTag" aid
           <*> pure False
-          <*> (genericLength <$> send (Relation.ManyToMany.GetRelatedRight @_ @(IdOf 'User) @"favorite" aid))
+          <*> (genericLength <$> getRelatedRightManyToMany @"UserFavoriteArticle" aid)
           <*> send (GetProfile $ getField @"author" a)
       ListArticles ->
         runNonDetA @[] $ do
           (aid, a) <- getAllMapInMem @'Article >>= oneOf
           ArticleWithAuthorProfile a
-            <$> send (Relation.ManyToMany.GetRelatedLeft @(IdOf 'Article) @"taggedBy" @Tag aid)
+            <$> getRelatedLeftManyToMany @"ArticleTaggedByTag" aid
             <*> pure False
-            <*> (genericLength <$> send (Relation.ManyToMany.GetRelatedRight @_ @(IdOf 'User) @"favorite" aid))
+            <*> (genericLength <$> getRelatedRightManyToMany @"UserFavoriteArticle" aid)
             <*> send (GetProfile $ getField @"author" a)
       GetComments aid -> do
         _ <- getByIdMapInMem aid
         runNonDetA @[] $ do
-          cid <- send (Relation.ToMany.GetRelated @_ @"has" @(IdOf 'Comment) aid) >>= oneOf
+          cid <- getRelatedToMany @"ArticleHasComment" aid >>= oneOf
           flip (catchError @(IdNotFound 'Comment)) (const $ throwError @Text "impossible: comment id not found") $ do
             CommentContent {..} <- getByIdMapInMem cid
             CommentWithAuthorProfile cid createdAt updatedAt body <$> send (GetProfile author)

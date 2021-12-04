@@ -33,8 +33,6 @@ import Field.Email (Email)
 import Field.Tag (Tag)
 import HTTP (Api, server)
 import qualified OptionalAuthAction (run)
-import qualified Relation.ManyToMany.InMem (run)
-import qualified Relation.ToMany.InMem (run)
 import Servant (Application, Context (EmptyContext, (:.)), ServerError (errBody), err400, err401, err404, err500, hoistServerWithContext, serveWithContext, throwError)
 import Servant.Auth.Server (CookieSettings, JWTSettings, defaultCookieSettings, defaultJWTSettings, generateKey)
 import Servant.Server (err403)
@@ -54,7 +52,7 @@ import qualified UserAction (run)
 import Util.Validation (ValidationErr)
 import VisitorAction (runVisitorActionInMem)
 
--- | @since 0.2.0.0
+-- | @since 0.3.0.0
 -- create app by supplying settings and databases(in memory)
 mkApp ::
   CookieSettings ->
@@ -100,12 +98,15 @@ mkApp cs jwts userDb articleDb commentDb tagDb emailUserIndex db0 db1 db2 db3 db
               & Token.Create.JWT.run @'User @SystemDRG
               & Cookie.Xsrf.run @SystemDRG
               & Authentication.User.run @SystemDRG
-              & Relation.ManyToMany.InMem.run @(IdOf 'Article) @"taggedBy" @Tag db2 db3
-              & Relation.ManyToMany.InMem.run @(IdOf 'User) @"follow" @(IdOf 'User) db4 db5
-              & Relation.ManyToMany.InMem.run @(IdOf 'User) @"favorite" @(IdOf 'Article) db6 db7
-              & Relation.ToMany.InMem.run @(IdOf 'User) @"create" @(IdOf 'Comment) db8
-              & Relation.ToMany.InMem.run @(IdOf 'Article) @"has" @(IdOf 'Comment) db0
-              & Relation.ToMany.InMem.run @(IdOf 'User) @"create" @(IdOf 'Article) db1
+              & (runLabelled @"UserCreateComment" >>> R.runReader db8)
+              & (runLabelled @"ArticleFavoritedByUser" >>> R.runReader db7)
+              & (runLabelled @"UserFavoriteArticle" >>> R.runReader db6)
+              & (runLabelled @"UserFollowedByUser" >>> R.runReader db5)
+              & (runLabelled @"UserFollowUser" >>> R.runReader db4)
+              & (runLabelled @"TagTagArticle" >>> R.runReader db3)
+              & (runLabelled @"ArticleTaggedByTag" >>> R.runReader db2)
+              & (runLabelled @"UserCreateArticle" >>> R.runReader db1)
+              & (runLabelled @"ArticleHasComment" >>> R.runReader db0)
               & (runLabelled @"EmailOfUser" >>> R.runReader emailUserIndex)
               & R.runReader userDb
               & R.runReader articleDb

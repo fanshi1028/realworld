@@ -17,6 +17,7 @@ import Field.Email (Email)
 import Relation.Internal.ToOne (ToOne (..))
 import Storage.Map (IdOf)
 
+-- | since 0.3.0.0
 instance ToOne "EmailOfUser" where
   type ToOneKey "EmailOfUser" = Email
   type ToOneValue "EmailOfUser" = IdOf 'User
