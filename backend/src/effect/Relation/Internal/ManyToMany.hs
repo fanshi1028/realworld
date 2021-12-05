@@ -1,5 +1,4 @@
 {-# LANGUAGE AllowAmbiguousTypes #-}
-{-# LANGUAGE ConstrainedClassMethods #-}
 {-# LANGUAGE ConstraintKinds #-}
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE FlexibleContexts #-}
@@ -39,16 +38,20 @@ import Relation.ToMany
 
 -- | @since 0.3.0.0
 type ManyToManyRelationE (label :: Symbol) sig =
-  ( ManyToMany label,
-    ToManyRelationE (ManyLeft label) sig,
+  ( ToManyRelationE (ManyLeft label) sig,
     ToManyRelationE (ManyRight label) sig,
-    Member (Lift STM) sig,
-    ToManyKey (ManyLeft label) ~ ToManyValue (ManyRight label),
-    ToManyValue (ManyLeft label) ~ ToManyKey (ManyRight label)
+    Member (Lift STM) sig
   )
 
 -- | @since 0.3.0.0
-class ManyToMany (label :: Symbol) where
+class
+  ( ToMany (ManyLeft label),
+    ToMany (ManyRight label),
+    ToManyKey (ManyLeft label) ~ ToManyValue (ManyRight label),
+    ToManyValue (ManyLeft label) ~ ToManyKey (ManyRight label)
+  ) =>
+  ManyToMany (label :: Symbol)
+  where
   -- | @since 0.3.0.0
   type ManyLeft label :: Symbol
 
@@ -57,9 +60,7 @@ class ManyToMany (label :: Symbol) where
 
   -- | @since 0.3.0.0
   relateManyToMany ::
-    ( ManyToManyRelationE label sig,
-      Algebra sig m
-    ) =>
+    (ManyToManyRelationE label sig, Algebra sig m) =>
     ToManyKey (ManyLeft label) ->
     ToManyKey (ManyRight label) ->
     m ()
@@ -80,10 +81,7 @@ class ManyToMany (label :: Symbol) where
   {-# INLINE unrelateManyToMany #-}
 
   -- | @since 0.3.0.0
-  unrelateByKeyLeftManyToMany ::
-    (ManyToManyRelationE label sig, Algebra sig m) =>
-    ToManyKey (ManyLeft label) ->
-    m ()
+  unrelateByKeyLeftManyToMany :: (ManyToManyRelationE label sig, Algebra sig m) => ToManyKey (ManyLeft label) -> m ()
   unrelateByKeyLeftManyToMany r1 = runNonDetM id $ do
     getRelatedToMany @(ManyLeft label) r1
       >>= oneOf
@@ -92,10 +90,7 @@ class ManyToMany (label :: Symbol) where
   {-# INLINE unrelateByKeyLeftManyToMany #-}
 
   -- | @since 0.3.0.0
-  unrelateByKeyRightManyToMany ::
-    (ManyToManyRelationE label sig, Algebra sig m) =>
-    ToManyKey (ManyRight label) ->
-    m ()
+  unrelateByKeyRightManyToMany :: (ManyToManyRelationE label sig, Algebra sig m) => ToManyKey (ManyRight label) -> m ()
   unrelateByKeyRightManyToMany r2 = runNonDetM id $ do
     getRelatedToMany @(ManyRight label) r2
       >>= oneOf
@@ -113,17 +108,11 @@ class ManyToMany (label :: Symbol) where
   {-# INLINE isRelatedManyToMany #-}
 
   -- | @since 0.3.0.0
-  getRelatedLeftManyToMany ::
-    (ManyToManyRelationE label sig, Algebra sig m) =>
-    ToManyKey (ManyLeft label) ->
-    m [ToManyValue (ManyLeft label)]
+  getRelatedLeftManyToMany :: (ManyToManyRelationE label sig, Algebra sig m) => ToManyKey (ManyLeft label) -> m [ToManyValue (ManyLeft label)]
   getRelatedLeftManyToMany = getRelatedToMany @(ManyLeft label)
   {-# INLINE getRelatedLeftManyToMany #-}
 
   -- | @since 0.3.0.0
-  getRelatedRightManyToMany ::
-    (ManyToManyRelationE label sig, Algebra sig m) =>
-    ToManyKey (ManyRight label) ->
-    m [ToManyValue (ManyRight label)]
+  getRelatedRightManyToMany :: (ManyToManyRelationE label sig, Algebra sig m) => ToManyKey (ManyRight label) -> m [ToManyValue (ManyRight label)]
   getRelatedRightManyToMany = getRelatedToMany @(ManyRight label)
   {-# INLINE getRelatedRightManyToMany #-}
