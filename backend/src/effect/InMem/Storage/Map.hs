@@ -38,7 +38,7 @@ module InMem.Storage.Map
 where
 
 import Domain (Domain)
-import InMem.Storage.Error (AlreadyExists, NotFound)
+import Error.Storage (AlreadyExists, NotFound)
 import InMem.Storage.Map.Internal.HasCreate as X
 import InMem.Storage.Map.Internal.HasCreate.Article as X
 import InMem.Storage.Map.Internal.HasCreate.Comment as X

@@ -119,6 +119,7 @@ library backend-effect-internal
     Domain.Comment
     Domain.Transform
     Domain.User
+    Error.Storage
     Field.Bio
     Field.Body
     Field.Description
@@ -139,11 +140,7 @@ library backend-effect-internal
     InMem.Relation.Internal.ToMany.UserCreateComment
     InMem.Relation.Internal.ToMany.UserCreateArticle
     InMem.Relation.Internal.ToOne.EmailOfUser
-    InMem.Relation.ManyToMany
-    InMem.Relation.ToMany
-    InMem.Relation.ToOne
     InMem.Storage
-    InMem.Storage.Error
     InMem.Storage.Map
     InMem.Storage.Map.Internal.HasCreate
     InMem.Storage.Map.Internal.HasCreate.Article

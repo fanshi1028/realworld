@@ -60,7 +60,7 @@ import InMem.Relation
     relateToMany,
   )
 import InMem.Storage (MapInMemE, deleteByIdMapInMem, getByIdMapInMem, insertMapInMem, updateByIdMapInMem)
-import InMem.Storage.Error (AlreadyExists (AlreadyExists), NotFound (NotFound))
+import Error.Storage (AlreadyExists (AlreadyExists), NotFound (NotFound))
 import InMem.Storage.Map (CRUD (D, U), ContentOf (..), CreateOf (ArticleCreate, CommentCreate), Forbidden (Forbidden), HasCreate (CreateOf), HasStorage (ContentOf, IdOf), IdAlreadyExists, IdNotFound, IdOf (ArticleId, CommentId, UserId), Patch, UpdateOf, toArticleId, toArticlePatch, toUserId)
 import qualified OptionalAuthAction (E (GetProfile))
 import Relude.Extra ((.~), (^.))

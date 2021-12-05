@@ -50,12 +50,12 @@ import qualified Control.Effect.Reader as R (Reader, ask)
 import Control.Effect.Sum (Member)
 import Domain (Domain)
 import Domain.Transform (Transform, transform)
+import Error.Storage (AlreadyExists (AlreadyExists), NotFound (NotFound))
 import qualified Focus as FC (Change (Leave, Remove), cases)
+import InMem.Storage.Map (HasStorage (ContentOf), IdOf)
 import qualified ListT (fold, toList)
 import qualified StmContainers.Map as STMMap (Map, delete, focus, insert, listT, lookup)
 import qualified StmContainers.Set as STMSet (Set, focus, insert, listT, lookup)
-import InMem.Storage.Error (AlreadyExists (AlreadyExists), NotFound (NotFound))
-import InMem.Storage.Map (HasStorage (ContentOf), IdOf)
 
 -- | @since 0.3.0.0
 isMemberSetInMem ::

@@ -9,7 +9,7 @@
 -- Common error for storage effect
 --
 -- @since 0.3.0.0
-module InMem.Storage.Error where
+module Error.Storage where
 
 import Data.Aeson (ToJSON)
 
