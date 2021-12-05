@@ -19,8 +19,8 @@ import Control.Effect.Lift (Lift)
 import qualified Control.Effect.Reader as R (Reader)
 import Control.Effect.Sum (Member)
 import Field.Tag (Tag)
+import InMem.Storage (getAllSetInMem)
 import qualified StmContainers.Set as STMSet (Set)
-import Storage.InMem (getAllSetInMem)
 
 -- * Effect
 

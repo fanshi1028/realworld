@@ -131,33 +131,31 @@ library backend-effect-internal
     Field.Title
     Field.Username
     OptionalAuthAction
-    Relation.Internal.ManyToMany
-    Relation.Internal.ManyToMany.Favorite
-    Relation.Internal.ManyToMany.Follow
-    Relation.Internal.ManyToMany.Tag
-    Relation.Internal.ToMany
-    Relation.Internal.ToMany.ArticleHasComment
-    Relation.Internal.ToMany.UserCreateComment
-    Relation.Internal.ToMany.UserCreateArticle
-    Relation.Internal.ToOne
-    Relation.Internal.ToOne.EmailOfUser
-    Relation.ManyToMany
-    Relation.ToMany
-    Relation.ToOne
-    Storage.Error
-    Storage.InMem
-    Storage.Map
-    Storage.Map.Internal.HasCreate
-    Storage.Map.Internal.HasCreate.Article
-    Storage.Map.Internal.HasCreate.Comment
-    Storage.Map.Internal.HasCreate.User
-    Storage.Map.Internal.HasStorage
-    Storage.Map.Internal.HasStorage.Article
-    Storage.Map.Internal.HasStorage.Comment
-    Storage.Map.Internal.HasStorage.User
-    Storage.Map.Internal.HasUpdate
-    Storage.Map.Internal.HasUpdate.Article
-    Storage.Map.Internal.HasUpdate.User
+    InMem.Relation
+    InMem.Relation.Internal.ManyToMany.Favorite
+    InMem.Relation.Internal.ManyToMany.Follow
+    InMem.Relation.Internal.ManyToMany.Tag
+    InMem.Relation.Internal.ToMany.ArticleHasComment
+    InMem.Relation.Internal.ToMany.UserCreateComment
+    InMem.Relation.Internal.ToMany.UserCreateArticle
+    InMem.Relation.Internal.ToOne.EmailOfUser
+    InMem.Relation.ManyToMany
+    InMem.Relation.ToMany
+    InMem.Relation.ToOne
+    InMem.Storage
+    InMem.Storage.Error
+    InMem.Storage.Map
+    InMem.Storage.Map.Internal.HasCreate
+    InMem.Storage.Map.Internal.HasCreate.Article
+    InMem.Storage.Map.Internal.HasCreate.Comment
+    InMem.Storage.Map.Internal.HasCreate.User
+    InMem.Storage.Map.Internal.HasStorage
+    InMem.Storage.Map.Internal.HasStorage.Article
+    InMem.Storage.Map.Internal.HasStorage.Comment
+    InMem.Storage.Map.Internal.HasStorage.User
+    InMem.Storage.Map.Internal.HasUpdate
+    InMem.Storage.Map.Internal.HasUpdate.Article
+    InMem.Storage.Map.Internal.HasUpdate.User
     Token
     Token.Create
     Token.Create.JWT

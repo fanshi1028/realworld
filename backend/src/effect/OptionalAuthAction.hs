@@ -31,15 +31,16 @@ import Domain.Comment (CommentR (CommentWithAuthorProfile))
 import Domain.Transform (transform)
 import Domain.User (UserR (UserAuthWithToken, UserProfile))
 import GHC.Records (getField)
-import Relation.ManyToMany
+import InMem.Relation
   ( ManyToManyRelationE,
+    ToMany (..),
+    ToManyRelationE,
     getRelatedLeftManyToMany,
     getRelatedRightManyToMany,
     isRelatedManyToMany,
   )
-import Relation.ToMany (ToMany (..), ToManyRelationE)
-import Storage.InMem (MapInMemE, getAllMapInMem, getByIdMapInMem)
-import Storage.Map (ContentOf (..), HasStorage (IdOf), IdNotFound, toUserId)
+import InMem.Storage (MapInMemE, getAllMapInMem, getByIdMapInMem)
+import InMem.Storage.Map (ContentOf (..), HasStorage (IdOf), IdNotFound, toUserId)
 import Prelude hiding (id)
 
 -- * Effect

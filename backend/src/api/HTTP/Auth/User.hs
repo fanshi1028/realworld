@@ -37,7 +37,7 @@ import Servant
   )
 import Servant.Auth.Server (CookieSettings, JWTSettings)
 import Servant.Auth.Server.Internal.Cookie (applyCookieSettings, applySessionCookieSettings)
-import Storage.InMem (MapInMemE)
+import InMem.Storage (MapInMemE)
 import Token (TokenOf (UserToken))
 import Token.Create (E (CreateToken))
 import Util.JSON.From (In (In))

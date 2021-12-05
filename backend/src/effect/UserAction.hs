@@ -42,14 +42,28 @@ import Field.Email (Email)
 import Field.Password (hashPassword, newSalt)
 import Field.Slug (titleToSlug)
 import Field.Time (Time)
+import InMem.Relation
+  ( ManyToMany
+      ( getRelatedLeftManyToMany,
+        getRelatedRightManyToMany,
+        isRelatedManyToMany,
+        relateManyToMany,
+        unrelateByKeyLeftManyToMany,
+        unrelateByKeyRightManyToMany,
+        unrelateManyToMany
+      ),
+    ManyToManyRelationE,
+    ToMany (getRelatedToMany, isRelatedToMany, unrelateByKeyToMany, unrelateToMany),
+    ToManyRelationE,
+    ToOne (getRelatedToOne, relateToOne, unrelateToOne),
+    ToOneRelationE,
+    relateToMany,
+  )
+import InMem.Storage (MapInMemE, deleteByIdMapInMem, getByIdMapInMem, insertMapInMem, updateByIdMapInMem)
+import InMem.Storage.Error (AlreadyExists (AlreadyExists), NotFound (NotFound))
+import InMem.Storage.Map (CRUD (D, U), ContentOf (..), CreateOf (ArticleCreate, CommentCreate), Forbidden (Forbidden), HasCreate (CreateOf), HasStorage (ContentOf, IdOf), IdAlreadyExists, IdNotFound, IdOf (ArticleId, CommentId, UserId), Patch, UpdateOf, toArticleId, toArticlePatch, toUserId)
 import qualified OptionalAuthAction (E (GetProfile))
-import Relation.ManyToMany (ManyToMany (getRelatedLeftManyToMany, getRelatedRightManyToMany, relateManyToMany, unrelateByKeyLeftManyToMany, unrelateByKeyRightManyToMany, unrelateManyToMany, isRelatedManyToMany), ManyToManyRelationE)
-import Relation.ToMany (ToMany (getRelatedToMany, isRelatedToMany, unrelateByKeyToMany, unrelateToMany), ToManyRelationE, relateToMany)
-import Relation.ToOne (ToOne (getRelatedToOne, relateToOne, unrelateToOne), ToOneRelationE)
 import Relude.Extra ((.~), (^.))
-import Storage.Error (AlreadyExists (AlreadyExists), NotFound (NotFound))
-import Storage.InMem (MapInMemE, deleteByIdMapInMem, getByIdMapInMem, insertMapInMem, updateByIdMapInMem)
-import Storage.Map (CRUD (D, U), ContentOf (..), CreateOf (ArticleCreate, CommentCreate), Forbidden (Forbidden), HasCreate (CreateOf), HasStorage (ContentOf, IdOf), IdAlreadyExists, IdNotFound, IdOf (ArticleId, CommentId, UserId), Patch, UpdateOf, toArticleId, toArticlePatch, toUserId)
 
 -- * Effect
 

@@ -34,7 +34,7 @@ import qualified OptionalAuthAction
 import Servant (Get, JSON, ServerT, type (:<|>) ((:<|>)), type (:>))
 import Servant.Auth.Server (Auth, AuthResult (Authenticated, BadPassword, Indefinite, NoSuchUser), CookieSettings, JWTSettings)
 import Servant.Server (hoistServer)
-import Storage.InMem (MapInMemE)
+import InMem.Storage (MapInMemE)
 import qualified Token.Create (E)
 import Token.Decode (InvalidToken)
 import qualified UserAction (E)

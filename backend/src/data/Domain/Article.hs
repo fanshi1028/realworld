@@ -19,7 +19,7 @@ import Domain (Domain (Article))
 import Domain.User (UserR)
 import Field.Tag (Tag)
 import GHC.TypeLits (Symbol)
-import Storage.Map (ContentOf (..), toArticleId)
+import InMem.Storage.Map (ContentOf (..), toArticleId)
 import Util.JSON.To (Out, multiWrappedWithCountToEncoding, multiWrappedWithCountToJSON, wrappedToEncoding, wrappedToJSON)
 
 -- $setup

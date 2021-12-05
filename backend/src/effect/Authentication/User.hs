@@ -35,16 +35,10 @@ import Field.Email (Email)
 import Field.Image (Image (Image))
 import Field.Password (checkPassword, hashPassword, newSalt)
 import GHC.Records (getField)
--- import Relation.InMem (ToOneRelationE, getRelatedToOne, relateToOne)
-
--- import Relation.InMem (ToOneRelationE, getRelatedToOne, relateToOne)
--- import Relation.InMem (ToOneRelationE, getRelatedToOne, relateToOne)
-
--- import Relation.InMem (ToOneRelationE, getRelatedToOne, relateToOne)
-import Relation.ToOne (ToOne (getRelatedToOne, relateToOne), ToOneRelationE)
-import Storage.Error (AlreadyExists (AlreadyExists), NotFound)
-import Storage.InMem (MapInMemE, getByIdMapInMem, insertMapInMem)
-import Storage.Map (ContentOf (..), CreateOf (UserCreate), IdAlreadyExists, IdNotFound, IdOf (UserId), toUserId)
+import InMem.Relation (ToOne (getRelatedToOne, relateToOne), ToOneRelationE)
+import InMem.Storage (MapInMemE, getByIdMapInMem, insertMapInMem)
+import InMem.Storage.Error (AlreadyExists (AlreadyExists), NotFound)
+import InMem.Storage.Map (ContentOf (..), CreateOf (UserCreate), IdAlreadyExists, IdNotFound, IdOf (UserId), toUserId)
 
 -- | @since 0.1.0.0
 newtype C gen m a = C

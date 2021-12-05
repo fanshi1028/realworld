@@ -16,8 +16,8 @@ module Domain.Transform (Transform (transform)) where
 import Authentication (AuthOf (UserAuth))
 import Domain (Domain (Article, Comment, User))
 import GHC.Records (getField)
-import Storage.Map (ContentOf (..), IdOf, toArticleId, toUserId)
-import Storage.Map.Internal.HasStorage.User ()
+import InMem.Storage.Map (ContentOf (..), IdOf, toArticleId, toUserId)
+import InMem.Storage.Map.Internal.HasStorage.User ()
 
 -- | @since 0.2.0.0
 -- Transform between representation of data
