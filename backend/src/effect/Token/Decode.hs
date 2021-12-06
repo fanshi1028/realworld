@@ -22,9 +22,9 @@ module Token.Decode
   )
 where
 
-import Authentication (AuthOf)
+import Authentication.HasAuth (AuthOf)
 import Domain (Domain)
-import Token (TokenOf)
+import Token.HasToken (TokenOf)
 
 -- | @since 0.3.0.0
 data E s (m :: Type -> Type) a where

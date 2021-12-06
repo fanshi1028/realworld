@@ -18,9 +18,9 @@ import Control.Effect.Throw (Throw, throwError)
 import Domain (Domain (User))
 import Domain.User (UserR)
 import HTTP.Util (Cap, ToggleApi)
-import InMem.Storage.Map (IdOf)
 import Servant (ServerT, type (:<|>) ((:<|>)), type (:>))
-import qualified UserAction
+import Storage.Map (IdOf)
+import UserAction (UserActionE (FollowUser, UnfollowUser))
 import Util.JSON.To (Out (Out))
 import Util.Validation (ValidationErr)
 import Validation (Validation (Failure, Success))
@@ -35,11 +35,11 @@ type FollowApi = Cap "username" (IdOf 'User) :> "follow" :> ToggleApi 'User (Use
 -- | @since 0.1.0.0
 followServer ::
   ( Algebra sig m,
-    Member UserAction.E sig,
+    Member UserActionE sig,
     Member (Throw ValidationErr) sig
   ) =>
   ServerT FollowApi m
 followServer (Success uid) =
-  Out <$> send (UserAction.FollowUser uid)
-    :<|> (Out <$> send (UserAction.UnfollowUser uid))
+  Out <$> send (FollowUser uid)
+    :<|> (Out <$> send (UnfollowUser uid))
 followServer (Failure err) = throwError err :<|> throwError err

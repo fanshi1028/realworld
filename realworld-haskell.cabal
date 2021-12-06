@@ -63,6 +63,7 @@ common prelude
 common backend-data-deps
   build-depends:
     , aeson                 ^>=1.5.6
+    , generic-lens          ^>=2.2.0
     , higgledy              ^>=0.4.1
     , password              ^>=3.0.0
     , servant-auth-server   ^>=0.4.6
@@ -75,51 +76,52 @@ common backend-data-deps
 
 common backend-effect-deps
   build-depends:
-    , cookie                ^>=0.4.5
-    , cryptonite            ^>=0.29
-    , focus                 ^>=1.0.3
-    , fused-effects         ^>=1.1.1
-    , generic-lens          ^>=2.2.0
-    , higgledy              ^>=0.4.1
-    , jose                  ^>=0.8.4
-    , list-t                ^>=1.0.5
-    , password              ^>=3.0.0
-    , servant-auth-server   ^>=0.4.6
-    , singleton-bool        ^>=0.1.6
-    , stm-containers        ^>=1.2
-    , unordered-containers  ^>=0.2.14
-    , uuid                  ^>=1.3.15
+    , cookie               ^>=0.4.5
+    , fused-effects        ^>=1.1.1
+    , generic-lens         ^>=2.2.0
+    , jose                 ^>=0.8.4
+    , servant-auth-server  ^>=0.4.6
 
 common backend-api-deps
   build-depends:
     , cookie                ^>=0.4.5
-    , cryptonite            ^>=0.29
     , fused-effects         ^>=1.1.1
-    , jose                  ^>=0.8.4
-    , safe-exceptions       ^>=0.1.7
     , servant-auth-server   ^>=0.4.6
     , servant-server        ^>=0.18.3
-    , stm-containers        ^>=1.2
     , time                  ^>=1.9.3
-    , uuid                  ^>=1.3.15
     , validation-selective  ^>=0.1.0
     , wai                   ^>=3.2.3
 
-library backend-effect-internal
-  import:          prelude, backend-data-deps, backend-effect-deps
-  hs-source-dirs:  backend/src/data backend/src/effect
+common backend-in-mem-carrier-deps
+  build-depends:
+    , cryptonite           ^>=0.29
+    , focus                ^>=1.0.3
+    , fused-effects        ^>=1.1.1
+    , generic-lens         ^>=2.2.0
+    , higgledy             ^>=0.4.1
+    , jose                 ^>=0.8.4
+    , list-t               ^>=1.0.5
+    , password             ^>=3.0.0
+    , safe-exceptions      ^>=0.1.7
+    , servant-auth-server  ^>=0.4.6
+    , servant-server       ^>=0.18.3
+    , stm-containers       ^>=1.2
+    , time                 ^>=1.9.3
+    , uuid                 ^>=1.3.15
+    , wai                  ^>=3.2.3
+
+library backend-data-internal
+  import:          prelude, backend-data-deps
+  hs-source-dirs:  backend/src/data
   exposed-modules:
-    Authentication
+    Authentication.HasAuth
     Authentication.Internal.HasAuth
     Authentication.Internal.HasAuth.User
-    Authentication.User
-    Cookie.Xsrf
     Domain
     Domain.Article
     Domain.Comment
     Domain.Transform
     Domain.User
-    Error.Storage
     Field.Bio
     Field.Body
     Field.Description
@@ -131,41 +133,48 @@ library backend-effect-internal
     Field.Time
     Field.Title
     Field.Username
+    Storage.Error
+    Storage.Map
+    Storage.Map.Internal.HasCreate
+    Storage.Map.Internal.HasCreate.Article
+    Storage.Map.Internal.HasCreate.Comment
+    Storage.Map.Internal.HasCreate.User
+    Storage.Map.Internal.HasStorage
+    Storage.Map.Internal.HasStorage.Article
+    Storage.Map.Internal.HasStorage.Comment
+    Storage.Map.Internal.HasStorage.User
+    Storage.Map.Internal.HasUpdate
+    Storage.Map.Internal.HasUpdate.Article
+    Storage.Map.Internal.HasUpdate.User
+    Token.HasToken
+    Token.Internal.HasToken
+    Token.Internal.HasToken.User
+    Util.JSON.From
+    Util.JSON.To
+    Util.Validation
+
+library backend-effect-internal
+  import:          prelude, backend-effect-deps
+
+  if flag(ghcid)
+    import:         backend-data-deps
+    hs-source-dirs: backend/src/data
+
+  else
+    build-depends: backend-data-internal
+
+  hs-source-dirs:  backend/src/effect
+  exposed-modules:
+    Authentication
+    Cookie.Xsrf
     OptionalAuthAction
-    InMem.Relation
-    InMem.Relation.Internal.ManyToMany.Favorite
-    InMem.Relation.Internal.ManyToMany.Follow
-    InMem.Relation.Internal.ManyToMany.Tag
-    InMem.Relation.Internal.ToMany.ArticleHasComment
-    InMem.Relation.Internal.ToMany.UserCreateComment
-    InMem.Relation.Internal.ToMany.UserCreateArticle
-    InMem.Relation.Internal.ToOne.EmailOfUser
-    InMem.Storage
-    InMem.Storage.Map
-    InMem.Storage.Map.Internal.HasCreate
-    InMem.Storage.Map.Internal.HasCreate.Article
-    InMem.Storage.Map.Internal.HasCreate.Comment
-    InMem.Storage.Map.Internal.HasCreate.User
-    InMem.Storage.Map.Internal.HasStorage
-    InMem.Storage.Map.Internal.HasStorage.Article
-    InMem.Storage.Map.Internal.HasStorage.Comment
-    InMem.Storage.Map.Internal.HasStorage.User
-    InMem.Storage.Map.Internal.HasUpdate
-    InMem.Storage.Map.Internal.HasUpdate.Article
-    InMem.Storage.Map.Internal.HasUpdate.User
-    Token
     Token.Create
     Token.Create.JWT
     Token.Decode
     Token.Decode.JWT
-    Token.Internal.HasToken
-    Token.Internal.HasToken.User
     Token.Invalidate
     Token.Invalidate.JWT
     UserAction
-    Util.JSON.From
-    Util.JSON.To
-    Util.Validation
     VisitorAction
 
 -- other-modules:
@@ -179,11 +188,12 @@ library backend-api-internal
     hs-source-dirs: backend/src/data backend/src/effect
 
   else
-    build-depends: backend-effect-internal
+    build-depends:
+      , backend-data-internal
+      , backend-effect-internal
 
   hs-source-dirs:  backend/src/api
   exposed-modules:
-    App.InMem
     Authorization
     HTTP
     HTTP.Auth.User
@@ -198,15 +208,48 @@ library backend-api-internal
     HTTP.Public.Tag
     HTTP.Util
 
-executable realworld-haskell
-  import:         prelude
+library backend-in-mem-carrier-internal
+  import:          prelude, backend-in-mem-carrier-deps
 
   if flag(ghcid)
     import:         backend-data-deps, backend-effect-deps, backend-api-deps
     hs-source-dirs: backend/src/data backend/src/effect backend/src/api
 
   else
-    build-depends: backend-api-internal
+    build-depends:
+      , backend-api-internal
+      , backend-data-internal
+      , backend-effect-internal
+
+  hs-source-dirs:  backend/src/carrier
+  exposed-modules:
+    InMem.App
+    InMem.Authentication.User
+    InMem.Relation
+    InMem.Relation.Internal.ManyToMany.Favorite
+    InMem.Relation.Internal.ManyToMany.Follow
+    InMem.Relation.Internal.ManyToMany.Tag
+    InMem.Relation.Internal.ToMany.ArticleHasComment
+    InMem.Relation.Internal.ToMany.UserCreateArticle
+    InMem.Relation.Internal.ToMany.UserCreateComment
+    InMem.Relation.Internal.ToOne.EmailOfUser
+    InMem.Storage
+    InMem.UserAction
+    InMem.VisitorAction
+
+executable realworld-haskell
+  import:         prelude
+
+  if flag(ghcid)
+    import:
+      backend-data-deps, backend-effect-deps, backend-api-deps, backend-in-mem-carrier-deps
+
+    hs-source-dirs:
+      backend/src/data backend/src/effect backend/src/api
+      backend/src/carrier
+
+  else
+    build-depends: backend-in-mem-carrier-internal
 
   main-is:        Main.hs
   hs-source-dirs: backend/app

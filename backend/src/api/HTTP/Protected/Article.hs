@@ -35,12 +35,23 @@ import Domain.Article (ArticleR)
 import Domain.Comment (CommentR)
 import HTTP.Util (Cap, CreateApi, QP, ReadManyApi, ToggleApi, UDApi)
 import Servant (Delete, JSON, NoContent (NoContent), ServerT, type (:<|>) ((:<|>)), type (:>))
-import InMem.Storage.Map (IdOf)
-import qualified UserAction (E (AddCommentToArticle, CreateArticle, DeleteArticle, DeleteComment, FavoriteArticle, FeedArticles, UnfavoriteArticle, UpdateArticle))
+import Storage.Map (IdOf)
+import UserAction
+  ( UserActionE
+      ( AddCommentToArticle,
+        CreateArticle,
+        DeleteArticle,
+        DeleteComment,
+        FavoriteArticle,
+        FeedArticles,
+        UnfavoriteArticle,
+        UpdateArticle
+      ),
+  )
 import Util.JSON.From (In (In))
 import Util.JSON.To (Out (Out))
-import Validation (Validation (Failure, Success))
 import Util.Validation (ValidationErr)
+import Validation (Validation (Failure, Success))
 
 -- |  @since 0.1.0.0
 type CommentApi =
@@ -61,10 +72,10 @@ type ArticleApi =
                 )
          )
 
--- | @since 0.1.0.0
+-- | @since 0.3.0.0
 articleServer ::
   ( Algebra sig m,
-    Member UserAction.E sig,
+    Member UserActionE sig,
     Member (Throw ValidationErr) sig
   ) =>
   ServerT ArticleApi m
@@ -72,23 +83,23 @@ articleServer =
   let fromUnValidatedInput f = \case
         In (Failure err) -> throwError err
         In (Success r) -> f r
-   in fromUnValidatedInput (Out <<$>> send . UserAction.CreateArticle)
+   in fromUnValidatedInput (Out <<$>> send . CreateArticle)
         -- FIXME
         :<|> (\_ _ -> Out <$> send UserAction.FeedArticles)
         :<|> ( \case
                  Success aid ->
-                   ( fromUnValidatedInput (Out <<$>> send . UserAction.UpdateArticle aid)
-                       :<|> send (UserAction.DeleteArticle aid) $> NoContent
+                   ( fromUnValidatedInput (Out <<$>> send . UpdateArticle aid)
+                       :<|> send (DeleteArticle aid) $> NoContent
                    )
                      -- Comment
                      :<|> ( \case
-                              Success cid -> send (UserAction.DeleteComment aid cid) $> NoContent
+                              Success cid -> send (DeleteComment aid cid) $> NoContent
                               Failure err -> throwError err
-                              :<|> fromUnValidatedInput (Out <<$>> send . UserAction.AddCommentToArticle aid)
+                              :<|> fromUnValidatedInput (Out <<$>> send . AddCommentToArticle aid)
                           )
                      -- Favourite
-                     :<|> ( (Out <$> send (UserAction.FavoriteArticle aid))
-                              :<|> (Out <$> send (UserAction.UnfavoriteArticle aid))
+                     :<|> ( (Out <$> send (FavoriteArticle aid))
+                              :<|> (Out <$> send (UnfavoriteArticle aid))
                           )
                  Failure err ->
                    (const (throwError err) :<|> throwError err)

@@ -21,7 +21,7 @@ import HTTP.Protected.Follow (FollowApi, followServer)
 import HTTP.Protected.User (UserApi, userServer)
 import Servant (ServerT, type (:<|>) ((:<|>)), type (:>))
 import qualified Token.Create (E)
-import qualified UserAction (E)
+import UserAction (UserActionE)
 import Util.Validation (ValidationErr)
 
 -- * API
@@ -34,10 +34,10 @@ type AuthedApi =
 
 -- * Server
 
--- | @since 0.1.0.0
+-- | @since 0.3.0.0
 authedServer ::
   ( Algebra sig m,
-    Member UserAction.E sig,
+    Member UserActionE sig,
     Member (Throw ValidationErr) sig,
     Member (Token.Create.E 'User) sig
   ) =>

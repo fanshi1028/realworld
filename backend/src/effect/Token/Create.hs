@@ -9,8 +9,8 @@
 -- @since 0.3.0.0
 module Token.Create where
 
-import Authentication (AuthOf)
-import Token (TokenOf)
+import Authentication.HasAuth (AuthOf)
+import Token.HasToken (TokenOf)
 
 -- | @since 0.3.0.0
 data E s (m :: Type -> Type) a where

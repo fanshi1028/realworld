@@ -12,7 +12,8 @@
 -- @since 0.1.0.0
 module HTTP.Auth.User where
 
-import Authentication (AuthOf, E (Login, Register), HasAuth (LoginOf))
+import Authentication.HasAuth ( HasAuth (AuthOf,LoginOf))
+import Authentication (AuthenticationE (Login, Register))
 import Control.Algebra (Algebra, send)
 import Control.Effect.Error (Throw, throwError)
 import qualified Control.Effect.Reader as R (Reader, ask)
@@ -37,8 +38,7 @@ import Servant
   )
 import Servant.Auth.Server (CookieSettings, JWTSettings)
 import Servant.Auth.Server.Internal.Cookie (applyCookieSettings, applySessionCookieSettings)
-import InMem.Storage (MapInMemE)
-import Token (TokenOf (UserToken))
+import Token.HasToken (TokenOf (UserToken))
 import Token.Create (E (CreateToken))
 import Util.JSON.From (In (In))
 import Util.JSON.To (Out (Out))
@@ -67,8 +67,7 @@ authUserServer ::
     Member (R.Reader JWTSettings) sig,
     Member (Throw Text) sig,
     Member (Token.Create.E 'User) sig,
-    Member (Authentication.E 'User) sig,
-    MapInMemE 'User sig,
+    Member (AuthenticationE 'User) sig,
     Member Cookie.Xsrf.E sig,
     AddHeader "Set-Cookie" SetCookie (AuthOf 'User) withOneCookie,
     AddHeader "Set-Cookie" SetCookie withOneCookie withTwoCookies

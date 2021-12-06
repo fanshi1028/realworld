@@ -19,9 +19,9 @@ import Control.Effect.Throw (Throw, throwError)
 import Domain (Domain (User))
 import Domain.User (UserR)
 import HTTP.Util (Cap, ReadApi)
-import OptionalAuthAction (E (GetProfile))
+import OptionalAuthAction (OptionalAuthActionE (GetProfile))
 import Servant (ServerT, type (:>))
-import InMem.Storage.Map (IdOf)
+import Storage.Map (IdOf)
 import Util.JSON.To (Out (Out))
 import Util.Validation (ValidationErr)
 import Validation (Validation (Failure, Success))
@@ -33,10 +33,10 @@ type ProfileApi = Cap "username" (IdOf 'User) :> ReadApi 'User (UserR "profile")
 
 -- * Server
 
--- | @since 0.1.0.0
+-- | @since 0.3.0.0
 profileServer ::
   ( Algebra sig m,
-    Member OptionalAuthAction.E sig,
+    Member OptionalAuthActionE sig,
     Member (Throw ValidationErr) sig
   ) =>
   ServerT ProfileApi m

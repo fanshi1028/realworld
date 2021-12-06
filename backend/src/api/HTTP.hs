@@ -14,9 +14,9 @@
 -- @since 0.1.0.0
 module HTTP where
 
-import Authentication (NotLogin (NotLogin))
-import qualified Authentication (E)
-import qualified Authentication as AuthErr (NotAuthorized (BadPassword, NoSuchUser))
+import Authentication (AuthenticationE)
+import Authentication.HasAuth (NotLogin (NotLogin))
+import qualified Authentication.HasAuth as AuthErr (NotAuthorized (BadPassword, NoSuchUser))
 import Authorization (TokenAuth)
 import Control.Algebra (Algebra)
 import qualified Control.Carrier.Reader as R (Reader, local)
@@ -30,14 +30,13 @@ import HTTP.Auth.User (AuthUserApi, authUserServer)
 import HTTP.OptionalAuth (OptionallyAuthedApi, optionallyAuthedServer)
 import HTTP.Protected (AuthedApi, authedServer)
 import HTTP.Public (PublicApi, publicServer)
-import qualified OptionalAuthAction
+import OptionalAuthAction (OptionalAuthActionE)
 import Servant (Get, JSON, ServerT, type (:<|>) ((:<|>)), type (:>))
 import Servant.Auth.Server (Auth, AuthResult (Authenticated, BadPassword, Indefinite, NoSuchUser), CookieSettings, JWTSettings)
 import Servant.Server (hoistServer)
-import InMem.Storage (MapInMemE)
 import qualified Token.Create (E)
 import Token.Decode (InvalidToken)
-import qualified UserAction (E)
+import UserAction (UserActionE)
 import Util.Validation (ValidationErr)
 import VisitorAction (VisitorActionE)
 
@@ -64,14 +63,13 @@ type Api =
 server ::
   ( Algebra sig m,
     Member VisitorActionE sig,
-    Member OptionalAuthAction.E sig,
-    Member UserAction.E sig,
+    Member OptionalAuthActionE sig,
+    Member UserActionE sig,
     Member Cookie.Xsrf.E sig,
     Member (R.Reader JWTSettings) sig,
     Member (R.Reader CookieSettings) sig,
     Member (R.Reader (Maybe (UserR "authWithToken"))) sig,
-    MapInMemE 'User sig,
-    Member (Authentication.E 'User) sig,
+    Member (AuthenticationE 'User) sig,
     Member (Token.Create.E 'User) sig,
     Member (Throw Text) sig,
     Member (Throw ValidationErr) sig,

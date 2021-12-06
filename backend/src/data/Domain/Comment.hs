@@ -18,7 +18,7 @@ import Domain (Domain (Comment))
 import Domain.User (UserR)
 import Field.Time (Time)
 import GHC.TypeLits (Symbol)
-import InMem.Storage.Map (IdOf)
+import Storage.Map (IdOf)
 import Util.JSON.To (Out, wrappedToEncoding, wrappedToJSON)
 
 -- $setup

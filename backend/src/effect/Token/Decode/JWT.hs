@@ -16,7 +16,7 @@
 -- @since 0.3.0.0
 module Token.Decode.JWT (C (run)) where
 
-import Authentication (AuthOf)
+import Authentication.HasAuth (AuthOf)
 import Control.Algebra (Algebra (alg), type (:+:) (L, R))
 import qualified Control.Effect.Reader as R (Reader, ask)
 import Control.Effect.Sum (Member)
@@ -28,7 +28,7 @@ import Relude.Extra (un)
 import Servant.Auth.Server (FromJWT, JWTSettings, decodeJWT, validationKeys)
 import Servant.Auth.Server.Internal.ConfigTypes (jwtSettingsToJwtValidationSettings)
 import Token.Decode (E (DecodeToken), InvalidToken (InvalidToken))
-import Token.Internal.HasToken (TokenOf)
+import Token.HasToken (TokenOf)
 
 -- | @since 0.3.0.0
 newtype C (s :: Domain) (m :: Type -> Type) a = C

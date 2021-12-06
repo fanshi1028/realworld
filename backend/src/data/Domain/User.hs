@@ -13,13 +13,14 @@
 -- @since 0.2.0.0
 module Domain.User where
 
-import Authentication (AuthOf)
+import Authentication.Internal.HasAuth (AuthOf)
 import Data.Aeson (ToJSON (toEncoding, toJSON), Value (Object), defaultOptions, genericToJSON)
 import qualified Data.HashMap.Strict as HM
 import Domain (Domain (User))
 import GHC.TypeLits (Symbol)
 import Servant.Auth.Server (ToJWT (encodeJWT))
-import Token (TokenOf)
+import Token.Internal.HasToken (TokenOf)
+import Token.Internal.HasToken.User ()
 import Util.JSON.To (Out, wrappedToEncoding, wrappedToJSON)
 
 -- $setup

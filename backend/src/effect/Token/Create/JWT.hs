@@ -16,7 +16,7 @@
 -- @since 0.3.0.0
 module Token.Create.JWT (C (run)) where
 
-import Authentication (AuthOf)
+import Authentication.HasAuth (AuthOf)
 import Control.Algebra (Algebra (alg), type (:+:) (L, R))
 import qualified Control.Effect.Reader as R (Reader, ask, asks)
 import qualified Control.Effect.State as S
@@ -29,7 +29,7 @@ import Field.Time (Time)
 import Relude.Extra (un, (.~))
 import Servant.Auth.Server (CookieSettings (cookieExpires), JWTSettings, ToJWT, encodeJWT, jwtAlg, signingKey)
 import Token.Create (E (CreateToken))
-import Token.Internal.HasToken (TokenOf)
+import Token.HasToken (TokenOf)
 
 -- | @since 0.3.0.0
 newtype C (s :: Domain) gen (m :: Type -> Type) a = C

@@ -18,7 +18,7 @@ import Control.Effect.Sum (Member)
 import Control.Effect.Throw (Throw)
 import HTTP.OptionalAuth.Article (ArticleApi, articleServer)
 import HTTP.OptionalAuth.Profile (ProfileApi, profileServer)
-import qualified OptionalAuthAction (E)
+import OptionalAuthAction (OptionalAuthActionE)
 import Servant (ServerT, type (:<|>) ((:<|>)), type (:>))
 import Util.Validation (ValidationErr)
 
@@ -34,7 +34,7 @@ type OptionallyAuthedApi =
 -- | @since 0.3.0.0
 optionallyAuthedServer ::
   ( Algebra sig m,
-    Member OptionalAuthAction.E sig,
+    Member OptionalAuthActionE sig,
     Member (Throw ValidationErr) sig
   ) =>
   ServerT OptionallyAuthedApi m

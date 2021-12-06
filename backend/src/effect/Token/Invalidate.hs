@@ -11,7 +11,7 @@
 -- @since 0.3.0.0
 module Token.Invalidate where
 
-import Token (TokenOf)
+import Token.HasToken (TokenOf)
 
 -- | @since 0.3.0.0
 data E s (m :: Type -> Type) a where

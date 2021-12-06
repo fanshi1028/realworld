@@ -13,15 +13,8 @@
 --
 -- Some IsAuth instances for servant
 --
--- @since 0.1.0.0
-module Authorization
-  ( -- * TokenAuth
-    TokenAuth,
-
-    -- * TokenAuthInMem
-    TokenAuthInMem,
-  )
-where
+-- @since 0.3.0.0
+module Authorization where
 
 import Control.Algebra (send)
 import Control.Carrier.Lift (runM)
@@ -30,18 +23,13 @@ import Control.Carrier.Throw.Either (runThrow)
 import qualified Data.List as List (lookup)
 import Data.Time.Clock (getCurrentTime)
 import Domain (Domain (User))
-import Domain.Transform (Transform (transform))
 import Domain.User (UserR (UserAuthWithToken))
 import Network.Wai (Request, requestHeaders)
 import Servant (FromHttpApiData (parseHeader))
 import Servant.Auth.Server (CookieSettings, JWTSettings)
 import qualified Servant.Auth.Server as Auth (AuthCheck (AuthCheck))
 import Servant.Auth.Server.Internal.Class (IsAuth (AuthArgs, runAuth))
-import qualified StmContainers.Map as STM (lookup)
-import qualified StmContainers.Map as STMMap (Map)
-import InMem.Storage (TableInMem)
-import InMem.Storage.Map (IdOf)
-import Token (TokenOf (..))
+import Token.HasToken (TokenOf (..))
 import Token.Decode (E (DecodeToken), InvalidToken)
 import Token.Decode.JWT (run)
 
@@ -72,20 +60,3 @@ instance IsAuth TokenAuth (UserR "authWithToken") where
             Right auth -> pure $ UserAuthWithToken auth token
             _ -> mempty
       _ -> pure mempty
-
--- | @since 0.1.0.0
--- Use hand-roll in-memory storage to facilitate auth process
-data TokenAuthInMem
-
--- | @since 0.1.0.0
-instance IsAuth TokenAuthInMem (UserR "authWithToken") where
-  type AuthArgs TokenAuthInMem = '[TableInMem 'User, STMMap.Map (TokenOf 'User) (IdOf 'User)]
-  runAuth _ _ userDb tokenDb = Auth.AuthCheck $ \case
-    RequestToken token ->
-      atomically $
-        STM.lookup token tokenDb
-          >>= traverse (`STM.lookup` userDb)
-          <&> \case
-            (join -> Just u) -> pure $ UserAuthWithToken (transform u) token
-            _ -> mempty
-    _ -> pure mempty

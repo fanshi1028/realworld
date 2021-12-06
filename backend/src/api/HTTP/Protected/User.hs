@@ -20,7 +20,7 @@ import Domain.User (UserR (UserAuthWithToken))
 import HTTP.Util (ReadApi, UpdateApi)
 import Servant (ServerT, type (:<|>) ((:<|>)))
 import Token.Create (E (CreateToken))
-import UserAction (E (GetCurrentUser, UpdateUser))
+import UserAction (UserActionE (GetCurrentUser, UpdateUser))
 import Util.JSON.From (In (In))
 import Util.JSON.To (Out (Out))
 import Util.Validation (ValidationErr)
@@ -38,7 +38,7 @@ userServer ::
   ( Algebra sig m,
     Member (Throw ValidationErr) sig,
     Member (Token.Create.E 'User) sig,
-    Member UserAction.E sig
+    Member UserActionE sig
   ) =>
   ServerT UserApi m
 userServer =

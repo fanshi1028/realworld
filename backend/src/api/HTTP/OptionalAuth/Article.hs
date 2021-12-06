@@ -19,9 +19,9 @@ import Domain (Domain (Article))
 import Domain.Article (ArticleR)
 import Domain.Comment (CommentR)
 import HTTP.Util (Cap, QP, ReadApi, ReadManyApi)
-import OptionalAuthAction (E (GetArticle, GetComments, ListArticles))
+import OptionalAuthAction (OptionalAuthActionE (GetArticle, GetComments, ListArticles))
 import Servant (ServerT, type (:<|>) ((:<|>)), type (:>))
-import InMem.Storage.Map.Internal.HasStorage.User (IdOf)
+import Storage.Map (IdOf)
 import Util.JSON.To (Out (Out))
 import Util.Validation (ValidationErr)
 import Validation (Validation (Failure, Success))
@@ -38,10 +38,10 @@ type ArticleApi =
 
 -- * Server
 
--- | @since 0.1.0.0
+-- | @since 0.3.0.0
 articleServer ::
   ( Algebra sig m,
-    Member OptionalAuthAction.E sig,
+    Member OptionalAuthActionE sig,
     Member (Throw ValidationErr) sig
   ) =>
   ServerT ArticleApi m
