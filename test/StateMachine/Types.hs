@@ -39,7 +39,6 @@ data VisitorResponse (r :: Type -> Type)
 data AuthCommand (r :: Type -> Type)
   = Register (CreateOf 'User)
   | Login (Reference Email r) (Reference Password r)
-  -- -- | Logout
   deriving (Show)
 
 instance CommandNames AuthCommand
@@ -47,7 +46,6 @@ instance CommandNames AuthCommand
 data AuthResponse (r :: Type -> Type)
   = Registered (Reference (IdOf 'User) r) (Reference Email r) (Reference Password r) (Reference (TokenOf 'User) r)
   | LoggedIn
-  -- -- | LoggedOut
   deriving (Show)
 
 data UserCommand r

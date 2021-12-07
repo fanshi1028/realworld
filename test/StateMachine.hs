@@ -94,7 +94,6 @@ transition m cm res = case (cm, res) of
         & field' @"tokens" %~ ((t, em) :)
     -- FIXME: How about double login with different identity?
     (_, Login _ _, LoggedIn) -> m
-    -- (Just t, Logout, LoggedOut) -> m & field' @"tokens" %~ deleteByRef t
     _failed -> m
   (VisitorCommand _ _, _) -> m
   (UserCommand (Just t) cm', UserResponse res') -> fromMaybe m $ do
@@ -208,7 +207,7 @@ postcondition m cmd res =
       favoriteInv = [emailsL, credentialsL, usersL, articlesL, commentsL, followL, hasCommentL, createArticleL, tokensL]
    in case (cmd, res) of
         (_, FailResponse _) -> m .== m' .// "same model"
-        (AuthCommand m_ref ac, AuthResponse ar) ->
+        (AuthCommand _m_ref ac, AuthResponse ar) ->
           Boolean (and $ on (==) <$> authInv <*> pure m <*> pure m') .// "auth command invariant"
             .&& case (ac, ar) of
               (Register cr, Registered ref em pw _t) ->
@@ -223,17 +222,7 @@ postcondition m cmd res =
                   .&& on (-) credentialsL m' m .== 1 .// "after: added 1 to credentials"
                   .&& on (-) tokensL m' m .== 1 .// "after: new token, added 1 to tokensL"
               (Login _ _, LoggedIn) -> Top
-              -- NOTE: no one care, not log out in spec
-              -- (Logout, LoggedOut) ->
-              --   on (.==) usersL m' m .// "same users" .&& case m_ref of
-              --     Just ref ->
-              --       validToken ref m .// "before: the token is valid"
-              --         .&& findByRef ref (tokens m') .== Nothing .// "after: the token is invalidated"
-              --         .&& on (-) tokensL m m' .== 1 .// "after: removed 1 from tokens"
-              --         .&& on (.==) emailsL m' m .// "same emails"
-              --         .&& on (.==) credentialsL m' m .// "same credentials"
-              --     Nothing -> Bot .// "logged in"
-              -- _ -> error "auth postcondition error"
+              _ -> error "auth postcondition error"
         (VisitorCommand _ vc, VisitorResponse vr) ->
           m .== m' .// "same model" .&& case (vc, vr) of
             (GetProfile ref', GotProfile) -> Forall [m, m'] (findByRef' ref' . users) .// "the user exist"
@@ -339,7 +328,6 @@ mock m =
             Login em pw -> do
               guard $ (em, pw) `elem` credentials m
               pure $ pure LoggedIn
-            -- Logout -> pure $ pure LoggedOut
         VisitorCommand _ vc -> maybe (pure $ FailResponse "") (VisitorResponse <$>) $ case vc of
           GetProfile _ -> pure $ pure GotProfile
           GetArticle ref -> do
@@ -457,8 +445,6 @@ semantics =
               run' (login $ In $ pure $ UserLogin (concrete em) $ concrete pw) >>= \case
                 Left ce -> pure $ FailResponse $ show ce
                 Right (Headers (Out _) _) -> pure $ AuthResponse LoggedIn
-            -- FIXME no logout command right now
-            -- Logout -> undefined
         VisitorCommand m_ref vc ->
           let (getProfile :<|> (listArticles :<|> withArticle)) :<|> _ = apis $ maybe (UserToken "") concrete m_ref
            in case vc of

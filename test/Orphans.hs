@@ -41,7 +41,7 @@ import HTTP.Util (Limit (Limit), Offset (Offset))
 import Network.HTTP.Types (hAuthorization)
 import Servant (ToHttpApiData (toUrlPiece), type (:>))
 import Servant.Auth.Server (Auth)
-import Servant.Client (HasClient (Client, clientWithRoute))
+import Servant.Client (HasClient (Client, clientWithRoute), hoistClientMonad)
 import Servant.Client.Core (requestHeaders)
 import Storage.Map (ContentOf, CreateOf (..), IdOf (..), Patch, UpdateOf (..))
 import Test.StateMachine (ToExpr (toExpr))
@@ -67,6 +67,7 @@ instance (HasTokenAuth auths, HasClient m api) => HasClient m (Auth auths a :> a
         { requestHeaders =
             (hAuthorization, "Token " <> t) <| requestHeaders req
         }
+  hoistClientMonad p _ f cl = hoistClientMonad p (Proxy :: Proxy api) f . cl
 
 wrappedParseJSON' :: FromJSON a => String -> Text -> Value -> Parser (Out a)
 wrappedParseJSON' info key = wrappedParseJSON info key >=> \(In a) -> pure (Out a)
