@@ -8,6 +8,7 @@
 module Gen.Naive where
 
 import Authentication.HasAuth (AuthOf)
+import Data.Time.Clock ()
 import Domain (Domain (Article, Comment, User))
 import Domain.Article (ArticleR (..))
 import Domain.Comment (CommentR (..))
@@ -18,6 +19,7 @@ import Field.Description (Description (Description))
 import Field.Email (Email (Email))
 import Field.Image (Image (Image))
 import Field.Tag (Tag (Tag))
+import Field.Time (Time (Time))
 import Field.Title (Title (Title))
 import Field.Username (Username (Username))
 import Storage.Map (HasStorage (ContentOf), IdOf (..))
@@ -54,6 +56,11 @@ deriving instance Arbitrary Image
 -- >>> sample' $ arbitrary @Title
 -- ["","\33532","\1082204\ESC","\ENQC}h-J","b","l\1086590\\","\78209:k\ESC","c","-~\1069271\&7n!\199009}\30571B","!\68081re\\\"Y~","\RSq;"]
 deriving instance Arbitrary Title
+
+-- | @since 0.3.0.0
+-- >>> sample' $ arbitrary @Time
+-- [1864-05-09 12:15:24.478938341373 UTC,1864-05-08 04:14:22.787283774678 UTC,1864-05-11 20:11:07.350399947405 UTC,1864-05-04 16:02:04.890488921402 UTC,1864-05-11 23:30:49.330851050355 UTC,1864-05-13 13:26:30.361190437026 UTC,1864-04-30 19:23:16.659840504304 UTC,1864-05-15 02:33:42.833714440686 UTC,1864-05-25 09:04:52.111442215958 UTC,1864-04-24 04:48:10.953480851738 UTC,1864-05-09 06:21:57.673382779961 UTC]
+deriving instance Arbitrary Time
 
 -- | @since 0.2.0.0
 -- >>> sample' $ arbitrary @Description
