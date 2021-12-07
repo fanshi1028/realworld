@@ -25,7 +25,7 @@ import Control.Effect.Throw (Throw, throwError)
 import Crypto.JOSE (Error)
 import Crypto.JWT (DRG, NumericDate (NumericDate), bestJWSAlg, claimExp, encodeCompact, newJWSHeader, signClaims, withDRG)
 import Domain (Domain)
-import Field.Time (Time)
+import Field.Time (Time (Time))
 import Relude.Extra (un, (.~))
 import Servant.Auth.Server (CookieSettings (cookieExpires), JWTSettings, ToJWT, encodeJWT, jwtAlg, signingKey)
 import Token.Create (E (CreateToken))
@@ -49,7 +49,7 @@ makeJWT v gen cfg expiry =
   where
     addExp = case expiry of
       Nothing -> id
-      Just e -> claimExp .~ Just (NumericDate e)
+      Just (Time e) -> claimExp .~ Just (NumericDate e)
 {-# INLINE makeJWT #-}
 
 -- | @since 0.3.0.0
@@ -66,7 +66,7 @@ instance
   Algebra (Token.Create.E s :+: sig) (C s gen m)
   where
   alg _ (L (CreateToken auth)) ctx = do
-    (et, g) <- makeJWT auth <$> S.get @gen <*> R.ask <*> R.asks cookieExpires
+    (et, g) <- makeJWT auth <$> S.get @gen <*> R.ask <*> R.asks (fmap Time . cookieExpires)
     S.put g
     either throwError (pure . (<$ ctx) . un . toStrict) et
   alg hdl (R other) ctx = C $ alg (run . hdl) other ctx

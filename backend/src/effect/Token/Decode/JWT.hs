@@ -23,7 +23,7 @@ import Control.Effect.Sum (Member)
 import Control.Effect.Throw (Throw, throwError)
 import Crypto.JWT (JWTError, decodeCompact, verifyClaimsAt)
 import Domain (Domain)
-import Field.Time (Time)
+import Field.Time (Time (Time))
 import Relude.Extra (un)
 import Servant.Auth.Server (FromJWT, JWTSettings, decodeJWT, validationKeys)
 import Servant.Auth.Server.Internal.ConfigTypes (jwtSettingsToJwtValidationSettings)
@@ -40,7 +40,7 @@ newtype C (s :: Domain) (m :: Type -> Type) a = C
 -- | @since 0.3.0.0
 -- Copy from servant auth but amended so that it is not in IO
 verifyJWTAt :: (FromJWT a) => Time -> JWTSettings -> ByteString -> Maybe a
-verifyJWTAt time jwtCfg input = runIdentity $ do
+verifyJWTAt (Time time) jwtCfg input = runIdentity $ do
   verifiedJWT <- runExceptT $ do
     decodeCompact (fromStrict input)
       >>= verifyClaimsAt (jwtSettingsToJwtValidationSettings jwtCfg) (validationKeys jwtCfg) time

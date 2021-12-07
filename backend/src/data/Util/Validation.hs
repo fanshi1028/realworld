@@ -6,6 +6,7 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE StandaloneDeriving #-}
 {-# LANGUAGE ViewPatterns #-}
+{-# OPTIONS_GHC -Wno-orphans #-}
 
 -- |
 -- Description : Helper
@@ -32,54 +33,19 @@ module Util.Validation
 where
 
 import Data.Aeson (FromJSON (parseJSON), withArray)
-import Data.Aeson.Types (withText)
-import qualified Data.HashSet as HS (fromList)
-import Data.Password.Argon2 (Password, mkPassword)
-import Data.Password.Validate (ValidationResult (InvalidPassword, ValidPassword), defaultPasswordPolicy_, validatePassword)
 import qualified Data.Semigroup as SG (Last (Last))
-import Data.Time (UTCTime)
 import Servant (FromHttpApiData (parseQueryParam))
-import qualified Validation as V (Validation (Failure, Success), failure)
+import qualified Validation as V (Validation (Success), failure)
 
 -- $setup
 -- >>> import Data.Aeson (eitherDecode')
-
--- | @since 0.2.0.0
--- Validate password with default password policy
-instance FromJSON (WithValidation Password) where
-  parseJSON =
-    withText "password" $ \(mkPassword -> pw) -> pure $
-      case validatePassword defaultPasswordPolicy_ pw of
-        ValidPassword -> V.Success pw
-        InvalidPassword irs ->
-          maybe (error "Impossible: password must be invalidated with a reason!") V.Failure $
-            nonEmpty $ show @Text <$> irs
--- ^
--- ==== Success
--- >>> eitherDecode' @(WithValidation Password) "\"jfoj9343f43f43f\""
--- Right (Success **PASSWORD**)
---
--- ==== Validation Fail
--- >>> eitherDecode' @(WithValidation Password) "\"jf\""
--- Right (Failure ("PasswordTooShort 8 2" :| []))
---
--- ==== Fail
--- >>> eitherDecode' @(WithValidation Password) "{}"
--- Left "Error in $: parsing password failed, expected String, but encountered Object"
 
 -- | @since 0.1.0.0
 instance FromJSON (WithValidation a) => FromJSON (WithValidation [a]) where
   parseJSON = withArray "array" $ mapM parseJSON >=> pure . sequenceA . toList
 
 -- | @since 0.1.0.0
-instance (Eq r, Hashable r, FromJSON (WithValidation r)) => FromJSON (WithValidation (HashSet r)) where
-  parseJSON = fmap HS.fromList . sequenceA <<$>> parseJSON
-
--- | @since 0.1.0.0
 deriving via (WithNoValidation Text) instance FromJSON (WithValidation Text)
-
--- | @since 0.1.0.0
-deriving via (WithNoValidation UTCTime) instance FromJSON (WithValidation UTCTime)
 
 -- | @since 0.2.0.0
 -- For parsing partial update patch with 'HKD'
@@ -136,3 +102,5 @@ instance FromHttpApiData a => FromHttpApiData (WithNoValidation a) where
 -- | @since 0.2.0.0
 -- Just use 'Text' to represent all validation errors. When it happens, there will be a nonempty list of them.
 type ValidationErr = NonEmpty Text
+
+-- newtype ValidationErr = ValidationErr (NonEmpty Text)

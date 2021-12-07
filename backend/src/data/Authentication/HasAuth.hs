@@ -35,7 +35,6 @@ where
 import Authentication.Internal.HasAuth as X
 import Authentication.Internal.HasAuth.User as X
 import Domain (Domain)
-import Storage.Map (CreateOf)
 
 -- | @since 0.3.0.0
 newtype AlreadyLogin (a :: Domain) = AlreadyLogin (LoginOf a)

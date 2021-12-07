@@ -4,6 +4,7 @@
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE TypeSynonymInstances #-}
+{-# OPTIONS_GHC -Wno-orphans #-}
 
 -- |
 -- Description : Instance
