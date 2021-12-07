@@ -1,7 +1,7 @@
 -- |
 module Main where
 
-import App.InMem (newApp)
+import InMem.App (newApp)
 import Network.HTTP.Client (defaultManagerSettings, newManager)
 import Roundtrip (aesonRoundtripTests)
 import Servant.Client (BaseUrl (BaseUrl), Scheme (Http))

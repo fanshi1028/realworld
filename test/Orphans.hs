@@ -11,7 +11,7 @@
 -- | @since 0.2.0.0
 module Orphans where
 
-import Authentication (AuthOf (..), LoginOf (..))
+import Authentication.HasAuth (AuthOf (..), LoginOf (..))
 import Authorization (TokenAuth)
 import Control.Lens ((^.))
 import Data.Aeson (FromJSON, ToJSON (toEncoding, toJSON), Value (Object, String), parseJSON, withObject, (.:))
@@ -45,7 +45,7 @@ import Servant.Client (HasClient (Client, clientWithRoute))
 import Servant.Client.Core (requestHeaders)
 import Storage.Map (ContentOf, CreateOf (..), IdOf (..), Patch, UpdateOf (..))
 import Test.StateMachine (ToExpr (toExpr))
-import Token (TokenOf (UserToken))
+import Token.HasToken (TokenOf (UserToken))
 import Util.JSON.From (In (In), wrappedParseJSON)
 import Util.JSON.To (Out (Out), wrappedToJSON)
 import Util.Validation (WithValidation)

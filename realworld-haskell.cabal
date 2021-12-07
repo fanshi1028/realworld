@@ -262,15 +262,17 @@ executable realworld-haskell
 
 test-suite realworld-haskell-test
   import:
-    prelude, backend-data-deps, backend-effect-deps, backend-api-deps
+    prelude, backend-data-deps, backend-effect-deps, backend-api-deps, backend-in-mem-carrier-deps
 
   if !flag(ghcid)
     build-depends:
-      , backend-api-internal
+      , backend-data-internal
       , backend-effect-internal
+      , backend-api-internal
+      , backend-in-mem-carrier-internal
 
   else
-    hs-source-dirs: backend/src/data backend/src/effect backend/src/api
+    hs-source-dirs: backend/src/data backend/src/effect backend/src/api backend/src/carrier
 
   type:           exitcode-stdio-1.0
   hs-source-dirs: test

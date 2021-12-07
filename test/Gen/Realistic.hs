@@ -8,7 +8,7 @@
 -- | @since 0.2.0.0
 module Gen.Realistic where
 
-import Authentication (AuthOf (..), HasAuth (..), LoginOf (UserLogin))
+import Authentication.HasAuth (AuthOf (..), HasAuth (..), LoginOf (UserLogin))
 import Data.Generic.HKD (build, construct)
 import Data.Password.Argon2 (mkPassword)
 import Data.Password.Validate (ValidationResult (ValidPassword), defaultPasswordPolicy_, validatePassword)

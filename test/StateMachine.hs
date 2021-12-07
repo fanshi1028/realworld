@@ -13,7 +13,7 @@
 -- |
 module StateMachine where
 
-import Authentication (AuthOf (..), LoginOf (UserLogin))
+import Authentication.HasAuth (AuthOf (..), LoginOf (UserLogin))
 import Control.Lens ((%~))
 import Data.Aeson (FromJSON, ToJSON, eitherDecode, encode)
 import Data.Functor.Classes (Eq1, Ord1)
@@ -73,7 +73,7 @@ import Test.StateMachine
   )
 import Test.StateMachine.Logic (member)
 import Test.Tasty.QuickCheck ((===))
-import Token (TokenOf (UserToken))
+import Token.HasToken (TokenOf (UserToken))
 import Util.JSON.From (In (In))
 import Util.JSON.To (Out (Out))
 import Util.Validation (WithValidation)

@@ -16,7 +16,7 @@ import Storage.Map (CreateOf (..), IdOf (..), Patch, UpdateOf (..))
 import Test.StateMachine (CommandNames, Concrete, Reference, ToExpr, cmdName, cmdNames)
 import qualified Test.StateMachine.Types.Rank2 as R2
 import Text.Show (showString, showsPrec)
-import Token (TokenOf (..))
+import Token.HasToken (TokenOf (..))
 
 data VisitorCommand r
   = GetProfile (Reference (IdOf 'User) r)
