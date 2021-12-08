@@ -1,19 +1,12 @@
 {-# LANGUAGE DataKinds #-}
-{-# LANGUAGE FlexibleContexts #-}
-{-# LANGUAGE FlexibleInstances #-}
-{-# LANGUAGE MultiParamTypeClasses #-}
-{-# LANGUAGE RecordWildCards #-}
-{-# LANGUAGE ScopedTypeVariables #-}
-{-# LANGUAGE UndecidableInstances #-}
-{-# LANGUAGE ViewPatterns #-}
 
 -- |
--- Description : Effect & Carrier
+-- Description : Effect
 -- Copyright   : (c) 2021 fanshi1028
 -- Maintainer  : jackychany321@gmail.com
 -- Stability   : experimental
 --
--- Effect and Carrier of users' action
+-- Effect of users' action
 --
 -- @since 0.1.0.0
 module UserAction where

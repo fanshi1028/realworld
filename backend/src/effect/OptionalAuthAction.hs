@@ -1,18 +1,12 @@
 {-# LANGUAGE DataKinds #-}
-{-# LANGUAGE FlexibleContexts #-}
-{-# LANGUAGE FlexibleInstances #-}
-{-# LANGUAGE MultiParamTypeClasses #-}
-{-# LANGUAGE RecordWildCards #-}
-{-# LANGUAGE UndecidableInstances #-}
-{-# LANGUAGE ViewPatterns #-}
 
 -- |
--- Description : Effect & Carrier
+-- Description : Effect
 -- Copyright   : (c) 2021 fanshi1028
 -- Maintainer  : jackychany321@gmail.com
 -- Stability   : experimental
 --
--- Effect and Carrier of optionally authed action
+-- Effect of optionally authed action
 --
 -- @since 0.3.0.0
 module OptionalAuthAction where
