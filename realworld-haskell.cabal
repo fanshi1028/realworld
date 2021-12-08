@@ -226,12 +226,15 @@ library backend-in-mem-carrier-internal
     InMem.App
     InMem.Authentication.User
     InMem.Relation
+    InMem.Relation.Internal.ManyToMany
     InMem.Relation.Internal.ManyToMany.Favorite
     InMem.Relation.Internal.ManyToMany.Follow
     InMem.Relation.Internal.ManyToMany.Tag
+    InMem.Relation.Internal.ToMany
     InMem.Relation.Internal.ToMany.ArticleHasComment
     InMem.Relation.Internal.ToMany.UserCreateArticle
     InMem.Relation.Internal.ToMany.UserCreateComment
+    InMem.Relation.Internal.ToOne
     InMem.Relation.Internal.ToOne.EmailOfUser
     InMem.Storage
     InMem.UserAction
