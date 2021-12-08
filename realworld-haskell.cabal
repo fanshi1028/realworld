@@ -225,6 +225,8 @@ library backend-in-mem-carrier-internal
   exposed-modules:
     InMem.App
     InMem.Authentication.User
+    InMem.Authorization
+    InMem.OptionalAuthAction
     InMem.Relation
     InMem.Relation.Internal.ManyToMany
     InMem.Relation.Internal.ManyToMany.Favorite
