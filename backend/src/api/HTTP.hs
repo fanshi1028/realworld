@@ -31,6 +31,7 @@ import HTTP.OptionalAuth (OptionallyAuthedApi, optionallyAuthedServer)
 import HTTP.Protected (AuthedApi, authedServer)
 import HTTP.Public (PublicApi, publicServer)
 import OptionalAuthAction (OptionalAuthActionE)
+import Paging (Limit, Offset)
 import Servant (Get, JSON, ServerT, type (:<|>) ((:<|>)), type (:>))
 import Servant.Auth.Server (Auth, AuthResult (Authenticated, BadPassword, Indefinite, NoSuchUser), CookieSettings, JWTSettings)
 import Servant.Server (hoistServer)
@@ -68,6 +69,8 @@ server ::
     Member Cookie.Xsrf.E sig,
     Member (R.Reader JWTSettings) sig,
     Member (R.Reader CookieSettings) sig,
+    Member (R.Reader Limit) sig,
+    Member (R.Reader Offset) sig,
     Member (R.Reader (Maybe (UserR "authWithToken"))) sig,
     Member (AuthenticationE 'User) sig,
     Member (Token.Create.E 'User) sig,

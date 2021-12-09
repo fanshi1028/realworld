@@ -36,6 +36,7 @@ import InMem.OptionalAuthAction (runOptionalAuthActionInMem)
 import InMem.Storage (TableInMem)
 import InMem.UserAction (UserActionInMemC (runUserActionInMem), runUserActionInMem)
 import InMem.VisitorAction (runVisitorActionInMem)
+import Paging (Limit (Limit), Offset (Offset))
 import Servant (Application, Context (EmptyContext, (:.)), ServerError (errBody), err400, err401, err404, err500, hoistServerWithContext, serveWithContext, throwError)
 import Servant.Auth.Server (CookieSettings, JWTSettings, defaultCookieSettings, defaultJWTSettings, generateKey)
 import Servant.Server (err403)
@@ -116,6 +117,8 @@ mkApp cs jwts userDb articleDb commentDb tagDb emailUserIndex db0 db1 db2 db3 db
               & R.runReader time
               & R.runReader jwts
               & R.runReader cs
+              & R.runReader (Limit 20)
+              & R.runReader (Offset 0)
               & R.runReader (Nothing @(UserR "authWithToken"))
               & S.evalState gen
               & runTrace

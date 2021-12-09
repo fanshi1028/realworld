@@ -3,7 +3,6 @@
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE StandaloneDeriving #-}
 {-# LANGUAGE TypeFamilies #-}
-{-# LANGUAGE TypeSynonymInstances #-}
 
 -- |
 -- Copyright   : (c) 2021 fanshi1028
@@ -19,25 +18,12 @@ import Domain (Domain)
 import Field.Tag (Tag)
 import Field.Username (Username)
 import GHC.TypeLits (Symbol)
-import Servant (Capture, Delete, FromHttpApiData, Get, JSON, NoContent, Post, Put, QueryParam, ReqBody, type (:<|>), type (:>))
+import Paging (Limit, Offset)
+import Servant (Capture, Delete, Get, JSON, NoContent, Post, Put, QueryParam, ReqBody, type (:<|>), type (:>))
 import Storage.Map (CreateOf, Patch, UpdateOf)
 import Util.JSON.From (In)
 import Util.JSON.To (Out)
-import Util.Validation (NoValidation (..), WithNoValidation, WithValidation)
-
--- * Paging
-
--- | @since 0.1.0.0
-newtype Limit = Limit Natural deriving (FromHttpApiData)
-
--- | @since 0.1.0.0
-deriving via (WithNoValidation Natural) instance FromHttpApiData (WithValidation Limit)
-
--- | @since 0.1.0.0
-newtype Offset = Offset Natural deriving (FromHttpApiData)
-
--- | @since 0.1.0.0
-deriving via (WithNoValidation Natural) instance FromHttpApiData (WithValidation Offset)
+import Util.Validation (WithValidation)
 
 -- * QueryParam
 

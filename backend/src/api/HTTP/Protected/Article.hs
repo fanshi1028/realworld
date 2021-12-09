@@ -28,12 +28,14 @@ module HTTP.Protected.Article
 where
 
 import Control.Algebra (Algebra, send)
+import qualified Control.Effect.Reader as R (Reader, ask)
 import Control.Effect.Sum (Member)
 import Control.Effect.Throw (Throw, throwError)
 import Domain (Domain (Article, Comment))
 import Domain.Article (ArticleR)
 import Domain.Comment (CommentR)
 import HTTP.Util (Cap, CreateApi, QP, ReadManyApi, ToggleApi, UDApi)
+import Paging (HasPaging (paging), Limit, Offset, Paging (LimitOffSet))
 import Servant (Delete, JSON, NoContent (NoContent), ServerT, type (:<|>) ((:<|>)), type (:>))
 import Storage.Map (IdOf)
 import UserAction
@@ -51,7 +53,7 @@ import UserAction
 import Util.JSON.From (In (In))
 import Util.JSON.To (Out (Out))
 import Util.Validation (ValidationErr)
-import Validation (Validation (Failure, Success))
+import Validation (Validation (Failure, Success), validation)
 
 -- |  @since 0.1.0.0
 type CommentApi =
@@ -76,7 +78,9 @@ type ArticleApi =
 articleServer ::
   ( Algebra sig m,
     Member UserActionE sig,
-    Member (Throw ValidationErr) sig
+    Member (Throw ValidationErr) sig,
+    Member (R.Reader Limit) sig,
+    Member (R.Reader Offset) sig
   ) =>
   ServerT ArticleApi m
 articleServer =
@@ -84,8 +88,16 @@ articleServer =
         In (Failure err) -> throwError err
         In (Success r) -> f r
    in fromUnValidatedInput (Out <<$>> send . CreateArticle)
-        -- FIXME
-        :<|> (\_ _ -> Out <$> send UserAction.FeedArticles)
+        :<|> ( \mLimit mOffset -> do
+                 vLimit <- R.ask <&> \lim -> fromMaybe (pure lim) mLimit
+                 vOffset <- R.ask <&> \off -> fromMaybe (pure off) mOffset
+                 Out
+                   <$> do
+                     validation
+                       (throwError @ValidationErr)
+                       (\p -> paging p <$> send FeedArticles)
+                       (LimitOffSet <$> vLimit <*> vOffset)
+             )
         :<|> ( \case
                  Success aid ->
                    ( fromUnValidatedInput (Out <<$>> send . UpdateArticle aid)

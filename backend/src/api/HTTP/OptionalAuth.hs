@@ -14,11 +14,13 @@
 module HTTP.OptionalAuth where
 
 import Control.Algebra (Algebra)
+import qualified Control.Effect.Reader as R (Reader)
 import Control.Effect.Sum (Member)
 import Control.Effect.Throw (Throw)
 import HTTP.OptionalAuth.Article (ArticleApi, articleServer)
 import HTTP.OptionalAuth.Profile (ProfileApi, profileServer)
 import OptionalAuthAction (OptionalAuthActionE)
+import Paging (Limit, Offset)
 import Servant (ServerT, type (:<|>) ((:<|>)), type (:>))
 import Util.Validation (ValidationErr)
 
@@ -35,6 +37,8 @@ type OptionallyAuthedApi =
 optionallyAuthedServer ::
   ( Algebra sig m,
     Member OptionalAuthActionE sig,
+    Member (R.Reader Limit) sig,
+    Member (R.Reader Offset) sig,
     Member (Throw ValidationErr) sig
   ) =>
   ServerT OptionallyAuthedApi m

@@ -13,12 +13,14 @@
 module HTTP.Protected where
 
 import Control.Algebra (Algebra)
+import qualified Control.Effect.Reader as R (Reader)
 import Control.Effect.Sum (Member)
 import Control.Effect.Throw (Throw)
 import Domain (Domain (User))
 import HTTP.Protected.Article (ArticleApi, articleServer)
 import HTTP.Protected.Follow (FollowApi, followServer)
 import HTTP.Protected.User (UserApi, userServer)
+import Paging (Limit, Offset)
 import Servant (ServerT, type (:<|>) ((:<|>)), type (:>))
 import qualified Token.Create (E)
 import UserAction (UserActionE)
@@ -38,6 +40,8 @@ type AuthedApi =
 authedServer ::
   ( Algebra sig m,
     Member UserActionE sig,
+    Member (R.Reader Limit) sig,
+    Member (R.Reader Offset) sig,
     Member (Throw ValidationErr) sig,
     Member (Token.Create.E 'User) sig
   ) =>

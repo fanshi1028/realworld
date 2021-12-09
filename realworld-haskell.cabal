@@ -133,6 +133,7 @@ library backend-data-internal
     Field.Time
     Field.Title
     Field.Username
+    Paging
     Storage.Error
     Storage.Map
     Storage.Map.Internal.HasCreate
