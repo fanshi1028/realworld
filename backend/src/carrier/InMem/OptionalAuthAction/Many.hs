@@ -68,9 +68,9 @@ instance
         runNonDetA @f $ do
           let mkPred :: forall a b. (a -> b -> Bool) -> Maybe a -> Predicate b
               mkPred pp = maybe mempty (Predicate . pp)
-              predGuard :: forall m a. (Alternative m, Monad m) => Predicate a -> m a -> m a
-              predGuard (getPredicate -> p) ma = do
-                a <- ma
+              predGuard :: forall n a. (Alternative n, Monad n) => Predicate a -> n a -> n a
+              predGuard (getPredicate -> p) na = do
+                a <- na
                 guard $ p a
                 pure a
           (aid, a) <- getAllMapInMem @'Article >>= oneOf
