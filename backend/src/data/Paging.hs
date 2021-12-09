@@ -30,12 +30,14 @@ newtype Offset = Offset Natural deriving (Num, FromHttpApiData)
 deriving via (WithNoValidation Natural) instance FromHttpApiData (WithValidation Offset)
 
 -- | @since 0.3.0.0
-data Paging = LimitOffSet Limit Offset
+data Paging = LimitOffset Limit Offset
 
 -- * Hepler
 
+-- | @since 0.3.0.0
+mkPaging :: Applicative f => Limit -> Offset -> Maybe (f Limit) -> Maybe (f Offset) -> f Paging
 mkPaging dLimit dOffset mLimit mOffset =
-  LimitOffSet
+  LimitOffset
     <$> (fromMaybe dLimit <$> sequenceA mLimit)
     <*> (fromMaybe dOffset <$> sequenceA mOffset)
 
@@ -47,4 +49,4 @@ class HasPaging (f :: Type -> Type) where
 
 -- | @since 0.3.0.0
 instance HasPaging [] where
-  paging (LimitOffSet (Limit lim) (Offset off)) = genericTake lim . genericDrop off
+  paging (LimitOffset (Limit lim) (Offset off)) = genericTake lim . genericDrop off

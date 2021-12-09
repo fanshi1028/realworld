@@ -14,8 +14,6 @@ module OptionalAuthAction where
 import Domain (Domain (Article, User))
 import Domain.Article (ArticleR)
 import Domain.User (UserR)
-import Field.Tag (Tag)
-import Field.Username (Username)
 import Storage.Map (IdOf)
 
 -- | @since 0.3.0.0

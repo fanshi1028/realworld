@@ -235,8 +235,8 @@ postcondition m cmd res =
             (GetProfile ref', GotProfile) -> Forall [m, m'] (findByRef' ref' . users) .// "the user exist"
             (GetArticle ref', GotArticle) -> Forall [m, m'] (findByRef' ref' . articles) .// "the article exists"
             (ListArticles {}, ListedArticles) -> Top
-            (GetTags, GotTags) -> Top
-            (GetComments ref', GotComments) -> Forall [m, m'] (findByRef' ref' . articles) .// "the article exists"
+            (GetTags _, GotTags) -> Top
+            (GetComments ref' _, GotComments) -> Forall [m, m'] (findByRef' ref' . articles) .// "the article exists"
             _ -> error "visitor postcondition error"
         (UserCommand (Just ref) uc, UserResponse ur) -> fromMaybe (Bot .// "the token is valid") $ do
           em <- findByRef ref $ tokens m
@@ -342,8 +342,8 @@ mock m =
             _ <- findByRef ref $ articles m
             pure $ pure GotArticle
           ListArticles {} -> pure $ pure ListedArticles
-          GetTags -> pure $ pure GotTags
-          GetComments ref -> do
+          GetTags _ -> pure $ pure GotTags
+          GetComments ref _ -> do
             _ <- findByRef ref $ articles m
             pure $ pure GotComments
         UserCommand m_ref uc -> maybe (pure $ FailResponse "") (UserResponse <$>) $ do
@@ -478,8 +478,8 @@ semantics =
                    in run getArticle $ const $ VisitorResponse GotArticle
                 -- FIXME: gen query param ?
                 ListArticles (fmap pure -> mTags) ((pure . un . concrete <$>) -> mAuthor) ((pure . un . concrete <$>) -> mFav) streamMode ->
-                  let listArticlesNoStream :<|> listArticlesStream = listArticles Nothing Nothing Nothing Nothing Nothing
-                   in runByCases (listArticlesNoStream mTags mAuthor mFav Nothing Nothing) listArticlesStream streamMode $ const $ VisitorResponse ListedArticles
+                  let listArticlesNoStream :<|> listArticlesStream = listArticles mTags mAuthor mFav Nothing Nothing
+                   in runByCases listArticlesNoStream listArticlesStream streamMode $ const $ VisitorResponse ListedArticles
                 GetTags streamMode -> runByCases getTags getTagsStream streamMode $ const $ VisitorResponse GotTags
                 GetComments ref streamMode ->
                   let _ :<|> (getComments :<|> getCommentsStream) = withArticle $ pure $ concrete ref

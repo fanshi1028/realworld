@@ -18,23 +18,24 @@
 -- @since 0.3.0.0
 module InMem.OptionalAuthAction.Many where
 
+import Authentication.HasAuth (AuthOf (..))
 import Control.Algebra (Algebra, alg, send, type (:+:) (L, R))
 import Control.Carrier.NonDet.Church (runNonDetA)
 import Control.Effect.Catch (catchError)
 import Control.Effect.Error (Catch, Throw, throwError)
 import Control.Effect.NonDet (oneOf)
-import qualified Control.Effect.Reader as R (Reader)
+import qualified Control.Effect.Reader as R (Reader, ask)
 import Control.Effect.Sum (Member)
 import Domain (Domain (Article, Comment, User))
 import Domain.Article (ArticleR (ArticleWithAuthorProfile))
 import Domain.Comment (CommentR (CommentWithAuthorProfile))
-import Domain.User (UserR)
+import Domain.User (UserR (UserAuthWithToken))
 import GHC.Records (getField)
 import InMem.Relation (ManyToManyRelationE, ToMany (getRelatedToMany), ToManyRelationE, getRelatedLeftManyToMany, getRelatedRightManyToMany)
 import InMem.Storage (MapInMemE, getAllMapInMem, getByIdMapInMem)
 import OptionalAuthAction (OptionalAuthActionE (GetProfile))
 import OptionalAuthAction.Many (OptionalAuthActionManyE (GetComments, ListArticles))
-import Storage.Map (ContentOf (..), IdNotFound)
+import Storage.Map (ContentOf (..), IdNotFound, IdOf (UserId), toUserId)
 import Prelude hiding (id)
 
 -- | @since 0.3.0.0
@@ -64,7 +65,7 @@ instance
   alg _ (L action) ctx =
     (<$ ctx) <$> case action of
       ListArticles mTag mAuthor mFav ->
-        runNonDetA @[] $ do
+        runNonDetA @f $ do
           let mkPred :: forall a b. (a -> b -> Bool) -> Maybe a -> Predicate b
               mkPred pp = maybe mempty (Predicate . pp)
               predGuard :: forall m a. (Alternative m, Monad m) => Predicate a -> m a -> m a
@@ -88,7 +89,7 @@ instance
             <$> (predGuard (mkPred ((==) . UserId) mAuthor) (pure $ getField @"author" a) >>= send . GetProfile)
       GetComments aid -> do
         _ <- getByIdMapInMem aid
-        runNonDetA @[] $ do
+        runNonDetA @f $ do
           cid <- getRelatedToMany @"ArticleHasComment" aid >>= oneOf
           flip (catchError @(IdNotFound 'Comment)) (const $ throwError @Text "impossible: comment id not found") $ do
             CommentContent {..} <- getByIdMapInMem cid

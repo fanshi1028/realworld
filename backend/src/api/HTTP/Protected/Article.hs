@@ -35,7 +35,7 @@ import Domain (Domain (Article, Comment))
 import Domain.Article (ArticleR)
 import Domain.Comment (CommentR)
 import HTTP.Util (Cap, CreateApi, QP, ReadManyApi, ToggleApi, UDApi)
-import Paging (HasPaging (paging), Limit, Offset, Paging (LimitOffSet))
+import Paging (HasPaging (paging), Limit, Offset, Paging (LimitOffset))
 import Servant (Delete, JSON, NoContent (NoContent), ServerT, type (:<|>) ((:<|>)), type (:>))
 import Servant.Types.SourceT (source)
 import Storage.Map (IdOf)
@@ -48,7 +48,7 @@ import UserAction
         FavoriteArticle,
         UnfavoriteArticle,
         UpdateArticle
-      )
+      ),
   )
 import UserAction.Many (UserActionManyE (FeedArticles))
 import Util.JSON.From (In (In))
@@ -91,12 +91,15 @@ articleServer =
         In (Success r) -> f r
    in fromUnValidatedInput (Out <<$>> send . CreateArticle)
         :<|> ( \mLimit mOffset -> do
-                 vLimit <- R.ask <&> \lim -> fromMaybe (pure lim) mLimit
-                 vOffset <- R.ask <&> \off -> fromMaybe (pure off) mOffset
-                 let fa = validation
+                 let getVPaging =
+                       liftA2 LimitOffset
+                         <$> (R.ask <&> \lim -> fromMaybe (pure lim) mLimit)
+                         <*> (R.ask <&> \off -> fromMaybe (pure off) mOffset)
+                     fa =
+                       getVPaging
+                         >>= validation
                            (throwError @ValidationErr)
                            (\p -> paging p <$> send FeedArticles)
-                           (LimitOffSet <$> vLimit <*> vOffset)
                   in Out <$> fa :<|> (source <$> fa)
              )
         :<|> ( \case

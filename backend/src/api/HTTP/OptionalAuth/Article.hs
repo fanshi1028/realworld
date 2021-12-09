@@ -22,7 +22,7 @@ import Domain.Comment (CommentR)
 import HTTP.Util (Cap, QP, ReadApi, ReadManyApi)
 import OptionalAuthAction (OptionalAuthActionE (GetArticle))
 import OptionalAuthAction.Many (OptionalAuthActionManyE (GetComments, ListArticles))
-import Paging (Limit, Offset, Paging (LimitOffSet), paging)
+import Paging (Limit, Offset, Paging (LimitOffset), paging)
 import Servant (ServerT, type (:<|>) ((:<|>)), type (:>))
 import Servant.Types.SourceT (source)
 import Storage.Map (IdOf)
@@ -54,16 +54,16 @@ articleServer ::
   ServerT ArticleApi m
 articleServer =
   ( \mTag mAuthor mFavBy mLimit mOffset -> do
-      vLimit <- R.ask >>= \lim -> pure $ fromMaybe (pure lim) mLimit
-      vOffset <- R.ask >>= \off -> pure $ fromMaybe (pure off) mOffset
-      let la = validation
+      let getVPaging =
+            liftA2 LimitOffset
+              <$> (R.ask <&> \lim -> fromMaybe (pure lim) mLimit)
+              <*> (R.ask <&> \off -> fromMaybe (pure off) mOffset)
+          la =
+            getVPaging >>= \vp ->
+              validation
                 (throwError @ValidationErr)
                 (\(act, p) -> paging p <$> send act)
-                ( liftA2
-                  (,)
-                  (ListArticles @[] <$> sequenceA mTag <*> sequenceA mAuthor <*> sequenceA mFavBy)
-                  (LimitOffSet <$> vLimit <*> vOffset)
-                )
+                (liftA2 (,) (ListArticles @[] <$> sequenceA mTag <*> sequenceA mAuthor <*> sequenceA mFavBy) vp)
        in Out <$> la :<|> (source <$> la)
   )
     :<|> ( \case
