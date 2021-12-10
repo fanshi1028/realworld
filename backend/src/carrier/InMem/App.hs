@@ -147,24 +147,24 @@ mkApp cs jwts userDb articleDb commentDb tagDb emailUserIndex db0 db1 db2 db3 db
               & runThrow @ValidationErr
               & runThrow @Crypto.JOSE.Error
               & runM
-              >>= handlerErr err403
-              >>= handlerErr err403
-              >>= handlerErr err403
-              >>= handlerErr err401
-              >>= handlerErr err401
-              >>= handlerErr err401
-              >>= handlerErr err404
-              >>= handlerErr err404
-              >>= handlerErr err404
-              >>= handlerErr err404
-              >>= handlerErr err404
+              >>= handlerErr err500
               >>= handlerErr err400
-              >>= handlerErr err400
-              >>= handlerErr err500 -- Comment AlreadyExists use 500
               >>= handlerErr err400
               >>= handlerErr err400 -- ???? FIXME
+              >>= handlerErr err500 -- Comment AlreadyExists use 500
               >>= handlerErr err400
               >>= handlerErr err400
+              >>= handlerErr err404
+              >>= handlerErr err404
+              >>= handlerErr err404
+              >>= handlerErr err404
+              >>= handlerErr err404
+              >>= handlerErr err401
+              >>= handlerErr err401
+              >>= handlerErr err403
+              >>= handlerErr err403
+              >>= handlerErr err403
+              >>= handlerErr err403
               >>= handlerErr err500
               <&> snd
             )
