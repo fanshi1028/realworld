@@ -18,6 +18,7 @@ import qualified Data.HashMap.Strict as HM
 import Domain (Domain (Article))
 import Domain.User (UserR)
 import Field.Tag (Tag)
+import GHC.Records (getField)
 import GHC.TypeLits (Symbol)
 import Storage.Map (ContentOf (..), toArticleId)
 import Util.JSON.To (Out, multiWrappedWithCountToEncoding, multiWrappedWithCountToJSON, wrappedToEncoding, wrappedToJSON)
@@ -57,6 +58,10 @@ data instance ArticleR "withAuthorProfile" = ArticleWithAuthorProfile
     author :: UserR "profile"
   }
   deriving (Eq, Show, Generic)
+
+-- | @since 0.3.0.0
+instance Ord (ArticleR "withAuthorProfile") where
+  (<=) = (<=) `on` getField @"article"
 
 -- | @since 0.2.0.0
 instance ToJSON (ArticleR "withAuthorProfile") where

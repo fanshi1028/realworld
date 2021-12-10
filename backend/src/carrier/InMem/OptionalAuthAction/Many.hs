@@ -73,7 +73,7 @@ instance
                 a <- na
                 guard $ p a
                 pure a
-          (aid, a) <- getAllMapInMem @'Article >>= oneOf
+          (aid, a) <- getAllMapInMem @'Article <&> sortOn snd >>= oneOf
           favBy <- getRelatedRightManyToMany @UserFavoriteArticle aid
           follow <-
             R.ask >>= \case

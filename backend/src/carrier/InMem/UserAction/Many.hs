@@ -20,7 +20,7 @@ module InMem.UserAction.Many where
 
 import Authentication.HasAuth (AuthOf (..), NotLogin)
 import Control.Algebra (Algebra, alg, send, type (:+:) (L, R))
-import Control.Carrier.NonDet.Church (runNonDetA)
+import Control.Carrier.NonDet.Church (runNonDetM)
 import Control.Effect.Error (Catch, Throw, catchError, throwError)
 import Control.Effect.NonDet (oneOf)
 import qualified Control.Effect.Reader as R (Reader)
@@ -35,6 +35,7 @@ import OptionalAuthAction (OptionalAuthActionE (GetProfile))
 import Storage.Map (ContentOf (..), IdNotFound, toUserId)
 import UserAction (UserActionE (GetCurrentUser))
 import UserAction.Many (UserActionManyE (FeedArticles))
+import Util.Sort (getSorted)
 
 -- | @since 0.3.0.0
 newtype UserActionManyC (f :: Type -> Type) m a = UserActionManyC
@@ -56,14 +57,12 @@ instance
     Member (R.Reader (Maybe (UserR "authWithToken"))) sig,
     Member OptionalAuthActionE sig,
     Member UserActionE sig,
-    Alternative f,
     Algebra sig m
   ) =>
-  Algebra (UserActionManyE f :+: sig) (UserActionManyC f m)
+  Algebra (UserActionManyE [] :+: sig) (UserActionManyC [] m)
   where
-  -- FIXME feed order
   alg _ (L FeedArticles) ctx =
-    fmap (<$ ctx) . runNonDetA @f $ do
+    fmap ((<$ ctx) . getSorted) . runNonDetM pure $ do
       UserAuthWithToken (toUserId -> authUserId) _ <- send GetCurrentUser
       articleId <-
         getRelatedLeftManyToMany @UserFollowUser authUserId

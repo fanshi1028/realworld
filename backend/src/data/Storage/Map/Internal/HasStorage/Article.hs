@@ -49,6 +49,10 @@ instance HasStorage 'Article where
     deriving (Show, Eq, Generic)
 
 -- | @since 0.3.0.0
+instance Ord (ContentOf 'Article) where
+  (<=) = (<=) `on` Down . createdAt
+
+-- | @since 0.3.0.0
 deriving via (WithValidation Slug) instance FromHttpApiData (WithValidation (IdOf 'Article))
 
 -- | @since 0.3.0.0

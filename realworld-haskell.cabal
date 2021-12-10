@@ -156,6 +156,7 @@ library backend-data-internal
     Token.Internal.HasToken.User
     Util.JSON.From
     Util.JSON.To
+    Util.Sort
     Util.Validation
 
 library backend-effect-internal
