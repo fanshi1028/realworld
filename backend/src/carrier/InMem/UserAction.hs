@@ -41,7 +41,10 @@ import Field.Password (hashPassword, newSalt)
 import Field.Slug (titleToSlug)
 import Field.Time (Time)
 import InMem.Relation
-  ( ManyToMany
+  ( ArticleHasComment,
+    ArticleTaggedByTag,
+    EmailOfUser,
+    ManyToMany
       ( getRelatedLeftManyToMany,
         getRelatedRightManyToMany,
         isRelatedManyToMany,
@@ -55,6 +58,10 @@ import InMem.Relation
     ToManyRelationE,
     ToOne (getRelatedToOne, relateToOne, unrelateToOne),
     ToOneRelationE,
+    UserCreateArticle,
+    UserCreateComment,
+    UserFavoriteArticle,
+    UserFollowUser,
     relateToMany,
   )
 import InMem.Storage (MapInMemE, deleteByIdMapInMem, getByIdMapInMem, insertMapInMem, updateByIdMapInMem)
@@ -88,13 +95,13 @@ instance
     Member (Throw Text) sig,
     Member (R.Reader Time) sig,
     Member (R.Reader UUID) sig,
-    ManyToManyRelationE "UserFollowUser" sig,
-    ManyToManyRelationE "UserFavoriteArticle" sig,
-    ManyToManyRelationE "ArticleTaggedByTag" sig,
-    ToManyRelationE "ArticleHasComment" sig,
-    ToManyRelationE "UserCreateComment" sig,
-    ToManyRelationE "UserCreateArticle" sig,
-    ToOneRelationE "EmailOfUser" sig,
+    ManyToManyRelationE UserFollowUser sig,
+    ManyToManyRelationE UserFavoriteArticle sig,
+    ManyToManyRelationE ArticleTaggedByTag sig,
+    ToManyRelationE ArticleHasComment sig,
+    ToManyRelationE UserCreateComment sig,
+    ToManyRelationE UserCreateArticle sig,
+    ToOneRelationE EmailOfUser sig,
     Member (Throw (NotLogin 'User)) sig,
     Member (Throw (NotAuthorized 'User)) sig,
     Member (R.Reader (Maybe (UserR "authWithToken"))) sig,
@@ -124,7 +131,7 @@ instance
               checkEmail em
                 | em == o_em = pure ()
                 | otherwise =
-                  getRelatedToOne @"EmailOfUser" em >>= \case
+                  getRelatedToOne @EmailOfUser em >>= \case
                     Just _ -> throwError $ AlreadyExists em
                     Nothing -> pure ()
               checkUid uid
@@ -139,45 +146,45 @@ instance
               case m_newEm of
                 Just (SG.Last newEm) -> do
                   checkEmail newEm
-                  unrelateToOne @"EmailOfUser" o_em authUserId
-                  relateToOne @"EmailOfUser" newEm authUserId
+                  unrelateToOne @EmailOfUser o_em authUserId
+                  relateToOne @EmailOfUser newEm authUserId
                 Nothing -> pure ()
             Just (SG.Last (UserId -> newId)) -> do
               checkUid newId
-              unrelateToOne @"EmailOfUser" o_em authUserId
+              unrelateToOne @EmailOfUser o_em authUserId
               case m_newEm of
                 Just (SG.Last newEm) -> do
                   checkEmail newEm
-                  relateToOne @"EmailOfUser" newEm newId
-                Nothing -> relateToOne @"EmailOfUser" o_em newId
+                  relateToOne @EmailOfUser newEm newId
+                Nothing -> relateToOne @EmailOfUser o_em newId
 
-              getRelatedToMany @"UserCreateArticle" authUserId
+              getRelatedToMany @UserCreateArticle authUserId
                 >>= traverse_
                   ( \aid -> do
-                      relateToMany @"UserCreateArticle" newId aid
+                      relateToMany @UserCreateArticle newId aid
                       updateByIdMapInMem aid (field' @"author" .~ newId)
                   )
-              unrelateByKeyToMany @"UserCreateArticle" authUserId
+              unrelateByKeyToMany @UserCreateArticle authUserId
 
-              getRelatedToMany @"UserCreateComment" authUserId
+              getRelatedToMany @UserCreateComment authUserId
                 >>= traverse_
                   ( \cid -> do
-                      relateToMany @"UserCreateComment" newId cid
+                      relateToMany @UserCreateComment newId cid
                       updateByIdMapInMem cid (& field' @"author" .~ newId)
                   )
-              unrelateByKeyToMany @"UserCreateComment" authUserId
+              unrelateByKeyToMany @UserCreateComment authUserId
 
-              getRelatedLeftManyToMany @"UserFavoriteArticle" authUserId
-                >>= traverse_ (relateManyToMany @"UserFavoriteArticle" newId)
-              unrelateByKeyLeftManyToMany @"UserFavoriteArticle" authUserId
+              getRelatedLeftManyToMany @UserFavoriteArticle authUserId
+                >>= traverse_ (relateManyToMany @UserFavoriteArticle newId)
+              unrelateByKeyLeftManyToMany @UserFavoriteArticle authUserId
 
-              getRelatedLeftManyToMany @"UserFollowUser" authUserId
-                >>= traverse_ (relateManyToMany @"UserFollowUser" newId)
-              unrelateByKeyLeftManyToMany @"UserFollowUser" authUserId
+              getRelatedLeftManyToMany @UserFollowUser authUserId
+                >>= traverse_ (relateManyToMany @UserFollowUser newId)
+              unrelateByKeyLeftManyToMany @UserFollowUser authUserId
 
-              getRelatedRightManyToMany @"UserFollowUser" authUserId
-                >>= traverse_ (\rus -> relateManyToMany @"UserFollowUser" rus newId)
-              unrelateByKeyRightManyToMany @"UserFollowUser" authUserId
+              getRelatedRightManyToMany @UserFollowUser authUserId
+                >>= traverse_ (\rus -> relateManyToMany @UserFollowUser rus newId)
+              unrelateByKeyRightManyToMany @UserFollowUser authUserId
 
               void $ deleteByIdMapInMem authUserId
 
@@ -202,20 +209,20 @@ instance
             Just (construct -> SG.Last r) -> insertMapInMem (toUserId r) r $> transform r
         FollowUser targetUserId -> do
           targetUser <- getByIdMapInMem targetUserId
-          relateManyToMany @"UserFollowUser" authUserId targetUserId
+          relateManyToMany @UserFollowUser authUserId targetUserId
           pure $ UserProfile (transform targetUser) True
         UnfollowUser targetUserId -> do
           targetUser <- getByIdMapInMem targetUserId
-          unrelateManyToMany @"UserFollowUser" authUserId targetUserId
+          unrelateManyToMany @UserFollowUser authUserId targetUserId
             $> UserProfile (transform targetUser) False
         CreateArticle (ArticleCreate tt des bd ts) -> do
           let aid = ArticleId $ titleToSlug tt
           catchError @(IdNotFound 'Article)
             (getByIdMapInMem aid >> throwError (AlreadyExists aid))
             $ const $ pure ()
-          relateToMany @"UserCreateArticle" authUserId aid
+          relateToMany @UserCreateArticle authUserId aid
           t <- R.ask @Time
-          foldMapA (relateManyToMany @"ArticleTaggedByTag" aid) ts
+          foldMapA (relateManyToMany @ArticleTaggedByTag aid) ts
           let a = ArticleContent tt des bd t t authUserId
           insertMapInMem (toArticleId a) a
             -- FIXME: Follow his own article?
@@ -226,27 +233,27 @@ instance
               | getField @"author" orig /= authUserId -> throwError $ Forbidden @'U articleId
               | otherwise -> do
                 let m_new_aid = ArticleId . titleToSlug . SG.getLast <$> getField @"title" update
-                tags <- getRelatedLeftManyToMany @"ArticleTaggedByTag" articleId
-                fus <- getRelatedRightManyToMany @"UserFavoriteArticle" articleId
+                tags <- getRelatedLeftManyToMany @ArticleTaggedByTag articleId
+                fus <- getRelatedRightManyToMany @UserFavoriteArticle articleId
                 case m_new_aid of
                   Just new_aid
                     | new_aid /= articleId -> do
                       catchError @(IdNotFound 'Article)
                         (getByIdMapInMem new_aid >> throwError (AlreadyExists new_aid))
                         $ const $ pure ()
-                      unrelateToMany @"UserCreateArticle" authUserId articleId
-                      relateToMany @"UserCreateArticle" authUserId new_aid
-                      getRelatedToMany @"ArticleHasComment" articleId
+                      unrelateToMany @UserCreateArticle authUserId articleId
+                      relateToMany @UserCreateArticle authUserId new_aid
+                      getRelatedToMany @ArticleHasComment articleId
                         >>= traverse_
                           ( \cid -> do
-                              relateToMany @"ArticleHasComment" new_aid cid
+                              relateToMany @ArticleHasComment new_aid cid
                               updateByIdMapInMem cid $ \c -> c {article = new_aid}
                           )
-                      unrelateByKeyToMany @"ArticleHasComment" articleId
-                      traverse_ (\u -> relateManyToMany @"UserFavoriteArticle" u new_aid) fus
-                      unrelateByKeyRightManyToMany @"UserFavoriteArticle" articleId
-                      traverse_ (relateManyToMany @"ArticleTaggedByTag" new_aid) tags
-                      unrelateByKeyLeftManyToMany @"ArticleTaggedByTag" articleId
+                      unrelateByKeyToMany @ArticleHasComment articleId
+                      traverse_ (\u -> relateManyToMany @UserFavoriteArticle u new_aid) fus
+                      unrelateByKeyRightManyToMany @UserFavoriteArticle articleId
+                      traverse_ (relateManyToMany @ArticleTaggedByTag new_aid) tags
+                      unrelateByKeyLeftManyToMany @ArticleTaggedByTag articleId
                       void $ deleteByIdMapInMem articleId
                     | otherwise -> pure ()
                   Nothing -> pure ()
@@ -260,57 +267,57 @@ instance
             (getField @"author" -> auid)
               | (auid == authUserId) -> do
                 void $ deleteByIdMapInMem articleId
-                unrelateToMany @"UserCreateArticle" authUserId articleId
+                unrelateToMany @UserCreateArticle authUserId articleId
 
-                getRelatedToMany @"ArticleHasComment" articleId
+                getRelatedToMany @ArticleHasComment articleId
                   >>= traverse_
                     ( \cid -> do
                         uid <- (^. field' @"author") <$> getByIdMapInMem cid
-                        unrelateToMany @"UserCreateComment" uid cid
+                        unrelateToMany @UserCreateComment uid cid
                         deleteByIdMapInMem cid
                     )
-                unrelateByKeyToMany @"ArticleHasComment" articleId
+                unrelateByKeyToMany @ArticleHasComment articleId
 
-                unrelateByKeyRightManyToMany @"UserFavoriteArticle" articleId
+                unrelateByKeyRightManyToMany @UserFavoriteArticle articleId
               | otherwise -> throwError $ Forbidden @'D articleId
         AddCommentToArticle articleId (CommentCreate txt) -> do
           t <- R.ask @Time
           commentId <- CommentId <$> R.ask
           let a = CommentContent commentId t t txt authUserId articleId
           insertMapInMem commentId a
-          relateToMany @"ArticleHasComment" articleId commentId
-          relateToMany @"UserCreateComment" authUserId commentId
+          relateToMany @ArticleHasComment articleId commentId
+          relateToMany @UserCreateComment authUserId commentId
           pure $
             CommentWithAuthorProfile commentId t t txt $
               -- FIXME is th current user following himself??
               UserProfile auth True
         DeleteComment articleId commentId -> do
           void $ getByIdMapInMem articleId
-          isRelatedToMany @"ArticleHasComment" articleId commentId >>= \case
+          isRelatedToMany @ArticleHasComment articleId commentId >>= \case
             False -> throwError $ NotFound commentId
             True ->
               getByIdMapInMem commentId >>= \case
                 (getField @"author" -> auid)
                   | auid == authUserId -> do
                     void $ deleteByIdMapInMem commentId
-                    unrelateToMany @"ArticleHasComment" articleId commentId
-                    unrelateToMany @"UserCreateComment" authUserId commentId
+                    unrelateToMany @ArticleHasComment articleId commentId
+                    unrelateToMany @UserCreateComment authUserId commentId
                   | otherwise -> throwError $ Forbidden @'D commentId
         FavoriteArticle articleId -> do
           a@(getField @"author" -> authorId) <- getByIdMapInMem articleId
-          relateManyToMany @"UserFavoriteArticle" authUserId articleId
+          relateManyToMany @UserFavoriteArticle authUserId articleId
           ArticleWithAuthorProfile a
-            <$> getRelatedLeftManyToMany @"ArticleTaggedByTag" articleId
-            <*> isRelatedManyToMany @"UserFavoriteArticle" authUserId articleId
-            <*> (genericLength <$> getRelatedRightManyToMany @"UserFavoriteArticle" articleId)
+            <$> getRelatedLeftManyToMany @ArticleTaggedByTag articleId
+            <*> isRelatedManyToMany @UserFavoriteArticle authUserId articleId
+            <*> (genericLength <$> getRelatedRightManyToMany @UserFavoriteArticle articleId)
             <*> send (OptionalAuthAction.GetProfile authorId)
         UnfavoriteArticle articleId -> do
           a@(getField @"author" -> authorId) <- getByIdMapInMem articleId
-          unrelateManyToMany @"UserFavoriteArticle" authUserId articleId
+          unrelateManyToMany @UserFavoriteArticle authUserId articleId
           ArticleWithAuthorProfile a
-            <$> getRelatedLeftManyToMany @"ArticleTaggedByTag" articleId
-            <*> isRelatedManyToMany @"UserFavoriteArticle" authUserId articleId
-            <*> (genericLength <$> getRelatedRightManyToMany @"UserFavoriteArticle" articleId)
+            <$> getRelatedLeftManyToMany @ArticleTaggedByTag articleId
+            <*> isRelatedManyToMany @UserFavoriteArticle authUserId articleId
+            <*> (genericLength <$> getRelatedRightManyToMany @UserFavoriteArticle articleId)
             <*> send (OptionalAuthAction.GetProfile authorId)
   alg hdl (R other) ctx = UserActionInMemC $ alg (runUserActionInMem . hdl) other ctx
   {-# INLINE alg #-}

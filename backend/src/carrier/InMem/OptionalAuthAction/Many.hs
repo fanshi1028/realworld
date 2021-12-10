@@ -31,7 +31,7 @@ import Domain.Article (ArticleR (ArticleWithAuthorProfile))
 import Domain.Comment (CommentR (CommentWithAuthorProfile))
 import Domain.User (UserR (UserAuthWithToken))
 import GHC.Records (getField)
-import InMem.Relation (ManyToManyRelationE, ToMany (getRelatedToMany), ToManyRelationE, getRelatedLeftManyToMany, getRelatedRightManyToMany)
+import InMem.Relation (ArticleHasComment, ArticleTaggedByTag, ManyToManyRelationE, ToMany (getRelatedToMany), ToManyRelationE, UserFavoriteArticle, getRelatedLeftManyToMany, getRelatedRightManyToMany)
 import InMem.Storage (MapInMemE, getAllMapInMem, getByIdMapInMem)
 import OptionalAuthAction (OptionalAuthActionE (GetProfile))
 import OptionalAuthAction.Many (OptionalAuthActionManyE (GetComments, ListArticles))
@@ -50,9 +50,9 @@ instance
   ( MapInMemE 'User sig,
     MapInMemE 'Article sig,
     MapInMemE 'Comment sig,
-    ManyToManyRelationE "ArticleTaggedByTag" sig,
-    ManyToManyRelationE "UserFavoriteArticle" sig,
-    ToManyRelationE "ArticleHasComment" sig,
+    ManyToManyRelationE ArticleTaggedByTag sig,
+    ManyToManyRelationE UserFavoriteArticle sig,
+    ToManyRelationE ArticleHasComment sig,
     Member (Throw Text) sig,
     Member (Catch (IdNotFound 'Comment)) sig,
     Member (R.Reader (Maybe (UserR "authWithToken"))) sig,
@@ -74,7 +74,7 @@ instance
                 guard $ p a
                 pure a
           (aid, a) <- getAllMapInMem @'Article >>= oneOf
-          favBy <- getRelatedRightManyToMany @"UserFavoriteArticle" aid
+          favBy <- getRelatedRightManyToMany @UserFavoriteArticle aid
           follow <-
             R.ask >>= \case
               Just (UserAuthWithToken (toUserId -> authId) _) -> do
@@ -84,13 +84,13 @@ instance
           case mFav of
             Nothing -> pure ()
             Just (elem . UserId -> check) -> guard $ check favBy
-          tags <- predGuard (mkPred elem mTag) (getRelatedLeftManyToMany @"ArticleTaggedByTag" aid)
+          tags <- predGuard (mkPred elem mTag) (getRelatedLeftManyToMany @ArticleTaggedByTag aid)
           ArticleWithAuthorProfile a tags follow (genericLength favBy)
             <$> (predGuard (mkPred ((==) . UserId) mAuthor) (pure $ getField @"author" a) >>= send . GetProfile)
       GetComments aid -> do
         _ <- getByIdMapInMem aid
         runNonDetA @f $ do
-          cid <- getRelatedToMany @"ArticleHasComment" aid >>= oneOf
+          cid <- getRelatedToMany @ArticleHasComment aid >>= oneOf
           flip (catchError @(IdNotFound 'Comment)) (const $ throwError @Text "impossible: comment id not found") $ do
             CommentContent {..} <- getByIdMapInMem cid
             CommentWithAuthorProfile cid createdAt updatedAt body <$> send (GetProfile author)

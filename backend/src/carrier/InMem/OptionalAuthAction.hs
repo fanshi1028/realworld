@@ -29,8 +29,12 @@ import Domain.Transform (transform)
 import Domain.User (UserR (UserAuthWithToken, UserProfile))
 import GHC.Records (getField)
 import InMem.Relation
-  ( ManyToManyRelationE,
+  ( ArticleHasComment,
+    ArticleTaggedByTag,
+    ManyToManyRelationE,
     ToManyRelationE,
+    UserFavoriteArticle,
+    UserFollowUser,
     getRelatedLeftManyToMany,
     getRelatedRightManyToMany,
     isRelatedManyToMany,
@@ -52,10 +56,10 @@ instance
   ( MapInMemE 'User sig,
     MapInMemE 'Article sig,
     MapInMemE 'Comment sig,
-    ManyToManyRelationE "ArticleTaggedByTag" sig,
-    ManyToManyRelationE "UserFavoriteArticle" sig,
-    ManyToManyRelationE "UserFollowUser" sig,
-    ToManyRelationE "ArticleHasComment" sig,
+    ManyToManyRelationE ArticleTaggedByTag sig,
+    ManyToManyRelationE UserFavoriteArticle sig,
+    ManyToManyRelationE UserFollowUser sig,
+    ToManyRelationE ArticleHasComment sig,
     Member (Throw Text) sig,
     Member (Catch (IdNotFound 'Comment)) sig,
     Member (R.Reader (Maybe (UserR "authWithToken"))) sig,
@@ -71,20 +75,20 @@ instance
           <*> ( R.ask >>= \case
                   Just (UserAuthWithToken (toUserId -> authId) _) -> do
                     _ <- getByIdMapInMem authId
-                    isRelatedManyToMany @"UserFollowUser" authId uid
+                    isRelatedManyToMany @UserFollowUser authId uid
                   Nothing -> pure False
               )
       GetArticle aid -> do
         a <- getByIdMapInMem aid
         ArticleWithAuthorProfile a
-          <$> getRelatedLeftManyToMany @"ArticleTaggedByTag" aid
+          <$> getRelatedLeftManyToMany @ArticleTaggedByTag aid
           <*> ( R.ask >>= \case
                   Just (UserAuthWithToken (toUserId -> authId) _) -> do
                     _ <- getByIdMapInMem authId
-                    isRelatedManyToMany @"UserFavoriteArticle" authId aid
+                    isRelatedManyToMany @UserFavoriteArticle authId aid
                   Nothing -> pure False
               )
-          <*> (genericLength <$> getRelatedRightManyToMany @"UserFavoriteArticle" aid)
+          <*> (genericLength <$> getRelatedRightManyToMany @UserFavoriteArticle aid)
           <*> send (GetProfile $ getField @"author" a)
   alg hdl (R other) ctx = OptionalAuthActionInMemC $ alg (runOptionalAuthActionInMem . hdl) other ctx
   {-# INLINE alg #-}

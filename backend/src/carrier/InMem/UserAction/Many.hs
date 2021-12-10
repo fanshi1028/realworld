@@ -29,7 +29,7 @@ import Domain (Domain (Article, User))
 import Domain.Article (ArticleR (ArticleWithAuthorProfile))
 import Domain.User (UserR (UserAuthWithToken))
 import GHC.Records (getField)
-import InMem.Relation (ManyToMany (getRelatedLeftManyToMany), ManyToManyRelationE, ToMany (getRelatedToMany), ToManyRelationE, getRelatedRightManyToMany, isRelatedManyToMany)
+import InMem.Relation (ArticleTaggedByTag, ManyToMany (getRelatedLeftManyToMany), ManyToManyRelationE, ToMany (getRelatedToMany), ToManyRelationE, UserCreateArticle, UserFavoriteArticle, UserFollowUser, getRelatedRightManyToMany, isRelatedManyToMany)
 import InMem.Storage (MapInMemE, getByIdMapInMem)
 import OptionalAuthAction (OptionalAuthActionE (GetProfile))
 import Storage.Map (ContentOf (..), IdNotFound, toUserId)
@@ -48,10 +48,10 @@ instance
   ( MapInMemE 'Article sig,
     Member (Catch (IdNotFound 'Article)) sig,
     Member (Throw Text) sig,
-    ManyToManyRelationE "UserFollowUser" sig,
-    ManyToManyRelationE "UserFavoriteArticle" sig,
-    ManyToManyRelationE "ArticleTaggedByTag" sig,
-    ToManyRelationE "UserCreateArticle" sig,
+    ManyToManyRelationE UserFollowUser sig,
+    ManyToManyRelationE UserFavoriteArticle sig,
+    ManyToManyRelationE ArticleTaggedByTag sig,
+    ToManyRelationE UserCreateArticle sig,
     Member (Throw (NotLogin 'User)) sig,
     Member (R.Reader (Maybe (UserR "authWithToken"))) sig,
     Member OptionalAuthActionE sig,
@@ -66,16 +66,16 @@ instance
     fmap (<$ ctx) . runNonDetA @f $ do
       UserAuthWithToken (toUserId -> authUserId) _ <- send GetCurrentUser
       articleId <-
-        getRelatedLeftManyToMany @"UserFollowUser" authUserId
+        getRelatedLeftManyToMany @UserFollowUser authUserId
           >>= oneOf
-          >>= getRelatedToMany @"UserCreateArticle"
+          >>= getRelatedToMany @UserCreateArticle
           >>= oneOf
       flip (catchError @(IdNotFound 'Article)) (const $ throwError @Text "impossible: article id not found") $ do
         a@(getField @"author" -> authorId) <- getByIdMapInMem articleId
         ArticleWithAuthorProfile a
-          <$> getRelatedLeftManyToMany @"ArticleTaggedByTag" articleId
-          <*> isRelatedManyToMany @"UserFavoriteArticle" authUserId articleId
-          <*> (genericLength <$> getRelatedRightManyToMany @"UserFavoriteArticle" articleId)
+          <$> getRelatedLeftManyToMany @ArticleTaggedByTag articleId
+          <*> isRelatedManyToMany @UserFavoriteArticle authUserId articleId
+          <*> (genericLength <$> getRelatedRightManyToMany @UserFavoriteArticle articleId)
           <*> send (GetProfile authorId)
   alg hdl (R other) ctx = UserActionManyC $ alg (runUserActionManyInMem . hdl) other ctx
   {-# INLINE alg #-}

@@ -22,12 +22,11 @@ import Control.Effect.Labelled (LabelledMember)
 import Control.Effect.Lift (Lift)
 import qualified Control.Effect.Reader.Labelled as R (Reader, ask)
 import Control.Effect.Sum (Member)
-import GHC.Base (Symbol)
 import qualified ListT (toList)
 import qualified StmContainers.Multimap as STMMulti (Multimap, delete, deleteByKey, insert, listTByKey, lookup)
 
 -- | @since 0.3.0.0
-type ToManyRelationE (label :: Symbol) sig =
+type ToManyRelationE label sig =
   ( LabelledMember label (R.Reader (STMMulti.Multimap (ToManyKey label) (ToManyValue label))) sig,
     Member (Lift STM) sig
   )
@@ -39,7 +38,7 @@ class
     Hashable (ToManyKey label),
     Hashable (ToManyValue label)
   ) =>
-  ToMany (label :: Symbol)
+  ToMany label
   where
   -- | @since 0.3.0.0
   type ToManyKey label

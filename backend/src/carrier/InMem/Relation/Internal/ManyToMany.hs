@@ -22,7 +22,6 @@ import Control.Carrier.NonDet.Church (runNonDetM)
 import Control.Effect.Lift (Lift)
 import Control.Effect.NonDet (oneOf)
 import Control.Effect.Sum (Member)
-import GHC.Base (Symbol)
 import InMem.Relation.Internal.ToMany
   ( ToMany
       ( ToManyKey,
@@ -37,7 +36,7 @@ import InMem.Relation.Internal.ToMany
   )
 
 -- | @since 0.3.0.0
-type ManyToManyRelationE (label :: Symbol) sig =
+type ManyToManyRelationE label sig =
   ( ToManyRelationE (ManyLeft label) sig,
     ToManyRelationE (ManyRight label) sig,
     Member (Lift STM) sig
@@ -50,13 +49,13 @@ class
     ToManyKey (ManyLeft label) ~ ToManyValue (ManyRight label),
     ToManyValue (ManyLeft label) ~ ToManyKey (ManyRight label)
   ) =>
-  ManyToMany (label :: Symbol)
+  ManyToMany label
   where
   -- | @since 0.3.0.0
-  type ManyLeft label :: Symbol
+  type ManyLeft label
 
   -- | @since 0.3.0.0
-  type ManyRight label :: Symbol
+  type ManyRight label
 
   -- | @since 0.3.0.0
   relateManyToMany ::

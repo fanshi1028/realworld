@@ -35,7 +35,7 @@ import Field.Email (Email)
 import Field.Image (Image (Image))
 import Field.Password (checkPassword, hashPassword, newSalt)
 import GHC.Records (getField)
-import InMem.Relation (ToOne (getRelatedToOne, relateToOne), ToOneRelationE)
+import InMem.Relation (ToOne (getRelatedToOne, relateToOne), ToOneRelationE, EmailOfUser)
 import InMem.Storage (MapInMemE, getByIdMapInMem, insertMapInMem)
 import Storage.Error (AlreadyExists (AlreadyExists), NotFound)
 import Storage.Map (ContentOf (..), CreateOf (UserCreate), IdAlreadyExists, IdNotFound, IdOf (UserId), toUserId)
@@ -52,7 +52,7 @@ instance
   ( DRG gen,
     Algebra sig m,
     MapInMemE 'User sig,
-    ToOneRelationE "EmailOfUser" sig,
+    ToOneRelationE EmailOfUser sig,
     Member (Catch (IdNotFound 'User)) sig,
     Member (Throw (IdAlreadyExists 'User)) sig,
     Member (Throw (AlreadyExists Email)) sig,
@@ -71,7 +71,7 @@ instance
           -- FIXME: meta data like createdTime and UpdatedTime?
           -- send $ GetCurrent @Time
           u <-
-            getRelatedToOne @"EmailOfUser" em >>= \case
+            getRelatedToOne @EmailOfUser em >>= \case
               Just _ -> throwError $ AlreadyExists em
               Nothing -> do
                 g <- S.get @gen
@@ -81,10 +81,10 @@ instance
                   (getByIdMapInMem uid >> throwError (AlreadyExists uid))
                   $ const $ pure $ UserContent em (hashPassword pw salt) user (Bio "") $ Image ""
           insertMapInMem (toUserId u) u
-          relateToOne @"EmailOfUser" em uid
+          relateToOne @EmailOfUser em uid
           pure $ transform u
         Login (UserLogin em pw) ->
-          getRelatedToOne @"EmailOfUser" em >>= \case
+          getRelatedToOne @EmailOfUser em >>= \case
             Nothing -> throwError $ NoSuchUser @'User
             Just uid -> do
               a <- getByIdMapInMem uid

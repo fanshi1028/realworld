@@ -18,6 +18,9 @@ import InMem.Relation.Internal.ToMany (ToMany (..))
 import Storage.Map (IdOf)
 
 -- | @since 0.3.0.0
-instance ToMany "ArticleHasComment" where
-  type ToManyKey "ArticleHasComment" = IdOf 'Article
-  type ToManyValue "ArticleHasComment" = IdOf 'Comment
+data ArticleHasComment
+
+-- | @since 0.3.0.0
+instance ToMany ArticleHasComment where
+  type ToManyKey ArticleHasComment = IdOf 'Article
+  type ToManyValue ArticleHasComment = IdOf 'Comment

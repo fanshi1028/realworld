@@ -22,12 +22,12 @@ module InMem.Relation
 where
 
 import InMem.Relation.Internal.ManyToMany as Z
-import InMem.Relation.Internal.ManyToMany.Favorite as Z ()
-import InMem.Relation.Internal.ManyToMany.Follow as Z ()
-import InMem.Relation.Internal.ManyToMany.Tag as Z ()
+import InMem.Relation.Internal.ManyToMany.Favorite as Z
+import InMem.Relation.Internal.ManyToMany.Follow as Z
+import InMem.Relation.Internal.ManyToMany.Tag as Z
 import InMem.Relation.Internal.ToMany as Y
-import InMem.Relation.Internal.ToMany.ArticleHasComment as Y ()
-import InMem.Relation.Internal.ToMany.UserCreateArticle as Y ()
-import InMem.Relation.Internal.ToMany.UserCreateComment as Y ()
+import InMem.Relation.Internal.ToMany.ArticleHasComment as Y
+import InMem.Relation.Internal.ToMany.UserCreateArticle as Y
+import InMem.Relation.Internal.ToMany.UserCreateComment as Y
 import InMem.Relation.Internal.ToOne as X
-import InMem.Relation.Internal.ToOne.EmailOfUser as X ()
+import InMem.Relation.Internal.ToOne.EmailOfUser as X

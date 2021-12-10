@@ -34,6 +34,7 @@ import HTTP (Api, server)
 import qualified InMem.Authentication.User (run)
 import InMem.OptionalAuthAction (runOptionalAuthActionInMem)
 import InMem.OptionalAuthAction.Many (runOptionalAuthActionManyInMem)
+import InMem.Relation (ArticleFavoritedByUser, ArticleHasComment, ArticleTaggedByTag, EmailOfUser, TagTagArticle, UserCreateArticle, UserCreateComment, UserFavoriteArticle, UserFollowUser, UserFollowedByUser)
 import InMem.Storage (TableInMem)
 import InMem.UserAction (runUserActionInMem)
 import InMem.UserAction.Many (runUserActionManyInMem)
@@ -103,16 +104,16 @@ mkApp cs jwts userDb articleDb commentDb tagDb emailUserIndex db0 db1 db2 db3 db
               & Token.Create.JWT.run @'User @SystemDRG
               & Cookie.Xsrf.run @SystemDRG
               & InMem.Authentication.User.run @SystemDRG
-              & (runLabelled @"UserCreateComment" >>> R.runReader db8)
-              & (runLabelled @"ArticleFavoritedByUser" >>> R.runReader db7)
-              & (runLabelled @"UserFavoriteArticle" >>> R.runReader db6)
-              & (runLabelled @"UserFollowedByUser" >>> R.runReader db5)
-              & (runLabelled @"UserFollowUser" >>> R.runReader db4)
-              & (runLabelled @"TagTagArticle" >>> R.runReader db3)
-              & (runLabelled @"ArticleTaggedByTag" >>> R.runReader db2)
-              & (runLabelled @"UserCreateArticle" >>> R.runReader db1)
-              & (runLabelled @"ArticleHasComment" >>> R.runReader db0)
-              & (runLabelled @"EmailOfUser" >>> R.runReader emailUserIndex)
+              & (runLabelled @UserCreateComment >>> R.runReader db8)
+              & (runLabelled @ArticleFavoritedByUser >>> R.runReader db7)
+              & (runLabelled @UserFavoriteArticle >>> R.runReader db6)
+              & (runLabelled @UserFollowedByUser >>> R.runReader db5)
+              & (runLabelled @UserFollowUser >>> R.runReader db4)
+              & (runLabelled @TagTagArticle >>> R.runReader db3)
+              & (runLabelled @ArticleTaggedByTag >>> R.runReader db2)
+              & (runLabelled @UserCreateArticle >>> R.runReader db1)
+              & (runLabelled @ArticleHasComment >>> R.runReader db0)
+              & (runLabelled @EmailOfUser >>> R.runReader emailUserIndex)
               & R.runReader userDb
               & R.runReader articleDb
               & R.runReader commentDb

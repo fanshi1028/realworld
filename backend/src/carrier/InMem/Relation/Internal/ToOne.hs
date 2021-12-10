@@ -23,17 +23,16 @@ import Control.Effect.Lift (Lift)
 import qualified Control.Effect.Reader.Labelled as R (Reader, ask)
 import Control.Effect.Sum (Member)
 import qualified Focus (update)
-import GHC.Base (Symbol)
 import qualified StmContainers.Map as STMMap
 
 -- | @since 0.3.0.0
-type ToOneRelationE (label :: Symbol) sig =
+type ToOneRelationE label sig =
   ( LabelledMember label (R.Reader (STMMap.Map (ToOneKey label) (ToOneValue label))) sig,
     Member (Lift STM) sig
   )
 
 -- | @since 0.3.0.0
-class (Eq (ToOneKey label), Eq (ToOneValue label), Hashable (ToOneKey label)) => ToOne (label :: Symbol) where
+class (Eq (ToOneKey label), Eq (ToOneValue label), Hashable (ToOneKey label)) => ToOne label where
   -- | @since 0.3.0.0
   type ToOneKey label
 
