@@ -14,7 +14,7 @@
 -- Carrier for creating JWT token
 --
 -- @since 0.3.0.0
-module Token.Create.JWT (C (run)) where
+module Token.Create.JWT (CreateTokenJWTC (runCreateTokenJWT)) where
 
 import Authentication.HasAuth (AuthOf)
 import Control.Algebra (Algebra (alg), type (:+:) (L, R))
@@ -28,13 +28,13 @@ import Domain (Domain)
 import Field.Time (Time (Time))
 import Relude.Extra (un, (.~))
 import Servant.Auth.Server (CookieSettings (cookieExpires), JWTSettings, ToJWT, encodeJWT, jwtAlg, signingKey)
-import Token.Create (E (CreateToken))
+import Token.Create (CreateTokenE (CreateToken))
 import Token.HasToken (TokenOf)
 
 -- | @since 0.3.0.0
-newtype C (s :: Domain) gen (m :: Type -> Type) a = C
+newtype CreateTokenJWTC (s :: Domain) gen (m :: Type -> Type) a = CreateTokenJWTC
   { -- | @since 0.3.0.0
-    run :: m a
+    runCreateTokenJWT :: m a
   }
   deriving (Functor, Applicative, Monad)
 
@@ -63,11 +63,11 @@ instance
     ToJWT (AuthOf s),
     Coercible (TokenOf s) ByteString
   ) =>
-  Algebra (Token.Create.E s :+: sig) (C s gen m)
+  Algebra (CreateTokenE s :+: sig) (CreateTokenJWTC s gen m)
   where
   alg _ (L (CreateToken auth)) ctx = do
     (et, g) <- makeJWT auth <$> S.get @gen <*> R.ask <*> R.asks (fmap Time . cookieExpires)
     S.put g
     either throwError (pure . (<$ ctx) . un . toStrict) et
-  alg hdl (R other) ctx = C $ alg (run . hdl) other ctx
+  alg hdl (R other) ctx = CreateTokenJWTC $ alg (runCreateTokenJWT . hdl) other ctx
   {-# INLINE alg #-}

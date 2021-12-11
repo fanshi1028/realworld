@@ -22,7 +22,7 @@ import HTTP.Protected.Follow (FollowApi, followServer)
 import HTTP.Protected.User (UserApi, userServer)
 import Paging (Limit, Offset)
 import Servant (ServerT, type (:<|>) ((:<|>)), type (:>))
-import qualified Token.Create (E)
+import Token.Create (CreateTokenE)
 import UserAction (UserActionE)
 import UserAction.Many (UserActionManyE)
 import Util.Validation (ValidationErr)
@@ -45,7 +45,7 @@ authedServer ::
     Member (R.Reader Offset) sig,
     Member (UserActionManyE []) sig,
     Member (Throw ValidationErr) sig,
-    Member (Token.Create.E 'User) sig
+    Member (CreateTokenE 'User) sig
   ) =>
   ServerT AuthedApi m
 authedServer = userServer :<|> followServer :<|> articleServer

@@ -51,7 +51,7 @@ import StmContainers.Set as STM.Set (newIO)
 import qualified StmContainers.Set as STM (Set)
 import Storage.Error (AlreadyExists, NotFound)
 import Storage.Map (CRUD (D, U), Forbidden, IdAlreadyExists, IdNotFound, IdOf)
-import qualified Token.Create.JWT (run)
+import Token.Create.JWT (runCreateTokenJWT)
 import Token.Decode (InvalidToken)
 import Token.HasToken (TokenOf (..))
 import Util.Validation (ValidationErr)
@@ -101,7 +101,7 @@ mkApp cs jwts userDb articleDb commentDb tagDb emailUserIndex db0 db1 db2 db3 db
               & runOptionalAuthActionManyInMem @[]
               & runOptionalAuthActionInMem
               & runVisitorActionInMem @[]
-              & Token.Create.JWT.run @'User @SystemDRG
+              & runCreateTokenJWT @'User @SystemDRG
               & Cookie.Xsrf.run @SystemDRG
               & InMem.Authentication.User.run @SystemDRG
               & (runLabelled @UserCreateComment >>> R.runReader db8)

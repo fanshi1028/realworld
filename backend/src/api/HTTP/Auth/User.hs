@@ -39,7 +39,7 @@ import Servant
 import Servant.Auth.Server (CookieSettings, JWTSettings)
 import Servant.Auth.Server.Internal.Cookie (applyCookieSettings, applySessionCookieSettings)
 import Token.HasToken (TokenOf (UserToken))
-import Token.Create (E (CreateToken))
+import Token.Create (CreateTokenE (CreateToken))
 import Util.JSON.From (In (In))
 import Util.JSON.To (Out (Out))
 import Util.Validation (ValidationErr, WithValidation)
@@ -66,7 +66,7 @@ authUserServer ::
     Member (R.Reader CookieSettings) sig,
     Member (R.Reader JWTSettings) sig,
     Member (Throw Text) sig,
-    Member (Token.Create.E 'User) sig,
+    Member (CreateTokenE 'User) sig,
     Member (AuthenticationE 'User) sig,
     Member Cookie.Xsrf.E sig,
     AddHeader "Set-Cookie" SetCookie (AuthOf 'User) withOneCookie,

@@ -36,7 +36,7 @@ import Paging (Limit, Offset)
 import Servant (Get, JSON, ServerT, type (:<|>) ((:<|>)), type (:>))
 import Servant.Auth.Server (Auth, AuthResult (Authenticated, BadPassword, Indefinite, NoSuchUser), CookieSettings, JWTSettings)
 import Servant.Server (hoistServer)
-import qualified Token.Create (E)
+import Token.Create (CreateTokenE)
 import Token.Decode (InvalidToken)
 import UserAction (UserActionE)
 import UserAction.Many (UserActionManyE)
@@ -77,7 +77,7 @@ server ::
     Member (R.Reader Offset) sig,
     Member (R.Reader (Maybe (UserR "authWithToken"))) sig,
     Member (AuthenticationE 'User) sig,
-    Member (Token.Create.E 'User) sig,
+    Member (CreateTokenE 'User) sig,
     Member (Throw Text) sig,
     Member (Throw ValidationErr) sig,
     Member (Throw (NotLogin 'User)) sig,

@@ -13,7 +13,7 @@ import Authentication.HasAuth (AuthOf)
 import Token.HasToken (TokenOf)
 
 -- | @since 0.3.0.0
-data E s (m :: Type -> Type) a where
+data CreateTokenE s (m :: Type -> Type) a where
   -- | @since 0.3.0.0
   -- Create token from auth info
-  CreateToken :: AuthOf s -> E s m (TokenOf s)
+  CreateToken :: AuthOf s -> CreateTokenE s m (TokenOf s)
