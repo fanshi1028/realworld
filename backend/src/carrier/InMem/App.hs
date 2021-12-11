@@ -22,6 +22,7 @@ import Control.Carrier.Trace.Returning (runTrace)
 import Control.Effect.Labelled (runLabelled)
 import Control.Exception.Safe (catch)
 import qualified Cookie.Xsrf (run)
+import CreateSalt (CreateSaltC (runCreateSalt))
 import qualified Crypto.JOSE (Error)
 import Crypto.JWT (SystemDRG, getSystemDRG)
 import Data.UUID.V1 (nextUUID)
@@ -97,13 +98,14 @@ mkApp cs jwts userDb articleDb commentDb tagDb emailUserIndex db0 db1 db2 db3 db
           gen <- liftIO getSystemDRG
           ( eff
               & runUserActionManyInMem @[]
-              & runUserActionInMem @SystemDRG
+              & runUserActionInMem
               & runOptionalAuthActionManyInMem @[]
               & runOptionalAuthActionInMem
               & runVisitorActionInMem @[]
               & runCreateTokenJWT @'User @SystemDRG
               & Cookie.Xsrf.run @SystemDRG
-              & InMem.Authentication.User.run @SystemDRG
+              & InMem.Authentication.User.run
+              & runCreateSalt @SystemDRG
               & (runLabelled @UserCreateComment >>> R.runReader db8)
               & (runLabelled @ArticleFavoritedByUser >>> R.runReader db7)
               & (runLabelled @UserFavoriteArticle >>> R.runReader db6)

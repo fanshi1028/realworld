@@ -23,10 +23,9 @@ import Control.Algebra (Algebra (alg), send, type (:+:) (L, R))
 import Control.Effect.Catch (Catch)
 import Control.Effect.Error (catchError)
 import qualified Control.Effect.Reader as R (Reader, ask)
-import qualified Control.Effect.State as S (State, get, put)
 import Control.Effect.Sum (Member)
 import Control.Effect.Throw (Throw, throwError)
-import Crypto.Random (DRG, getRandomBytes, withDRG)
+import CreateSalt (CreateSaltE (CreateSalt))
 import Data.Generic.HKD (Build (build), Construct (construct), HKD, deconstruct)
 import Data.Generics.Product (HasField' (field'), getField)
 import qualified Data.Semigroup as SG (Last (Last, getLast))
@@ -37,7 +36,7 @@ import Domain.Comment (CommentR (CommentWithAuthorProfile))
 import Domain.Transform (Transform (transform))
 import Domain.User (UserR (UserAuthWithToken, UserProfile))
 import Field.Email (Email)
-import Field.Password (hashPassword, newSalt)
+import Field.Password (hashPassword)
 import Field.Slug (titleToSlug)
 import Field.Time (Time)
 import InMem.Relation
@@ -72,7 +71,7 @@ import Storage.Map (CRUD (D, U), ContentOf (..), CreateOf (ArticleCreate, Commen
 import UserAction (UserActionE (AddCommentToArticle, CreateArticle, DeleteArticle, DeleteComment, FavoriteArticle, FollowUser, GetCurrentUser, UnfavoriteArticle, UnfollowUser, UpdateArticle, UpdateUser))
 
 -- | @since 0.3.0.0
-newtype UserActionInMemC gen m a = UserActionInMemC
+newtype UserActionInMemC m a = UserActionInMemC
   { -- | @since 0.3.0.0
     runUserActionInMem :: m a
   }
@@ -106,11 +105,10 @@ instance
     Member (Throw (NotAuthorized 'User)) sig,
     Member (R.Reader (Maybe (UserR "authWithToken"))) sig,
     Member OptionalAuthActionE sig,
-    Member (S.State gen) sig,
-    DRG gen,
+    Member CreateSaltE sig,
     Algebra sig m
   ) =>
-  Algebra (UserActionE :+: sig) (UserActionInMemC gen m)
+  Algebra (UserActionE :+: sig) (UserActionInMemC m)
   where
   alg _ (L action) ctx =
     (<$ ctx) <$> do
@@ -193,11 +191,7 @@ instance
               build @(HKD (HKD (ContentOf 'User) SG.Last) Maybe)
                 (pure m_newEm)
                 ( case getField @"password" update of
-                    Just (SG.Last pwNew) -> do
-                      g <- S.get @gen
-                      let (salt, g') = withDRG g $ newSalt <$> getRandomBytes 16
-                      S.put g'
-                      pure $ Just $ SG.Last $ hashPassword pwNew salt
+                    Just (SG.Last pwNew) -> send CreateSalt <&> Just . SG.Last . hashPassword pwNew
                     Nothing -> pure Nothing
                 )
                 (pure m_newName)
