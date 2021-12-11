@@ -23,7 +23,7 @@ import qualified Control.Carrier.Reader as R (Reader, local)
 import Control.Effect.Catch (Catch)
 import Control.Effect.Sum (Member)
 import Control.Effect.Throw (Throw, throwError)
-import qualified Cookie.Xsrf (E)
+import Cookie.Xsrf (CreateXsrfCookieE)
 import Domain (Domain (User))
 import Domain.User (UserR)
 import HTTP.Auth.User (AuthUserApi, authUserServer)
@@ -70,7 +70,7 @@ server ::
     Member (OptionalAuthActionManyE []) sig,
     Member UserActionE sig,
     Member (UserActionManyE []) sig,
-    Member Cookie.Xsrf.E sig,
+    Member CreateXsrfCookieE sig,
     Member (R.Reader JWTSettings) sig,
     Member (R.Reader CookieSettings) sig,
     Member (R.Reader Limit) sig,

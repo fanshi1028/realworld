@@ -21,7 +21,7 @@ import Control.Carrier.Throw.Either (runThrow)
 import Control.Carrier.Trace.Returning (runTrace)
 import Control.Effect.Labelled (runLabelled)
 import Control.Exception.Safe (catch)
-import qualified Cookie.Xsrf (run)
+import Cookie.Xsrf (runCreateXsrfCookie)
 import CreateSalt (CreateSaltC (runCreateSalt))
 import qualified Crypto.JOSE (Error)
 import Crypto.JWT (SystemDRG, getSystemDRG)
@@ -103,7 +103,7 @@ mkApp cs jwts userDb articleDb commentDb tagDb emailUserIndex db0 db1 db2 db3 db
               & runOptionalAuthActionInMem
               & runVisitorActionInMem @[]
               & runCreateTokenJWT @'User @SystemDRG
-              & Cookie.Xsrf.run @SystemDRG
+              & runCreateXsrfCookie @SystemDRG
               & InMem.Authentication.User.run
               & runCreateSalt @SystemDRG
               & (runLabelled @UserCreateComment >>> R.runReader db8)
