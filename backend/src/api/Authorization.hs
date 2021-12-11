@@ -29,8 +29,8 @@ import Servant (FromHttpApiData (parseHeader))
 import Servant.Auth.Server (CookieSettings, JWTSettings)
 import qualified Servant.Auth.Server as Auth (AuthCheck (AuthCheck))
 import Servant.Auth.Server.Internal.Class (IsAuth (AuthArgs, runAuth))
-import Token.Decode (E (DecodeToken), InvalidToken)
-import Token.Decode.JWT (run)
+import Token.Decode (DecodeTokenE (DecodeToken), InvalidToken)
+import Token.Decode.JWT (runDecodeTokenJWT, DecodeTokenJWTC (runDecodeTokenJWT))
 import Token.HasToken (TokenOf (..))
 
 -- | @since 0.1.0.0
@@ -51,7 +51,7 @@ instance IsAuth TokenAuth (UserR "authWithToken") where
         time <- getCurrentTime
         DecodeToken token
           & send
-          & Token.Decode.JWT.run @'User
+          & runDecodeTokenJWT @'User
           & R.runReader time
           & R.runReader jwts
           & runThrow @(InvalidToken 'User)

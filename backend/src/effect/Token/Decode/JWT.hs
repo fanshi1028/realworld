@@ -14,7 +14,7 @@
 -- Carrier for decoding JWT token
 --
 -- @since 0.3.0.0
-module Token.Decode.JWT (C (run)) where
+module Token.Decode.JWT (DecodeTokenJWTC (runDecodeTokenJWT)) where
 
 import Authentication.HasAuth (AuthOf)
 import Control.Algebra (Algebra (alg), type (:+:) (L, R))
@@ -27,13 +27,13 @@ import Field.Time (Time (Time))
 import Relude.Extra (un)
 import Servant.Auth.Server (FromJWT, JWTSettings, decodeJWT, validationKeys)
 import Servant.Auth.Server.Internal.ConfigTypes (jwtSettingsToJwtValidationSettings)
-import Token.Decode (E (DecodeToken), InvalidToken (InvalidToken))
+import Token.Decode (DecodeTokenE (DecodeToken), InvalidToken (InvalidToken))
 import Token.HasToken (TokenOf)
 
 -- | @since 0.3.0.0
-newtype C (s :: Domain) (m :: Type -> Type) a = C
+newtype DecodeTokenJWTC (s :: Domain) (m :: Type -> Type) a = DecodeTokenJWTC
   { -- | @since 0.3.0.0
-    run :: m a
+    runDecodeTokenJWT :: m a
   }
   deriving (Functor, Applicative, Monad)
 
@@ -60,12 +60,12 @@ instance
     FromJWT (AuthOf s),
     Coercible (TokenOf s) ByteString
   ) =>
-  Algebra (Token.Decode.E s :+: sig) (C s m)
+  Algebra (DecodeTokenE s :+: sig) (DecodeTokenJWTC s m)
   where
   alg _ (L (DecodeToken token)) ctx = do
     verifyJWTAt <$> R.ask <*> R.ask <*> pure (un @ByteString token)
       >>= \case
         Nothing -> throwError $ InvalidToken token
         (Just auth) -> pure $ auth <$ ctx
-  alg hdl (R other) ctx = C $ alg (run . hdl) other ctx
+  alg hdl (R other) ctx = DecodeTokenJWTC $ alg (runDecodeTokenJWT . hdl) other ctx
   {-# INLINE alg #-}

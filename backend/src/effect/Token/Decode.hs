@@ -13,7 +13,7 @@
 --
 -- @since 0.3.0.0
 module Token.Decode
-  ( E (..),
+  ( DecodeTokenE (..),
 
     -- * Error
 
@@ -27,10 +27,10 @@ import Domain (Domain)
 import Token.HasToken (TokenOf)
 
 -- | @since 0.3.0.0
-data E s (m :: Type -> Type) a where
+data DecodeTokenE s (m :: Type -> Type) a where
   -- | @since 0.3.0.0
   -- Decode token to auth info
-  DecodeToken :: TokenOf s -> E s m (AuthOf s)
+  DecodeToken :: TokenOf s -> DecodeTokenE s m (AuthOf s)
 
 -- | @since 0.3.0.0
 newtype InvalidToken (a :: Domain) = InvalidToken (TokenOf a)
