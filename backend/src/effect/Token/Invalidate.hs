@@ -14,7 +14,7 @@ module Token.Invalidate where
 import Token.HasToken (TokenOf)
 
 -- | @since 0.3.0.0
-data E s (m :: Type -> Type) a where
+data InvalidateTokenE s (m :: Type -> Type) a where
   -- | @since 0.3.0.0
   -- Invalidate token
-  InvalidateToken :: TokenOf s -> E s m ()
+  InvalidateToken :: TokenOf s -> InvalidateTokenE s m ()
