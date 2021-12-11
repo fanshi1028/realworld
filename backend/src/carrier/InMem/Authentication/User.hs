@@ -40,9 +40,9 @@ import Storage.Error (AlreadyExists (AlreadyExists), NotFound)
 import Storage.Map (ContentOf (..), CreateOf (UserCreate), IdAlreadyExists, IdNotFound, IdOf (UserId), toUserId)
 
 -- | @since 0.3.0.0
-newtype C m a = C
+newtype AuthenticationUserInMemC m a = AuthenticationUserInMemC
   { -- | @since 0.3.0.0
-    run :: m a
+    runAuthenticationUserInMem :: m a
   }
   deriving (Functor, Applicative, Monad)
 
@@ -59,7 +59,7 @@ instance
     Member CreateSaltE sig,
     Member (R.Reader (Maybe (UserR "authWithToken"))) sig
   ) =>
-  Algebra (AuthenticationE 'User :+: sig) (C m)
+  Algebra (AuthenticationE 'User :+: sig) (AuthenticationUserInMemC m)
   where
   alg _ (L action) ctx =
     (<$ ctx) <$> do
@@ -87,5 +87,5 @@ instance
               case checkPassword pw $ getField @"password" a of
                 PasswordCheckSuccess -> pure $ transform a
                 PasswordCheckFail -> throwError $ BadPassword @'User
-  alg hdl (R other) ctx = C $ alg (run . hdl) other ctx
+  alg hdl (R other) ctx = AuthenticationUserInMemC $ alg (runAuthenticationUserInMem . hdl) other ctx
   {-# INLINE alg #-}

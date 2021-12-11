@@ -32,7 +32,7 @@ import Field.Email (Email)
 import Field.Tag (Tag)
 import Field.Time (getCurrentTime)
 import HTTP (Api, server)
-import qualified InMem.Authentication.User (run)
+import InMem.Authentication.User (runAuthenticationUserInMem)
 import InMem.OptionalAuthAction (runOptionalAuthActionInMem)
 import InMem.OptionalAuthAction.Many (runOptionalAuthActionManyInMem)
 import InMem.Relation (ArticleFavoritedByUser, ArticleHasComment, ArticleTaggedByTag, EmailOfUser, TagTagArticle, UserCreateArticle, UserCreateComment, UserFavoriteArticle, UserFollowUser, UserFollowedByUser)
@@ -104,7 +104,7 @@ mkApp cs jwts userDb articleDb commentDb tagDb emailUserIndex db0 db1 db2 db3 db
               & runVisitorActionInMem @[]
               & runCreateTokenJWT @'User @SystemDRG
               & runCreateXsrfCookie @SystemDRG
-              & InMem.Authentication.User.run
+              & runAuthenticationUserInMem
               & runCreateSalt @SystemDRG
               & (runLabelled @UserCreateComment >>> R.runReader db8)
               & (runLabelled @ArticleFavoritedByUser >>> R.runReader db7)
