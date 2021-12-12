@@ -24,3 +24,6 @@ data AuthenticationE (s :: Domain) (m :: Type -> Type) a where
   Register :: CreateOf s -> AuthenticationE s m (AuthOf s)
   -- | @since 0.2.0.0
   Login :: LoginOf s -> AuthenticationE s m (AuthOf s)
+  -- | @since 0.4.0.0
+  -- Get the info of the current authenticated user.
+  GetCurrentAuth :: AuthenticationE s m (Maybe (AuthOf s))

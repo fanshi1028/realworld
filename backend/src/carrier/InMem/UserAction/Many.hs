@@ -18,22 +18,20 @@
 -- @since 0.3.0.0
 module InMem.UserAction.Many where
 
+import Authentication (AuthenticationE (GetCurrentAuth))
 import Authentication.HasAuth (AuthOf (..), NotLogin)
 import Control.Algebra (Algebra, alg, send, type (:+:) (L, R))
 import Control.Carrier.NonDet.Church (runNonDetM)
 import Control.Effect.Error (Catch, Throw, catchError, throwError)
 import Control.Effect.NonDet (oneOf)
-import qualified Control.Effect.Reader as R (Reader)
 import Control.Effect.Sum (Member)
 import Domain (Domain (Article, User))
 import Domain.Article (ArticleR (ArticleWithAuthorProfile))
-import Domain.User (UserR (UserAuthWithToken))
 import GHC.Records (getField)
 import InMem.Relation (ArticleTaggedByTag, ManyToMany (getRelatedLeftManyToMany), ManyToManyRelationE, ToMany (getRelatedToMany), ToManyRelationE, UserCreateArticle, UserFavoriteArticle, UserFollowUser, getRelatedRightManyToMany, isRelatedManyToMany)
 import InMem.Storage (MapInMemE, getByIdMapInMem)
 import OptionalAuthAction (OptionalAuthActionE (GetProfile))
 import Storage.Map (ContentOf (..), IdNotFound, toUserId)
-import UserAction (UserActionE (GetCurrentUser))
 import UserAction.Many (UserActionManyE (FeedArticles))
 import Util.Sort (getSorted)
 
@@ -54,16 +52,17 @@ instance
     ManyToManyRelationE ArticleTaggedByTag sig,
     ToManyRelationE UserCreateArticle sig,
     Member (Throw (NotLogin 'User)) sig,
-    Member (R.Reader (Maybe (UserR "authWithToken"))) sig,
+    Member (AuthenticationE 'User) sig,
     Member OptionalAuthActionE sig,
-    Member UserActionE sig,
     Algebra sig m
   ) =>
   Algebra (UserActionManyE [] :+: sig) (UserActionManyC [] m)
   where
   alg _ (L FeedArticles) ctx =
     fmap ((<$ ctx) . getSorted) . runNonDetM pure $ do
-      UserAuthWithToken (toUserId -> authUserId) _ <- send GetCurrentUser
+      authUserId <-
+        send (GetCurrentAuth @'User)
+          >>= maybe (error "impossible: not login would not get here") (pure . toUserId)
       articleId <-
         getRelatedLeftManyToMany @UserFollowUser authUserId
           >>= oneOf

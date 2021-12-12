@@ -18,18 +18,17 @@
 -- @since 0.3.0.0
 module InMem.OptionalAuthAction.Many where
 
-import Authentication.HasAuth (AuthOf (..))
+import Authentication (AuthenticationE (GetCurrentAuth))
+import Authentication.HasAuth (AuthOf (..), NotLogin)
 import Control.Algebra (Algebra, alg, send, type (:+:) (L, R))
 import Control.Carrier.NonDet.Church (runNonDetA)
 import Control.Effect.Catch (catchError)
 import Control.Effect.Error (Catch, Throw, throwError)
 import Control.Effect.NonDet (oneOf)
-import qualified Control.Effect.Reader as R (Reader, ask)
 import Control.Effect.Sum (Member)
 import Domain (Domain (Article, Comment, User))
 import Domain.Article (ArticleR (ArticleWithAuthorProfile))
 import Domain.Comment (CommentR (CommentWithAuthorProfile))
-import Domain.User (UserR (UserAuthWithToken))
 import GHC.Records (getField)
 import InMem.Relation (ArticleHasComment, ArticleTaggedByTag, ManyToManyRelationE, ToMany (getRelatedToMany), ToManyRelationE, UserFavoriteArticle, getRelatedLeftManyToMany, getRelatedRightManyToMany)
 import InMem.Storage (MapInMemE, getAllMapInMem, getByIdMapInMem)
@@ -50,15 +49,16 @@ instance
   ( MapInMemE 'User sig,
     MapInMemE 'Article sig,
     MapInMemE 'Comment sig,
+    Member OptionalAuthActionE sig,
+    Member (AuthenticationE 'User) sig,
     ManyToManyRelationE ArticleTaggedByTag sig,
     ManyToManyRelationE UserFavoriteArticle sig,
     ToManyRelationE ArticleHasComment sig,
     Member (Throw Text) sig,
     Member (Catch (IdNotFound 'Comment)) sig,
-    Member (R.Reader (Maybe (UserR "authWithToken"))) sig,
-    Member OptionalAuthActionE sig,
-    Alternative f,
-    Algebra sig m
+    Member (Catch (NotLogin 'User)) sig,
+    Algebra sig m,
+    Alternative f
   ) =>
   Algebra (OptionalAuthActionManyE f :+: sig) (OptionalAuthActionManyC f m)
   where
@@ -76,8 +76,8 @@ instance
           (aid, a) <- getAllMapInMem @'Article <&> sortOn snd >>= oneOf
           favBy <- getRelatedRightManyToMany @UserFavoriteArticle aid
           follow <-
-            R.ask >>= \case
-              Just (UserAuthWithToken (toUserId -> authId) _) -> do
+            send (GetCurrentAuth @'User) >>= \case
+              Just (toUserId -> authId) -> do
                 _ <- getByIdMapInMem authId
                 pure $ authId `elem` favBy
               Nothing -> pure False

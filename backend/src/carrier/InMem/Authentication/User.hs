@@ -16,19 +16,18 @@
 -- @since 0.3.0.0
 module InMem.Authentication.User where
 
-import Authentication (AuthenticationE (Login, Register))
-import Authentication.HasAuth (LoginOf (UserLogin), NotAuthorized (BadPassword, NoSuchUser), NotLogin)
+import Authentication (AuthenticationE (GetCurrentAuth, Login, Register))
+import Authentication.HasAuth (AuthOf, LoginOf (UserLogin), NotAuthorized (BadPassword, NoSuchUser), NotLogin (NotLogin))
 import Control.Algebra (Algebra (alg), send, type (:+:) (L, R))
 import Control.Effect.Catch (Catch)
 import Control.Effect.Error (catchError)
-import qualified Control.Effect.Reader as R (Reader)
+import qualified Control.Effect.Reader as R (Reader, ask)
 import Control.Effect.Sum (Member)
 import Control.Effect.Throw (Throw, throwError)
 import CreateSalt (CreateSaltE (CreateSalt))
 import Data.Password.Argon2 (PasswordCheck (PasswordCheckFail, PasswordCheckSuccess))
 import Domain (Domain (User))
 import Domain.Transform (transform)
-import Domain.User (UserR)
 import Field.Bio (Bio (Bio))
 import Field.Email (Email)
 import Field.Image (Image (Image))
@@ -57,7 +56,7 @@ instance
     Member (Throw (NotAuthorized 'User)) sig,
     Member (Throw (NotLogin 'User)) sig,
     Member CreateSaltE sig,
-    Member (R.Reader (Maybe (UserR "authWithToken"))) sig
+    Member (R.Reader (Maybe (AuthOf 'User))) sig
   ) =>
   Algebra (AuthenticationE 'User :+: sig) (AuthenticationUserInMemC m)
   where
@@ -87,5 +86,6 @@ instance
               case checkPassword pw $ getField @"password" a of
                 PasswordCheckSuccess -> pure $ transform a
                 PasswordCheckFail -> throwError $ BadPassword @'User
+        GetCurrentAuth -> R.ask
   alg hdl (R other) ctx = AuthenticationUserInMemC $ alg (runAuthenticationUserInMem . hdl) other ctx
   {-# INLINE alg #-}

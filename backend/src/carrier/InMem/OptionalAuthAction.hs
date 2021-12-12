@@ -17,16 +17,17 @@
 -- @since 0.3.0.0
 module InMem.OptionalAuthAction where
 
-import Authentication.HasAuth (AuthOf (..))
+import Authentication (AuthenticationE (GetCurrentAuth))
+import Authentication.HasAuth (AuthOf (..), NotLogin)
 import Control.Algebra (Algebra (alg), send, type (:+:) (L, R))
 import Control.Effect.Catch (Catch)
-import qualified Control.Effect.Reader as R (Reader, ask)
+import Control.Effect.Error (catchError)
 import Control.Effect.Sum (Member)
 import Control.Effect.Throw (Throw)
 import Domain (Domain (Article, Comment, User))
 import Domain.Article (ArticleR (ArticleWithAuthorProfile))
 import Domain.Transform (transform)
-import Domain.User (UserR (UserAuthWithToken, UserProfile))
+import Domain.User (UserR (UserProfile))
 import GHC.Records (getField)
 import InMem.Relation
   ( ArticleHasComment,
@@ -62,33 +63,38 @@ instance
     ToManyRelationE ArticleHasComment sig,
     Member (Throw Text) sig,
     Member (Catch (IdNotFound 'Comment)) sig,
-    Member (R.Reader (Maybe (UserR "authWithToken"))) sig,
+    Member (Catch (NotLogin 'User)) sig,
+    Member (AuthenticationE 'User) sig,
     Algebra sig m
   ) =>
   Algebra (OptionalAuthActionE :+: sig) (OptionalAuthActionInMemC m)
   where
-  alg _ (L action) ctx =
+  alg _ (L action) ctx = do
+    let authMaybe f no =
+          send (GetCurrentAuth @'User) >>= \case
+            Just (toUserId -> authId) -> do
+              _ <- getByIdMapInMem authId
+              f authId
+            Nothing -> no
+        getProfile uid = transform <$> getByIdMapInMem uid
     (<$ ctx) <$> case action of
       GetProfile uid ->
-        UserProfile . transform
-          <$> getByIdMapInMem uid
-          <*> ( R.ask >>= \case
-                  Just (UserAuthWithToken (toUserId -> authId) _) -> do
-                    _ <- getByIdMapInMem authId
-                    isRelatedManyToMany @UserFollowUser authId uid
-                  Nothing -> pure False
-              )
+        UserProfile
+          <$> getProfile uid <*> authMaybe (\authId -> isRelatedManyToMany @UserFollowUser authId uid) (pure False)
       GetArticle aid -> do
-        a <- getByIdMapInMem aid
-        ArticleWithAuthorProfile a
-          <$> getRelatedLeftManyToMany @ArticleTaggedByTag aid
-          <*> ( R.ask >>= \case
-                  Just (UserAuthWithToken (toUserId -> authId) _) -> do
-                    _ <- getByIdMapInMem authId
-                    isRelatedManyToMany @UserFavoriteArticle authId aid
-                  Nothing -> pure False
-              )
-          <*> (genericLength <$> getRelatedRightManyToMany @UserFavoriteArticle aid)
-          <*> send (GetProfile $ getField @"author" a)
+        a@(getField @"author" -> uid) <- getByIdMapInMem aid
+        let mkArticleOutput getIsFav getIsFollow =
+              ArticleWithAuthorProfile a
+                <$> getRelatedLeftManyToMany @ArticleTaggedByTag aid
+                <*> getIsFav
+                <*> (genericLength <$> getRelatedRightManyToMany @UserFavoriteArticle aid)
+                <*> (UserProfile <$> getProfile uid <*> getIsFollow)
+        authMaybe
+          ( \authId ->
+              mkArticleOutput
+                (isRelatedManyToMany @UserFollowUser authId uid)
+                $ isRelatedManyToMany @UserFavoriteArticle authId aid
+          )
+          (mkArticleOutput (pure False) $ pure False)
   alg hdl (R other) ctx = OptionalAuthActionInMemC $ alg (runOptionalAuthActionInMem . hdl) other ctx
   {-# INLINE alg #-}

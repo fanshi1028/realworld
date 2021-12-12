@@ -12,7 +12,7 @@
 -- @since 0.2.0.0
 module InMem.App where
 
-import Authentication.HasAuth (AlreadyLogin, NotAuthorized, NotLogin)
+import Authentication.HasAuth (AlreadyLogin, AuthOf, NotAuthorized, NotLogin)
 import Control.Carrier.Error.Either (runError)
 import Control.Carrier.Lift (runM)
 import qualified Control.Carrier.Reader as R (runReader)
@@ -27,7 +27,6 @@ import qualified Crypto.JOSE (Error)
 import Crypto.JWT (SystemDRG, getSystemDRG)
 import Data.UUID.V1 (nextUUID)
 import Domain (Domain (Article, Comment, User))
-import Domain.User (UserR)
 import Field.Email (Email)
 import Field.Tag (Tag)
 import Field.Time (getCurrentTime)
@@ -126,7 +125,8 @@ mkApp cs jwts userDb articleDb commentDb tagDb emailUserIndex db0 db1 db2 db3 db
               & R.runReader cs
               & R.runReader (Limit 20)
               & R.runReader (Offset 0)
-              & R.runReader (Nothing @(UserR "authWithToken"))
+              & R.runReader (Nothing @(AuthOf 'User))
+              & R.runReader (Nothing @(TokenOf 'User))
               & S.evalState gen
               & runTrace
               & runThrow @Text

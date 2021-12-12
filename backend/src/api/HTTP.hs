@@ -15,7 +15,7 @@
 module HTTP where
 
 import Authentication (AuthenticationE)
-import Authentication.HasAuth (NotLogin (NotLogin))
+import Authentication.HasAuth (AuthOf, NotLogin (NotLogin))
 import qualified Authentication.HasAuth as AuthErr (NotAuthorized (BadPassword, NoSuchUser))
 import Authorization (TokenAuth)
 import Control.Algebra (Algebra)
@@ -25,7 +25,7 @@ import Control.Effect.Sum (Member)
 import Control.Effect.Throw (Throw, throwError)
 import Cookie.Xsrf (CreateXsrfCookieE)
 import Domain (Domain (User))
-import Domain.User (UserR)
+import Domain.User (UserR (UserAuthWithToken))
 import HTTP.Auth.User (AuthUserApi, authUserServer)
 import HTTP.OptionalAuth (OptionallyAuthedApi, optionallyAuthedServer)
 import HTTP.Protected (AuthedApi, authedServer)
@@ -38,6 +38,7 @@ import Servant.Auth.Server (Auth, AuthResult (Authenticated, BadPassword, Indefi
 import Servant.Server (hoistServer)
 import Token.Create (CreateTokenE)
 import Token.Decode (InvalidToken)
+import Token.HasToken (TokenOf)
 import UserAction (UserActionE)
 import UserAction.Many (UserActionManyE)
 import Util.Validation (ValidationErr)
@@ -75,23 +76,25 @@ server ::
     Member (R.Reader CookieSettings) sig,
     Member (R.Reader Limit) sig,
     Member (R.Reader Offset) sig,
-    Member (R.Reader (Maybe (UserR "authWithToken"))) sig,
     Member (AuthenticationE 'User) sig,
     Member (CreateTokenE 'User) sig,
     Member (Throw Text) sig,
     Member (Throw ValidationErr) sig,
     Member (Throw (NotLogin 'User)) sig,
     Member (Throw (AuthErr.NotAuthorized 'User)) sig,
-    Member (Catch (InvalidToken 'User)) sig
+    Member (Catch (InvalidToken 'User)) sig,
+    Member (R.Reader (Maybe (TokenOf 'User))) sig,
+    Member (R.Reader (Maybe (AuthOf 'User))) sig
   ) =>
   ServerT Api m
 server =
   ( ( \auth ->
-        let appendOptionalAuth = hoistServer (Proxy @OptionallyAuthedApi) $ case auth of
-              Authenticated u -> R.local $ const $ Just u
+        let appendAuth' (UserAuthWithToken user token) = R.local (const $ Just user) . R.local (const $ Just token)
+            appendOptionalAuth = hoistServer (Proxy @OptionallyAuthedApi) $ case auth of
+              Authenticated u -> appendAuth' u
               _ -> id
             appendAuth = hoistServer (Proxy @AuthedApi) $ \eff -> case auth of
-              Authenticated u -> R.local (const $ Just u) eff
+              Authenticated u -> appendAuth' u eff
               BadPassword -> throwError $ AuthErr.BadPassword @'User
               NoSuchUser -> throwError $ AuthErr.NoSuchUser @'User
               Indefinite -> throwError $ NotLogin @'User

@@ -18,7 +18,8 @@
 -- @since 0.3.0.0
 module InMem.UserAction where
 
-import Authentication.HasAuth (AuthOf (..), NotAuthorized, NotLogin (NotLogin))
+import Authentication (AuthenticationE (GetCurrentAuth))
+import Authentication.HasAuth (AuthOf (..), NotAuthorized, NotLogin)
 import Control.Algebra (Algebra (alg), send, type (:+:) (L, R))
 import Control.Effect.Catch (Catch)
 import Control.Effect.Error (catchError)
@@ -68,6 +69,7 @@ import OptionalAuthAction (OptionalAuthActionE (GetProfile))
 import Relude.Extra ((.~), (^.))
 import Storage.Error (AlreadyExists (AlreadyExists), NotFound (NotFound))
 import Storage.Map (CRUD (D, U), ContentOf (..), CreateOf (ArticleCreate, CommentCreate), Forbidden (Forbidden), HasStorage (ContentOf), IdAlreadyExists, IdNotFound, IdOf (ArticleId, CommentId, UserId), toArticleId, toArticlePatch, toUserId)
+import Token.HasToken (TokenOf)
 import UserAction (UserActionE (AddCommentToArticle, CreateArticle, DeleteArticle, DeleteComment, FavoriteArticle, FollowUser, GetCurrentUser, UnfavoriteArticle, UnfollowUser, UpdateArticle, UpdateUser))
 
 -- | @since 0.3.0.0
@@ -103,7 +105,8 @@ instance
     ToOneRelationE EmailOfUser sig,
     Member (Throw (NotLogin 'User)) sig,
     Member (Throw (NotAuthorized 'User)) sig,
-    Member (R.Reader (Maybe (UserR "authWithToken"))) sig,
+    Member (AuthenticationE 'User) sig,
+    Member (R.Reader (Maybe (TokenOf 'User))) sig,
     Member OptionalAuthActionE sig,
     Member CreateSaltE sig,
     Algebra sig m
@@ -112,12 +115,11 @@ instance
   where
   alg _ (L action) ctx =
     (<$ ctx) <$> do
-      authOut@(UserAuthWithToken auth@(toUserId -> authUserId) _) <-
-        R.ask >>= \case
-          Just auth -> pure auth
-          Nothing -> throwError $ NotLogin @'User
+      auth@(toUserId -> authUserId) <-
+        send (GetCurrentAuth @'User)
+          >>= maybe (error "impossible: not login would not get here") pure
       case action of
-        GetCurrentUser -> pure authOut
+        GetCurrentUser -> R.ask >>= maybe (error "impossible: Missing token") (pure . UserAuthWithToken auth)
         UpdateUser update -> do
           -- FIXME GetCurrent (User) should return all(with token?) as it is internal, so that we can avoid looking by authUserId again like below
           orig <- getByIdMapInMem authUserId
