@@ -18,10 +18,9 @@
 module InMem.OptionalAuthAction where
 
 import Authentication (AuthenticationE (GetCurrentAuth))
-import Authentication.HasAuth (AuthOf (..), NotLogin)
+import Authentication.HasAuth (AuthOf (..))
 import Control.Algebra (Algebra (alg), send, type (:+:) (L, R))
 import Control.Effect.Catch (Catch)
-import Control.Effect.Error (catchError)
 import Control.Effect.Sum (Member)
 import Control.Effect.Throw (Throw)
 import Domain (Domain (Article, Comment, User))
@@ -63,7 +62,6 @@ instance
     ToManyRelationE ArticleHasComment sig,
     Member (Throw Text) sig,
     Member (Catch (IdNotFound 'Comment)) sig,
-    Member (Catch (NotLogin 'User)) sig,
     Member (AuthenticationE 'User) sig,
     Algebra sig m
   ) =>

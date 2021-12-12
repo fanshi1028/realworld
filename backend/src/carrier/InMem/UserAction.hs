@@ -19,7 +19,7 @@
 module InMem.UserAction where
 
 import Authentication (AuthenticationE (GetCurrentAuth))
-import Authentication.HasAuth (AuthOf (..), NotAuthorized, NotLogin)
+import Authentication.HasAuth (AuthOf (..), NotAuthorized)
 import Control.Algebra (Algebra (alg), send, type (:+:) (L, R))
 import Control.Effect.Catch (Catch)
 import Control.Effect.Error (catchError)
@@ -103,7 +103,6 @@ instance
     ToManyRelationE UserCreateComment sig,
     ToManyRelationE UserCreateArticle sig,
     ToOneRelationE EmailOfUser sig,
-    Member (Throw (NotLogin 'User)) sig,
     Member (Throw (NotAuthorized 'User)) sig,
     Member (AuthenticationE 'User) sig,
     Member (R.Reader (Maybe (TokenOf 'User))) sig,

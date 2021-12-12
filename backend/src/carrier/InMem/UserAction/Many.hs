@@ -19,7 +19,7 @@
 module InMem.UserAction.Many where
 
 import Authentication (AuthenticationE (GetCurrentAuth))
-import Authentication.HasAuth (AuthOf (..), NotLogin)
+import Authentication.HasAuth (AuthOf (..))
 import Control.Algebra (Algebra, alg, send, type (:+:) (L, R))
 import Control.Carrier.NonDet.Church (runNonDetM)
 import Control.Effect.Error (Catch, Throw, catchError, throwError)
@@ -51,7 +51,6 @@ instance
     ManyToManyRelationE UserFavoriteArticle sig,
     ManyToManyRelationE ArticleTaggedByTag sig,
     ToManyRelationE UserCreateArticle sig,
-    Member (Throw (NotLogin 'User)) sig,
     Member (AuthenticationE 'User) sig,
     Member OptionalAuthActionE sig,
     Algebra sig m

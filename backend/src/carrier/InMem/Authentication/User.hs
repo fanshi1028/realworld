@@ -17,7 +17,7 @@
 module InMem.Authentication.User where
 
 import Authentication (AuthenticationE (GetCurrentAuth, Login, Register))
-import Authentication.HasAuth (AuthOf, LoginOf (UserLogin), NotAuthorized (BadPassword, NoSuchUser), NotLogin (NotLogin))
+import Authentication.HasAuth (AuthOf, LoginOf (UserLogin), NotAuthorized (BadPassword, NoSuchUser))
 import Control.Algebra (Algebra (alg), send, type (:+:) (L, R))
 import Control.Effect.Catch (Catch)
 import Control.Effect.Error (catchError)
@@ -54,7 +54,6 @@ instance
     Member (Throw (IdAlreadyExists 'User)) sig,
     Member (Throw (AlreadyExists Email)) sig,
     Member (Throw (NotAuthorized 'User)) sig,
-    Member (Throw (NotLogin 'User)) sig,
     Member CreateSaltE sig,
     Member (R.Reader (Maybe (AuthOf 'User))) sig
   ) =>

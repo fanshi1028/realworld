@@ -19,11 +19,10 @@
 module InMem.OptionalAuthAction.Many where
 
 import Authentication (AuthenticationE (GetCurrentAuth))
-import Authentication.HasAuth (AuthOf (..), NotLogin)
+import Authentication.HasAuth (AuthOf (..))
 import Control.Algebra (Algebra, alg, send, type (:+:) (L, R))
 import Control.Carrier.NonDet.Church (runNonDetA)
-import Control.Effect.Catch (catchError)
-import Control.Effect.Error (Catch, Throw, throwError)
+import Control.Effect.Error (Catch, Throw, catchError, throwError)
 import Control.Effect.NonDet (oneOf)
 import Control.Effect.Sum (Member)
 import Domain (Domain (Article, Comment, User))
@@ -56,7 +55,6 @@ instance
     ToManyRelationE ArticleHasComment sig,
     Member (Throw Text) sig,
     Member (Catch (IdNotFound 'Comment)) sig,
-    Member (Catch (NotLogin 'User)) sig,
     Algebra sig m,
     Alternative f
   ) =>
