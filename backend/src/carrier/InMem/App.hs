@@ -1,5 +1,6 @@
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE FlexibleContexts #-}
+{-# OPTIONS_GHC -Wno-missing-signatures #-}
 
 -- |
 -- Description : App
@@ -13,13 +14,14 @@
 module InMem.App where
 
 import Authentication.HasAuth (AlreadyLogin, AuthOf, NotAuthorized, NotLogin)
-import Control.Carrier.Error.Either (runError)
+import qualified Control.Carrier.Error.Church as Church (runError)
 import Control.Carrier.Lift (runM)
 import qualified Control.Carrier.Reader as R (runReader)
 import qualified Control.Carrier.State.Strict as S (evalState)
 import Control.Carrier.Throw.Either (runThrow)
 import Control.Carrier.Trace.Returning (runTrace)
 import Control.Effect.Labelled (runLabelled)
+import Control.Effect.Lift (sendM)
 import Control.Exception.Safe (catch)
 import Cookie.Xsrf (runCreateXsrfCookie)
 import CreateSalt (CreateSaltC (runCreateSalt))
@@ -55,6 +57,34 @@ import Token.Create.JWT (runCreateTokenJWT)
 import Token.Decode (InvalidToken)
 import Token.HasToken (TokenOf (..))
 import Util.Validation (ValidationErr)
+
+-- | @since 0.4.0.0
+-- Error runner to throw in memory as 'ServerError' with HTTP status code
+runErrors =
+  let asStatus :: Show e => (ServerError -> e -> ServerError)
+      asStatus status e = status {errBody = show e}
+      runThrowInMem f = runThrow >=> either (sendM . throwSTM . f) pure
+      runErrorInMem f = Church.runError (sendM . throwSTM . f) pure
+   in runThrowInMem (\e -> err500 {errBody = encodeUtf8 @Text e})
+        >>> runErrorInMem (asStatus @(Forbidden 'D 'Article) err403)
+        >>> runErrorInMem (asStatus @(Forbidden 'U 'Article) err403)
+        >>> runErrorInMem (asStatus @(Forbidden 'D 'Comment) err403)
+        >>> runErrorInMem (asStatus @(NotAuthorized 'User) err403)
+        >>> runErrorInMem (asStatus @(NotLogin 'User) err401)
+        >>> runErrorInMem (asStatus @(InvalidToken 'User) err401)
+        >>> runErrorInMem (asStatus @(IdNotFound 'Article) err404)
+        >>> runErrorInMem (asStatus @(IdNotFound 'Comment) err404)
+        >>> runErrorInMem (asStatus @(IdNotFound 'User) err404)
+        >>> runErrorInMem (asStatus @(NotFound Email) err404)
+        >>> runThrowInMem (asStatus @(NotFound Tag) err404)
+        >>> runThrowInMem (asStatus @(IdAlreadyExists 'User) err400)
+        >>> runThrowInMem (asStatus @(IdAlreadyExists 'Article) err400)
+        >>> runThrowInMem (asStatus @(IdAlreadyExists 'Comment) err500)
+        >>> runThrowInMem (asStatus @(AlreadyExists Email) err400)
+        >>> runThrowInMem (asStatus @(AlreadyLogin 'User) err400)
+        >>> runThrowInMem (asStatus @ValidationErr err400)
+        >>> runThrowInMem (asStatus @Crypto.JOSE.Error err500)
+{-# INLINEABLE runErrors #-}
 
 -- | @since 0.3.0.0
 -- create app by supplying settings and databases(in memory)
@@ -95,30 +125,33 @@ mkApp cs jwts userDb articleDb commentDb tagDb emailUserIndex db0 db1 db2 db3 db
           time <- liftIO getCurrentTime
           uuid <- liftIO nextUUID >>= maybe (throwError $ err500 {errBody = "RequestedUUIDsTooQuickly"}) pure
           gen <- liftIO getSystemDRG
+          let runStorageInMem =
+                runUserActionManyInMem @[]
+                  >>> runUserActionInMem
+                  >>> runOptionalAuthActionManyInMem @[]
+                  >>> runOptionalAuthActionInMem
+                  >>> runVisitorActionInMem @[]
+                  >>> runAuthenticationUserInMem
+                  >>> (runLabelled @UserCreateComment >>> R.runReader db8)
+                  >>> (runLabelled @ArticleFavoritedByUser >>> R.runReader db7)
+                  >>> (runLabelled @UserFavoriteArticle >>> R.runReader db6)
+                  >>> (runLabelled @UserFollowedByUser >>> R.runReader db5)
+                  >>> (runLabelled @UserFollowUser >>> R.runReader db4)
+                  >>> (runLabelled @TagTagArticle >>> R.runReader db3)
+                  >>> (runLabelled @ArticleTaggedByTag >>> R.runReader db2)
+                  >>> (runLabelled @UserCreateArticle >>> R.runReader db1)
+                  >>> (runLabelled @ArticleHasComment >>> R.runReader db0)
+                  >>> (runLabelled @EmailOfUser >>> R.runReader emailUserIndex)
+                  >>> R.runReader userDb
+                  >>> R.runReader articleDb
+                  >>> R.runReader commentDb
+                  >>> R.runReader tagDb
           ( eff
-              & runUserActionManyInMem @[]
-              & runUserActionInMem
-              & runOptionalAuthActionManyInMem @[]
-              & runOptionalAuthActionInMem
-              & runVisitorActionInMem @[]
+              & runStorageInMem
               & runCreateTokenJWT @'User @SystemDRG
               & runCreateXsrfCookie @SystemDRG
-              & runAuthenticationUserInMem
               & runCreateSalt @SystemDRG
-              & (runLabelled @UserCreateComment >>> R.runReader db8)
-              & (runLabelled @ArticleFavoritedByUser >>> R.runReader db7)
-              & (runLabelled @UserFavoriteArticle >>> R.runReader db6)
-              & (runLabelled @UserFollowedByUser >>> R.runReader db5)
-              & (runLabelled @UserFollowUser >>> R.runReader db4)
-              & (runLabelled @TagTagArticle >>> R.runReader db3)
-              & (runLabelled @ArticleTaggedByTag >>> R.runReader db2)
-              & (runLabelled @UserCreateArticle >>> R.runReader db1)
-              & (runLabelled @ArticleHasComment >>> R.runReader db0)
-              & (runLabelled @EmailOfUser >>> R.runReader emailUserIndex)
-              & R.runReader userDb
-              & R.runReader articleDb
-              & R.runReader commentDb
-              & R.runReader tagDb
+              & S.evalState gen
               & R.runReader uuid
               & R.runReader time
               & R.runReader jwts
@@ -127,57 +160,15 @@ mkApp cs jwts userDb articleDb commentDb tagDb emailUserIndex db0 db1 db2 db3 db
               & R.runReader (Offset 0)
               & R.runReader (Nothing @(AuthOf 'User))
               & R.runReader (Nothing @(TokenOf 'User))
-              & S.evalState gen
+              & runErrors
               & runTrace
-              & runThrow @Text
-              & runError @(Forbidden 'D 'Article)
-              & runError @(Forbidden 'U 'Article)
-              & runError @(Forbidden 'D 'Comment)
-              & runError @(NotAuthorized 'User)
-              & runError @(NotLogin 'User)
-              & runError @(InvalidToken 'User)
-              & runError @(IdNotFound 'Article)
-              & runError @(IdNotFound 'Comment)
-              & runError @(IdNotFound 'User)
-              & runError @(NotFound Email)
-              & runThrow @(NotFound Tag)
-              & runThrow @(IdAlreadyExists 'User)
-              & runThrow @(IdAlreadyExists 'Article)
-              & runThrow @(IdAlreadyExists 'Comment)
-              & runThrow @(AlreadyExists Email)
-              & runThrow @(AlreadyLogin 'User)
-              & runThrow @ValidationErr
-              & runThrow @Crypto.JOSE.Error
               & runM
-              >>= handlerErr err500
-              >>= handlerErr err400
-              >>= handlerErr err400
-              >>= handlerErr err400 -- ???? FIXME
-              >>= handlerErr err500 -- Comment AlreadyExists use 500
-              >>= handlerErr err400
-              >>= handlerErr err400
-              >>= handlerErr err404
-              >>= handlerErr err404
-              >>= handlerErr err404
-              >>= handlerErr err404
-              >>= handlerErr err404
-              >>= handlerErr err401
-              >>= handlerErr err401
-              >>= handlerErr err403
-              >>= handlerErr err403
-              >>= handlerErr err403
-              >>= handlerErr err403
-              >>= handlerErr err500
               <&> snd
             )
             & atomically
             & (`catch` throwError)
       )
       server
-  where
-    -- NOTE: Helpers for handle errors in form of nested either
-    handlerErr' handler = either handler pure
-    handlerErr status = handlerErr' (\e -> throwSTM $ status {errBody = show e})
 
 -- | @since 0.2.0.0
 -- create in-memory app with default settings
