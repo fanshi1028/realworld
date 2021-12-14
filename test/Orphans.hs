@@ -37,8 +37,8 @@ import Field.Tag (Tag (Tag))
 import Field.Title (Title (Title))
 import Field.Username (Username (Username))
 import GHC.Records (getField)
-import Paging (Limit (Limit), Offset (Offset))
 import Network.HTTP.Types (hAuthorization)
+import Paging (Limit (Limit), Offset (Offset))
 import Servant (ToHttpApiData (toUrlPiece), type (:>))
 import Servant.Auth.Server (Auth)
 import Servant.Client (HasClient (Client, clientWithRoute), hoistClientMonad)
@@ -120,7 +120,7 @@ instance FromJSON (ArticleR "withAuthorProfile") where
           <*> o .: "tagList"
           <*> o .: "favorited"
           <*> o .: "favoritesCount"
-          <*> pure a
+          ?? a
 
 instance FromJSON (Out (ArticleR "withAuthorProfile")) where
   parseJSON = withObject "out ArticleR withAuthorProfile" $ \o -> Out <$> o .: "article"

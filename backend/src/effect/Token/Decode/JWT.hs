@@ -63,7 +63,7 @@ instance
   Algebra (DecodeTokenE s :+: sig) (DecodeTokenJWTC s m)
   where
   alg _ (L (DecodeToken token)) ctx = do
-    verifyJWTAt <$> R.ask <*> R.ask <*> pure (un @ByteString token)
+    verifyJWTAt <$> R.ask <*> R.ask ?? un @ByteString token
       >>= \case
         Nothing -> throwError $ InvalidToken token
         (Just auth) -> pure $ auth <$ ctx

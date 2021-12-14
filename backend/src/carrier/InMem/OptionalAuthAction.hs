@@ -81,18 +81,19 @@ instance
           <$> getProfile uid <*> authMaybe (\authId -> isRelatedManyToMany @UserFollowUser authId uid) (pure False)
       GetArticle aid -> do
         a@(getField @"author" -> uid) <- getByIdMapInMem aid
-        let mkArticleOutput getIsFav getIsFollow =
+        let mkArticleOutput isFav isFollow =
               ArticleWithAuthorProfile a
                 <$> getRelatedLeftManyToMany @ArticleTaggedByTag aid
-                <*> getIsFav
+                ?? isFav
                 <*> (genericLength <$> getRelatedRightManyToMany @UserFavoriteArticle aid)
-                <*> (UserProfile <$> getProfile uid <*> getIsFollow)
+                <*> (UserProfile <$> getProfile uid ?? isFollow)
         authMaybe
           ( \authId ->
-              mkArticleOutput
-                (isRelatedManyToMany @UserFollowUser authId uid)
-                $ isRelatedManyToMany @UserFavoriteArticle authId aid
+              join $
+                mkArticleOutput
+                  <$> isRelatedManyToMany @UserFollowUser authId uid
+                  <*> isRelatedManyToMany @UserFavoriteArticle authId aid
           )
-          (mkArticleOutput (pure False) $ pure False)
+          (mkArticleOutput False False)
   alg hdl (R other) ctx = OptionalAuthActionInMemC $ alg (runOptionalAuthActionInMem . hdl) other ctx
   {-# INLINE alg #-}
