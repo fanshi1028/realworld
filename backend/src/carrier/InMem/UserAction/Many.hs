@@ -36,7 +36,7 @@ import UserAction.Many (UserActionManyE (FeedArticles))
 import Util.Sort (getSorted)
 
 -- | @since 0.3.0.0
-newtype UserActionManyC (f :: Type -> Type) m a = UserActionManyC
+newtype UserActionManyInMemC (f :: Type -> Type) m a = UserActionManyInMemC
   { -- | @since 0.3.0.0
     runUserActionManyInMem :: m a
   }
@@ -55,7 +55,7 @@ instance
     Member OptionalAuthActionE sig,
     Algebra sig m
   ) =>
-  Algebra (UserActionManyE [] :+: sig) (UserActionManyC [] m)
+  Algebra (UserActionManyE [] :+: sig) (UserActionManyInMemC [] m)
   where
   alg _ (L FeedArticles) ctx =
     fmap ((<$ ctx) . getSorted) . runNonDetM pure $ do
@@ -74,5 +74,5 @@ instance
           <*> isRelatedManyToMany @UserFavoriteArticle authUserId articleId
           <*> (genericLength <$> getRelatedRightManyToMany @UserFavoriteArticle articleId)
           <*> send (GetProfile authorId)
-  alg hdl (R other) ctx = UserActionManyC $ alg (runUserActionManyInMem . hdl) other ctx
+  alg hdl (R other) ctx = UserActionManyInMemC $ alg (runUserActionManyInMem . hdl) other ctx
   {-# INLINE alg #-}
