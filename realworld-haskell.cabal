@@ -98,6 +98,7 @@ common backend-api-deps
 
 common backend-in-mem-carrier-deps
   build-depends:
+    , cryptonite           ^>=0.29
     , focus                ^>=1.0.3
     , fused-effects        ^>=1.1.1
     , generic-lens         ^>=2.2.0

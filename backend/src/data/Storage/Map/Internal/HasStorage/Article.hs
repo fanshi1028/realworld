@@ -56,6 +56,7 @@ instance Ord (ContentOf 'Article) where
 deriving via (WithValidation Slug) instance FromHttpApiData (WithValidation (IdOf 'Article))
 
 -- | @since 0.3.0.0
+-- FIXME tojson have slug
 instance ToJSON (ContentOf 'Article)
 
 -- * Helper
