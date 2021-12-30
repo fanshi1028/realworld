@@ -68,7 +68,19 @@ import InMem.Storage (MapInMemE, deleteByIdMapInMem, getByIdMapInMem, insertMapI
 import OptionalAuthAction (OptionalAuthActionE (GetProfile))
 import Relude.Extra ((.~), (^.))
 import Storage.Error (AlreadyExists (AlreadyExists), NotFound (NotFound))
-import Storage.Map (CRUD (D, U), ContentOf (..), CreateOf (ArticleCreate, CommentCreate), Forbidden (Forbidden), HasStorage (ContentOf), IdAlreadyExists, IdNotFound, IdOf (ArticleId, CommentId, UserId), toArticleId, toArticlePatch, toUserId)
+import Storage.Map
+  ( CRUD (D, U),
+    ContentOf (..),
+    CreateOf (ArticleCreate, CommentCreate),
+    Forbidden (Forbidden),
+    HasStorage (ContentOf),
+    IdAlreadyExists,
+    IdNotFound,
+    IdOf (ArticleId, CommentId, UserId),
+    toArticleId,
+    toArticlePatch,
+    toUserId,
+  )
 import Token.HasToken (TokenOf)
 import UserAction (UserActionE (AddCommentToArticle, CreateArticle, DeleteArticle, DeleteComment, FavoriteArticle, FollowUser, GetCurrentUser, UnfavoriteArticle, UnfollowUser, UpdateArticle, UpdateUser))
 
@@ -127,18 +139,14 @@ instance
               o_em = getField @"email" orig
               -- NOTE: factor out check(monadic) as effect? register use this code too.
               -- NOTE: right now, only pure validation are checked at boundary.
-              checkEmail em
-                | em == o_em = pure ()
-                | otherwise =
+              checkEmail em =
+                when (em /= o_em) $
                   getRelatedToOne @EmailOfUser em >>= \case
                     Just _ -> throwError $ AlreadyExists em
                     Nothing -> pure ()
-              checkUid uid
-                | uid == authUserId = pure ()
-                | otherwise =
-                  catchError @(IdNotFound 'User)
-                    (getByIdMapInMem uid >> throwError (AlreadyExists uid))
-                    $ const $ pure ()
+              checkUid uid =
+                when (uid == authUserId) $
+                  catchError @(IdNotFound 'User) (getByIdMapInMem uid >> throwError (AlreadyExists uid)) $ const $ pure ()
 
           case m_newName of
             Nothing -> do
