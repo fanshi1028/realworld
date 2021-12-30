@@ -27,7 +27,7 @@ import Cookie.Xsrf (runCreateXsrfCookie)
 import CreateSalt (CreateSaltC (runCreateSalt))
 import qualified Crypto.JOSE (Error)
 import Crypto.Random (SystemDRG, getSystemDRG)
-import Data.UUID.V1 (nextUUID)
+import Data.UUID.V4 (nextRandom)
 import Domain (Domain (Article, Comment, User))
 import Field.Email (Email)
 import Field.Tag (Tag)
@@ -123,7 +123,7 @@ mkApp cs jwts userDb articleDb commentDb tagDb emailUserIndex db0 db1 db2 db3 db
       (Proxy @'[CookieSettings, JWTSettings])
       ( \eff -> do
           time <- liftIO getCurrentTime
-          uuid <- liftIO nextUUID >>= maybe (throwError $ err500 {errBody = "RequestedUUIDsTooQuickly"}) pure
+          uuid <- liftIO nextRandom
           gen <- liftIO getSystemDRG
           let runStorageInMem =
                 runUserActionManyInMem @[]
