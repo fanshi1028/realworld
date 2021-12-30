@@ -46,7 +46,7 @@ instance FromJSON (WithValidation Password) where
       case validatePassword defaultPasswordPolicy_ pw of
         ValidPassword -> V.Success $ Password pw
         InvalidPassword irs ->
-          maybe (error "Impossible: password must be invalidated with a reason!") V.Failure $
+          maybe (error "impossible: password must be invalidated with a reason!") V.Failure $
             nonEmpty $ show @Text <$> irs
 -- ^
 -- >>> import Data.Aeson (eitherDecode')

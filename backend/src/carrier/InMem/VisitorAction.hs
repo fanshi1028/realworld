@@ -4,12 +4,12 @@
 {-# LANGUAGE UndecidableInstances #-}
 
 -- |
--- Description : Effect & Carrier
+-- Description : Carrier
 -- Copyright   : (c) 2021 fanshi1028
 -- Maintainer  : jackychany321@gmail.com
 -- Stability   : experimental
 --
--- Effect and Carrier of visitors' action
+-- Carrier of visitors' action in memory
 --
 -- @since 0.3.0.0
 module InMem.VisitorAction where

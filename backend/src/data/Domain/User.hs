@@ -55,7 +55,7 @@ data instance UserR "profile" = UserProfile
 instance ToJSON (UserR "profile") where
   toJSON (UserProfile auth following') = case genericToJSON defaultOptions auth of
     Object hm -> Object $ HM.insert "following" (toJSON following') hm
-    _ -> error "impossible in ToJSON (UserR \"profile\")"
+    _ -> error "Impossible: in ToJSON (UserR \"profile\")"
 -- ^
 -- >>> encode exampleProfile
 -- "{\"email\":\"jake@jake.jake\",\"bio\":\"I work at statefarm\",\"following\":false,\"username\":\"jake\",\"image\":\"https://static.productionready.io/images/smiley-cyrus.jpg\"}"

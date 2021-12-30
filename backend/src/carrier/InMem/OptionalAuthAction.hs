@@ -7,12 +7,12 @@
 {-# LANGUAGE ViewPatterns #-}
 
 -- |
--- Description : Effect & Carrier
+-- Description : Carrier
 -- Copyright   : (c) 2021 fanshi1028
 -- Maintainer  : jackychany321@gmail.com
 -- Stability   : experimental
 --
--- Effect and Carrier of optionally authed action
+-- Carrier of optionally authed action in memory
 --
 -- @since 0.3.0.0
 module InMem.OptionalAuthAction where

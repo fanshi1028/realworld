@@ -74,7 +74,7 @@ instance ToJSON (ArticleR "withAuthorProfile") where
         . HM.insert "favoritesCount" (toJSON n)
         . HM.insert "author" (toJSON ur)
         $ hm
-    _ -> error "impossible in ToJSON (ArticleR \"withAuthorProfile\")"
+    _ -> error "Impossible in ToJSON (ArticleR \"withAuthorProfile\")"
 -- ^
 -- >>> encode example
 -- "{\"title\":\"How to train your dragon\",\"author\":{\"email\":\"jake@jake.jake\",\"bio\":\"I work at statefarm\",\"following\":false,\"username\":\"jake\",\"image\":\"https://static.productionready.io/images/smiley-cyrus.jpg\"},\"favorited\":false,\"tagList\":[\"dragons\",\"training\"],\"body\":\"It takes a Jacobian\",\"slug\":\"how-to-train-your-dragon\",\"favoritesCount\":0,\"createdAt\":\"1858-11-17T00:00:00Z\",\"updatedAt\":\"1858-11-17T00:00:00Z\",\"description\":\"Ever wonder how?\"}"
