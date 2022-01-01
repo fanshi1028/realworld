@@ -1,0 +1,10 @@
+CREATE TABLE IF NOT EXISTS comments (
+ id UUID PRIMARY KEY NOT NULL,
+ body TEXT NOT NULL DEFAULT '',
+ author TEXT NOT NULL,
+ article TEXT NOT NULL,
+ created_at TIMESTAMP NOT NULL DEFAULT current_timestamp,
+ updated_at TIMESTAMP NOT NULL DEFAULT current_timestamp,
+ CONSTRAINT comment_author FOREIGN KEY (author) REFERENCES accounts (username) ON DELETE CASCADE ON UPDATE CASCADE,
+ CONSTRAINT comment_article FOREIGN KEY (article) REFERENCES articles (slug) ON DELETE CASCADE ON UPDATE CASCADE
+)
