@@ -19,32 +19,33 @@ in project.shellFor {
   tools = {
     cabal = {
       inherit index-state checkMaterialization;
-      version = "3.6.0.0";
-      plan-sha256 = "0n46d3pa5jhbv3z4hjywn83lfxpdcbcc3dmipdywdjykmk9ig44r";
+      version = "3.6.2.0";
+      plan-sha256 = "03i9rdvnpkr96x3ng5zfvfd9h49qsyzmxlckh2i1yr4xn991yid3";
       materialized = materializedDir + /cabal;
     };
     hlint = {
       inherit index-state checkMaterialization;
-      version = "3.3.4";
-      plan-sha256 = "0sycg9swgh7isv8wxr91l6hxvrbaynwznaspd0cwjghaxh75s68l";
+      version = "3.3.6";
+      plan-sha256 = "17km3wxl79sl6vcgjl3yadqm41lb503hd8vsr9rc0z95yg20n91j";
       materialized = materializedDir + /hlint;
     };
     haskell-language-server = {
       inherit index-state checkMaterialization;
-      version = "1.4.0.0";
-      plan-sha256 = "03ksqzhnd1qn2rizhdr0vf34d8y6r49pb8mn9qmylzqfsmi5cb41";
+      version = "1.5.1.0";
+      plan-sha256 = "0vhq2gvbwssgbh54ciwg2jcjsqsbrc9ml54yqnvv758ykga6xrsk";
       materialized = materializedDir + /haskell-language-server;
     };
-    ormolu = {
-      inherit index-state checkMaterialization;
-      version = "0.3.0.1";
-      plan-sha256 = "17fgqh434ndvb55n3bwmmyh2qgiyam4rxl4wwdks7r9fsxy8jq2n";
-      materialized = materializedDir + /ormolu;
-    };
+    # error: builder for '/nix/store/9w46v4709ddiycqg6zdrssfwsjlz64nq-ormolu-lib-ormolu-0.4.0.0.drv' failed with exit code 1
+    # ormolu = {
+    #   inherit index-state checkMaterialization;
+    #   version = "0.4.0.0";
+    #   plan-sha256 = "1g1g88bi46lx7kf2zc7lq7bgcqvcs5h7d53v5zclhgihfww1w5hl";
+    #   materialized = materializedDir + /ormolu;
+    # };
     ghcid = {
       inherit index-state checkMaterialization;
       version = "0.8.7";
-      plan-sha256 = "0icxgap4qg8v8xbnsxldanj5brlhs0sq6c11xmgwhkfa0b7n72i2";
+      plan-sha256 = "0z35zpx7x0qncqiddnq4acdq3cgqlalwc2kb28dv8lk1rvn377ri";
       materialized = materializedDir + /ghcid;
     };
     # use cabal-docspec instead of doctest(which I failed to set it up right), yet it seesm that cabal-docspec is not on hackage yet
@@ -53,13 +54,13 @@ in project.shellFor {
     cabal-fmt = {
       inherit index-state checkMaterialization;
       version = "0.1.5.1";
-      plan-sha256 = "00w8vj9s9ah0cvqxkrnfr3xhxmgra0bwlv1sxp4inn2s88ixnn5q";
+      plan-sha256 = "1wbds3wmnfzl9g562271bvd8z1whmiv2cn10m3qxbfpbdj3ri25h";
       materialized = materializedDir + /cabal-fmt;
     };
     stan = {
       inherit index-state checkMaterialization;
       version = "0.0.1.0";
-      plan-sha256 = "18iw1gm915rp8j9h9rgiks80yyww0h1zg1niq0zyyqgaz9q54nv5";
+      plan-sha256 = "1b5ckkajsf87jczavx18glwfa06zcvi7w1dp45xbpiyjqf7wmpi2";
       materialized = materializedDir + /stan;
     };
     # hoogle = {
