@@ -21,10 +21,13 @@ jobs:
         authToken: '${{ secrets.CACHIX_AUTH_TOKEN }}'
         extraPullNames: nix-community
 
-    - name: run-test
+    - name: build-test
       run: |
         nix-build -j4 -o test-result -A realworld-haskell.components.tests.realworld-haskell-test
-        ./test-result/bin/realworld-haskell-test
+
+    - name: run-test
+      run: |
+        nix-shell -p postgresql_13 --run "./test-result/bin/realworld-haskell-test"
 
     - name: nix build
       if: ${{ success() }}
