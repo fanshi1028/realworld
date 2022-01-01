@@ -145,7 +145,7 @@ instance
                     Just _ -> throwError $ AlreadyExists em
                     Nothing -> pure ()
               checkUid uid =
-                when (uid == authUserId) $
+                when (uid /= authUserId) $
                   catchError @(IdNotFound 'User) (getByIdMapInMem uid >> throwError (AlreadyExists uid)) $ const $ pure ()
 
           case m_newName of
