@@ -24,8 +24,7 @@ import Control.Carrier.Throw.Either (runThrow)
 import Control.Carrier.Trace.Returning (runTrace)
 import Control.Effect.Lift (sendM)
 import qualified Control.Effect.Throw as T (throwError)
-import Control.Exception.Base (finally)
-import Control.Exception.Safe (catch)
+import Control.Exception.Safe (bracket, catch)
 import Cookie.Xsrf (runCreateXsrfCookie)
 import CreateSalt (runCreateSalt)
 import qualified Crypto.JOSE (Error)
@@ -38,7 +37,7 @@ import HTTP (Api, server)
 import Hasql.Connection (acquire, release)
 import qualified Hasql.Session as Session (run)
 import Hasql.Transaction (condemn)
-import Hasql.Transaction.Sessions (IsolationLevel (RepeatableRead), Mode (Write), transaction)
+import Hasql.Transaction.Sessions (IsolationLevel (ReadCommitted), Mode (Write), transaction)
 import InRel8.Authentication.User (runAuthenticationUserInRel8)
 import InRel8.OptionalAuthAction (runOptionalAuthActionInRel8)
 import InRel8.OptionalAuthAction.Many (OptionalAuthActionManyInRel8C (runOptionalAuthActionManyInRel8))
@@ -64,7 +63,6 @@ import Servant.Auth.Server (CookieSettings, JWTSettings, defaultCookieSettings, 
 import Servant.Server (errBody)
 import Storage.Error (AlreadyExists, NotFound)
 import Storage.Map (CRUD (D, U), Forbidden, IdAlreadyExists, IdNotFound)
-import System.IO (hPutStrLn)
 import Token.Create.JWT (runCreateTokenJWT)
 import Token.Decode (InvalidToken)
 import Token.HasToken (TokenOf (..))
@@ -106,61 +104,63 @@ runErrors =
 {-# INLINEABLE runErrors #-}
 
 -- | @since 0.4.0.0
-mkApp :: CookieSettings -> JWTSettings -> Application
-mkApp cs jwts =
+mkApp :: CookieSettings -> JWTSettings -> ByteString -> Application
+mkApp cs jwts connStr =
   serveWithContext (Proxy @Api) (cs :. jwts :. EmptyContext) $
     hoistServerWithContext
       (Proxy @Api)
       (Proxy @'[CookieSettings, JWTSettings])
       ( \eff ->
-          do
-            conn <-
-              liftIO (acquire "") >>= \case
-                (Left (fromMaybe "connection error" -> err)) -> throwError $ err500 {errBody = fromStrict err}
-                (Right conn) -> pure conn
-            uuid <- liftIO nextRandom
-            gen <- liftIO getSystemDRG
-            let runStorageInRel8 =
-                  runVisitorActionInRel8 @[]
-                    >>> runUserActionManyInRel8 @[]
-                    >>> runUserActionInRel8
-                    >>> runOptionalAuthActionManyInRel8 @[]
-                    >>> runOptionalAuthActionInRel8
-                    >>> runAuthenticationUserInRel8
-            ( eff
-                & runStorageInRel8
-                & runCreateTokenJWT @'User @SystemDRG
-                & runCreateXsrfCookie @SystemDRG
-                & runCreateSalt @SystemDRG
-                & S.evalState gen
-                & R.runReader uuid
-                & R.runReader jwts
-                & R.runReader cs
-                & R.runReader (Limit 20)
-                & R.runReader (Offset 0)
-                & R.runReader (Nothing @(AuthOf 'User))
-                & R.runReader (Nothing @(TokenOf 'User))
-                & runErrors
-                & runError @ServerError
-                & runSqlInRel8Transaction
-                & runTrace
-                & runM
-              )
-              & transaction RepeatableRead Write
-              >>= ( \(e, r) -> do
-                      liftIO $ mapM_ putStrLn e
-                      liftIO $ withFile "sql_log" AppendMode $ \h -> mapM_ (hPutStrLn h) e
-                      pure r
+          bracket
+            ( liftIO (acquire connStr) >>= \case
+                Left (fromMaybe "connection error" -> err) -> throwError $ err500 {errBody = fromStrict err}
+                Right conn -> pure conn
+            )
+            (liftIO . release)
+            ( \conn -> liftIO $ do
+                uuid <- nextRandom
+                gen <- getSystemDRG
+                let runStorageInRel8 =
+                      runVisitorActionInRel8 @[]
+                        >>> runUserActionManyInRel8 @[]
+                        >>> runUserActionInRel8
+                        >>> runOptionalAuthActionManyInRel8 @[]
+                        >>> runOptionalAuthActionInRel8
+                        >>> runAuthenticationUserInRel8
+                ( eff
+                    & runStorageInRel8
+                    & runCreateTokenJWT @'User @SystemDRG
+                    & runCreateXsrfCookie @SystemDRG
+                    & runCreateSalt @SystemDRG
+                    & S.evalState gen
+                    & R.runReader uuid
+                    & R.runReader jwts
+                    & R.runReader cs
+                    & R.runReader (Limit 20)
+                    & R.runReader (Offset 0)
+                    & R.runReader (Nothing @(AuthOf 'User))
+                    & R.runReader (Nothing @(TokenOf 'User))
+                    & runErrors
+                    & runError @ServerError
+                    & runSqlInRel8Transaction
+                    & runTrace
+                    & runM
                   )
-              & flip Session.run conn
-              & (`finally` release conn)
-              & liftIO
-              >>= either (throwError . asStatus err500) pure
-              >>= either throwError pure
-              & (`catch` throwError)
+                  & transaction ReadCommitted Write
+                  <&> snd
+                  -- >>= ( \(_e, r) -> do
+                  --         liftIO $ mapM_ putStrLn e
+                  --         liftIO $ withFile "sql_log" AppendMode $ \h -> mapM_ (hPutStrLn h) e
+                  --         pure r
+                  --     )
+                  & flip Session.run conn
+            )
+            >>= either (throwError . asStatus err500) pure
+            >>= either throwError pure
+            & (`catch` throwError)
       )
       server
 
 -- | @since 0.4.0.0
-newApp :: IO Application
-newApp = mkApp defaultCookieSettings . defaultJWTSettings <$> generateKey
+newApp :: ByteString -> IO Application
+newApp connStr = mkApp defaultCookieSettings . defaultJWTSettings <$> generateKey ?? connStr
