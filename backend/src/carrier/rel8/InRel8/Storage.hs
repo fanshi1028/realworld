@@ -32,7 +32,7 @@ import InRel8.Storage.Schema.Tag as Tag (TagRel8 (tag), tagSchema)
 import InRel8.Storage.Schema.User as User (UserRel8 (UserRel8), userSchema, username)
 import InRel8.Storage.Schema.UserFavoriteArticle (UserFavoriteArticleRel8 (UserFavoriteArticleRel8), userFavoriteArticleSchema)
 import InRel8.Storage.Schema.UserFollowUser as UFU (UserFollowUserRel8 (UserFollowUserRel8), userFollowUserSchema)
-import Rel8 (EqTable, Expr, ListTable, Query, Result, aggregate, asc, count, each, exists, filter, lit, many, orderBy, where_, (&&.), (==.), (==:))
+import Rel8 (Expr, ListTable, Query, Result, asc, countRows, each, exists, filter, lit, many, orderBy, where_, (&&.), (==.))
 import Storage.Map (ContentOf (ArticleContent), IdOf (UserId), toUserId)
 
 -- * Basic Query
@@ -151,7 +151,11 @@ getUserFavoritingForArticle (Article.slug -> aid) = do
 isFollow :: Maybe (AuthOf 'User) -> UserRel8 Expr -> Query (Expr Bool)
 isFollow mAuth u = case mAuth of
   Nothing -> pure $ lit False
-  Just (lit . toUserId -> uid) -> getUserById uid >>= (`inQuery` getFollowerForUser u)
+  Just (lit . toUserId -> uid) ->
+    exists $
+      getUserById uid
+        >>= getFollowerForUser
+        >>= Rel8.filter (on (==.) User.username u)
 
 -- | @since 0.4.0.0
 getProfile :: Maybe (AuthOf 'User) -> UserRel8 Expr -> Query (UserRel8 Expr, Expr Bool)
@@ -174,8 +178,8 @@ getArticles mAuth = do
   tl <- Rel8.many $ tag <$> getTagForArticle a
   fav <- case mAuth of
     Nothing -> pure $ lit False
-    Just (lit . toUserId -> uid) -> uid `inQuery` (User.username <$> getUserFavoritingForArticle a)
-  favC <- aggregate $ count . User.username <$> getUserFavoritingForArticle a
+    Just (lit . toUserId -> uid) -> exists $ getUserFavoritingForArticle a >>= Rel8.filter (==. uid) . User.username
+  favC <- countRows $ getUserFavoritingForArticle a
   (a,u,tl,,fav,favC) <$> isFollow mAuth u
 
 -- * Construct result
@@ -197,10 +201,3 @@ mkProfile (mkAuth -> auth, fol) = UserProfile auth fol
 mkArticle :: (ArticleRel8 Result, UserRel8 Result, [Tag], Bool, Bool, Int64) -> ArticleR "withAuthorProfile"
 mkArticle (ArticleRel8 _ tt des bd uid ct ut, u, ts, fol, fav, fromIntegral -> favC) =
   ArticleWithAuthorProfile (ArticleContent tt des bd ct ut uid) ts fav favC $ curry mkProfile u fol
-
--- * helper
-
--- | @since 0.4.0.0
--- For some reasons, it is defined and exported in 'Rel8.Query.Exists' but not reexport by 'Rel8'
-inQuery :: EqTable a => a -> Query a -> Query (Expr Bool)
-inQuery a = exists . (>>= Rel8.filter (a ==:))
