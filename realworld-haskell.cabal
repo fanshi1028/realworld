@@ -378,3 +378,6 @@ test-suite realworld-haskell-test
     , tasty-quickcheck
     , tasty-rerun
     , warp
+    , postgresql-simple
+    , postgresql-migration
+    , tmp-postgres

@@ -22,13 +22,14 @@ import Data.Generics.Product (HasField' (field'), getField)
 import qualified Data.Semigroup as SG (Last (Last, getLast))
 import Data.Set (delete, insert, isSubsetOf)
 import qualified Data.Set as S (empty, foldl', insert, map, member)
+import Database.Postgres.Temp (Config, toConnectionString, withConfig)
 import Domain.Transform (transform)
 import Domain.User (UserR (..))
 import Field.Slug (titleToSlug)
 import Gen.Naive ()
 import HTTP (Api)
 import Network.HTTP.Client (Manager)
-import Network.Wai.Handler.Warp (withApplication)
+import Network.Wai.Handler.Warp (testWithApplication)
 import Orphans ()
 import Relude.Extra (un, (^.))
 import Servant (Application, Headers (Headers), type (:<|>) ((:<|>)))
@@ -530,11 +531,29 @@ semantics =
 sm :: StateMachine Model Command (ReaderT ClientEnv IO) Response
 sm = StateMachine initModel transition precondition postcondition Nothing generator shrinker semantics mock noCleanup
 
-prop1 :: IO Application -> Manager -> (Int -> BaseUrl) -> Property
-prop1 new mgr mkUrl =
+checkInMemAppProp :: IO Application -> Manager -> (Int -> BaseUrl) -> Property
+checkInMemAppProp new mgr mkUrl =
   forAllCommands sm Nothing $ \cmds -> monadic
     ( ioProperty
-        . \prop -> liftIO $ withApplication new $ \port -> usingReaderT (mkClientEnv mgr $ mkUrl port) prop
+        . \prop -> testWithApplication new $ \port -> usingReaderT (mkClientEnv mgr $ mkUrl port) prop
+    )
+    $ do
+      (hist, _, res) <- runCommands sm cmds
+      prettyCommands sm hist $ coverCommandNames cmds $ checkCommandNames cmds $ res === Ok
+
+checkRel8AppProp :: Config -> (ByteString -> IO Application) -> Manager -> (Int -> BaseUrl) -> Property
+checkRel8AppProp cfg newApp mgr mkUrl =
+  forAllCommands sm Nothing $ \cmds -> monadic
+    ( ioProperty
+        . \prop -> do
+          withConfig
+            cfg
+            ( \(newApp . toConnectionString -> newApp') ->
+                testWithApplication newApp' $ \port -> usingReaderT (mkClientEnv mgr $ mkUrl port) prop
+            )
+            >>= \case
+              (Left se) -> error $ show se
+              (Right prop') -> pure prop'
     )
     $ do
       (hist, _, res) <- runCommands sm cmds
@@ -544,7 +563,7 @@ prop2 :: IO Application -> Manager -> (Int -> BaseUrl) -> Property
 prop2 new mgr mkUrl =
   forAllParallelCommands sm Nothing $ \cmds -> monadic
     ( ioProperty
-        . \prop -> liftIO $ withApplication new $ \port -> usingReaderT (mkClientEnv mgr $ mkUrl port) prop
+        . \prop -> testWithApplication new $ \port -> usingReaderT (mkClientEnv mgr $ mkUrl port) prop
     )
     $ do
       prettyParallelCommands cmds =<< runParallelCommandsNTimes 30 sm cmds
