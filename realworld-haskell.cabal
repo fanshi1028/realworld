@@ -55,7 +55,7 @@ common prelude
     ghc-options: -fwrite-ide-info -hiedir=.hie
 
   build-depends:
-    , base    ^>=4.14.3
+    , base    >=4.14.0
     , relude  ^>=1.0.0
 
   mixins:
