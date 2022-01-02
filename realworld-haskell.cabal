@@ -16,11 +16,26 @@ build-type:         Simple
 extra-source-files:
   backend/postgres/migration/*.sql
   CHANGELOG.md
-  golden/**
+  "golden/ArticleR \"withAuthorProfile\".json"
+  "golden/AuthOf \"user\".json"
+  "golden/CommentR \"withAuthorProfile\".json"
+  "golden/ContentOf \"article\".json"
+  "golden/Out (ArticleR \"withAuthorProfile\").json"
+  "golden/Out (CommentR \"withAuthorProfile\").json"
+  "golden/Out (UserR \"authWithToken\").json"
+  "golden/Out (UserR \"profile\").json"
+  "golden/Out [ArticleR \"withAuthorProfile\"].json"
+  "golden/Out [CommentR \"withAuthorProfile\"].json"
+  "golden/Out [Tag].json"
+  "golden/UserR \"authWithToken\".json"
+  "golden/UserR \"profile\".json"
   README.md
 
+-- https://github.com/haskell/cabal/blob/bbc11f1c71651e910976c16498bc4871d7b416ea/Cabal/src/Distribution/Simple/Glob.hs#L179
+-- https://github.com/haskell/cabal/issues/703
 -- https://github.com/haskell/cabal/issues/5883
 -- golden/*.json
+
 -- synopsis:
 -- description:
 -- bug-reports:
