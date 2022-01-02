@@ -14,13 +14,13 @@ homepage:           https://github.com/fanshi1028/realworld
 category:           Web
 build-type:         Simple
 extra-source-files:
-  CHANGELOG.md
-  README.md
   backend/postgres/migration/*.sql
-  -- https://github.com/haskell/cabal/issues/5883
-  -- golden/*.json
+  CHANGELOG.md
   golden/**
+  README.md
 
+-- https://github.com/haskell/cabal/issues/5883
+-- golden/*.json
 -- synopsis:
 -- description:
 -- bug-reports:
@@ -320,7 +320,9 @@ executable realworld-haskell
       backend/src/carrier/mem backend/src/carrier/rel8
 
   else
-    build-depends: backend-in-mem-carrier-internal, backend-rel8-carrier-internal
+    build-depends:
+      , backend-in-mem-carrier-internal
+      , backend-rel8-carrier-internal
 
   main-is:        Main.hs
   hs-source-dirs: backend/app
@@ -371,6 +373,8 @@ test-suite realworld-haskell-test
     , http-client
     , http-types
     , lens
+    , postgresql-migration
+    , postgresql-simple
     , QuickCheck
     , quickcheck-arbitrary-adt
     , quickcheck-instances
@@ -381,7 +385,5 @@ test-suite realworld-haskell-test
     , tasty-hspec
     , tasty-quickcheck
     , tasty-rerun
-    , warp
-    , postgresql-simple
-    , postgresql-migration
     , tmp-postgres
+    , warp
