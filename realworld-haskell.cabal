@@ -17,7 +17,9 @@ extra-source-files:
   CHANGELOG.md
   README.md
   backend/postgres/migration/*.sql
-  golden/*.json
+  -- https://github.com/haskell/cabal/issues/5883
+  -- golden/*.json
+  golden/**
 
 -- synopsis:
 -- description:
