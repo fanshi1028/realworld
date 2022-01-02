@@ -1,7 +1,14 @@
 # shell.nix
-{ checkMaterialization ? false }:
+{ nixpkgsPin ? "2111", ghcVersion ? if nixpkgsPin == "2111" then
+  "8107"
+else if nixpkgsPin == "unstable" then
+  "921"
+else
+  null, checkMaterialization ? false }:
+assert ghcVersion != null;
 let
-  project = import ./default.nix;
+  project = import ./default.nix { inherit nixpkgsPin ghcVersion; };
+  # inherit (project) index-state;
   index-state = project.index-state;
   materializedDir = ./materialized;
 in project.shellFor {
@@ -73,7 +80,10 @@ in project.shellFor {
   # See overlays/tools.nix for more details
 
   # Some you may need to get some other way.
-  buildInputs = with import ./nix/pkgs.nix; [ postgresql_13 sqls ];
+  buildInputs = with import ./nix/pkgs.nix { inherit nixpkgsPin; }; [
+    postgresql_13
+    sqls
+  ];
 
   # Sellect cross compilers to include.
   crossPlatforms = ps:

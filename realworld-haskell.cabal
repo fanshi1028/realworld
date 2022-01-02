@@ -16,6 +16,8 @@ build-type:         Simple
 extra-source-files:
   CHANGELOG.md
   README.md
+  backend/postgres/migration/*.sql
+  golden/*.json
 
 -- synopsis:
 -- description:
