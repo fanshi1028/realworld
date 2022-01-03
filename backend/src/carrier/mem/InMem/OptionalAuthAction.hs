@@ -24,9 +24,9 @@ import Control.Effect.Catch (Catch)
 import Control.Effect.Sum (Member)
 import Control.Effect.Throw (Throw)
 import Domain (Domain (Article, Comment, User))
-import Domain.Article (ArticleR (ArticleWithAuthorProfile))
+import Domain.Article (ArticleWithAuthorProfile (ArticleWithAuthorProfile))
 import Domain.Transform (transform)
-import Domain.User (UserR (UserProfile))
+import Domain.User (UserProfile (UserProfile))
 import GHC.Records (getField)
 import InMem.Relation
   ( ArticleHasComment,

@@ -20,7 +20,7 @@ import qualified Control.Effect.Reader as R (Reader, ask)
 import Control.Effect.Sum (Member)
 import Cookie.Xsrf (CreateXsrfCookieE (CreateXsrfCookie))
 import Domain (Domain (User))
-import Domain.User (UserR (..))
+import Domain.User (UserAuthWithToken (..))
 import HTTP.Util (CreateApi)
 import Relude.Extra (un)
 import Servant
@@ -50,12 +50,12 @@ import Web.Cookie (SetCookie, def, setCookieValue)
 
 -- | Register or Login
 --
--- @since 0.1.0.0
+-- @since 0.4.0.0
 type AuthUserApi =
   ( "login" :> ReqBody '[JSON] (In (WithValidation (LoginOf 'User)))
-      :> Verb 'POST 200 '[JSON] (Headers '[Header "Set-Cookie" SetCookie, Header "Set-Cookie" SetCookie] (Out (UserR "authWithToken")))
+      :> Verb 'POST 200 '[JSON] (Headers '[Header "Set-Cookie" SetCookie, Header "Set-Cookie" SetCookie] (Out UserAuthWithToken))
   )
-    :<|> CreateApi 'User (UserR "authWithToken")
+    :<|> CreateApi 'User UserAuthWithToken
 
 -- * Server
 

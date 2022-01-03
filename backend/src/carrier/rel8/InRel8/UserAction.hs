@@ -31,8 +31,8 @@ import Data.Generics.Product (getField)
 import qualified Data.Semigroup as SG (Last (Last, getLast))
 import Data.UUID (UUID)
 import Domain (Domain (Article, Comment, User))
-import Domain.Article (ArticleR)
-import Domain.User (UserR (UserAuthWithToken))
+import Domain.Article (ArticleWithAuthorProfile)
+import Domain.User (UserProfile, UserAuthWithToken (UserAuthWithToken))
 import Field.Email (Email)
 import Field.Password (hashPassword)
 import Field.Slug (titleToSlug)
@@ -125,7 +125,7 @@ instance
               _ -> throwError $ Impossible $ "got more than one row from id " <> show id'
           checkCommentId cid = checkId getCommentById cid
           checkArticleId aid = checkId getArticleById aid
-      let getProfileById :: Expr (IdOf 'User) -> UserActionInRel8C m (UserR "profile")
+      let getProfileById :: Expr (IdOf 'User) -> UserActionInRel8C m UserProfile
           getProfileById userId =
             send
               ( SqlSelect . select $
@@ -136,7 +136,7 @@ instance
                 [] -> throwError $ Impossible "not found user profile"
                 [r] -> pure $ mkProfile r
                 _ -> throwError $ Impossible "got more than one user profile from user id"
-          getArticleWithAuthorProfileById :: Expr (IdOf 'Article) -> UserActionInRel8C m (ArticleR "withAuthorProfile")
+          getArticleWithAuthorProfileById :: Expr (IdOf 'Article) -> UserActionInRel8C m ArticleWithAuthorProfile
           getArticleWithAuthorProfileById articleId = do
             send
               ( SqlSelect . select $

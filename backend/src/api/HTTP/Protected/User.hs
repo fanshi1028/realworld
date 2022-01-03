@@ -16,7 +16,7 @@ import Control.Algebra (Algebra, send)
 import Control.Effect.Sum (Member)
 import Control.Effect.Throw (Throw, throwError)
 import Domain (Domain (User))
-import Domain.User (UserR (UserAuthWithToken))
+import Domain.User (UserAuthWithToken (UserAuthWithToken))
 import HTTP.Util (ReadApi, UpdateApi)
 import Servant (ServerT, type (:<|>) ((:<|>)))
 import Token.Create (CreateTokenE (CreateToken))
@@ -28,8 +28,8 @@ import Validation (Validation (Failure, Success))
 
 -- * API
 
--- | @since 0.3.0.0
-type UserApi = ReadApi (UserR "authWithToken") :<|> UpdateApi 'User (UserR "authWithToken")
+-- | @since 0.4.0.0
+type UserApi = ReadApi UserAuthWithToken :<|> UpdateApi 'User UserAuthWithToken
 
 -- * Server
 

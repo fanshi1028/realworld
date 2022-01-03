@@ -23,7 +23,7 @@ where
 import Authorization (pattern RequestToken)
 import Domain (Domain (User))
 import Domain.Transform (Transform (transform))
-import Domain.User (UserR (UserAuthWithToken))
+import Domain.User (UserAuthWithToken (UserAuthWithToken))
 import InMem.Storage (TableInMem)
 import qualified Servant.Auth.Server as Auth (AuthCheck (AuthCheck))
 import Servant.Auth.Server.Internal.Class (IsAuth (AuthArgs, runAuth))
@@ -36,8 +36,8 @@ import Token.HasToken (TokenOf (..))
 -- Use hand-roll in-memory storage to facilitate auth process
 data TokenAuthInMem
 
--- | @since 0.1.0.0
-instance IsAuth TokenAuthInMem (UserR "authWithToken") where
+-- | @since 0.4.0.0
+instance IsAuth TokenAuthInMem UserAuthWithToken where
   type AuthArgs TokenAuthInMem = '[TableInMem 'User, STMMap.Map (TokenOf 'User) (IdOf 'User)]
   runAuth _ _ userDb tokenDb = Auth.AuthCheck $ \case
     RequestToken token ->

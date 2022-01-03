@@ -17,8 +17,8 @@ import qualified Control.Effect.Reader as R (Reader, ask)
 import Control.Effect.Sum (Member)
 import Control.Effect.Throw (Throw, throwError)
 import Domain (Domain (Article))
-import Domain.Article (ArticleR)
-import Domain.Comment (CommentR)
+import Domain.Article (ArticleWithAuthorProfile)
+import Domain.Comment (CommentWithAuthorProfile)
 import HTTP.Util (Cap, QP, ReadApi, ReadManyApi)
 import OptionalAuthAction (OptionalAuthActionE (GetArticle))
 import OptionalAuthAction.Many (OptionalAuthActionManyE (GetComments, ListArticles))
@@ -32,13 +32,11 @@ import Validation (Validation (Failure, Success), validation)
 
 -- * API
 
--- | @since 0.3.0.0
+-- | @since 0.4.0.0
 type ArticleApi =
-  QP "tag" :> QP "author" :> QP "favorited" :> QP "limit" :> QP "offset" :> ReadManyApi (ArticleR "withAuthorProfile")
+  QP "tag" :> QP "author" :> QP "favorited" :> QP "limit" :> QP "offset" :> ReadManyApi ArticleWithAuthorProfile
     :<|> Cap "slug" (IdOf 'Article)
-      :> ( ReadApi (ArticleR "withAuthorProfile")
-             :<|> "comments" :> ReadManyApi (CommentR "withAuthorProfile")
-         )
+      :> (ReadApi ArticleWithAuthorProfile :<|> "comments" :> ReadManyApi CommentWithAuthorProfile)
 
 -- * Server
 

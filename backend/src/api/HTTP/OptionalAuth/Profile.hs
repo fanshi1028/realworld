@@ -17,7 +17,7 @@ import Control.Algebra (Algebra, send)
 import Control.Effect.Sum (Member)
 import Control.Effect.Throw (Throw, throwError)
 import Domain (Domain (User))
-import Domain.User (UserR)
+import Domain.User (UserProfile)
 import HTTP.Util (Cap, ReadApi)
 import OptionalAuthAction (OptionalAuthActionE (GetProfile))
 import Servant (ServerT, type (:>))
@@ -28,8 +28,8 @@ import Validation (Validation (Failure, Success))
 
 -- * API
 
--- | @since 0.3.0.0
-type ProfileApi = Cap "username" (IdOf 'User) :> ReadApi (UserR "profile")
+-- | @since 0.4.0.0
+type ProfileApi = Cap "username" (IdOf 'User) :> ReadApi UserProfile
 
 -- * Server
 

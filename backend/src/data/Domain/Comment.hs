@@ -15,9 +15,8 @@ module Domain.Comment where
 
 import Data.Aeson (ToJSON (toEncoding, toJSON))
 import Domain (Domain (Comment))
-import Domain.User (UserR)
+import Domain.User (UserProfile)
 import Field.Time (Time)
-import GHC.TypeLits (Symbol)
 import Storage.Map (IdOf)
 import Util.JSON.To (Out, wrappedToEncoding, wrappedToJSON)
 
@@ -37,38 +36,34 @@ import Util.JSON.To (Out, wrappedToEncoding, wrappedToJSON)
 -- >>> exampleProfile = UserProfile (UserAuth (Email "jake@jake.jake") (Username "jake") (Bio "I work at statefarm") (Image "https://static.productionready.io/images/smiley-cyrus.jpg")) False
 -- >>> example = CommentWithAuthorProfile (CommentId nil) t t "It takes a Jacobian" exampleProfile
 
--- | @since 0.2.0.0
--- Type family for different representations of comments
-data family CommentR (r :: Symbol)
-
--- | @since 0.2.0.0
+-- | @since 0.4.0.0
 -- >>> example
 -- CommentWithAuthorProfile {id = CommentId 00000000-0000-0000-0000-000000000000, createdAt = 1858-11-17 00:00:00 UTC, updatedAt = 1858-11-17 00:00:00 UTC, body = "It takes a Jacobian", author = UserProfile {profile = UserAuth {email = "jake@jake.jake", username = "jake", bio = "I work at statefarm", image = "https://static.productionready.io/images/smiley-cyrus.jpg"}, following = False}}
-data instance CommentR "withAuthorProfile" = CommentWithAuthorProfile
+data CommentWithAuthorProfile = CommentWithAuthorProfile
   { id :: IdOf 'Comment,
     createdAt :: Time,
     updatedAt :: Time,
     body :: Text,
-    author :: UserR "profile"
+    author :: UserProfile
   }
   deriving (Show, Eq, Generic)
 
--- | @since 0.2.0.0
-instance ToJSON (CommentR "withAuthorProfile")
+-- | @since 0.4.0.0
+instance ToJSON CommentWithAuthorProfile
 -- ^
 -- >>> encode example
 -- "{\"author\":{\"email\":\"jake@jake.jake\",\"bio\":\"I work at statefarm\",\"following\":false,\"username\":\"jake\",\"image\":\"https://static.productionready.io/images/smiley-cyrus.jpg\"},\"body\":\"It takes a Jacobian\",\"createdAt\":\"1858-11-17T00:00:00Z\",\"id\":\"00000000-0000-0000-0000-000000000000\",\"updatedAt\":\"1858-11-17T00:00:00Z\"}"
 
--- | @since 0.2.0.0
-instance ToJSON (Out (CommentR "withAuthorProfile")) where
+-- | @since 0.4.0.0
+instance ToJSON (Out CommentWithAuthorProfile) where
   toJSON = wrappedToJSON "comment"
   toEncoding = wrappedToEncoding "comment"
 -- ^
 -- >>> encode $ Out example
 -- "{\"comment\":{\"author\":{\"email\":\"jake@jake.jake\",\"bio\":\"I work at statefarm\",\"following\":false,\"username\":\"jake\",\"image\":\"https://static.productionready.io/images/smiley-cyrus.jpg\"},\"body\":\"It takes a Jacobian\",\"createdAt\":\"1858-11-17T00:00:00Z\",\"id\":\"00000000-0000-0000-0000-000000000000\",\"updatedAt\":\"1858-11-17T00:00:00Z\"}}"
 
--- | @since 0.2.0.0
-instance (Foldable t, ToJSON (t (CommentR "withAuthorProfile"))) => ToJSON (Out (t (CommentR "withAuthorProfile"))) where
+-- | @since 0.4.0.0
+instance (Foldable t, ToJSON (t CommentWithAuthorProfile)) => ToJSON (Out (t CommentWithAuthorProfile)) where
   toJSON = wrappedToJSON "comments"
   toEncoding = wrappedToEncoding "comments"
 -- ^

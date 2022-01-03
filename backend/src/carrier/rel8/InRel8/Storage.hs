@@ -20,9 +20,9 @@ module InRel8.Storage where
 
 import Authentication.HasAuth (AuthOf (..))
 import Domain (Domain (Article, Comment, User))
-import Domain.Article (ArticleR (ArticleWithAuthorProfile))
-import Domain.Comment (CommentR (CommentWithAuthorProfile))
-import Domain.User (UserR (UserProfile))
+import Domain.Article (ArticleWithAuthorProfile (ArticleWithAuthorProfile))
+import Domain.Comment (CommentWithAuthorProfile (CommentWithAuthorProfile))
+import Domain.User (UserProfile (UserProfile))
 import Field.Tag (Tag)
 import InRel8.Storage.Internal.Field ()
 import InRel8.Storage.Schema.Article as Article (ArticleRel8 (ArticleRel8, createdAt, slug), articleSchema, author)
@@ -185,7 +185,7 @@ getArticles mAuth = do
 -- * Construct result
 
 -- | @since 0.4.0.0
-mkComment :: (CommentRel8 Result, UserRel8 Result, Bool) -> CommentR "withAuthorProfile"
+mkComment :: (CommentRel8 Result, UserRel8 Result, Bool) -> CommentWithAuthorProfile
 mkComment (CommentRel8 cid t _ _ ct ut, UserRel8 (UserId un) em _ bio' img _ _, fol) =
   CommentWithAuthorProfile cid ct ut t $ UserProfile (UserAuth em un bio' img) fol
 
@@ -194,10 +194,10 @@ mkAuth :: UserRel8 Result -> AuthOf 'User
 mkAuth (UserRel8 (UserId un) em _ bio' uImg _ _) = UserAuth em un bio' uImg
 
 -- | @since 0.4.0.0
-mkProfile :: (UserRel8 Result, Bool) -> UserR "profile"
+mkProfile :: (UserRel8 Result, Bool) -> UserProfile
 mkProfile (mkAuth -> auth, fol) = UserProfile auth fol
 
 -- | @since 0.4.0.0
-mkArticle :: (ArticleRel8 Result, UserRel8 Result, [Tag], Bool, Bool, Int64) -> ArticleR "withAuthorProfile"
+mkArticle :: (ArticleRel8 Result, UserRel8 Result, [Tag], Bool, Bool, Int64) -> ArticleWithAuthorProfile
 mkArticle (ArticleRel8 _ tt des bd uid ct ut, u, ts, fol, fav, fromIntegral -> favC) =
   ArticleWithAuthorProfile (ArticleContent tt des bd ct ut uid) ts fav favC $ curry mkProfile u fol

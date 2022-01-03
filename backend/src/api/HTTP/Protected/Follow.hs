@@ -16,7 +16,7 @@ import Control.Algebra (Algebra, send)
 import Control.Effect.Sum (Member)
 import Control.Effect.Throw (Throw, throwError)
 import Domain (Domain (User))
-import Domain.User (UserR)
+import Domain.User (UserProfile)
 import HTTP.Util (Cap, ToggleApi)
 import Servant (ServerT, type (:<|>) ((:<|>)), type (:>))
 import Storage.Map (IdOf)
@@ -27,8 +27,8 @@ import Validation (Validation (Failure, Success))
 
 -- * API
 
--- | @since 0.3.0.0
-type FollowApi = Cap "username" (IdOf 'User) :> "follow" :> ToggleApi (UserR "profile")
+-- | @since 0.4.0.0
+type FollowApi = Cap "username" (IdOf 'User) :> "follow" :> ToggleApi UserProfile
 
 -- * Server
 

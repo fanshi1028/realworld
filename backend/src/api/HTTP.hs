@@ -25,7 +25,7 @@ import Control.Effect.Sum (Member)
 import Control.Effect.Throw (Throw, throwError)
 import Cookie.Xsrf (CreateXsrfCookieE)
 import Domain (Domain (User))
-import Domain.User (UserR (UserAuthWithToken))
+import Domain.User (UserAuthWithToken (UserAuthWithToken))
 import HTTP.Auth.User (AuthUserApi, authUserServer)
 import HTTP.OptionalAuth (OptionallyAuthedApi, optionallyAuthedServer)
 import HTTP.Protected (AuthedApi, authedServer)
@@ -46,7 +46,7 @@ import VisitorAction (VisitorActionE)
 
 -- * API
 
--- | @since 0.1.0.0
+-- | @since 0.4.0.0
 -- all api
 --
 -- __NOTE__: This part of api is for health check
@@ -54,7 +54,7 @@ import VisitorAction (VisitorActionE)
 -- > Get '[JSON] Text
 type Api =
   "api"
-    :> ( Auth '[TokenAuth] (UserR "authWithToken") :> (OptionallyAuthedApi :<|> AuthedApi)
+    :> ( Auth '[TokenAuth] UserAuthWithToken :> (OptionallyAuthedApi :<|> AuthedApi)
            :<|> "users" :> AuthUserApi
            :<|> PublicApi
        )

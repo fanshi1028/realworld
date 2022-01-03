@@ -22,7 +22,7 @@ import qualified Control.Carrier.Reader as R (runReader)
 import Control.Carrier.Throw.Either (runThrow)
 import qualified Data.List as List (lookup)
 import Domain (Domain (User))
-import Domain.User (UserR (UserAuthWithToken))
+import Domain.User (UserAuthWithToken (UserAuthWithToken))
 import Field.Time (getCurrentTime)
 import Network.Wai (Request, requestHeaders)
 import Servant (FromHttpApiData (parseHeader))
@@ -30,7 +30,7 @@ import Servant.Auth.Server (CookieSettings, JWTSettings)
 import qualified Servant.Auth.Server as Auth (AuthCheck (AuthCheck))
 import Servant.Auth.Server.Internal.Class (IsAuth (AuthArgs, runAuth))
 import Token.Decode (DecodeTokenE (DecodeToken), InvalidToken)
-import Token.Decode.JWT (runDecodeTokenJWT, DecodeTokenJWTC (runDecodeTokenJWT))
+import Token.Decode.JWT (DecodeTokenJWTC (runDecodeTokenJWT), runDecodeTokenJWT)
 import Token.HasToken (TokenOf (..))
 
 -- | @since 0.1.0.0
@@ -42,8 +42,8 @@ pattern RequestToken token <- (List.lookup "authorization" . requestHeaders -> J
 -- make use of 'CookieSettings' and 'JWTSettings' from servant-auth
 data TokenAuth
 
--- | @since 0.1.0.0
-instance IsAuth TokenAuth (UserR "authWithToken") where
+-- | @since 0.4.0.0
+instance IsAuth TokenAuth UserAuthWithToken where
   type AuthArgs TokenAuth = '[CookieSettings, JWTSettings]
   runAuth _ _ _ jwts = Auth.AuthCheck $
     \case
