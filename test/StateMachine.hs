@@ -22,7 +22,7 @@ import qualified Data.Semigroup as SG (Last (Last, getLast))
 import Data.Set (delete, insert, isSubsetOf)
 import qualified Data.Set as S (empty, foldl', insert, map, member)
 import Database.PostgreSQL.Simple (close, connectPostgreSQL)
-import Database.PostgreSQL.Simple.Migration (MigrationCommand (MigrationCommands, MigrationFile, MigrationInitialization, MigrationValidation), MigrationResult (MigrationError, MigrationSuccess), Verbosity (Verbose), defaultOptions, optVerbose, runMigrations)
+import Database.PostgreSQL.Simple.Migration (MigrationCommand (MigrationCommands, MigrationFile, MigrationInitialization, MigrationValidation), MigrationResult (MigrationError, MigrationSuccess), defaultOptions, runMigrations)
 import Database.Postgres.Temp (Cache, Config, DB, cacheAction, cacheConfig, toConnectionString, withConfig)
 import Domain.Transform (transform)
 import Domain.User (UserAuthWithToken (UserAuthWithToken))
@@ -564,7 +564,7 @@ doMigration config =
         $ \conn ->
           runMigrations
             conn
-            defaultOptions {optVerbose = Verbose}
+            defaultOptions
             ( MigrationInitialization :
               cmds
                 <> [ MigrationValidation $
