@@ -41,7 +41,7 @@ instance HasAuth 'User where
     deriving (Show, Generic)
   data AuthOf 'User = UserAuth
     { email :: Email, -- "jake@jake.jake",
-    -- token :: UserR "token", -- "jwt.token.here",
+    -- token :: TokenOf 'User, -- "jwt.token.here",
       username :: Username, -- "jake",
       bio :: Bio, -- "I work at statefarm",
       image :: Image -- "https://static.productionready.io/images/smiley-cyrus.jpg",

@@ -36,7 +36,7 @@ instance HasStorage 'User where
   newtype IdOf 'User = UserId Username deriving (Show, Eq, Hashable, ToJSON)
   data ContentOf 'User = UserContent
     { email :: Email, -- "jake@jake.jake",
-    -- token :: UserR "token", -- "jwt.token.here",
+    -- token :: TokenOf 'User, -- "jwt.token.here",
       password :: PasswordHash, -- "jakejake"
       username :: Username, -- "jake",
       bio :: Bio, -- "I work at statefarm",

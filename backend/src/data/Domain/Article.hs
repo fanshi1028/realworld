@@ -34,7 +34,7 @@ import Util.JSON.To (Out, multiWrappedWithCountToEncoding, multiWrappedWithCount
 -- >>> import Field.Image (Image (Image))
 -- >>> import Storage.Map (IdOf (UserId))
 -- >>> import Authentication (AuthOf (UserAuth))
--- >>> import Domain.User (UserR (UserProfile))
+-- >>> import Domain.User (UserProfile)
 -- >>> import Data.Time (UTCTime (UTCTime))
 -- >>> import Util.JSON.To (Out (Out))
 -- >>> t = UTCTime (toEnum 0) (toEnum 0)
