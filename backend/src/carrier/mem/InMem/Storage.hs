@@ -2,7 +2,6 @@
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE ScopedTypeVariables #-}
-{-# LANGUAGE StandaloneDeriving #-}
 
 -- |
 -- Description : Helper
@@ -50,11 +49,11 @@ import qualified Control.Effect.Reader as R (Reader, ask)
 import Control.Effect.Sum (Member)
 import Domain (Domain)
 import Domain.Transform (Transform, transform)
-import Storage.Error (AlreadyExists (AlreadyExists), NotFound (NotFound))
 import qualified Focus as FC (Change (Leave, Remove), cases)
 import qualified ListT (fold, toList)
 import qualified StmContainers.Map as STMMap (Map, delete, focus, insert, listT, lookup)
 import qualified StmContainers.Set as STMSet (Set, focus, insert, listT, lookup)
+import Storage.Error (AlreadyExists (AlreadyExists), NotFound (NotFound))
 import Storage.Map (HasStorage (ContentOf), IdOf)
 
 -- | @since 0.3.0.0

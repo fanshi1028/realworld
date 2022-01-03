@@ -2,7 +2,6 @@
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
-{-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TupleSections #-}
 {-# LANGUAGE UndecidableInstances #-}
@@ -32,7 +31,7 @@ import qualified Data.Semigroup as SG (Last (Last, getLast))
 import Data.UUID (UUID)
 import Domain (Domain (Article, Comment, User))
 import Domain.Article (ArticleWithAuthorProfile)
-import Domain.User (UserProfile, UserAuthWithToken (UserAuthWithToken))
+import Domain.User (UserAuthWithToken (UserAuthWithToken), UserProfile)
 import Field.Email (Email)
 import Field.Password (hashPassword)
 import Field.Slug (titleToSlug)
