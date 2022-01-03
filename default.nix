@@ -34,10 +34,8 @@ haskell-nix.project {
     }
     # https://github.com/input-output-hk/haskell.nix/issues/1111
     ({ pkgs, ... }: {
-      packages.realworld-haskell.components.tests.realworld-haskell-test = {
-        build-tools = pkgs.lib.mkForce [ pkgs.postgresql_13 ];
-        extraSrcFiles = ["golden"];
-      };
+      packages.realworld-haskell.components.tests.realworld-haskell-test.build-tools =
+        pkgs.lib.mkForce [ pkgs.postgresql_13 ];
     })
   ];
 }
