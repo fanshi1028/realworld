@@ -9,9 +9,9 @@ import Authentication.HasAuth (LoginOf)
 import Data.Aeson (FromJSON, ToJSON, eitherDecode', encode)
 import Data.Typeable (typeRep)
 import Domain (Domain (Article, Comment, User))
-import Domain.Article (ArticleR)
-import Domain.Comment (CommentR)
-import Domain.User (UserR)
+import Domain.Article (ArticleWithAuthorProfile)
+import Domain.Comment (CommentWithAuthorProfile)
+import Domain.User (UserAuthWithToken, UserProfile)
 import Field.Tag (Tag)
 import Field.Time (Time)
 import Gen.Naive ()
@@ -76,7 +76,7 @@ simpleRoundtripSpecs = do
   roundtripSpecs $ Proxy @(IdOf 'User)
   roundtripSpecs $ Proxy @(IdOf 'Comment)
   roundtripSpecs $ Proxy @(TokenOf 'User)
-  roundtripSpecs $ Proxy @(UserR "authWithToken")
+  roundtripSpecs $ Proxy @UserAuthWithToken
 
 -- | @since 0.2.0.0
 --
@@ -96,16 +96,16 @@ inRoundtripSpecs = do
 outRoundtripSpecs :: Spec
 outRoundtripSpecs = do
   let roundtripAndGoldenSpecs' p = roundtripAndGoldenSpecsWithSettings defaultSettings {sampleSize = 30} p
-  roundtripAndGoldenSpecs' $ Proxy @(UserR "authWithToken")
-  roundtripAndGoldenSpecs' $ Proxy @(Out (UserR "authWithToken"))
-  roundtripAndGoldenSpecs' $ Proxy @(UserR "profile")
-  roundtripAndGoldenSpecs' $ Proxy @(Out (UserR "profile"))
-  roundtripAndGoldenSpecs' $ Proxy @(ArticleR "withAuthorProfile")
-  roundtripAndGoldenSpecs' $ Proxy @(Out (ArticleR "withAuthorProfile"))
-  roundtripAndGoldenSpecs' $ Proxy @(Out [ArticleR "withAuthorProfile"])
-  roundtripAndGoldenSpecs' $ Proxy @(CommentR "withAuthorProfile")
-  roundtripAndGoldenSpecs' $ Proxy @(Out (CommentR "withAuthorProfile"))
-  roundtripAndGoldenSpecs' $ Proxy @(Out [CommentR "withAuthorProfile"])
+  roundtripAndGoldenSpecs' $ Proxy @UserAuthWithToken
+  roundtripAndGoldenSpecs' $ Proxy @(Out UserAuthWithToken)
+  roundtripAndGoldenSpecs' $ Proxy @UserProfile
+  roundtripAndGoldenSpecs' $ Proxy @(Out UserProfile)
+  roundtripAndGoldenSpecs' $ Proxy @ArticleWithAuthorProfile
+  roundtripAndGoldenSpecs' $ Proxy @(Out ArticleWithAuthorProfile)
+  roundtripAndGoldenSpecs' $ Proxy @(Out [ArticleWithAuthorProfile])
+  roundtripAndGoldenSpecs' $ Proxy @CommentWithAuthorProfile
+  roundtripAndGoldenSpecs' $ Proxy @(Out CommentWithAuthorProfile)
+  roundtripAndGoldenSpecs' $ Proxy @(Out [CommentWithAuthorProfile])
   roundtripAndGoldenSpecs' $ Proxy @(Out [Tag])
 
 aesonRoundtripTests :: IO TestTree

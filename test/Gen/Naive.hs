@@ -10,9 +10,9 @@ module Gen.Naive where
 import Authentication.HasAuth (AuthOf)
 import Data.Time.Clock ()
 import Domain (Domain (Article, Comment, User))
-import Domain.Article (ArticleR (..))
-import Domain.Comment (CommentR (..))
-import Domain.User (UserR (..))
+import Domain.Article (ArticleWithAuthorProfile)
+import Domain.Comment (CommentWithAuthorProfile)
+import Domain.User (UserAuthWithToken, UserProfile)
 import Field.Bio (Bio (Bio))
 import Field.Body (Body (Body))
 import Field.Description (Description (Description))
@@ -100,22 +100,22 @@ instance Arbitrary (ContentOf 'Article) where
   arbitrary = genericArbitrary
   shrink = genericShrink
 
-instance Arbitrary (UserR "profile") where
+instance Arbitrary UserProfile where
   arbitrary = genericArbitrary
   shrink = genericShrink
 
-instance Arbitrary (ArticleR "withAuthorProfile") where
+instance Arbitrary ArticleWithAuthorProfile where
   arbitrary = genericArbitrary
   shrink = genericShrink
 
 deriving newtype instance Arbitrary (IdOf 'Comment)
 
-instance Arbitrary (CommentR "withAuthorProfile") where
+instance Arbitrary CommentWithAuthorProfile where
   arbitrary = genericArbitrary
   shrink = genericShrink
 
 deriving newtype instance Arbitrary (TokenOf 'User)
 
-instance Arbitrary (UserR "authWithToken") where
+instance Arbitrary UserAuthWithToken where
   arbitrary = genericArbitrary
   shrink = genericShrink

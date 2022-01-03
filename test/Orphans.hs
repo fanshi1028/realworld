@@ -17,15 +17,16 @@ import Control.Lens ((^.))
 import Data.Aeson (FromJSON, ToJSON (toEncoding, toJSON), Value (Object, String), parseJSON, withObject, (.:))
 import Data.Aeson.Types (Parser)
 import Data.Generics.Product (field')
+import Data.Generics.Product.Fields (getField)
 import Data.HashMap.Strict (insert)
 import qualified Data.HashMap.Strict as HM (insert)
 import Data.Password.Argon2 (unsafeShowPassword)
 import qualified Data.Semigroup as SG (getLast)
 import Data.Sequence ((<|))
 import Domain (Domain (Article, Comment, User))
-import Domain.Article (ArticleR (..))
-import Domain.Comment (CommentR (..))
-import Domain.User (UserR (..))
+import Domain.Article (ArticleWithAuthorProfile (ArticleWithAuthorProfile))
+import Domain.Comment (CommentWithAuthorProfile)
+import Domain.User (UserAuthWithToken (UserAuthWithToken), UserProfile (UserProfile))
 import Field.Bio (Bio (Bio))
 import Field.Body (Body (Body))
 import Field.Description (Description (Description))
@@ -36,14 +37,13 @@ import Field.Slug (Slug (Slug))
 import Field.Tag (Tag (Tag))
 import Field.Title (Title (Title))
 import Field.Username (Username (Username))
-import GHC.Records (getField)
 import Network.HTTP.Types (hAuthorization)
 import Paging (Limit (Limit), Offset (Offset))
 import Servant (ToHttpApiData (toUrlPiece), type (:>))
 import Servant.Auth.Server (Auth)
 import Servant.Client (HasClient (Client, clientWithRoute), hoistClientMonad)
 import Servant.Client.Core (requestHeaders)
-import Storage.Map (ContentOf, CreateOf (..), IdOf (..), Patch, UpdateOf (..))
+import Storage.Map (ContentOf (..), CreateOf (..), IdOf (..), Patch, UpdateOf (..))
 import Test.StateMachine (ToExpr (toExpr))
 import Token.HasToken (TokenOf (UserToken))
 import Util.JSON.From (In (In), wrappedParseJSON)
@@ -105,10 +105,10 @@ deriving newtype instance FromJSON (IdOf 'Article)
 
 instance FromJSON (ContentOf 'Article)
 
-instance FromJSON (UserR "profile") where
-  parseJSON v = withObject "UserR profile" (\o -> UserProfile <$> parseJSON v <*> o .: "following") v
+instance FromJSON UserProfile where
+  parseJSON v = withObject "UserProfile" (\o -> UserProfile <$> parseJSON v <*> o .: "following") v
 
-instance FromJSON (ArticleR "withAuthorProfile") where
+instance FromJSON ArticleWithAuthorProfile where
   parseJSON =
     withObject
       "withAuthorProfile"
@@ -122,21 +122,21 @@ instance FromJSON (ArticleR "withAuthorProfile") where
           <*> o .: "favoritesCount"
           ?? a
 
-instance FromJSON (Out (ArticleR "withAuthorProfile")) where
-  parseJSON = withObject "out ArticleR withAuthorProfile" $ \o -> Out <$> o .: "article"
+instance FromJSON (Out ArticleWithAuthorProfile) where
+  parseJSON = withObject "out ArticleWithAuthorProfile" $ \o -> Out <$> o .: "article"
 
-instance FromJSON (Out [ArticleR "withAuthorProfile"]) where
-  parseJSON = withObject "Out [ ArticleR withAuthorProfile ]" $ \o -> Out <$> o .: "articles"
+instance FromJSON (Out [ArticleWithAuthorProfile]) where
+  parseJSON = withObject "Out [ ArticleWithAuthorProfile ]" $ \o -> Out <$> o .: "articles"
 
 deriving newtype instance FromJSON (IdOf 'Comment)
 
-instance FromJSON (CommentR "withAuthorProfile")
+instance FromJSON CommentWithAuthorProfile
 
-instance FromJSON (Out (CommentR "withAuthorProfile")) where
-  parseJSON = withObject "Out CommentR withAuthorProfile" $ \o -> Out <$> o .: "comment"
+instance FromJSON (Out CommentWithAuthorProfile) where
+  parseJSON = withObject "Out CommentWithAuthorProfile" $ \o -> Out <$> o .: "comment"
 
-instance FromJSON (Out [CommentR "withAuthorProfile"]) where
-  parseJSON = withObject "Out [ CommentR withAuthorProfile ]" $ \o -> Out <$> o .: "comments"
+instance FromJSON (Out [CommentWithAuthorProfile]) where
+  parseJSON = withObject "Out [ CommentWithAuthorProfile ]" $ \o -> Out <$> o .: "comments"
 
 instance FromJSON (Out [Tag]) where
   parseJSON = withObject "Out [ Tag ]" $ \o -> Out <$> o .: "tags"
@@ -144,14 +144,14 @@ instance FromJSON (Out [Tag]) where
 instance FromJSON (TokenOf 'User) where
   parseJSON = UserToken . encodeUtf8 <<$>> parseJSON @Text
 
-instance FromJSON (UserR "authWithToken") where
-  parseJSON v = withObject "UserR authWithToken" (\o -> UserAuthWithToken <$> parseJSON v <*> o .: "token") v
+instance FromJSON UserAuthWithToken where
+  parseJSON v = withObject "UserAuthWithToken" (\o -> UserAuthWithToken <$> parseJSON v <*> o .: "token") v
 
-instance FromJSON (Out (UserR "authWithToken")) where
-  parseJSON = withObject "Out UserR authWithToken" $ \o -> Out <$> o .: "user"
+instance FromJSON (Out UserAuthWithToken) where
+  parseJSON = withObject "Out UserAuthWithToken" $ \o -> Out <$> o .: "user"
 
-instance FromJSON (Out (UserR "profile")) where
-  parseJSON = withObject "Out UserR profile" $ \o -> Out <$> o .: "profile"
+instance FromJSON (Out UserProfile) where
+  parseJSON = withObject "Out UserProfile" $ \o -> Out <$> o .: "profile"
 
 instance ToJSON a => ToJSON (WithValidation a) where
   toJSON (Failure err) = error $ "Invalidated toJSON: " <> show err
