@@ -13,6 +13,7 @@
 module StateMachine where
 
 import Authentication.HasAuth (AuthOf (..), LoginOf (UserLogin))
+import Control.Exception.Safe (bracket)
 import Control.Lens ((%~))
 import Data.Aeson (FromJSON, ToJSON, eitherDecode, encode)
 import Data.Functor.Classes (Eq1, Ord1)
@@ -20,7 +21,9 @@ import Data.Generics.Product (HasField' (field'), getField)
 import qualified Data.Semigroup as SG (Last (Last, getLast))
 import Data.Set (delete, insert, isSubsetOf)
 import qualified Data.Set as S (empty, foldl', insert, map, member)
-import Database.Postgres.Temp (Config, toConnectionString, withConfig)
+import Database.PostgreSQL.Simple (close, connectPostgreSQL)
+import Database.PostgreSQL.Simple.Migration (MigrationCommand (MigrationCommands, MigrationFile, MigrationInitialization, MigrationValidation), MigrationResult (MigrationError, MigrationSuccess), Verbosity (Verbose), defaultOptions, optVerbose, runMigrations)
+import Database.Postgres.Temp (Cache, Config, DB, cacheAction, cacheConfig, toConnectionString, withConfig)
 import Domain.Transform (transform)
 import Domain.User (UserAuthWithToken (UserAuthWithToken))
 import Field.Slug (titleToSlug)
@@ -539,15 +542,55 @@ checkInMemAppProp new mgr mkUrl =
       (hist, _, res) <- runCommands sm cmds
       prettyCommands sm hist $ coverCommandNames cmds $ checkCommandNames cmds $ res === Ok
 
-checkRel8AppProp :: Config -> (ByteString -> IO Application) -> Manager -> (Int -> BaseUrl) -> Property
-checkRel8AppProp cfg newApp mgr mkUrl =
+postgresDir :: FilePath
+postgresDir = "./backend/postgres"
+
+doMigration :: DB -> IO ()
+doMigration config =
+  let migrateTableCmd tbn = MigrationFile ("create " <> tbn <> " table") $ postgresDir <> "/migration/" <> tbn <> ".sql"
+      tables =
+        [ "accounts",
+          "articles",
+          "comments",
+          "tags",
+          "article_has_tag",
+          "user_follow_user",
+          "user_favorite_article"
+        ]
+      cmds = migrateTableCmd <$> tables
+   in bracket
+        (connectPostgreSQL $ toConnectionString config)
+        close
+        $ \conn ->
+          runMigrations
+            conn
+            defaultOptions {optVerbose = Verbose}
+            ( MigrationInitialization :
+              cmds
+                <> [ MigrationValidation $
+                       MigrationCommands cmds
+                   ]
+            )
+            >>= \case
+              MigrationError err -> error $ fromString err
+              MigrationSuccess -> pure ()
+
+mkMigratedCacheConfig :: Cache -> IO Config
+mkMigratedCacheConfig (cacheConfig -> cfg) =
+  cacheAction (postgresDir <> "/.tmp-postgres/cache") doMigration cfg
+    >>= either (error . show) pure
+
+checkRel8AppProp :: IO Cache -> (ByteString -> IO Application) -> Manager -> (Int -> BaseUrl) -> Property
+checkRel8AppProp getDbCache newApp mgr mkUrl =
   forAllCommands sm Nothing $ \cmds -> monadic
     ( ioProperty
-        . \prop -> do
+        . \readerProp -> do
+          migratedCfg <- getDbCache >>= mkMigratedCacheConfig
           withConfig
-            cfg
-            ( \(newApp . toConnectionString -> newApp') ->
-                testWithApplication newApp' $ \port -> usingReaderT (mkClientEnv mgr $ mkUrl port) prop
+            migratedCfg
+            ( \cfg ->
+                testWithApplication (newApp $ toConnectionString cfg) $ \port ->
+                  usingReaderT (mkClientEnv mgr $ mkUrl port) readerProp
             )
             >>= \case
               (Left se) -> error $ show se
