@@ -36,7 +36,7 @@ haskell-nix.project {
     ({ pkgs, ... }: {
       packages.realworld-haskell.components.tests.realworld-haskell-test = {
         build-tools = pkgs.lib.mkForce [ pkgs.postgresql_13 ];
-        extraSrcFiles = [./golden];
+        extraSrcFiles = ["golden"];
       };
     })
   ];
