@@ -37,7 +37,6 @@ node_modules/
 /cabal.project.local
 /.hie/
 /.tasty-rerun-log
-/materialized/
 /result
 /backend/postgres/data/
 /backend/postgres/.tmp-postgres/cache/**
