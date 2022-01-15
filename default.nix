@@ -3,10 +3,12 @@
 else if nixpkgsPin == "unstable" then
   "921"
 else
-  null }:
+  null, checkMaterialization ? false }:
 assert ghcVersion != null;
 with import ./nix/pkgs.nix { inherit nixpkgsPin; };
 haskell-nix.project {
+  inherit checkMaterialization;
+
   # 'cleanGit' cleans a source directory based on the files known by git
   src = haskell-nix.haskellLib.cleanGit {
     name = "realworld-haskell";
@@ -16,8 +18,6 @@ haskell-nix.project {
   compiler-nix-name = "ghc${ghcVersion}";
 
   index-state = "2021-12-31T00:00:00Z";
-
-  # plan-sha256 = "RiN1455qlA4rp2yO6wJp9FCVzAOR20KzfmNMM3fPXTQ=";
 
   modules = [
     {
@@ -38,4 +38,8 @@ haskell-nix.project {
         pkgs.lib.mkForce [ pkgs.postgresql_13 ];
     })
   ];
+
+  plan-sha256 = "07m98qfk9y6smlgyg75dva2mq8037gp5m8ld46jycwagnhns3kai";
+
+  materialized = ./materialized/haskell-nix;
 }

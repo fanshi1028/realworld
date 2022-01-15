@@ -7,7 +7,7 @@ else
   null, checkMaterialization ? false }:
 assert ghcVersion != null;
 let
-  project = import ./default.nix { inherit nixpkgsPin ghcVersion; };
+  project = import ./default.nix { inherit nixpkgsPin ghcVersion checkMaterialization; };
   # inherit (project) index-state;
   index-state = project.index-state;
   materializedDir = ./materialized;
@@ -70,12 +70,12 @@ in project.shellFor {
       plan-sha256 = "1b5ckkajsf87jczavx18glwfa06zcvi7w1dp45xbpiyjqf7wmpi2";
       materialized = materializedDir + /stan;
     };
-    # hoogle = {
-    #   inherit index-state checkMaterialization;
-    #   version = "5.0.17.15";
-    #   plan-sha256 = "Z+9k15uSfml5rO/Badx0Ud+TSI/Wu92gPPTWqHBiaM4=";
-    #   materialized = materializedDir + /hoogle;
-    # };
+    hoogle = {
+      inherit index-state checkMaterialization;
+      version = "5.0.18.3";
+      plan-sha256 = "0knhl9icjpmbqz18vw4pxs6n5m6m32b1jyss6cmlz86s6df7pwik";
+      materialized = materializedDir + /hoogle;
+    };
   };
   # See overlays/tools.nix for more details
 
