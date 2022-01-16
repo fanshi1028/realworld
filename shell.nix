@@ -7,7 +7,9 @@ else
   null, checkMaterialization ? false }:
 assert ghcVersion != null;
 let
-  project = import ./default.nix { inherit nixpkgsPin ghcVersion checkMaterialization; };
+  project = import ./default.nix {
+    inherit nixpkgsPin ghcVersion checkMaterialization;
+  };
   # inherit (project) index-state;
   index-state = project.index-state;
   materializedDir = ./materialized;
@@ -43,12 +45,19 @@ in project.shellFor {
       materialized = materializedDir + /haskell-language-server;
     };
     # error: builder for '/nix/store/9w46v4709ddiycqg6zdrssfwsjlz64nq-ormolu-lib-ormolu-0.4.0.0.drv' failed with exit code 1
-    # ormolu = {
-    #   inherit index-state checkMaterialization;
-    #   version = "0.4.0.0";
-    #   plan-sha256 = "1g1g88bi46lx7kf2zc7lq7bgcqvcs5h7d53v5zclhgihfww1w5hl";
-    #   materialized = materializedDir + /ormolu;
-    # };
+    ormolu = {
+      inherit index-state checkMaterialization;
+      version = "0.4.0.0";
+      plan-sha256 = "1g1g88bi46lx7kf2zc7lq7bgcqvcs5h7d53v5zclhgihfww1w5hl";
+      materialized = materializedDir + /ormolu;
+      # TEMP FIXME NOTE: https://github.com/input-output-hk/haskell.nix/issues/1337
+      modules = [
+        ({ lib, ... }: {
+          options.nonReinstallablePkgs =
+            lib.mkOption { apply = lib.remove "Cabal"; };
+        })
+      ];
+    };
     ghcid = {
       inherit index-state checkMaterialization;
       version = "0.8.7";
