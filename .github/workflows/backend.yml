@@ -35,4 +35,4 @@ jobs:
 
     - name: nix build
       run: |
-        nix-build -j4 --argstr nixpkgsPin ${{matrix.nixpkgsPin}}
+        nix-build -j4 --argstr nixpkgsPin ${{matrix.nixpkgsPin}} --arg checkMaterialization true
