@@ -10,7 +10,9 @@ jobs:
         # https://docs.github.com/en/actions/using-github-hosted-runners/about-github-hosted-runners
         os: [ubuntu-20.04, macos-10.15]
         # https://github.com/input-output-hk/haskell.nix/blob/85755332c0698ab90d061c079f3c25710675bb85/docs/reference/supported-ghc-versions.md
-        nixpkgsPin: [2111,unstable]
+        # NOTE: won't build on ghc921 yet, so only 2111 for now
+        nixpkgsPin: [2111]
+        # nixpkgsPin: [2111,unstable]
         # NOTE: ghcVersion is determine by nipkgsPin in nix expression, 2111 -> ghc8107, unstable -> ghc921
         # ghcVerson: [ghc8107, ghc921]
 
