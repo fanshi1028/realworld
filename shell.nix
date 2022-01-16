@@ -10,9 +10,19 @@ let
   project = import ./default.nix {
     inherit nixpkgsPin ghcVersion checkMaterialization;
   };
-  # inherit (project) index-state;
   index-state = project.index-state;
   materializedDir = ./materialized;
+  tool-common = { inherit index-state checkMaterialization; };
+  ony-ghc8107-materialize-config = plan-sha256: subpath:
+    if ghcVersion == "8107" then {
+      inherit plan-sha256;
+      materialized = materializedDir + subpath;
+    } else
+      { };
+  tool-config = { version, plan-sha256, materialized, ... }@args:
+    tool-common // args // {
+      inherit version;
+    } // (ony-ghc8107-materialize-config plan-sha256 materialized);
 in project.shellFor {
   # ALL of these arguments are optional.
 
@@ -26,30 +36,26 @@ in project.shellFor {
 
   # Some common tools can be added with the `tools` argument
   tools = {
-    cabal = {
-      inherit index-state checkMaterialization;
+    cabal = tool-config {
       version = "3.6.2.0";
       plan-sha256 = "03i9rdvnpkr96x3ng5zfvfd9h49qsyzmxlckh2i1yr4xn991yid3";
-      materialized = materializedDir + /cabal;
+      materialized = /cabal;
     };
-    hlint = {
-      inherit index-state checkMaterialization;
+    hlint = tool-config {
       version = "3.3.6";
       plan-sha256 = "17km3wxl79sl6vcgjl3yadqm41lb503hd8vsr9rc0z95yg20n91j";
-      materialized = materializedDir + /hlint;
+      materialized = /hlint;
     };
-    haskell-language-server = {
-      inherit index-state checkMaterialization;
+    haskell-language-server = tool-config {
       version = "1.5.1.0";
       plan-sha256 = "0vhq2gvbwssgbh54ciwg2jcjsqsbrc9ml54yqnvv758ykga6xrsk";
-      materialized = materializedDir + /haskell-language-server;
+      materialized = /haskell-language-server;
     };
     # error: builder for '/nix/store/9w46v4709ddiycqg6zdrssfwsjlz64nq-ormolu-lib-ormolu-0.4.0.0.drv' failed with exit code 1
-    ormolu = {
-      inherit index-state checkMaterialization;
+    ormolu = tool-config {
       version = "0.4.0.0";
       plan-sha256 = "1g1g88bi46lx7kf2zc7lq7bgcqvcs5h7d53v5zclhgihfww1w5hl";
-      materialized = materializedDir + /ormolu;
+      materialized = /ormolu;
       # TEMP FIXME NOTE: https://github.com/input-output-hk/haskell.nix/issues/1337
       modules = [
         ({ lib, ... }: {
@@ -58,32 +64,28 @@ in project.shellFor {
         })
       ];
     };
-    ghcid = {
-      inherit index-state checkMaterialization;
+    ghcid = tool-config {
       version = "0.8.7";
       plan-sha256 = "0z35zpx7x0qncqiddnq4acdq3cgqlalwc2kb28dv8lk1rvn377ri";
-      materialized = materializedDir + /ghcid;
+      materialized = /ghcid;
     };
     # use cabal-docspec instead of doctest(which I failed to set it up right), yet it seesm that cabal-docspec is not on hackage yet
     # https://github.com/phadej/cabal-extras/tree/master/cabal-docspec
     # doctest = "latest";
-    cabal-fmt = {
-      inherit index-state checkMaterialization;
+    cabal-fmt = tool-config {
       version = "0.1.5.1";
       plan-sha256 = "1wbds3wmnfzl9g562271bvd8z1whmiv2cn10m3qxbfpbdj3ri25h";
-      materialized = materializedDir + /cabal-fmt;
+      materialized = /cabal-fmt;
     };
-    stan = {
-      inherit index-state checkMaterialization;
+    stan = tool-config {
       version = "0.0.1.0";
       plan-sha256 = "1b5ckkajsf87jczavx18glwfa06zcvi7w1dp45xbpiyjqf7wmpi2";
-      materialized = materializedDir + /stan;
+      materialized = /stan;
     };
-    hoogle = {
-      inherit index-state checkMaterialization;
+    hoogle = tool-config {
       version = "5.0.18.3";
       plan-sha256 = "0knhl9icjpmbqz18vw4pxs6n5m6m32b1jyss6cmlz86s6df7pwik";
-      materialized = materializedDir + /hoogle;
+      materialized = /hoogle;
     };
   };
   # See overlays/tools.nix for more details

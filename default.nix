@@ -39,7 +39,11 @@ haskell-nix.project {
     })
   ];
 
-  plan-sha256 = "07m98qfk9y6smlgyg75dva2mq8037gp5m8ld46jycwagnhns3kai";
+  plan-sha256 = if ghcVersion == "8107" then
+    "07m98qfk9y6smlgyg75dva2mq8037gp5m8ld46jycwagnhns3kai"
+  else
+    null;
 
-  materialized = ./materialized/haskell-nix;
+  materialized =
+    if ghcVersion == "8107" then ./materialized/haskell-nix else null;
 }
