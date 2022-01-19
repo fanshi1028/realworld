@@ -7,73 +7,59 @@
 -- Maintainer  : jackychany321@gmail.com
 -- Stability   : experimental
 --
--- API & Server for (all related to __article__)
---
--- 1. __Read__ aritcle feeds(customized for the authed user)
---
--- 2. __CUD__ aritcles of the authed user
---
--- 3. __CD__ comments of the authed user on article
---
--- 4. __Toggle__ authed user's __favority__ on article
+-- Auth protected API & Server
 --
 -- @since 0.1.0.0
-module HTTP.Protected.Article
-  ( -- * API
-    ArticleApi,
-
-    -- * Server
-    articleServer,
-  )
-where
+module Server.Protected where
 
 import Control.Algebra (Algebra, send)
 import qualified Control.Effect.Reader as R (Reader, ask)
 import Control.Effect.Sum (Member)
 import Control.Effect.Throw (Throw, throwError)
-import Domain (Domain (Article, Comment))
-import Domain.Article (ArticleWithAuthorProfile)
-import Domain.Comment (CommentWithAuthorProfile)
-import HTTP.Util (Cap, CreateApi, QP, ReadManyApi, ToggleApi, UDApi)
+import Domain (Domain (User))
+import Domain.User (UserAuthWithToken (UserAuthWithToken))
+import HTTP.Protected (ProtectedApi, ProtectedArticleApi, ProtectedFollowApi, ProtectedUserApi)
 import Paging (HasPaging (paging), Limit, Offset, Paging (LimitOffset))
-import Servant (Delete, JSON, NoContent (NoContent), ServerT, type (:<|>) ((:<|>)), type (:>))
+import Servant (NoContent (NoContent), ServerT, type (:<|>) ((:<|>)))
 import Servant.Types.SourceT (source)
-import Storage.Map (IdOf)
-import UserAction
-  ( UserActionE
-      ( AddCommentToArticle,
-        CreateArticle,
-        DeleteArticle,
-        DeleteComment,
-        FavoriteArticle,
-        UnfavoriteArticle,
-        UpdateArticle
-      ),
-  )
+import Token.Create (CreateTokenE (CreateToken))
+import UserAction (UserActionE (AddCommentToArticle, CreateArticle, DeleteArticle, DeleteComment, FavoriteArticle, FollowUser, GetCurrentUser, UnfavoriteArticle, UnfollowUser, UpdateArticle, UpdateUser))
 import UserAction.Many (UserActionManyE (FeedArticles))
 import Util.JSON.From (In (In))
 import Util.JSON.To (Out (Out))
 import Util.Validation (ValidationErr)
 import Validation (Validation (Failure, Success), validation)
 
--- |  @since 0.4.0.0
-type CommentApi =
-  Cap "id" (IdOf 'Comment) :> Delete '[JSON] NoContent
-    :<|> CreateApi 'Comment CommentWithAuthorProfile
+-- * Server
 
--- | @since 0.4.0.0
-type FavoriteApi = ToggleApi ArticleWithAuthorProfile
-
--- | @since 0.4.0.0
-type ArticleApi =
-  CreateApi 'Article ArticleWithAuthorProfile
-    :<|> "feed" :> QP "limit" :> QP "offset" :> ReadManyApi ArticleWithAuthorProfile
-    :<|> ( Cap "slug" (IdOf 'Article)
-             :> ( UDApi 'Article ArticleWithAuthorProfile
-                    :<|> "comments" :> CommentApi
-                    :<|> "favorite" :> FavoriteApi
-                )
+-- | @since 0.2.0.0
+userServer ::
+  ( Algebra sig m,
+    Member (Throw ValidationErr) sig,
+    Member (CreateTokenE 'User) sig,
+    Member UserActionE sig
+  ) =>
+  ServerT ProtectedUserApi m
+userServer =
+  Out <$> send GetCurrentUser
+    :<|> ( \case
+             In (Failure err) -> throwError err
+             In (Success a) -> do
+               newUser <- send (UpdateUser a)
+               Out . UserAuthWithToken newUser <$> send (CreateToken newUser)
          )
+
+-- | @since 0.1.0.0
+followServer ::
+  ( Algebra sig m,
+    Member UserActionE sig,
+    Member (Throw ValidationErr) sig
+  ) =>
+  ServerT ProtectedFollowApi m
+followServer (Success uid) =
+  Out <$> send (FollowUser uid)
+    :<|> (Out <$> send (UnfollowUser uid))
+followServer (Failure err) = throwError err :<|> throwError err
 
 -- | @since 0.3.0.0
 articleServer ::
@@ -84,7 +70,7 @@ articleServer ::
     Member (R.Reader Offset) sig,
     Member (Throw ValidationErr) sig
   ) =>
-  ServerT ArticleApi m
+  ServerT ProtectedArticleApi m
 articleServer =
   let fromUnValidatedInput f = \case
         In (Failure err) -> throwError err
@@ -123,3 +109,16 @@ articleServer =
                               :<|> (throwError err :<|> throwError err)
                           )
              )
+
+-- | @since 0.3.0.0
+authedServer ::
+  ( Algebra sig m,
+    Member UserActionE sig,
+    Member (R.Reader Limit) sig,
+    Member (R.Reader Offset) sig,
+    Member (UserActionManyE []) sig,
+    Member (Throw ValidationErr) sig,
+    Member (CreateTokenE 'User) sig
+  ) =>
+  ServerT ProtectedApi m
+authedServer = userServer :<|> followServer :<|> articleServer

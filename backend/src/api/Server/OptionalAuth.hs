@@ -1,3 +1,4 @@
+{-# LANGUAGE ConstraintKinds #-}
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE FlexibleContexts #-}
 
@@ -7,38 +8,36 @@
 -- Maintainer  : jackychany321@gmail.com
 -- Stability   : experimental
 --
--- API & Server to read articles and comments
+-- API & Server, optional authed.
 --
--- @since 0.1.0.0
-module HTTP.OptionalAuth.Article where
+-- @since 0.3.0.0
+module Server.OptionalAuth where
 
 import Control.Algebra (Algebra, send)
 import qualified Control.Effect.Reader as R (Reader, ask)
 import Control.Effect.Sum (Member)
 import Control.Effect.Throw (Throw, throwError)
-import Domain (Domain (Article))
-import Domain.Article (ArticleWithAuthorProfile)
-import Domain.Comment (CommentWithAuthorProfile)
-import HTTP.Util (Cap, QP, ReadApi, ReadManyApi)
-import OptionalAuthAction (OptionalAuthActionE (GetArticle))
+import HTTP.OptionalAuth (OptionalAuthApi, OptionalAuthArticleApi, OptionalAuthProfileApi)
+import OptionalAuthAction (OptionalAuthActionE (GetArticle, GetProfile))
 import OptionalAuthAction.Many (OptionalAuthActionManyE (GetComments, ListArticles))
-import Paging (Limit, Offset, Paging (LimitOffset), paging)
-import Servant (ServerT, type (:<|>) ((:<|>)), type (:>))
+import Paging (HasPaging (paging), Limit, Offset, Paging (LimitOffset))
+import Servant (ServerT, type (:<|>) ((:<|>)))
 import Servant.Types.SourceT (source)
-import Storage.Map (IdOf)
 import Util.JSON.To (Out (Out))
 import Util.Validation (ValidationErr)
 import Validation (Validation (Failure, Success), validation)
 
--- * API
-
--- | @since 0.4.0.0
-type ArticleApi =
-  QP "tag" :> QP "author" :> QP "favorited" :> QP "limit" :> QP "offset" :> ReadManyApi ArticleWithAuthorProfile
-    :<|> Cap "slug" (IdOf 'Article)
-      :> (ReadApi ArticleWithAuthorProfile :<|> "comments" :> ReadManyApi CommentWithAuthorProfile)
-
 -- * Server
+
+-- | @since 0.3.0.0
+profileServer ::
+  ( Algebra sig m,
+    Member OptionalAuthActionE sig,
+    Member (Throw ValidationErr) sig
+  ) =>
+  ServerT OptionalAuthProfileApi m
+profileServer (Success u) = Out <$> send (GetProfile u)
+profileServer (Failure err) = throwError err
 
 -- | @since 0.3.0.0
 articleServer ::
@@ -49,7 +48,7 @@ articleServer ::
     Member (R.Reader Limit) sig,
     Member (R.Reader Offset) sig
   ) =>
-  ServerT ArticleApi m
+  ServerT OptionalAuthArticleApi m
 articleServer =
   ( \mTag mAuthor mFavBy mLimit mOffset -> do
       let getVPaging =
@@ -72,3 +71,15 @@ articleServer =
                       )
              Failure err -> throwError err :<|> throwError err :<|> throwError err
          )
+
+-- | @since 0.3.0.0
+optionallyAuthedServer ::
+  ( Algebra sig m,
+    Member OptionalAuthActionE sig,
+    Member (R.Reader Limit) sig,
+    Member (R.Reader Offset) sig,
+    Member (OptionalAuthActionManyE []) sig,
+    Member (Throw ValidationErr) sig
+  ) =>
+  ServerT OptionalAuthApi m
+optionallyAuthedServer = profileServer :<|> articleServer

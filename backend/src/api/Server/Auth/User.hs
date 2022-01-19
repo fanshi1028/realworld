@@ -10,10 +10,10 @@
 -- API & Server for authorization
 --
 -- @since 0.1.0.0
-module HTTP.Auth.User where
+module Server.Auth.User where
 
 import Authentication (AuthenticationE (Login, Register))
-import Authentication.HasAuth (HasAuth (AuthOf, LoginOf))
+import Authentication.HasAuth (HasAuth (AuthOf))
 import Control.Algebra (Algebra, send)
 import Control.Effect.Error (Throw, throwError)
 import qualified Control.Effect.Reader as R (Reader, ask)
@@ -21,20 +21,13 @@ import Control.Effect.Sum (Member)
 import Cookie.Xsrf (CreateXsrfCookieE (CreateXsrfCookie))
 import Domain (Domain (User))
 import Domain.User (UserAuthWithToken (..))
-import HTTP.Util (CreateApi)
+import HTTP.Auth.User (AuthUserApi)
 import Relude.Extra (un)
 import Servant
   ( AddHeader,
-    Header,
-    Headers,
-    JSON,
-    ReqBody,
     ServerT,
-    StdMethod (POST),
-    Verb,
     addHeader,
     type (:<|>) ((:<|>)),
-    type (:>),
   )
 import Servant.Auth.Server (CookieSettings, JWTSettings)
 import Servant.Auth.Server.Internal.Cookie (applyCookieSettings, applySessionCookieSettings)
@@ -42,20 +35,9 @@ import Token.Create (CreateTokenE (CreateToken))
 import Token.HasToken (TokenOf (UserToken))
 import Util.JSON.From (In (In))
 import Util.JSON.To (Out (Out))
-import Util.Validation (ValidationErr, WithValidation)
+import Util.Validation (ValidationErr)
 import Validation (validation)
 import Web.Cookie (SetCookie, def, setCookieValue)
-
--- * API
-
--- | Register or Login
---
--- @since 0.4.0.0
-type AuthUserApi =
-  ( "login" :> ReqBody '[JSON] (In (WithValidation (LoginOf 'User)))
-      :> Verb 'POST 200 '[JSON] (Headers '[Header "Set-Cookie" SetCookie, Header "Set-Cookie" SetCookie] (Out UserAuthWithToken))
-  )
-    :<|> CreateApi 'User UserAuthWithToken
 
 -- * Server
 

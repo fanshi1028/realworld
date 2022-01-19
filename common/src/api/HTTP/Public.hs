@@ -13,23 +13,14 @@
 -- @since 0.1.0.0
 module HTTP.Public where
 
-import Control.Algebra (Algebra)
-import Control.Effect.Sum (Member)
-import HTTP.Public.Tag (TagApi, tagServer)
-import Servant (ServerT, type (:>))
-import VisitorAction (VisitorActionE)
+import Field.Tag (Tag)
+import HTTP.Util (ReadManyApi)
+import Servant (type (:>))
 
 -- * API
 
 -- | @since 0.3.0.0
-type PublicApi = "tags" :> TagApi
-
--- * Server
+type PublicTagApi = ReadManyApi Tag
 
 -- | @since 0.3.0.0
-publicServer ::
-  ( Algebra sig m,
-    Member (VisitorActionE []) sig
-  ) =>
-  ServerT PublicApi m
-publicServer = tagServer
+type PublicApi = "tags" :> PublicTagApi

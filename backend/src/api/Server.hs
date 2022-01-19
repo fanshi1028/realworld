@@ -1,7 +1,6 @@
 {-# LANGUAGE ConstraintKinds #-}
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE FlexibleContexts #-}
-{-# LANGUAGE ViewPatterns #-}
 
 -- |
 -- Description : API & Server
@@ -12,12 +11,12 @@
 -- All API & Server combined
 --
 -- @since 0.1.0.0
-module HTTP where
+module Server where
 
 import Authentication (AuthenticationE)
 import Authentication.HasAuth (AuthOf, NotLogin (NotLogin))
 import qualified Authentication.HasAuth as AuthErr (NotAuthorized (BadPassword, NoSuchUser))
-import Authorization (TokenAuth)
+-- import Authorization (TokenAuth)
 import Control.Algebra (Algebra)
 import qualified Control.Carrier.Reader as R (Reader, local)
 import Control.Effect.Catch (Catch)
@@ -26,16 +25,19 @@ import Control.Effect.Throw (Throw, throwError)
 import Cookie.Xsrf (CreateXsrfCookieE)
 import Domain (Domain (User))
 import Domain.User (UserAuthWithToken (UserAuthWithToken))
-import HTTP.Auth.User (AuthUserApi, authUserServer)
-import HTTP.OptionalAuth (OptionallyAuthedApi, optionallyAuthedServer)
-import HTTP.Protected (AuthedApi, authedServer)
-import HTTP.Public (PublicApi, publicServer)
+import HTTP (Api)
+import HTTP.OptionalAuth (OptionalAuthApi)
+import HTTP.Protected (ProtectedApi)
 import OptionalAuthAction (OptionalAuthActionE)
 import OptionalAuthAction.Many (OptionalAuthActionManyE)
 import Paging (Limit, Offset)
-import Servant (Get, JSON, ServerT, type (:<|>) ((:<|>)), type (:>))
-import Servant.Auth.Server (Auth, AuthResult (Authenticated, BadPassword, Indefinite, NoSuchUser), CookieSettings, JWTSettings)
+import Servant (ServerT, type (:<|>) ((:<|>)))
+import Servant.Auth.Server (AuthResult (Authenticated, BadPassword, Indefinite, NoSuchUser), CookieSettings, JWTSettings)
 import Servant.Server (hoistServer)
+import Server.Auth.User (authUserServer)
+import Server.OptionalAuth (optionallyAuthedServer)
+import Server.Protected (authedServer)
+import Server.Public (publicServer)
 import Token.Create (CreateTokenE)
 import Token.Decode (InvalidToken)
 import Token.HasToken (TokenOf)
@@ -43,22 +45,6 @@ import UserAction (UserActionE)
 import UserAction.Many (UserActionManyE)
 import Util.Validation (ValidationErr)
 import VisitorAction (VisitorActionE)
-
--- * API
-
--- | @since 0.4.0.0
--- all api
---
--- __NOTE__: This part of api is for health check
---
--- > Get '[JSON] Text
-type Api =
-  "api"
-    :> ( Auth '[TokenAuth] UserAuthWithToken :> (OptionallyAuthedApi :<|> AuthedApi)
-           :<|> "users" :> AuthUserApi
-           :<|> PublicApi
-       )
-    :<|> Get '[JSON] Text
 
 -- * Server
 
@@ -90,10 +76,10 @@ server ::
 server =
   ( ( \auth ->
         let appendAuth' (UserAuthWithToken user token) = R.local (const $ Just user) . R.local (const $ Just token)
-            appendOptionalAuth = hoistServer (Proxy @OptionallyAuthedApi) $ case auth of
+            appendOptionalAuth = hoistServer (Proxy @OptionalAuthApi) $ case auth of
               Authenticated u -> appendAuth' u
               _ -> id
-            appendAuth = hoistServer (Proxy @AuthedApi) $ \eff -> case auth of
+            appendAuth = hoistServer (Proxy @ProtectedApi) $ \eff -> case auth of
               Authenticated u -> appendAuth' u eff
               BadPassword -> throwError $ AuthErr.BadPassword @'User
               NoSuchUser -> throwError $ AuthErr.NoSuchUser @'User
