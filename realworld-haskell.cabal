@@ -341,6 +341,20 @@ library backend-rel8-carrier-internal
     InRel8.UserAction.Many
     InRel8.VisitorAction
 
+executable realworld-haskell-frontend
+  import:         prelude
+  main-is:        Main.hs
+  hs-source-dirs: frontend/app
+  ghc-options:    -threaded -rtsopts -with-rtsopts=-N
+  build-depends:
+              -- , jsaddle-warp
+              , reflex
+              -- , reflex-dom
+              , reflex-vty
+              -- , servant-reflex
+              , vty
+              -- , brick
+
 executable realworld-haskell-backend
   import:         prelude
 
@@ -376,11 +390,12 @@ test-suite realworld-haskell-backend-test
       , backend-in-mem-carrier-internal
       , backend-rel8-carrier-internal
       , common-data-internal
+      , common-api-internal
       , common-effect-internal
 
   else
     hs-source-dirs:
-      common/src/data common/src/effect backend/src/api
+      common/src/data common/src/effect common/src/api backend/src/api
       backend/src/carrier/mem backend/src/carrier/rel8
 
   type:           exitcode-stdio-1.0

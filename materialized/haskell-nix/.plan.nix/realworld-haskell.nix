@@ -37,7 +37,7 @@
       };
     components = {
       sublibs = {
-        "backend-data-internal" = {
+        "common-data-internal" = {
           depends = [
             (hsPkgs."base" or (errorHandler.buildDepError "base"))
             (hsPkgs."relude" or (errorHandler.buildDepError "relude"))
@@ -97,9 +97,9 @@
             "Util/Sort"
             "Util/Validation"
             ];
-          hsSourceDirs = [ "backend/src/data" ];
+          hsSourceDirs = [ "common/src/data" ];
           };
-        "backend-effect-internal" = {
+        "common-effect-internal" = {
           depends = [
             (hsPkgs."base" or (errorHandler.buildDepError "base"))
             (hsPkgs."relude" or (errorHandler.buildDepError "relude"))
@@ -124,7 +124,7 @@
               (hsPkgs."validation-selective" or (errorHandler.buildDepError "validation-selective"))
               ]
             else [
-              (hsPkgs."realworld-haskell".components.sublibs.backend-data-internal or (errorHandler.buildDepError "realworld-haskell:backend-data-internal"))
+              (hsPkgs."realworld-haskell".components.sublibs.common-data-internal or (errorHandler.buildDepError "realworld-haskell:common-data-internal"))
               ]);
           buildable = true;
           modules = [
@@ -144,10 +144,10 @@
             "VisitorAction"
             ];
           hsSourceDirs = [
-            "backend/src/effect"
-            ] ++ (pkgs.lib).optional (flags.ghcid) "backend/src/data";
+            "common/src/effect"
+            ] ++ (pkgs.lib).optional (flags.ghcid) "common/src/data";
           };
-        "backend-api-internal" = {
+        "common-api-internal" = {
           depends = [
             (hsPkgs."base" or (errorHandler.buildDepError "base"))
             (hsPkgs."relude" or (errorHandler.buildDepError "relude"))
@@ -180,8 +180,8 @@
               (hsPkgs."jose" or (errorHandler.buildDepError "jose"))
               ]
             else [
-              (hsPkgs."realworld-haskell".components.sublibs.backend-data-internal or (errorHandler.buildDepError "realworld-haskell:backend-data-internal"))
-              (hsPkgs."realworld-haskell".components.sublibs.backend-effect-internal or (errorHandler.buildDepError "realworld-haskell:backend-effect-internal"))
+              (hsPkgs."realworld-haskell".components.sublibs.common-data-internal or (errorHandler.buildDepError "realworld-haskell:common-data-internal"))
+              (hsPkgs."realworld-haskell".components.sublibs.common-effect-internal or (errorHandler.buildDepError "realworld-haskell:common-effect-internal"))
               ]);
           buildable = true;
           modules = [
@@ -189,21 +189,72 @@
             "HTTP"
             "HTTP/Auth/User"
             "HTTP/OptionalAuth"
-            "HTTP/OptionalAuth/Article"
-            "HTTP/OptionalAuth/Profile"
             "HTTP/Protected"
-            "HTTP/Protected/Article"
-            "HTTP/Protected/Follow"
-            "HTTP/Protected/User"
             "HTTP/Public"
-            "HTTP/Public/Tag"
             "HTTP/Util"
+            ];
+          hsSourceDirs = [
+            "common/src/api"
+            ] ++ (pkgs.lib).optionals (flags.ghcid) [
+            "common/src/data"
+            "common/src/effect"
+            ];
+          };
+        "backend-api-internal" = {
+          depends = [
+            (hsPkgs."base" or (errorHandler.buildDepError "base"))
+            (hsPkgs."relude" or (errorHandler.buildDepError "relude"))
+            (hsPkgs."cookie" or (errorHandler.buildDepError "cookie"))
+            (hsPkgs."fused-effects" or (errorHandler.buildDepError "fused-effects"))
+            (hsPkgs."servant" or (errorHandler.buildDepError "servant"))
+            (hsPkgs."servant-auth-server" or (errorHandler.buildDepError "servant-auth-server"))
+            (hsPkgs."servant-server" or (errorHandler.buildDepError "servant-server"))
+            (hsPkgs."servant-streamly" or (errorHandler.buildDepError "servant-streamly"))
+            (hsPkgs."streamly" or (errorHandler.buildDepError "streamly"))
+            (hsPkgs."time" or (errorHandler.buildDepError "time"))
+            (hsPkgs."validation-selective" or (errorHandler.buildDepError "validation-selective"))
+            (hsPkgs."wai" or (errorHandler.buildDepError "wai"))
+            ] ++ (if flags.ghcid
+            then [
+              (hsPkgs."aeson" or (errorHandler.buildDepError "aeson"))
+              (hsPkgs."generic-lens" or (errorHandler.buildDepError "generic-lens"))
+              (hsPkgs."higgledy" or (errorHandler.buildDepError "higgledy"))
+              (hsPkgs."password" or (errorHandler.buildDepError "password"))
+              (hsPkgs."servant-auth-server" or (errorHandler.buildDepError "servant-auth-server"))
+              (hsPkgs."servant-server" or (errorHandler.buildDepError "servant-server"))
+              (hsPkgs."text" or (errorHandler.buildDepError "text"))
+              (hsPkgs."time" or (errorHandler.buildDepError "time"))
+              (hsPkgs."unordered-containers" or (errorHandler.buildDepError "unordered-containers"))
+              (hsPkgs."uuid" or (errorHandler.buildDepError "uuid"))
+              (hsPkgs."validation-selective" or (errorHandler.buildDepError "validation-selective"))
+              (hsPkgs."cookie" or (errorHandler.buildDepError "cookie"))
+              (hsPkgs."fused-effects" or (errorHandler.buildDepError "fused-effects"))
+              (hsPkgs."servant" or (errorHandler.buildDepError "servant"))
+              (hsPkgs."servant-streamly" or (errorHandler.buildDepError "servant-streamly"))
+              (hsPkgs."streamly" or (errorHandler.buildDepError "streamly"))
+              (hsPkgs."wai" or (errorHandler.buildDepError "wai"))
+              (hsPkgs."cryptonite" or (errorHandler.buildDepError "cryptonite"))
+              (hsPkgs."jose" or (errorHandler.buildDepError "jose"))
+              ]
+            else [
+              (hsPkgs."realworld-haskell".components.sublibs.common-api-internal or (errorHandler.buildDepError "realworld-haskell:common-api-internal"))
+              (hsPkgs."realworld-haskell".components.sublibs.common-data-internal or (errorHandler.buildDepError "realworld-haskell:common-data-internal"))
+              (hsPkgs."realworld-haskell".components.sublibs.common-effect-internal or (errorHandler.buildDepError "realworld-haskell:common-effect-internal"))
+              ]);
+          buildable = true;
+          modules = [
+            "Server"
+            "Server/Auth/User"
+            "Server/OptionalAuth"
+            "Server/Protected"
+            "Server/Public"
             ];
           hsSourceDirs = [
             "backend/src/api"
             ] ++ (pkgs.lib).optionals (flags.ghcid) [
-            "backend/src/data"
-            "backend/src/effect"
+            "common/src/data"
+            "common/src/api"
+            "common/src/effect"
             ];
           };
         "backend-in-mem-carrier-internal" = {
@@ -250,8 +301,9 @@
               ]
             else [
               (hsPkgs."realworld-haskell".components.sublibs.backend-api-internal or (errorHandler.buildDepError "realworld-haskell:backend-api-internal"))
-              (hsPkgs."realworld-haskell".components.sublibs.backend-data-internal or (errorHandler.buildDepError "realworld-haskell:backend-data-internal"))
-              (hsPkgs."realworld-haskell".components.sublibs.backend-effect-internal or (errorHandler.buildDepError "realworld-haskell:backend-effect-internal"))
+              (hsPkgs."realworld-haskell".components.sublibs.common-api-internal or (errorHandler.buildDepError "realworld-haskell:common-api-internal"))
+              (hsPkgs."realworld-haskell".components.sublibs.common-data-internal or (errorHandler.buildDepError "realworld-haskell:common-data-internal"))
+              (hsPkgs."realworld-haskell".components.sublibs.common-effect-internal or (errorHandler.buildDepError "realworld-haskell:common-effect-internal"))
               ]);
           buildable = true;
           modules = [
@@ -279,9 +331,10 @@
           hsSourceDirs = [
             "backend/src/carrier/mem"
             ] ++ (pkgs.lib).optionals (flags.ghcid) [
-            "backend/src/data"
-            "backend/src/effect"
+            "common/src/data"
+            "common/src/effect"
             "backend/src/api"
+            "common/src/api"
             ];
           };
         "backend-rel8-carrier-internal" = {
@@ -324,8 +377,9 @@
               ]
             else [
               (hsPkgs."realworld-haskell".components.sublibs.backend-api-internal or (errorHandler.buildDepError "realworld-haskell:backend-api-internal"))
-              (hsPkgs."realworld-haskell".components.sublibs.backend-data-internal or (errorHandler.buildDepError "realworld-haskell:backend-data-internal"))
-              (hsPkgs."realworld-haskell".components.sublibs.backend-effect-internal or (errorHandler.buildDepError "realworld-haskell:backend-effect-internal"))
+              (hsPkgs."realworld-haskell".components.sublibs.common-data-internal or (errorHandler.buildDepError "realworld-haskell:common-data-internal"))
+              (hsPkgs."realworld-haskell".components.sublibs.common-api-internal or (errorHandler.buildDepError "realworld-haskell:common-api-internal"))
+              (hsPkgs."realworld-haskell".components.sublibs.common-effect-internal or (errorHandler.buildDepError "realworld-haskell:common-effect-internal"))
               ]);
           buildable = true;
           modules = [
@@ -351,14 +405,27 @@
           hsSourceDirs = [
             "backend/src/carrier/rel8"
             ] ++ (pkgs.lib).optionals (flags.ghcid) [
-            "backend/src/data"
-            "backend/src/effect"
+            "common/src/data"
+            "common/src/effect"
             "backend/src/api"
+            "common/src/api"
             ];
           };
         };
       exes = {
-        "realworld-haskell" = {
+        "realworld-haskell-frontend" = {
+          depends = [
+            (hsPkgs."base" or (errorHandler.buildDepError "base"))
+            (hsPkgs."relude" or (errorHandler.buildDepError "relude"))
+            (hsPkgs."reflex" or (errorHandler.buildDepError "reflex"))
+            (hsPkgs."reflex-vty" or (errorHandler.buildDepError "reflex-vty"))
+            (hsPkgs."vty" or (errorHandler.buildDepError "vty"))
+            ];
+          buildable = true;
+          hsSourceDirs = [ "frontend/app" ];
+          mainPath = [ "Main.hs" ] ++ (pkgs.lib).optional (flags.stan) "";
+          };
+        "realworld-haskell-backend" = {
           depends = [
             (hsPkgs."base" or (errorHandler.buildDepError "base"))
             (hsPkgs."relude" or (errorHandler.buildDepError "relude"))
@@ -400,8 +467,9 @@
           hsSourceDirs = [
             "backend/app"
             ] ++ (pkgs.lib).optionals (flags.ghcid) [
-            "backend/src/data"
-            "backend/src/effect"
+            "common/src/data"
+            "common/src/effect"
+            "common/src/api"
             "backend/src/api"
             "backend/src/carrier/mem"
             "backend/src/carrier/rel8"
@@ -412,7 +480,7 @@
           };
         };
       tests = {
-        "realworld-haskell-test" = {
+        "realworld-haskell-backend-test" = {
           depends = [
             (hsPkgs."base" or (errorHandler.buildDepError "base"))
             (hsPkgs."relude" or (errorHandler.buildDepError "relude"))
@@ -466,10 +534,11 @@
             (hsPkgs."warp" or (errorHandler.buildDepError "warp"))
             ] ++ (pkgs.lib).optionals (!flags.ghcid) [
             (hsPkgs."realworld-haskell".components.sublibs.backend-api-internal or (errorHandler.buildDepError "realworld-haskell:backend-api-internal"))
-            (hsPkgs."realworld-haskell".components.sublibs.backend-data-internal or (errorHandler.buildDepError "realworld-haskell:backend-data-internal"))
-            (hsPkgs."realworld-haskell".components.sublibs.backend-effect-internal or (errorHandler.buildDepError "realworld-haskell:backend-effect-internal"))
             (hsPkgs."realworld-haskell".components.sublibs.backend-in-mem-carrier-internal or (errorHandler.buildDepError "realworld-haskell:backend-in-mem-carrier-internal"))
             (hsPkgs."realworld-haskell".components.sublibs.backend-rel8-carrier-internal or (errorHandler.buildDepError "realworld-haskell:backend-rel8-carrier-internal"))
+            (hsPkgs."realworld-haskell".components.sublibs.common-data-internal or (errorHandler.buildDepError "realworld-haskell:common-data-internal"))
+            (hsPkgs."realworld-haskell".components.sublibs.common-api-internal or (errorHandler.buildDepError "realworld-haskell:common-api-internal"))
+            (hsPkgs."realworld-haskell".components.sublibs.common-effect-internal or (errorHandler.buildDepError "realworld-haskell:common-effect-internal"))
             ];
           buildable = true;
           modules = [
@@ -483,8 +552,9 @@
             "StateMachine/Util"
             ];
           hsSourceDirs = [ "test" ] ++ (pkgs.lib).optionals (!(!flags.ghcid)) [
-            "backend/src/data"
-            "backend/src/effect"
+            "common/src/data"
+            "common/src/effect"
+            "common/src/api"
             "backend/src/api"
             "backend/src/carrier/mem"
             "backend/src/carrier/rel8"
