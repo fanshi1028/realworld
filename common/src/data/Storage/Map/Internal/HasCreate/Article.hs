@@ -13,19 +13,19 @@
 --
 -- Create 'Article' in storage
 --
--- @since 0.3.0.0
-module Storage.Map.Internal.HasCreate.Article where
+-- @since 0.4.0.0
+module Data.Storage.Map.Internal.HasCreate.Article where
 
 import Data.Aeson (FromJSON (parseJSON), Value (Array, Object), defaultOptions, genericParseJSON, withObject)
+import Data.Domain (Domain (Article))
+import Data.Field.Body (Body)
+import Data.Field.Description (Description)
+import Data.Field.Tag (Tag)
+import Data.Field.Title (Title)
 import Data.Generic.HKD (construct)
-import Domain (Domain (Article))
-import Field.Body (Body)
-import Field.Description (Description)
-import Field.Tag (Tag)
-import Field.Title (Title)
-import Storage.Map.Internal.HasCreate (HasCreate (CreateOf))
-import Util.JSON.From (In, insert', wrappedParseJSON)
-import Util.Validation (WithValidation)
+import Data.Storage.Map.Internal.HasCreate (HasCreate (CreateOf))
+import Data.Util.JSON.From (In, insert', wrappedParseJSON)
+import Data.Util.Validation (WithValidation)
 
 -- $setup
 -- >>> import Data.Aeson (eitherDecode')

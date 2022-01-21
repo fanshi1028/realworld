@@ -9,10 +9,10 @@
 --
 -- Type family for creating in storage
 --
--- @since 0.3.0.0
-module Storage.Map.Internal.HasCreate where
+-- @since 0.4.0.0
+module Data.Storage.Map.Internal.HasCreate where
 
-import Domain (Domain)
+import Data.Domain (Domain)
 
 -- | @since 0.3.0.0
 class HasCreate (s :: Domain) where

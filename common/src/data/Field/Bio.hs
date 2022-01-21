@@ -12,11 +12,11 @@
 --
 -- Field for Bio
 --
--- @since 0.2.0.0
-module Field.Bio where
+-- @since 0.4.0.0
+module Data.Field.Bio where
 
 import Data.Aeson (FromJSON, ToJSON)
-import Util.Validation (NoValidation (..), WithNoValidation, WithValidation)
+import Data.Util.Validation (NoValidation (..), WithNoValidation, WithValidation)
 
 -- | @since 0.2.0.0
 newtype Bio = Bio Text

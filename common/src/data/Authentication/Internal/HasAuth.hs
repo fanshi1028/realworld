@@ -9,10 +9,10 @@
 --
 -- Type family for auth
 --
--- @since 0.2.0.0
-module Authentication.Internal.HasAuth where
+-- @since 0.4.0.0
+module Data.Authentication.Internal.HasAuth where
 
-import Domain (Domain)
+import Data.Domain (Domain)
 
 -- | @since 0.2.0.0
 class HasAuth (s :: Domain) where

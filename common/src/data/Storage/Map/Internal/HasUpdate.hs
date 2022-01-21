@@ -12,15 +12,15 @@
 --
 -- Type family for updating in storage
 --
--- @since 0.3.0.0
-module Storage.Map.Internal.HasUpdate where
+-- @since 0.4.0.0
+module Data.Storage.Map.Internal.HasUpdate where
 
 import Data.Aeson (Object)
 import Data.Aeson.Types (Parser)
+import Data.Domain (Domain)
 import Data.Generic.HKD (HKD)
 import qualified Data.Semigroup as SG (Last)
-import Domain (Domain)
-import Util.JSON.From (acceptOnlyKeys)
+import Data.Util.JSON.From (acceptOnlyKeys)
 
 -- | @since 0.3.0.0
 class HasUpdate (s :: Domain) where

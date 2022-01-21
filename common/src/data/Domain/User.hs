@@ -10,17 +10,17 @@
 --
 -- Representations for user
 --
--- @since 0.2.0.0
-module Domain.User where
+-- @since 0.4.0.0
+module Data.Domain.User where
 
-import Authentication.Internal.HasAuth (AuthOf)
 import Data.Aeson (ToJSON (toEncoding, toJSON), Value (Object), defaultOptions, genericToJSON)
+import Data.Authentication.Internal.HasAuth (AuthOf)
+import Data.Domain (Domain (User))
 import qualified Data.HashMap.Strict as HM (insert)
-import Domain (Domain (User))
+import Data.Token.Internal.HasToken (TokenOf)
+import Data.Token.Internal.HasToken.User ()
+import Data.Util.JSON.To (Out, wrappedToEncoding, wrappedToJSON)
 import Servant.Auth.Server (ToJWT (encodeJWT))
-import Token.Internal.HasToken (TokenOf)
-import Token.Internal.HasToken.User ()
-import Util.JSON.To (Out, wrappedToEncoding, wrappedToJSON)
 
 -- $setup
 -- >>> import Data.Aeson (encode)

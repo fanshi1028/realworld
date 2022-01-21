@@ -12,11 +12,11 @@
 --
 -- Field for Description
 --
--- @since 0.2.0.0
-module Field.Description where
+-- @since 0.4.0.0
+module Data.Field.Description where
 
 import Data.Aeson (FromJSON, ToJSON)
-import Util.Validation (NoValidation (..), WithNoValidation, WithValidation)
+import Data.Util.Validation (NoValidation (..), WithNoValidation, WithValidation)
 
 -- | @since 0.2.0.0
 newtype Description = Description Text deriving newtype (Show, Eq, ToJSON, FromJSON)

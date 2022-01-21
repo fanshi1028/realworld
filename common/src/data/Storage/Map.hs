@@ -10,8 +10,8 @@
 --
 -- Type to related to storing data in memory as a map
 --
--- @since 0.3.0.0
-module Storage.Map
+-- @since 0.4.0.0
+module Data.Storage.Map
   ( -- * Error
 
     -- ** Forbidden
@@ -37,19 +37,19 @@ module Storage.Map
   )
 where
 
-import Domain (Domain)
-import Storage.Error (AlreadyExists, NotFound)
-import Storage.Map.Internal.HasCreate as X
-import Storage.Map.Internal.HasCreate.Article as X
-import Storage.Map.Internal.HasCreate.Comment as X
-import Storage.Map.Internal.HasCreate.User as X
-import Storage.Map.Internal.HasStorage as Y
-import Storage.Map.Internal.HasStorage.Article as Y
-import Storage.Map.Internal.HasStorage.Comment as Y
-import Storage.Map.Internal.HasStorage.User as Y
-import Storage.Map.Internal.HasUpdate as Z
-import Storage.Map.Internal.HasUpdate.Article as Z
-import Storage.Map.Internal.HasUpdate.User as Z
+import Data.Domain (Domain)
+import Data.Storage.Error (AlreadyExists, NotFound)
+import Data.Storage.Map.Internal.HasCreate as X
+import Data.Storage.Map.Internal.HasCreate.Article as X
+import Data.Storage.Map.Internal.HasCreate.Comment as X
+import Data.Storage.Map.Internal.HasCreate.User as X
+import Data.Storage.Map.Internal.HasStorage as Y
+import Data.Storage.Map.Internal.HasStorage.Article as Y
+import Data.Storage.Map.Internal.HasStorage.Comment as Y
+import Data.Storage.Map.Internal.HasStorage.User as Y
+import Data.Storage.Map.Internal.HasUpdate as Z
+import Data.Storage.Map.Internal.HasUpdate.Article as Z
+import Data.Storage.Map.Internal.HasUpdate.User as Z
 
 -- | @since 0.3.0.0
 -- see 'Forbidden'

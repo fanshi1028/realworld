@@ -10,11 +10,11 @@
 --
 -- Field for Body
 --
--- @since 0.2.0.0
-module Field.Body where
+-- @since 0.4.0.0
+module Data.Field.Body where
 
 import Data.Aeson (FromJSON, ToJSON)
-import Util.Validation (NoValidation (..), WithNoValidation, WithValidation)
+import Data.Util.Validation (NoValidation (..), WithNoValidation, WithValidation)
 
 -- | @since 0.2.0.0
 newtype Body = Body Text deriving newtype (Show, Eq, ToJSON, FromJSON)

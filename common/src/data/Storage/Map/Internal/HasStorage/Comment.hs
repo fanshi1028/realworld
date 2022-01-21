@@ -16,16 +16,16 @@
 --
 -- Storage for 'Comment'
 --
--- @since 0.3.0.0
-module Storage.Map.Internal.HasStorage.Comment where
+-- @since 0.4.0.0
+module Data.Storage.Map.Internal.HasStorage.Comment where
 
 import Data.Aeson (FromJSON, ToJSON)
+import Data.Domain (Domain (Article, Comment, User))
+import Data.Field.Time (Time)
+import Data.Storage.Map.Internal.HasStorage (HasStorage (..))
 import Data.UUID (UUID)
-import Domain (Domain (Article, Comment, User))
-import Field.Time (Time)
+import Data.Util.Validation (NoValidation (..), WithNoValidation, WithValidation)
 import Servant (FromHttpApiData)
-import Storage.Map.Internal.HasStorage (HasStorage (..))
-import Util.Validation (NoValidation (..), WithNoValidation, WithValidation)
 
 -- | @since 0.3.0.0
 instance HasStorage 'Comment where

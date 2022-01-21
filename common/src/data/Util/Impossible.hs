@@ -7,7 +7,7 @@
 -- Error for impossible
 --
 -- @since 0.4.0.0
-module Util.Impossible where
+module Data.Util.Impossible where
 
 import Text.Show (showString, showsPrec)
 

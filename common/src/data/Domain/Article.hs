@@ -10,17 +10,17 @@
 --
 -- Representations for article
 --
--- @since 0.2.0.0
-module Domain.Article where
+-- @since 0.4.0.0
+module Data.Domain.Article where
 
 import Data.Aeson (ToJSON (toEncoding, toJSON), Value (Object))
 import qualified Data.HashMap.Strict as HM
-import Domain (Domain (Article))
-import Domain.User (UserProfile)
-import Field.Tag (Tag)
+import Data.Domain (Domain (Article))
+import Data.Domain.User (UserProfile)
+import Data.Field.Tag (Tag)
 import GHC.Records (getField)
-import Storage.Map (ContentOf (..), toArticleId)
-import Util.JSON.To (Out, multiWrappedWithCountToEncoding, multiWrappedWithCountToJSON, wrappedToEncoding, wrappedToJSON)
+import Data.Storage.Map (ContentOf (..), toArticleId)
+import Data.Util.JSON.To (Out, multiWrappedWithCountToEncoding, multiWrappedWithCountToJSON, wrappedToEncoding, wrappedToJSON)
 
 -- $setup
 -- >>> import Data.Aeson (encode)

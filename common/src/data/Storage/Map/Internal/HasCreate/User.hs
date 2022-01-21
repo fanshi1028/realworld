@@ -14,18 +14,18 @@
 --
 -- Create 'User' in storage
 --
--- @since 0.3.0.0
-module Storage.Map.Internal.HasCreate.User where
+-- @since 0.4.0.0
+module Data.Storage.Map.Internal.HasCreate.User where
 
 import Data.Aeson (FromJSON (parseJSON), defaultOptions, genericParseJSON)
+import Data.Domain (Domain (User))
+import Data.Field.Email (Email)
+import Data.Field.Password (Password)
+import Data.Field.Username (Username)
 import Data.Generic.HKD (construct)
-import Domain (Domain (User))
-import Field.Email (Email)
-import Field.Password (Password)
-import Field.Username (Username)
-import Storage.Map.Internal.HasCreate (HasCreate (CreateOf))
-import Util.JSON.From (In, wrappedParseJSON)
-import Util.Validation (WithValidation)
+import Data.Storage.Map.Internal.HasCreate (HasCreate (CreateOf))
+import Data.Util.JSON.From (In, wrappedParseJSON)
+import Data.Util.Validation (WithValidation)
 
 -- $setup
 -- >>> import Data.Aeson (eitherDecode')

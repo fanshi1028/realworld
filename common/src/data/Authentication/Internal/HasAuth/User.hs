@@ -13,21 +13,21 @@
 --
 -- Auth for 'User'
 --
--- @since 0.2.0.0
-module Authentication.Internal.HasAuth.User where
+-- @since 0.4.0.0
+module Data.Authentication.Internal.HasAuth.User where
 
-import Authentication.Internal.HasAuth (HasAuth (..))
 import Data.Aeson (FromJSON (parseJSON), ToJSON, defaultOptions, genericParseJSON)
+import Data.Authentication.Internal.HasAuth (HasAuth (..))
+import Data.Domain (Domain (User))
+import Data.Field.Bio (Bio)
+import Data.Field.Email (Email)
+import Data.Field.Image (Image)
+import Data.Field.Password (Password)
+import Data.Field.Username (Username)
 import Data.Generic.HKD (construct)
-import Domain (Domain (User))
-import Field.Bio (Bio)
-import Field.Email (Email)
-import Field.Image (Image)
-import Field.Password (Password)
-import Field.Username (Username)
+import Data.Util.JSON.From (In, wrappedParseJSON)
+import Data.Util.Validation (WithValidation)
 import Servant.Auth.Server (FromJWT, ToJWT)
-import Util.JSON.From (In, wrappedParseJSON)
-import Util.Validation (WithValidation)
 
 -- $setup
 -- >>> import Data.Aeson (eitherDecode')

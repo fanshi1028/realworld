@@ -12,11 +12,11 @@
 --
 -- Field for Image
 --
--- @since 0.2.0.0
-module Field.Image where
+-- @since 0.4.0.0
+module Data.Field.Image where
 
 import Data.Aeson (FromJSON, ToJSON)
-import Util.Validation (NoValidation (..), WithNoValidation, WithValidation)
+import Data.Util.Validation (NoValidation (..), WithNoValidation, WithValidation)
 
 -- | @since 0.2.0.0
 newtype Image

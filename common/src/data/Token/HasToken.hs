@@ -10,8 +10,8 @@
 --
 -- typeclass eport for HasToken
 --
--- @since 0.3.0.0
-module Token.HasToken
+-- @since 0.4.0.0
+module Data.Token.HasToken
   ( -- * Typeclass
 
     -- ** HasToken
@@ -19,5 +19,5 @@ module Token.HasToken
   )
 where
 
-import Token.Internal.HasToken as X
-import Token.Internal.HasToken.User as X
+import Data.Token.Internal.HasToken as X
+import Data.Token.Internal.HasToken.User as X

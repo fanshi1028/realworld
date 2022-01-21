@@ -16,20 +16,20 @@
 --
 -- Storage for 'User'
 --
--- @since 0.2.0.0
-module Storage.Map.Internal.HasStorage.User where
+-- @since 0.4.0.0
+module Data.Storage.Map.Internal.HasStorage.User where
 
 import Data.Aeson (ToJSON)
-import Domain (Domain (User))
-import Field.Bio (Bio)
-import Field.Email (Email)
-import Field.Image (Image)
-import Field.Password (PasswordHash)
-import Field.Username (Username)
+import Data.Domain (Domain (User))
+import Data.Field.Bio (Bio)
+import Data.Field.Email (Email)
+import Data.Field.Image (Image)
+import Data.Field.Password (PasswordHash)
+import Data.Field.Username (Username)
+import Data.Storage.Map.Internal.HasStorage (HasStorage (..))
+import Data.Util.Validation (WithValidation)
 import GHC.Records (HasField, getField)
 import Servant (FromHttpApiData)
-import Storage.Map.Internal.HasStorage (HasStorage (..))
-import Util.Validation (WithValidation)
 
 -- | @since 0.3.0.0
 instance HasStorage 'User where

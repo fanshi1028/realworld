@@ -10,14 +10,14 @@
 --
 -- Field for Time
 --
--- @since 0.2.0.0
-module Field.Time where
+-- @since 0.4.0.0
+module Data.Field.Time where
 
 import Data.Aeson (FromJSON)
 import Data.Aeson.Types (ToJSON)
 import Data.Time (UTCTime)
 import qualified Data.Time as T (getCurrentTime)
-import Util.Validation (NoValidation (..), WithNoValidation, WithValidation)
+import Data.Util.Validation (NoValidation (..), WithNoValidation, WithValidation)
 
 -- | @since 0.3.0.0
 newtype Time = Time UTCTime deriving newtype (Show, Eq, Ord, ToJSON, FromJSON)

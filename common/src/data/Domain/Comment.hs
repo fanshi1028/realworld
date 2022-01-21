@@ -10,15 +10,15 @@
 --
 -- Representations for comment
 --
--- @since 0.2.0.0
-module Domain.Comment where
+-- @since 0.4.0.0
+module Data.Domain.Comment where
 
 import Data.Aeson (ToJSON (toEncoding, toJSON))
-import Domain (Domain (Comment))
-import Domain.User (UserProfile)
-import Field.Time (Time)
-import Storage.Map (IdOf)
-import Util.JSON.To (Out, wrappedToEncoding, wrappedToJSON)
+import Data.Domain (Domain (Comment))
+import Data.Domain.User (UserProfile)
+import Data.Field.Time (Time)
+import Data.Storage.Map (IdOf)
+import Data.Util.JSON.To (Out, wrappedToEncoding, wrappedToJSON)
 
 -- $setup
 -- >>> import Data.Aeson (encode)

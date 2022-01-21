@@ -6,8 +6,8 @@
 --
 -- Domain Type
 --
--- @since 0.2.0.0
-module Domain where
+-- @since 0.4.0.0
+module Data.Domain where
 
 -- | @since 0.2.0.0
 data Domain

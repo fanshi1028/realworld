@@ -13,15 +13,15 @@
 --
 -- Create 'Comment' in storage
 --
--- @since 0.3.0.0
-module Storage.Map.Internal.HasCreate.Comment where
+-- @since 0.4.0.0
+module Data.Storage.Map.Internal.HasCreate.Comment where
 
 import Data.Aeson (FromJSON (parseJSON), defaultOptions, genericParseJSON)
+import Data.Domain (Domain (Comment))
 import Data.Generic.HKD (construct)
-import Domain (Domain (Comment))
-import Storage.Map.Internal.HasCreate (HasCreate (CreateOf))
-import Util.JSON.From (In, wrappedParseJSON)
-import Util.Validation (WithValidation)
+import Data.Storage.Map.Internal.HasCreate (HasCreate (CreateOf))
+import Data.Util.JSON.From (In, wrappedParseJSON)
+import Data.Util.Validation (WithValidation)
 
 -- $setup
 -- >>> import Data.Aeson (eitherDecode')

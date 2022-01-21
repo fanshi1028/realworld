@@ -12,13 +12,13 @@
 --
 -- Auth token for 'User'
 --
--- @since 0.2.0.0
-module Token.Internal.HasToken.User where
+-- @since 0.4.0.0
+module Data.Token.Internal.HasToken.User where
 
 import Data.Aeson (ToJSON (toJSON))
-import Domain (Domain (User))
+import Data.Domain (Domain (User))
 import Servant (FromHttpApiData (parseUrlPiece))
-import Token.Internal.HasToken (HasToken (..))
+import Data.Token.Internal.HasToken (HasToken (..))
 
 -- | @since 0.3.0.0
 instance HasToken 'User where

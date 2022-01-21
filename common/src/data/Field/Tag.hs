@@ -10,13 +10,13 @@
 --
 -- Field for Tag
 --
--- @since 0.2.0.0
-module Field.Tag where
+-- @since 0.4.0.0
+module Data.Field.Tag where
 
 import Data.Aeson (FromJSON, ToJSON (toEncoding), toJSON)
+import Data.Util.JSON.To (Out, wrappedToEncoding, wrappedToJSON)
+import Data.Util.Validation (NoValidation (..), WithNoValidation, WithValidation)
 import Servant (FromHttpApiData)
-import Util.JSON.To (Out, wrappedToEncoding, wrappedToJSON)
-import Util.Validation (NoValidation (..), WithNoValidation, WithValidation)
 
 -- | @since 0.2.0.0
 newtype Tag = Tag Text deriving newtype (Show, Eq, Hashable, ToJSON)

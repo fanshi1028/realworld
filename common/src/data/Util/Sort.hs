@@ -6,8 +6,8 @@
 --
 -- Monoid for sort
 --
--- @since 0.3.0.0
-module Util.Sort (toSort, getSorted) where
+-- @since 0.4.0.0
+module Data.Util.Sort (toSort, getSorted) where
 
 -- | @since 0.3.0.0
 mergeSort :: Ord a => [a] -> [a] -> [a]

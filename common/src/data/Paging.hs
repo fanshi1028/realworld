@@ -9,11 +9,11 @@
 --
 -- paging
 --
--- @since 0.3.0.0
-module Paging where
+-- @since 0.4.0.0
+module Data.Paging where
 
+import Data.Util.Validation (NoValidation (..), WithNoValidation, WithValidation)
 import Servant (FromHttpApiData)
-import Util.Validation (NoValidation (..), WithNoValidation, WithValidation)
 
 -- * Type
 

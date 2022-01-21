@@ -12,8 +12,8 @@
 --
 -- HasAuth Typeclass and Error
 --
--- @since 0.3.0.0
-module Authentication.HasAuth
+-- @since 0.4.0.0
+module Data.Authentication.HasAuth
   ( -- * Error
 
     -- ** Not Authorized
@@ -32,9 +32,9 @@ module Authentication.HasAuth
   )
 where
 
-import Authentication.Internal.HasAuth as X
-import Authentication.Internal.HasAuth.User as X
-import Domain (Domain)
+import Data.Authentication.Internal.HasAuth as X
+import Data.Authentication.Internal.HasAuth.User as X
+import Data.Domain (Domain)
 
 -- | @since 0.3.0.0
 newtype AlreadyLogin (a :: Domain) = AlreadyLogin (LoginOf a)

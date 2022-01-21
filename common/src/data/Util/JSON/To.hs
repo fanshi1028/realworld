@@ -9,8 +9,8 @@
 --
 -- Utils to tweak 'ToJSON' instances
 --
--- @since 0.1.0.0
-module Util.JSON.To
+-- @since 0.4.0.0
+module Data.Util.JSON.To
   ( -- * Types
     Out (..),
 

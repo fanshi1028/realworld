@@ -8,8 +8,8 @@
 --
 -- Common error for storage effect
 --
--- @since 0.3.0.0
-module Storage.Error where
+-- @since 0.4.0.0
+module Data.Storage.Error where
 
 import Data.Aeson (ToJSON)
 

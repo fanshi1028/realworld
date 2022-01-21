@@ -10,12 +10,12 @@
 --
 -- Field for Email
 --
--- @since 0.2.0.0
-module Field.Email (Email (Email)) where
+-- @since 0.4.0.0
+module Data.Field.Email (Email (Email)) where
 
 import Data.Aeson (FromJSON (parseJSON), ToJSON, withText)
 import qualified Data.Text as T
-import Util.Validation (WithValidation, validate)
+import Data.Util.Validation (WithValidation, validate)
 
 -- $setup
 -- >>> import Data.Aeson (eitherDecode')

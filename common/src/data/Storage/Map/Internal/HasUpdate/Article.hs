@@ -14,24 +14,24 @@
 --
 -- Updating in storage for 'Article'
 --
--- @since 0.3.0.0
-module Storage.Map.Internal.HasUpdate.Article where
+-- @since 0.4.0.0
+module Data.Storage.Map.Internal.HasUpdate.Article where
 
 import Data.Aeson (FromJSON (parseJSON), withObject, (.!=), (.:?))
 import Data.Generic.HKD (HKD, build, construct)
 import Data.Generics.Product (HasField' (field'))
 import Data.Generics.Product.Fields (getField)
 import qualified Data.Semigroup as SG
-import Domain (Domain (Article))
-import Field.Body (Body)
-import Field.Description (Description)
-import Field.Title (Title)
+import Data.Domain (Domain (Article))
+import Data.Field.Body (Body)
+import Data.Field.Description (Description)
+import Data.Field.Title (Title)
+import Data.Storage.Map.Internal.HasStorage (ContentOf)
+import Data.Storage.Map.Internal.HasStorage.Article ()
+import Data.Storage.Map.Internal.HasUpdate (HasUpdate (UpdateOf), Patch, updatableKeys)
+import Data.Util.JSON.From (In, wrappedParseJSON)
+import Data.Util.Validation (WithValidation)
 import Relude.Extra ((.~))
-import Storage.Map.Internal.HasStorage (ContentOf)
-import Storage.Map.Internal.HasStorage.Article ()
-import Storage.Map.Internal.HasUpdate (HasUpdate (UpdateOf), Patch, updatableKeys)
-import Util.JSON.From (In, wrappedParseJSON)
-import Util.Validation (WithValidation)
 
 -- $setup
 -- >>> import Data.Aeson (eitherDecode')

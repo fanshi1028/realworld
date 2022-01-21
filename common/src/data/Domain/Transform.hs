@@ -10,13 +10,13 @@
 --
 -- Transforms between different representations of Domain Types.
 --
--- @since 0.2.0.0
-module Domain.Transform (Transform (transform)) where
+-- @since 0.4.0.0
+module Data.Domain.Transform (Transform (transform)) where
 
-import Authentication.HasAuth (AuthOf (UserAuth))
-import Domain (Domain (Article, Comment, User))
+import Data.Authentication.HasAuth (AuthOf (UserAuth))
+import Data.Domain (Domain (Article, Comment, User))
+import Data.Storage.Map (ContentOf (..), IdOf, toArticleId, toUserId)
 import GHC.Records (getField)
-import Storage.Map (ContentOf (..), IdOf, toArticleId, toUserId)
 
 -- | @since 0.2.0.0
 -- Transform between representation of data

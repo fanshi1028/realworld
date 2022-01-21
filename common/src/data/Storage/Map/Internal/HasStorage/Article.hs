@@ -16,21 +16,21 @@
 --
 -- Storage for 'Article'
 --
--- @since 0.3.0.0
-module Storage.Map.Internal.HasStorage.Article where
+-- @since 0.4.0.0
+module Data.Storage.Map.Internal.HasStorage.Article where
 
 import Data.Aeson (ToJSON)
-import Domain (Domain (Article, User))
-import Field.Body (Body)
-import Field.Description (Description)
-import Field.Slug (Slug, titleToSlug)
-import Field.Time (Time)
-import Field.Title (Title)
+import Data.Domain (Domain (Article, User))
+import Data.Field.Body (Body)
+import Data.Field.Description (Description)
+import Data.Field.Slug (Slug, titleToSlug)
+import Data.Field.Time (Time)
+import Data.Field.Title (Title)
+import Data.Storage.Map.Internal.HasStorage (HasStorage (..))
+import Data.Storage.Map.Internal.HasStorage.User ()
+import Data.Util.Validation (WithValidation)
 import GHC.Records (HasField, getField)
 import Servant (FromHttpApiData)
-import Storage.Map.Internal.HasStorage (HasStorage (..))
-import Storage.Map.Internal.HasStorage.User ()
-import Util.Validation (WithValidation)
 
 -- | @since 0.3.0.0
 instance HasStorage 'Article where

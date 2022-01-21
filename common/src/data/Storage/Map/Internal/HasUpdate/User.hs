@@ -14,21 +14,21 @@
 --
 -- Updating in storage for 'User'
 --
--- @since 0.3.0.0
-module Storage.Map.Internal.HasUpdate.User where
+-- @since 0.4.0.0
+module Data.Storage.Map.Internal.HasUpdate.User where
 
 import Data.Aeson (FromJSON (parseJSON), withObject, (.!=), (.:?))
 import Data.Generic.HKD (HKD, build, construct)
 import qualified Data.Semigroup as SG
-import Domain (Domain (User))
-import Field.Bio (Bio)
-import Field.Email (Email)
-import Field.Image (Image)
-import Field.Password (Password)
-import Field.Username (Username)
-import Storage.Map.Internal.HasUpdate (HasUpdate (..), Patch, updatableKeys)
-import Util.JSON.From (In, wrappedParseJSON)
-import Util.Validation (WithValidation)
+import Data.Domain (Domain (User))
+import Data.Field.Bio (Bio)
+import Data.Field.Email (Email)
+import Data.Field.Image (Image)
+import Data.Field.Password (Password)
+import Data.Field.Username (Username)
+import Data.Storage.Map.Internal.HasUpdate (HasUpdate (..), Patch, updatableKeys)
+import Data.Util.JSON.From (In, wrappedParseJSON)
+import Data.Util.Validation (WithValidation)
 
 -- $setup
 -- >>> import Data.Aeson (eitherDecode')

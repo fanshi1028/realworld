@@ -9,10 +9,10 @@
 --
 -- Type family for storage
 --
--- @since 0.3.0.0
-module Storage.Map.Internal.HasStorage where
+-- @since 0.4.0.0
+module Data.Storage.Map.Internal.HasStorage where
 
-import Domain (Domain)
+import Data.Domain (Domain)
 
 -- | @since 0.3.0.0
 class HasStorage (s :: Domain) where

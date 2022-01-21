@@ -13,15 +13,15 @@
 --
 -- Field for Password
 --
--- @since 0.2.0.0
-module Field.Password (Password (Password), PasswordHash (PasswordHash), Salt (Salt), hashPassword, checkPassword, newSalt) where
+-- @since 0.4.0.0
+module Data.Field.Password (Password (Password), PasswordHash (PasswordHash), Salt (Salt), hashPassword, checkPassword, newSalt) where
 
 import Data.Aeson (FromJSON (parseJSON))
 import Data.Aeson.Types (withText)
 import Data.Password.Argon2 (Argon2, PasswordCheck, defaultParams, hashPasswordWithSalt, mkPassword)
 import qualified Data.Password.Argon2 as Argon2 (Password, PasswordHash, Salt (Salt), checkPassword)
 import Data.Password.Validate (ValidationResult (InvalidPassword, ValidPassword), defaultPasswordPolicy_, validatePassword)
-import Util.Validation (WithValidation)
+import Data.Util.Validation (WithValidation)
 import qualified Validation as V (Validation (Failure, Success))
 
 -- | @since 0.2.0.0
