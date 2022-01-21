@@ -8,10 +8,10 @@
 --
 -- Effect for invalidating token
 --
--- @since 0.3.0.0
-module Token.Invalidate where
+-- @since 0.4.0.0
+module Effect.Token.Invalidate where
 
-import Token.HasToken (TokenOf)
+import Data.Token.HasToken (TokenOf)
 
 -- | @since 0.3.0.0
 data InvalidateTokenE s (m :: Type -> Type) a where

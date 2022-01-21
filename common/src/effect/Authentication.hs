@@ -8,15 +8,15 @@
 --
 -- Effect of authentication
 --
--- @since 0.3.0.0
-module Authentication
+-- @since 0.4.0.0
+module Effect.Authentication
   ( AuthenticationE (..),
   )
 where
 
-import Authentication.HasAuth (HasAuth (AuthOf, LoginOf))
-import Domain (Domain)
-import Storage.Map (CreateOf)
+import Data.Authentication.HasAuth (HasAuth (AuthOf, LoginOf))
+import Data.Domain (Domain)
+import Data.Storage.Map (CreateOf)
 
 -- | @since 0.3.0.0
 data AuthenticationE (s :: Domain) (m :: Type -> Type) a where

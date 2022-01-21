@@ -13,23 +13,23 @@
 --
 -- Carrier for creating JWT token
 --
--- @since 0.3.0.0
-module Token.Create.JWT (CreateTokenJWTC (runCreateTokenJWT)) where
+-- @since 0.4.0.0
+module Effect.Token.Create.JWT (CreateTokenJWTC (runCreateTokenJWT)) where
 
-import Authentication.HasAuth (AuthOf)
 import Control.Algebra (Algebra (alg), type (:+:) (L, R))
 import qualified Control.Effect.Reader as R (Reader, ask, asks)
-import qualified Control.Effect.State as S
+import qualified Control.Effect.State as S (State, get, put)
 import Control.Effect.Sum (Member)
 import Control.Effect.Throw (Throw, throwError)
 import Crypto.JOSE (Error)
 import Crypto.JWT (DRG, NumericDate (NumericDate), bestJWSAlg, claimExp, encodeCompact, newJWSHeader, signClaims, withDRG)
-import Domain (Domain)
-import Field.Time (Time (Time))
+import Data.Authentication.HasAuth (AuthOf)
+import Data.Domain (Domain)
+import Data.Field.Time (Time (Time))
+import Data.Token.HasToken (TokenOf)
+import Effect.Token.Create (CreateTokenE (CreateToken))
 import Relude.Extra (un, (.~))
 import Servant.Auth.Server (CookieSettings (cookieExpires), JWTSettings, ToJWT, encodeJWT, jwtAlg, signingKey)
-import Token.Create (CreateTokenE (CreateToken))
-import Token.HasToken (TokenOf)
 
 -- | @since 0.3.0.0
 newtype CreateTokenJWTC (s :: Domain) gen (m :: Type -> Type) a = CreateTokenJWTC

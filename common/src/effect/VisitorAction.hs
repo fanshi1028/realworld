@@ -6,10 +6,10 @@
 --
 -- Effect of visitors' action
 --
--- @since 0.3.0.0
-module VisitorAction where
+-- @since 0.4.0.0
+module Effect.VisitorAction where
 
-import Field.Tag (Tag)
+import Data.Field.Tag (Tag)
 
 -- | @since 0.3.0.0
 -- Actions that can be carried out by visitor(__unauthenticated__).

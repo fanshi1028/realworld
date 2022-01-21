@@ -8,15 +8,15 @@
 --
 -- Effect of users' action
 --
--- @since 0.1.0.0
-module UserAction where
+-- @since 0.4.0.0
+module Effect.UserAction where
 
-import Authentication.HasAuth (AuthOf (..))
-import Domain (Domain (Article, Comment, User))
-import Domain.Article (ArticleWithAuthorProfile)
-import Domain.Comment (CommentWithAuthorProfile)
-import Domain.User (UserAuthWithToken, UserProfile)
-import Storage.Map (CreateOf, IdOf, Patch, UpdateOf)
+import Data.Authentication.HasAuth (AuthOf (..))
+import Data.Domain (Domain (Article, Comment, User))
+import Data.Domain.Article (ArticleWithAuthorProfile)
+import Data.Domain.Comment (CommentWithAuthorProfile)
+import Data.Domain.User (UserAuthWithToken, UserProfile)
+import Data.Storage.Map (CreateOf, IdOf, Patch, UpdateOf)
 
 -- | @since 0.3.0.0
 -- Actions that can only be carried out by __authenticated__ users.

@@ -8,15 +8,15 @@
 --
 -- Effect of optionally authed action (many)
 --
--- @since 0.3.0.0
-module OptionalAuthAction.Many where
+-- @since 0.4.0.0
+module Effect.OptionalAuthAction.Many where
 
-import Domain (Domain (Article))
-import Domain.Article (ArticleWithAuthorProfile)
-import Domain.Comment (CommentWithAuthorProfile)
-import Field.Tag (Tag)
-import Field.Username (Username)
-import Storage.Map (HasStorage (IdOf))
+import Data.Domain (Domain (Article))
+import Data.Domain.Article (ArticleWithAuthorProfile)
+import Data.Domain.Comment (CommentWithAuthorProfile)
+import Data.Field.Tag (Tag)
+import Data.Field.Username (Username)
+import Data.Storage.Map (HasStorage (IdOf))
 
 -- | @since 0.3.0.0
 -- Optionally authed actions that can be carried out by visitors or users with different behaviours.

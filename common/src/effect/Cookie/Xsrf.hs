@@ -11,8 +11,8 @@
 --
 -- Effect and Carrier of creating xsrf cookie
 --
--- @since 0.3.0.0
-module Cookie.Xsrf where
+-- @since 0.4.0.0
+module Effect.Cookie.Xsrf where
 
 import Control.Algebra (alg, type (:+:) (L, R))
 import Control.Effect.Lift (Algebra)

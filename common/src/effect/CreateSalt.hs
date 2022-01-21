@@ -11,14 +11,14 @@
 --
 -- Effect and Carrier of create salt
 --
--- @since 0.1.0.0
-module CreateSalt (CreateSaltE (CreateSalt), CreateSaltC (runCreateSalt)) where
+-- @since 0.4.0.0
+module Effect.CreateSalt (CreateSaltE (CreateSalt), CreateSaltC (runCreateSalt)) where
 
 import Control.Algebra (Algebra (alg), type (:+:) (L, R))
 import qualified Control.Effect.State as S (State, get, put)
 import Control.Effect.Sum (Member)
 import Crypto.Random (DRG, MonadRandom (getRandomBytes), withDRG)
-import Field.Password (Salt, newSalt)
+import Data.Field.Password (Salt, newSalt)
 
 -- * Effect
 

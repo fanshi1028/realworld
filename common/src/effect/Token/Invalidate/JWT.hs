@@ -11,12 +11,12 @@
 --
 -- Carrier for invalidating JWT token (pure for now)
 --
--- @since 0.3.0.0
-module Token.Invalidate.JWT where
+-- @since 0.4.0.0
+module Effect.Token.Invalidate.JWT where
 
 import Control.Algebra (Algebra (alg), type (:+:) (L, R))
-import Domain (Domain)
-import Token.Invalidate (InvalidateTokenE (InvalidateToken))
+import Data.Domain (Domain)
+import Effect.Token.Invalidate (InvalidateTokenE (InvalidateToken))
 
 -- | @since 0.3.0.0
 newtype InvalidateTokenC (s :: Domain) (m :: Type -> Type) a = InvalidateTokenC

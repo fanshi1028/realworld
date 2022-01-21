@@ -13,22 +13,22 @@
 --
 -- Carrier for decoding JWT token
 --
--- @since 0.3.0.0
-module Token.Decode.JWT (DecodeTokenJWTC (runDecodeTokenJWT)) where
+-- @since 0.4.0.0
+module Effect.Token.Decode.JWT (DecodeTokenJWTC (runDecodeTokenJWT)) where
 
-import Authentication.HasAuth (AuthOf)
 import Control.Algebra (Algebra (alg), type (:+:) (L, R))
 import qualified Control.Effect.Reader as R (Reader, ask)
 import Control.Effect.Sum (Member)
 import Control.Effect.Throw (Throw, throwError)
 import Crypto.JWT (JWTError, decodeCompact, verifyClaimsAt)
-import Domain (Domain)
-import Field.Time (Time (Time))
+import Data.Authentication.HasAuth (AuthOf)
+import Data.Domain (Domain)
+import Data.Field.Time (Time (Time))
+import Data.Token.HasToken (TokenOf)
+import Effect.Token.Decode (DecodeTokenE (DecodeToken), InvalidToken (InvalidToken))
 import Relude.Extra (un)
 import Servant.Auth.Server (FromJWT, JWTSettings, decodeJWT, validationKeys)
 import Servant.Auth.Server.Internal.ConfigTypes (jwtSettingsToJwtValidationSettings)
-import Token.Decode (DecodeTokenE (DecodeToken), InvalidToken (InvalidToken))
-import Token.HasToken (TokenOf)
 
 -- | @since 0.3.0.0
 newtype DecodeTokenJWTC (s :: Domain) (m :: Type -> Type) a = DecodeTokenJWTC

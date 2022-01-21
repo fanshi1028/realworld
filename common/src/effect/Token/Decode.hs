@@ -11,8 +11,8 @@
 --
 -- Effect for decoding token
 --
--- @since 0.3.0.0
-module Token.Decode
+-- @since 0.4.0.0
+module Effect.Token.Decode
   ( DecodeTokenE (..),
 
     -- * Error
@@ -22,9 +22,9 @@ module Token.Decode
   )
 where
 
-import Authentication.HasAuth (AuthOf)
-import Domain (Domain)
-import Token.HasToken (TokenOf)
+import Data.Authentication.HasAuth (AuthOf)
+import Data.Domain (Domain)
+import Data.Token.HasToken (TokenOf)
 
 -- | @since 0.3.0.0
 data DecodeTokenE s (m :: Type -> Type) a where

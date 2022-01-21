@@ -6,11 +6,11 @@
 --
 -- Effect for creating token
 --
--- @since 0.3.0.0
-module Token.Create where
+-- @since 0.4.0.0
+module Effect.Token.Create where
 
-import Authentication.HasAuth (AuthOf)
-import Token.HasToken (TokenOf)
+import Data.Authentication.HasAuth (AuthOf)
+import Data.Token.HasToken (TokenOf)
 
 -- | @since 0.3.0.0
 data CreateTokenE s (m :: Type -> Type) a where

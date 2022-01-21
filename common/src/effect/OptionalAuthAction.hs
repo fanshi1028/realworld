@@ -8,13 +8,13 @@
 --
 -- Effect of optionally authed action
 --
--- @since 0.3.0.0
-module OptionalAuthAction where
+-- @since 0.4.0.0
+module Effect.OptionalAuthAction where
 
-import Domain (Domain (Article, User))
-import Domain.Article (ArticleWithAuthorProfile)
-import Domain.User (UserProfile)
-import Storage.Map (IdOf)
+import Data.Domain (Domain (Article, User))
+import Data.Domain.Article (ArticleWithAuthorProfile)
+import Data.Domain.User (UserProfile)
+import Data.Storage.Map (IdOf)
 
 -- | @since 0.3.0.0
 -- Optionally authed actions that can be carried out by visitors or users with different behaviours.
