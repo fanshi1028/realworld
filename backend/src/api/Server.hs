@@ -3,34 +3,33 @@
 {-# LANGUAGE FlexibleContexts #-}
 
 -- |
--- Description : API & Server
+-- Description : Server
 -- Copyright   : (c) 2021 fanshi1028
 -- Maintainer  : jackychany321@gmail.com
 -- Stability   : experimental
 --
--- All API & Server combined
+-- All Server combined
 --
 -- @since 0.1.0.0
 module Server where
 
-import Authentication (AuthenticationE)
-import Authentication.HasAuth (AuthOf, NotLogin (NotLogin))
-import qualified Authentication.HasAuth as AuthErr (NotAuthorized (BadPassword, NoSuchUser))
--- import Authorization (TokenAuth)
+import Effect.Authentication (AuthenticationE)
+import Data.Authentication.HasAuth (AuthOf, NotLogin (NotLogin))
+import qualified Data.Authentication.HasAuth as AuthErr (NotAuthorized (BadPassword, NoSuchUser))
 import Control.Algebra (Algebra)
 import qualified Control.Carrier.Reader as R (Reader, local)
 import Control.Effect.Catch (Catch)
 import Control.Effect.Sum (Member)
 import Control.Effect.Throw (Throw, throwError)
-import Cookie.Xsrf (CreateXsrfCookieE)
-import Domain (Domain (User))
-import Domain.User (UserAuthWithToken (UserAuthWithToken))
-import HTTP (Api)
-import HTTP.OptionalAuth (OptionalAuthApi)
-import HTTP.Protected (ProtectedApi)
-import OptionalAuthAction (OptionalAuthActionE)
-import OptionalAuthAction.Many (OptionalAuthActionManyE)
-import Paging (Limit, Offset)
+import Effect.Cookie.Xsrf (CreateXsrfCookieE)
+import Data.Domain (Domain (User))
+import Data.Domain.User (UserAuthWithToken (UserAuthWithToken))
+import API (Api)
+import API.OptionalAuth (OptionalAuthApi)
+import API.Protected (ProtectedApi)
+import Effect.OptionalAuthAction (OptionalAuthActionE)
+import Effect.OptionalAuthAction.Many (OptionalAuthActionManyE)
+import Data.Paging (Limit, Offset)
 import Servant (ServerT, type (:<|>) ((:<|>)))
 import Servant.Auth.Server (AuthResult (Authenticated, BadPassword, Indefinite, NoSuchUser), CookieSettings, JWTSettings)
 import Servant.Server (hoistServer)
@@ -38,13 +37,13 @@ import Server.Auth.User (authUserServer)
 import Server.OptionalAuth (optionallyAuthedServer)
 import Server.Protected (authedServer)
 import Server.Public (publicServer)
-import Token.Create (CreateTokenE)
-import Token.Decode (InvalidToken)
-import Token.HasToken (TokenOf)
-import UserAction (UserActionE)
-import UserAction.Many (UserActionManyE)
-import Util.Validation (ValidationErr)
-import VisitorAction (VisitorActionE)
+import Data.Token.HasToken (TokenOf)
+import Effect.Token.Create (CreateTokenE)
+import Effect.Token.Decode (InvalidToken)
+import Effect.UserAction (UserActionE)
+import Effect.UserAction.Many (UserActionManyE)
+import Data.Util.Validation (ValidationErr)
+import Effect.VisitorAction (VisitorActionE)
 
 -- * Server
 

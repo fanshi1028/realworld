@@ -2,26 +2,26 @@
 {-# LANGUAGE FlexibleContexts #-}
 
 -- |
--- Description : API & Server
+-- Description : Server
 -- Copyright   : (c) 2021 fanshi1028
 -- Maintainer  : jackychany321@gmail.com
 -- Stability   : experimental
 --
--- API & Server for authorization
+-- Server for authorization
 --
 -- @since 0.1.0.0
 module Server.Auth.User where
 
-import Authentication (AuthenticationE (Login, Register))
-import Authentication.HasAuth (HasAuth (AuthOf))
+import Effect.Authentication (AuthenticationE (Login, Register))
+import Data.Authentication.HasAuth (HasAuth (AuthOf))
 import Control.Algebra (Algebra, send)
 import Control.Effect.Error (Throw, throwError)
 import qualified Control.Effect.Reader as R (Reader, ask)
 import Control.Effect.Sum (Member)
-import Cookie.Xsrf (CreateXsrfCookieE (CreateXsrfCookie))
-import Domain (Domain (User))
-import Domain.User (UserAuthWithToken (..))
-import HTTP.Auth.User (AuthUserApi)
+import Effect.Cookie.Xsrf (CreateXsrfCookieE (CreateXsrfCookie))
+import Data.Domain (Domain (User))
+import Data.Domain.User (UserAuthWithToken (..))
+import API.Auth.User (AuthUserApi)
 import Relude.Extra (un)
 import Servant
   ( AddHeader,
@@ -31,11 +31,11 @@ import Servant
   )
 import Servant.Auth.Server (CookieSettings, JWTSettings)
 import Servant.Auth.Server.Internal.Cookie (applyCookieSettings, applySessionCookieSettings)
-import Token.Create (CreateTokenE (CreateToken))
-import Token.HasToken (TokenOf (UserToken))
-import Util.JSON.From (In (In))
-import Util.JSON.To (Out (Out))
-import Util.Validation (ValidationErr)
+import Effect.Token.Create (CreateTokenE (CreateToken))
+import Data.Token.HasToken (TokenOf (UserToken))
+import Data.Util.JSON.From (In (In))
+import Data.Util.JSON.To (Out (Out))
+import Data.Util.Validation (ValidationErr)
 import Validation (validation)
 import Web.Cookie (SetCookie, def, setCookieValue)
 

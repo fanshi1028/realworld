@@ -3,23 +3,23 @@
 {-# LANGUAGE FlexibleContexts #-}
 
 -- |
--- Description : API & Server
+-- Description : Server
 -- Copyright   : (c) 2021 fanshi1028
 -- Maintainer  : jackychany321@gmail.com
 -- Stability   : experimental
 --
--- Public API & Server, for visitors.
+-- Public Server for visitors.
 --
 -- @since 0.1.0.0
 module Server.Public where
 
+import API.Public (PublicApi, PublicTagApi)
 import Control.Algebra (Algebra, send)
 import Control.Effect.Sum (Member)
-import HTTP.Public (PublicApi, PublicTagApi)
+import Data.Util.JSON.To (Out (Out))
+import Effect.VisitorAction (VisitorActionE (GetTags))
 import Servant (ServerT, type (:<|>) ((:<|>)))
 import Servant.Types.SourceT (source)
-import Util.JSON.To (Out (Out))
-import VisitorAction (VisitorActionE (GetTags))
 
 -- * Server
 

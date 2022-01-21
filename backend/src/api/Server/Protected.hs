@@ -2,12 +2,12 @@
 {-# LANGUAGE FlexibleContexts #-}
 
 -- |
--- Description : API & Server
+-- Description : Server
 -- Copyright   : (c) 2021 fanshi1028
 -- Maintainer  : jackychany321@gmail.com
 -- Stability   : experimental
 --
--- Auth protected API & Server
+-- Auth protected Server
 --
 -- @since 0.1.0.0
 module Server.Protected where
@@ -16,18 +16,18 @@ import Control.Algebra (Algebra, send)
 import qualified Control.Effect.Reader as R (Reader, ask)
 import Control.Effect.Sum (Member)
 import Control.Effect.Throw (Throw, throwError)
-import Domain (Domain (User))
-import Domain.User (UserAuthWithToken (UserAuthWithToken))
-import HTTP.Protected (ProtectedApi, ProtectedArticleApi, ProtectedFollowApi, ProtectedUserApi)
-import Paging (HasPaging (paging), Limit, Offset, Paging (LimitOffset))
+import Data.Domain (Domain (User))
+import Data.Domain.User (UserAuthWithToken (UserAuthWithToken))
+import API.Protected (ProtectedApi, ProtectedArticleApi, ProtectedFollowApi, ProtectedUserApi)
+import Data.Paging (HasPaging (paging), Limit, Offset, Paging (LimitOffset))
 import Servant (NoContent (NoContent), ServerT, type (:<|>) ((:<|>)))
 import Servant.Types.SourceT (source)
-import Token.Create (CreateTokenE (CreateToken))
-import UserAction (UserActionE (AddCommentToArticle, CreateArticle, DeleteArticle, DeleteComment, FavoriteArticle, FollowUser, GetCurrentUser, UnfavoriteArticle, UnfollowUser, UpdateArticle, UpdateUser))
-import UserAction.Many (UserActionManyE (FeedArticles))
-import Util.JSON.From (In (In))
-import Util.JSON.To (Out (Out))
-import Util.Validation (ValidationErr)
+import Effect.Token.Create (CreateTokenE (CreateToken))
+import Effect.UserAction (UserActionE (AddCommentToArticle, CreateArticle, DeleteArticle, DeleteComment, FavoriteArticle, FollowUser, GetCurrentUser, UnfavoriteArticle, UnfollowUser, UpdateArticle, UpdateUser))
+import Effect.UserAction.Many (UserActionManyE (FeedArticles))
+import Data.Util.JSON.From (In (In))
+import Data.Util.JSON.To (Out (Out))
+import Data.Util.Validation (ValidationErr)
 import Validation (Validation (Failure, Success), validation)
 
 -- * Server
