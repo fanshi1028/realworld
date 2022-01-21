@@ -13,9 +13,9 @@
 -- @since 0.3.0.0
 module InMem.Relation.Internal.ToMany.UserCreateArticle where
 
-import Domain (Domain (Article, User))
+import Data.Domain (Domain (Article, User))
+import Data.Storage.Map (IdOf)
 import InMem.Relation.Internal.ToMany (ToMany (..))
-import Storage.Map (IdOf)
 
 -- | @since 0.3.0.0
 data UserCreateArticle

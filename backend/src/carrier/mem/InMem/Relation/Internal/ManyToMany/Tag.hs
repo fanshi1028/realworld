@@ -13,11 +13,11 @@
 -- @since 0.3.0.0
 module InMem.Relation.Internal.ManyToMany.Tag where
 
-import Domain (Domain (Article))
-import Field.Tag (Tag)
+import Data.Domain (Domain (Article))
+import Data.Field.Tag (Tag)
+import Data.Storage.Map (IdOf)
 import InMem.Relation.Internal.ManyToMany (ManyToMany (..))
 import InMem.Relation.Internal.ToMany (ToMany (..))
-import Storage.Map (IdOf)
 
 -- | @since 0.3.0.0
 data ArticleTaggedByTag

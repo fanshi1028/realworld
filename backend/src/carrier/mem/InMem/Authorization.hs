@@ -20,17 +20,17 @@ module InMem.Authorization
   )
 where
 
-import Authorization (pattern RequestToken)
-import Domain (Domain (User))
-import Domain.Transform (Transform (transform))
-import Domain.User (UserAuthWithToken (UserAuthWithToken))
+import API.Authorization (pattern RequestToken)
+import Data.Domain (Domain (User))
+import Data.Domain.Transform (Transform (transform))
+import Data.Domain.User (UserAuthWithToken (UserAuthWithToken))
+import Data.Storage.Map (IdOf)
+import Data.Token.HasToken (TokenOf (..))
 import InMem.Storage (TableInMem)
 import qualified Servant.Auth.Server as Auth (AuthCheck (AuthCheck))
 import Servant.Auth.Server.Internal.Class (IsAuth (AuthArgs, runAuth))
 import qualified StmContainers.Map as STM (lookup)
 import qualified StmContainers.Map as STMMap (Map)
-import Storage.Map (IdOf)
-import Token.HasToken (TokenOf (..))
 
 -- | @since 0.1.0.0
 -- Use hand-roll in-memory storage to facilitate auth process

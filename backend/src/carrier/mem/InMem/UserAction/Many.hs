@@ -18,22 +18,22 @@
 -- @since 0.3.0.0
 module InMem.UserAction.Many where
 
-import Authentication (AuthenticationE (GetCurrentAuth))
-import Authentication.HasAuth (AuthOf (..))
 import Control.Algebra (Algebra, alg, send, type (:+:) (L, R))
 import Control.Carrier.NonDet.Church (runNonDetM)
 import Control.Effect.Error (Catch, Throw, catchError, throwError)
 import Control.Effect.NonDet (oneOf)
 import Control.Effect.Sum (Member)
-import Domain (Domain (Article, User))
-import Domain.Article (ArticleWithAuthorProfile (ArticleWithAuthorProfile))
+import Data.Authentication.HasAuth (AuthOf (..))
+import Data.Domain (Domain (Article, User))
+import Data.Domain.Article (ArticleWithAuthorProfile (ArticleWithAuthorProfile))
+import Data.Storage.Map (ContentOf (..), IdNotFound, toUserId)
+import Data.Util.Sort (getSorted)
+import Effect.Authentication (AuthenticationE (GetCurrentAuth))
+import Effect.OptionalAuthAction (OptionalAuthActionE (GetProfile))
+import Effect.UserAction.Many (UserActionManyE (FeedArticles))
 import GHC.Records (getField)
 import InMem.Relation (ArticleTaggedByTag, ManyToMany (getRelatedLeftManyToMany), ManyToManyRelationE, ToMany (getRelatedToMany), ToManyRelationE, UserCreateArticle, UserFavoriteArticle, UserFollowUser, getRelatedRightManyToMany, isRelatedManyToMany)
 import InMem.Storage (MapInMemE, getByIdMapInMem)
-import OptionalAuthAction (OptionalAuthActionE (GetProfile))
-import Storage.Map (ContentOf (..), IdNotFound, toUserId)
-import UserAction.Many (UserActionManyE (FeedArticles))
-import Util.Sort (getSorted)
 
 -- | @since 0.3.0.0
 newtype UserActionManyInMemC (f :: Type -> Type) m a = UserActionManyInMemC

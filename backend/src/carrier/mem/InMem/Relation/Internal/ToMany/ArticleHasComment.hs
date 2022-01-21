@@ -13,9 +13,9 @@
 -- @since 0.3.0.0
 module InMem.Relation.Internal.ToMany.ArticleHasComment where
 
-import Domain (Domain (Article, Comment))
+import Data.Domain (Domain (Article, Comment))
+import Data.Storage.Map (IdOf)
 import InMem.Relation.Internal.ToMany (ToMany (..))
-import Storage.Map (IdOf)
 
 -- | @since 0.3.0.0
 data ArticleHasComment

@@ -13,10 +13,10 @@
 -- @since 0.3.0.0
 module InMem.Relation.Internal.ToOne.EmailOfUser where
 
-import Domain (Domain (User))
-import Field.Email (Email)
+import Data.Domain (Domain (User))
+import Data.Field.Email (Email)
+import Data.Storage.Map (IdOf)
 import InMem.Relation.Internal.ToOne (ToOne (..))
-import Storage.Map (IdOf)
 
 -- | @since 0.3.0.0
 data EmailOfUser

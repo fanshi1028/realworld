@@ -18,10 +18,10 @@ import Control.Algebra (Algebra (alg), type (:+:) (L, R))
 import Control.Effect.Lift (Lift)
 import qualified Control.Effect.Reader as R (Reader)
 import Control.Effect.Sum (Member)
-import Field.Tag (Tag)
+import Data.Field.Tag (Tag)
+import Effect.VisitorAction (VisitorActionE (GetTags))
 import InMem.Storage (getAllSetInMem)
 import qualified StmContainers.Set as STMSet (Set)
-import VisitorAction (VisitorActionE (GetTags))
 
 -- | @since 0.3.0.0
 newtype VisitorActionInMemC (f :: Type -> Type) m a = VisitorActionInMemC

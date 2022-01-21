@@ -16,27 +16,27 @@
 -- @since 0.3.0.0
 module InMem.Authentication.User where
 
-import Authentication (AuthenticationE (GetCurrentAuth, Login, Register))
-import Authentication.HasAuth (AuthOf, LoginOf (UserLogin), NotAuthorized (BadPassword, NoSuchUser))
 import Control.Algebra (Algebra (alg), send, type (:+:) (L, R))
 import Control.Effect.Catch (Catch)
 import Control.Effect.Error (catchError)
 import qualified Control.Effect.Reader as R (Reader, ask)
 import Control.Effect.Sum (Member)
 import Control.Effect.Throw (Throw, throwError)
-import CreateSalt (CreateSaltE (CreateSalt))
+import Data.Authentication.HasAuth (AuthOf, LoginOf (UserLogin), NotAuthorized (BadPassword, NoSuchUser))
+import Data.Domain (Domain (User))
+import Data.Domain.Transform (transform)
+import Data.Field.Bio (Bio (Bio))
+import Data.Field.Email (Email)
+import Data.Field.Image (Image (Image))
+import Data.Field.Password (checkPassword, hashPassword)
 import Data.Password.Argon2 (PasswordCheck (PasswordCheckFail, PasswordCheckSuccess))
-import Domain (Domain (User))
-import Domain.Transform (transform)
-import Field.Bio (Bio (Bio))
-import Field.Email (Email)
-import Field.Image (Image (Image))
-import Field.Password (checkPassword, hashPassword)
+import Data.Storage.Error (AlreadyExists (AlreadyExists), NotFound)
+import Data.Storage.Map (ContentOf (..), CreateOf (UserCreate), IdAlreadyExists, IdNotFound, IdOf (UserId), toUserId)
+import Effect.Authentication (AuthenticationE (GetCurrentAuth, Login, Register))
+import Effect.CreateSalt (CreateSaltE (CreateSalt))
 import GHC.Records (getField)
 import InMem.Relation (EmailOfUser, ToOne (getRelatedToOne, relateToOne), ToOneRelationE)
 import InMem.Storage (MapInMemE, getByIdMapInMem, insertMapInMem)
-import Storage.Error (AlreadyExists (AlreadyExists), NotFound)
-import Storage.Map (ContentOf (..), CreateOf (UserCreate), IdAlreadyExists, IdNotFound, IdOf (UserId), toUserId)
 
 -- | @since 0.3.0.0
 newtype AuthenticationUserInMemC m a = AuthenticationUserInMemC

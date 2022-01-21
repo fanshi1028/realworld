@@ -17,16 +17,18 @@
 -- @since 0.3.0.0
 module InMem.OptionalAuthAction where
 
-import Authentication (AuthenticationE (GetCurrentAuth))
-import Authentication.HasAuth (AuthOf (..))
 import Control.Algebra (Algebra (alg), send, type (:+:) (L, R))
 import Control.Effect.Catch (Catch)
 import Control.Effect.Sum (Member)
 import Control.Effect.Throw (Throw)
-import Domain (Domain (Article, Comment, User))
-import Domain.Article (ArticleWithAuthorProfile (ArticleWithAuthorProfile))
-import Domain.Transform (transform)
-import Domain.User (UserProfile (UserProfile))
+import Data.Authentication.HasAuth (AuthOf (..))
+import Data.Domain (Domain (Article, Comment, User))
+import Data.Domain.Article (ArticleWithAuthorProfile (ArticleWithAuthorProfile))
+import Data.Domain.Transform (transform)
+import Data.Domain.User (UserProfile (UserProfile))
+import Data.Storage.Map (ContentOf (..), IdNotFound, toUserId)
+import Effect.Authentication (AuthenticationE (GetCurrentAuth))
+import Effect.OptionalAuthAction (OptionalAuthActionE (GetArticle, GetProfile))
 import GHC.Records (getField)
 import InMem.Relation
   ( ArticleHasComment,
@@ -40,8 +42,6 @@ import InMem.Relation
     isRelatedManyToMany,
   )
 import InMem.Storage (MapInMemE, getByIdMapInMem)
-import OptionalAuthAction (OptionalAuthActionE (GetArticle, GetProfile))
-import Storage.Map (ContentOf (..), IdNotFound, toUserId)
 import Prelude hiding (id)
 
 -- | @since 0.3.0.0
