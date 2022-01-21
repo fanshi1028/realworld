@@ -37,168 +37,96 @@
       };
     components = {
       sublibs = {
-        "common-data-internal" = {
+        "common-internal" = {
           depends = [
             (hsPkgs."base" or (errorHandler.buildDepError "base"))
             (hsPkgs."relude" or (errorHandler.buildDepError "relude"))
             (hsPkgs."aeson" or (errorHandler.buildDepError "aeson"))
-            (hsPkgs."generic-lens" or (errorHandler.buildDepError "generic-lens"))
-            (hsPkgs."higgledy" or (errorHandler.buildDepError "higgledy"))
-            (hsPkgs."password" or (errorHandler.buildDepError "password"))
-            (hsPkgs."servant-auth-server" or (errorHandler.buildDepError "servant-auth-server"))
-            (hsPkgs."servant-server" or (errorHandler.buildDepError "servant-server"))
-            (hsPkgs."text" or (errorHandler.buildDepError "text"))
-            (hsPkgs."time" or (errorHandler.buildDepError "time"))
-            (hsPkgs."unordered-containers" or (errorHandler.buildDepError "unordered-containers"))
-            (hsPkgs."uuid" or (errorHandler.buildDepError "uuid"))
-            (hsPkgs."validation-selective" or (errorHandler.buildDepError "validation-selective"))
-            ];
-          buildable = true;
-          modules = [
-            "Authentication/HasAuth"
-            "Authentication/Internal/HasAuth"
-            "Authentication/Internal/HasAuth/User"
-            "Domain"
-            "Domain/Article"
-            "Domain/Comment"
-            "Domain/Transform"
-            "Domain/User"
-            "Field/Bio"
-            "Field/Body"
-            "Field/Description"
-            "Field/Email"
-            "Field/Image"
-            "Field/Password"
-            "Field/Slug"
-            "Field/Tag"
-            "Field/Time"
-            "Field/Title"
-            "Field/Username"
-            "Paging"
-            "Storage/Error"
-            "Storage/Map"
-            "Storage/Map/Internal/HasCreate"
-            "Storage/Map/Internal/HasCreate/Article"
-            "Storage/Map/Internal/HasCreate/Comment"
-            "Storage/Map/Internal/HasCreate/User"
-            "Storage/Map/Internal/HasStorage"
-            "Storage/Map/Internal/HasStorage/Article"
-            "Storage/Map/Internal/HasStorage/Comment"
-            "Storage/Map/Internal/HasStorage/User"
-            "Storage/Map/Internal/HasUpdate"
-            "Storage/Map/Internal/HasUpdate/Article"
-            "Storage/Map/Internal/HasUpdate/User"
-            "Token/HasToken"
-            "Token/Internal/HasToken"
-            "Token/Internal/HasToken/User"
-            "Util/Impossible"
-            "Util/JSON/From"
-            "Util/JSON/To"
-            "Util/Sort"
-            "Util/Validation"
-            ];
-          hsSourceDirs = [ "common/src/data" ];
-          };
-        "common-effect-internal" = {
-          depends = [
-            (hsPkgs."base" or (errorHandler.buildDepError "base"))
-            (hsPkgs."relude" or (errorHandler.buildDepError "relude"))
             (hsPkgs."cookie" or (errorHandler.buildDepError "cookie"))
             (hsPkgs."cryptonite" or (errorHandler.buildDepError "cryptonite"))
             (hsPkgs."fused-effects" or (errorHandler.buildDepError "fused-effects"))
             (hsPkgs."generic-lens" or (errorHandler.buildDepError "generic-lens"))
+            (hsPkgs."higgledy" or (errorHandler.buildDepError "higgledy"))
             (hsPkgs."jose" or (errorHandler.buildDepError "jose"))
-            (hsPkgs."servant-auth-server" or (errorHandler.buildDepError "servant-auth-server"))
-            ] ++ (if flags.ghcid
-            then [
-              (hsPkgs."aeson" or (errorHandler.buildDepError "aeson"))
-              (hsPkgs."generic-lens" or (errorHandler.buildDepError "generic-lens"))
-              (hsPkgs."higgledy" or (errorHandler.buildDepError "higgledy"))
-              (hsPkgs."password" or (errorHandler.buildDepError "password"))
-              (hsPkgs."servant-auth-server" or (errorHandler.buildDepError "servant-auth-server"))
-              (hsPkgs."servant-server" or (errorHandler.buildDepError "servant-server"))
-              (hsPkgs."text" or (errorHandler.buildDepError "text"))
-              (hsPkgs."time" or (errorHandler.buildDepError "time"))
-              (hsPkgs."unordered-containers" or (errorHandler.buildDepError "unordered-containers"))
-              (hsPkgs."uuid" or (errorHandler.buildDepError "uuid"))
-              (hsPkgs."validation-selective" or (errorHandler.buildDepError "validation-selective"))
-              ]
-            else [
-              (hsPkgs."realworld-haskell".components.sublibs.common-data-internal or (errorHandler.buildDepError "realworld-haskell:common-data-internal"))
-              ]);
-          buildable = true;
-          modules = [
-            "Authentication"
-            "Cookie/Xsrf"
-            "CreateSalt"
-            "OptionalAuthAction"
-            "OptionalAuthAction/Many"
-            "Token/Create"
-            "Token/Create/JWT"
-            "Token/Decode"
-            "Token/Decode/JWT"
-            "Token/Invalidate"
-            "Token/Invalidate/JWT"
-            "UserAction"
-            "UserAction/Many"
-            "VisitorAction"
-            ];
-          hsSourceDirs = [
-            "common/src/effect"
-            ] ++ (pkgs.lib).optional (flags.ghcid) "common/src/data";
-          };
-        "common-api-internal" = {
-          depends = [
-            (hsPkgs."base" or (errorHandler.buildDepError "base"))
-            (hsPkgs."relude" or (errorHandler.buildDepError "relude"))
-            (hsPkgs."cookie" or (errorHandler.buildDepError "cookie"))
-            (hsPkgs."fused-effects" or (errorHandler.buildDepError "fused-effects"))
+            (hsPkgs."password" or (errorHandler.buildDepError "password"))
             (hsPkgs."servant" or (errorHandler.buildDepError "servant"))
             (hsPkgs."servant-auth-server" or (errorHandler.buildDepError "servant-auth-server"))
             (hsPkgs."servant-server" or (errorHandler.buildDepError "servant-server"))
             (hsPkgs."servant-streamly" or (errorHandler.buildDepError "servant-streamly"))
             (hsPkgs."streamly" or (errorHandler.buildDepError "streamly"))
+            (hsPkgs."text" or (errorHandler.buildDepError "text"))
             (hsPkgs."time" or (errorHandler.buildDepError "time"))
+            (hsPkgs."unordered-containers" or (errorHandler.buildDepError "unordered-containers"))
+            (hsPkgs."uuid" or (errorHandler.buildDepError "uuid"))
             (hsPkgs."validation-selective" or (errorHandler.buildDepError "validation-selective"))
             (hsPkgs."wai" or (errorHandler.buildDepError "wai"))
-            ] ++ (if flags.ghcid
-            then [
-              (hsPkgs."aeson" or (errorHandler.buildDepError "aeson"))
-              (hsPkgs."generic-lens" or (errorHandler.buildDepError "generic-lens"))
-              (hsPkgs."higgledy" or (errorHandler.buildDepError "higgledy"))
-              (hsPkgs."password" or (errorHandler.buildDepError "password"))
-              (hsPkgs."servant-auth-server" or (errorHandler.buildDepError "servant-auth-server"))
-              (hsPkgs."servant-server" or (errorHandler.buildDepError "servant-server"))
-              (hsPkgs."text" or (errorHandler.buildDepError "text"))
-              (hsPkgs."time" or (errorHandler.buildDepError "time"))
-              (hsPkgs."unordered-containers" or (errorHandler.buildDepError "unordered-containers"))
-              (hsPkgs."uuid" or (errorHandler.buildDepError "uuid"))
-              (hsPkgs."validation-selective" or (errorHandler.buildDepError "validation-selective"))
-              (hsPkgs."cookie" or (errorHandler.buildDepError "cookie"))
-              (hsPkgs."cryptonite" or (errorHandler.buildDepError "cryptonite"))
-              (hsPkgs."fused-effects" or (errorHandler.buildDepError "fused-effects"))
-              (hsPkgs."jose" or (errorHandler.buildDepError "jose"))
-              ]
-            else [
-              (hsPkgs."realworld-haskell".components.sublibs.common-data-internal or (errorHandler.buildDepError "realworld-haskell:common-data-internal"))
-              (hsPkgs."realworld-haskell".components.sublibs.common-effect-internal or (errorHandler.buildDepError "realworld-haskell:common-effect-internal"))
-              ]);
+            ];
           buildable = true;
           modules = [
-            "Authorization"
-            "HTTP"
-            "HTTP/Auth/User"
-            "HTTP/OptionalAuth"
-            "HTTP/Protected"
-            "HTTP/Public"
-            "HTTP/Util"
+            "API"
+            "API/Auth/User"
+            "API/Authorization"
+            "API/OptionalAuth"
+            "API/Protected"
+            "API/Public"
+            "API/Util"
+            "Data/Authentication/HasAuth"
+            "Data/Authentication/Internal/HasAuth"
+            "Data/Authentication/Internal/HasAuth/User"
+            "Data/Domain"
+            "Data/Domain/Article"
+            "Data/Domain/Comment"
+            "Data/Domain/Transform"
+            "Data/Domain/User"
+            "Data/Field/Bio"
+            "Data/Field/Body"
+            "Data/Field/Description"
+            "Data/Field/Email"
+            "Data/Field/Image"
+            "Data/Field/Password"
+            "Data/Field/Slug"
+            "Data/Field/Tag"
+            "Data/Field/Time"
+            "Data/Field/Title"
+            "Data/Field/Username"
+            "Data/Paging"
+            "Data/Storage/Error"
+            "Data/Storage/Map"
+            "Data/Storage/Map/Internal/HasCreate"
+            "Data/Storage/Map/Internal/HasCreate/Article"
+            "Data/Storage/Map/Internal/HasCreate/Comment"
+            "Data/Storage/Map/Internal/HasCreate/User"
+            "Data/Storage/Map/Internal/HasStorage"
+            "Data/Storage/Map/Internal/HasStorage/Article"
+            "Data/Storage/Map/Internal/HasStorage/Comment"
+            "Data/Storage/Map/Internal/HasStorage/User"
+            "Data/Storage/Map/Internal/HasUpdate"
+            "Data/Storage/Map/Internal/HasUpdate/Article"
+            "Data/Storage/Map/Internal/HasUpdate/User"
+            "Data/Token/HasToken"
+            "Data/Token/Internal/HasToken"
+            "Data/Token/Internal/HasToken/User"
+            "Data/Util/Impossible"
+            "Data/Util/JSON/From"
+            "Data/Util/JSON/To"
+            "Data/Util/Sort"
+            "Data/Util/Validation"
+            "Effect/Authentication"
+            "Effect/Cookie/Xsrf"
+            "Effect/CreateSalt"
+            "Effect/OptionalAuthAction"
+            "Effect/OptionalAuthAction/Many"
+            "Effect/Token/Create"
+            "Effect/Token/Create/JWT"
+            "Effect/Token/Decode"
+            "Effect/Token/Decode/JWT"
+            "Effect/Token/Invalidate"
+            "Effect/Token/Invalidate/JWT"
+            "Effect/UserAction"
+            "Effect/UserAction/Many"
+            "Effect/VisitorAction"
             ];
-          hsSourceDirs = [
-            "common/src/api"
-            ] ++ (pkgs.lib).optionals (flags.ghcid) [
-            "common/src/data"
-            "common/src/effect"
-            ];
+          hsSourceDirs = [ "common/src" ];
           };
         "backend-api-internal" = {
           depends = [
@@ -217,29 +145,27 @@
             ] ++ (if flags.ghcid
             then [
               (hsPkgs."aeson" or (errorHandler.buildDepError "aeson"))
+              (hsPkgs."cookie" or (errorHandler.buildDepError "cookie"))
+              (hsPkgs."cryptonite" or (errorHandler.buildDepError "cryptonite"))
+              (hsPkgs."fused-effects" or (errorHandler.buildDepError "fused-effects"))
               (hsPkgs."generic-lens" or (errorHandler.buildDepError "generic-lens"))
               (hsPkgs."higgledy" or (errorHandler.buildDepError "higgledy"))
+              (hsPkgs."jose" or (errorHandler.buildDepError "jose"))
               (hsPkgs."password" or (errorHandler.buildDepError "password"))
+              (hsPkgs."servant" or (errorHandler.buildDepError "servant"))
               (hsPkgs."servant-auth-server" or (errorHandler.buildDepError "servant-auth-server"))
               (hsPkgs."servant-server" or (errorHandler.buildDepError "servant-server"))
+              (hsPkgs."servant-streamly" or (errorHandler.buildDepError "servant-streamly"))
+              (hsPkgs."streamly" or (errorHandler.buildDepError "streamly"))
               (hsPkgs."text" or (errorHandler.buildDepError "text"))
               (hsPkgs."time" or (errorHandler.buildDepError "time"))
               (hsPkgs."unordered-containers" or (errorHandler.buildDepError "unordered-containers"))
               (hsPkgs."uuid" or (errorHandler.buildDepError "uuid"))
               (hsPkgs."validation-selective" or (errorHandler.buildDepError "validation-selective"))
-              (hsPkgs."cookie" or (errorHandler.buildDepError "cookie"))
-              (hsPkgs."fused-effects" or (errorHandler.buildDepError "fused-effects"))
-              (hsPkgs."servant" or (errorHandler.buildDepError "servant"))
-              (hsPkgs."servant-streamly" or (errorHandler.buildDepError "servant-streamly"))
-              (hsPkgs."streamly" or (errorHandler.buildDepError "streamly"))
               (hsPkgs."wai" or (errorHandler.buildDepError "wai"))
-              (hsPkgs."cryptonite" or (errorHandler.buildDepError "cryptonite"))
-              (hsPkgs."jose" or (errorHandler.buildDepError "jose"))
               ]
             else [
-              (hsPkgs."realworld-haskell".components.sublibs.common-api-internal or (errorHandler.buildDepError "realworld-haskell:common-api-internal"))
-              (hsPkgs."realworld-haskell".components.sublibs.common-data-internal or (errorHandler.buildDepError "realworld-haskell:common-data-internal"))
-              (hsPkgs."realworld-haskell".components.sublibs.common-effect-internal or (errorHandler.buildDepError "realworld-haskell:common-effect-internal"))
+              (hsPkgs."realworld-haskell".components.sublibs.common-internal or (errorHandler.buildDepError "realworld-haskell:common-internal"))
               ]);
           buildable = true;
           modules = [
@@ -251,11 +177,7 @@
             ];
           hsSourceDirs = [
             "backend/src/api"
-            ] ++ (pkgs.lib).optionals (flags.ghcid) [
-            "common/src/data"
-            "common/src/api"
-            "common/src/effect"
-            ];
+            ] ++ (pkgs.lib).optional (flags.ghcid) "common/src";
           };
         "backend-in-mem-carrier-internal" = {
           depends = [
@@ -280,30 +202,28 @@
             ] ++ (if flags.ghcid
             then [
               (hsPkgs."aeson" or (errorHandler.buildDepError "aeson"))
+              (hsPkgs."cookie" or (errorHandler.buildDepError "cookie"))
+              (hsPkgs."cryptonite" or (errorHandler.buildDepError "cryptonite"))
+              (hsPkgs."fused-effects" or (errorHandler.buildDepError "fused-effects"))
               (hsPkgs."generic-lens" or (errorHandler.buildDepError "generic-lens"))
               (hsPkgs."higgledy" or (errorHandler.buildDepError "higgledy"))
+              (hsPkgs."jose" or (errorHandler.buildDepError "jose"))
               (hsPkgs."password" or (errorHandler.buildDepError "password"))
+              (hsPkgs."servant" or (errorHandler.buildDepError "servant"))
               (hsPkgs."servant-auth-server" or (errorHandler.buildDepError "servant-auth-server"))
               (hsPkgs."servant-server" or (errorHandler.buildDepError "servant-server"))
+              (hsPkgs."servant-streamly" or (errorHandler.buildDepError "servant-streamly"))
+              (hsPkgs."streamly" or (errorHandler.buildDepError "streamly"))
               (hsPkgs."text" or (errorHandler.buildDepError "text"))
               (hsPkgs."time" or (errorHandler.buildDepError "time"))
               (hsPkgs."unordered-containers" or (errorHandler.buildDepError "unordered-containers"))
               (hsPkgs."uuid" or (errorHandler.buildDepError "uuid"))
               (hsPkgs."validation-selective" or (errorHandler.buildDepError "validation-selective"))
-              (hsPkgs."cookie" or (errorHandler.buildDepError "cookie"))
-              (hsPkgs."cryptonite" or (errorHandler.buildDepError "cryptonite"))
-              (hsPkgs."fused-effects" or (errorHandler.buildDepError "fused-effects"))
-              (hsPkgs."jose" or (errorHandler.buildDepError "jose"))
-              (hsPkgs."servant" or (errorHandler.buildDepError "servant"))
-              (hsPkgs."servant-streamly" or (errorHandler.buildDepError "servant-streamly"))
-              (hsPkgs."streamly" or (errorHandler.buildDepError "streamly"))
               (hsPkgs."wai" or (errorHandler.buildDepError "wai"))
               ]
             else [
               (hsPkgs."realworld-haskell".components.sublibs.backend-api-internal or (errorHandler.buildDepError "realworld-haskell:backend-api-internal"))
-              (hsPkgs."realworld-haskell".components.sublibs.common-api-internal or (errorHandler.buildDepError "realworld-haskell:common-api-internal"))
-              (hsPkgs."realworld-haskell".components.sublibs.common-data-internal or (errorHandler.buildDepError "realworld-haskell:common-data-internal"))
-              (hsPkgs."realworld-haskell".components.sublibs.common-effect-internal or (errorHandler.buildDepError "realworld-haskell:common-effect-internal"))
+              (hsPkgs."realworld-haskell".components.sublibs.common-internal or (errorHandler.buildDepError "realworld-haskell:common-internal"))
               ]);
           buildable = true;
           modules = [
@@ -331,10 +251,8 @@
           hsSourceDirs = [
             "backend/src/carrier/mem"
             ] ++ (pkgs.lib).optionals (flags.ghcid) [
-            "common/src/data"
-            "common/src/effect"
+            "common/src"
             "backend/src/api"
-            "common/src/api"
             ];
           };
         "backend-rel8-carrier-internal" = {
@@ -356,30 +274,28 @@
             ] ++ (if flags.ghcid
             then [
               (hsPkgs."aeson" or (errorHandler.buildDepError "aeson"))
+              (hsPkgs."cookie" or (errorHandler.buildDepError "cookie"))
+              (hsPkgs."cryptonite" or (errorHandler.buildDepError "cryptonite"))
+              (hsPkgs."fused-effects" or (errorHandler.buildDepError "fused-effects"))
               (hsPkgs."generic-lens" or (errorHandler.buildDepError "generic-lens"))
               (hsPkgs."higgledy" or (errorHandler.buildDepError "higgledy"))
+              (hsPkgs."jose" or (errorHandler.buildDepError "jose"))
               (hsPkgs."password" or (errorHandler.buildDepError "password"))
+              (hsPkgs."servant" or (errorHandler.buildDepError "servant"))
               (hsPkgs."servant-auth-server" or (errorHandler.buildDepError "servant-auth-server"))
               (hsPkgs."servant-server" or (errorHandler.buildDepError "servant-server"))
+              (hsPkgs."servant-streamly" or (errorHandler.buildDepError "servant-streamly"))
+              (hsPkgs."streamly" or (errorHandler.buildDepError "streamly"))
               (hsPkgs."text" or (errorHandler.buildDepError "text"))
               (hsPkgs."time" or (errorHandler.buildDepError "time"))
               (hsPkgs."unordered-containers" or (errorHandler.buildDepError "unordered-containers"))
               (hsPkgs."uuid" or (errorHandler.buildDepError "uuid"))
               (hsPkgs."validation-selective" or (errorHandler.buildDepError "validation-selective"))
-              (hsPkgs."cookie" or (errorHandler.buildDepError "cookie"))
-              (hsPkgs."cryptonite" or (errorHandler.buildDepError "cryptonite"))
-              (hsPkgs."fused-effects" or (errorHandler.buildDepError "fused-effects"))
-              (hsPkgs."jose" or (errorHandler.buildDepError "jose"))
-              (hsPkgs."servant" or (errorHandler.buildDepError "servant"))
-              (hsPkgs."servant-streamly" or (errorHandler.buildDepError "servant-streamly"))
-              (hsPkgs."streamly" or (errorHandler.buildDepError "streamly"))
               (hsPkgs."wai" or (errorHandler.buildDepError "wai"))
               ]
             else [
               (hsPkgs."realworld-haskell".components.sublibs.backend-api-internal or (errorHandler.buildDepError "realworld-haskell:backend-api-internal"))
-              (hsPkgs."realworld-haskell".components.sublibs.common-data-internal or (errorHandler.buildDepError "realworld-haskell:common-data-internal"))
-              (hsPkgs."realworld-haskell".components.sublibs.common-api-internal or (errorHandler.buildDepError "realworld-haskell:common-api-internal"))
-              (hsPkgs."realworld-haskell".components.sublibs.common-effect-internal or (errorHandler.buildDepError "realworld-haskell:common-effect-internal"))
+              (hsPkgs."realworld-haskell".components.sublibs.common-internal or (errorHandler.buildDepError "realworld-haskell:common-internal"))
               ]);
           buildable = true;
           modules = [
@@ -405,10 +321,8 @@
           hsSourceDirs = [
             "backend/src/carrier/rel8"
             ] ++ (pkgs.lib).optionals (flags.ghcid) [
-            "common/src/data"
-            "common/src/effect"
+            "common/src"
             "backend/src/api"
-            "common/src/api"
             ];
           };
         };
@@ -433,23 +347,23 @@
             ] ++ (if flags.ghcid
             then [
               (hsPkgs."aeson" or (errorHandler.buildDepError "aeson"))
+              (hsPkgs."cookie" or (errorHandler.buildDepError "cookie"))
+              (hsPkgs."cryptonite" or (errorHandler.buildDepError "cryptonite"))
+              (hsPkgs."fused-effects" or (errorHandler.buildDepError "fused-effects"))
               (hsPkgs."generic-lens" or (errorHandler.buildDepError "generic-lens"))
               (hsPkgs."higgledy" or (errorHandler.buildDepError "higgledy"))
+              (hsPkgs."jose" or (errorHandler.buildDepError "jose"))
               (hsPkgs."password" or (errorHandler.buildDepError "password"))
+              (hsPkgs."servant" or (errorHandler.buildDepError "servant"))
               (hsPkgs."servant-auth-server" or (errorHandler.buildDepError "servant-auth-server"))
               (hsPkgs."servant-server" or (errorHandler.buildDepError "servant-server"))
+              (hsPkgs."servant-streamly" or (errorHandler.buildDepError "servant-streamly"))
+              (hsPkgs."streamly" or (errorHandler.buildDepError "streamly"))
               (hsPkgs."text" or (errorHandler.buildDepError "text"))
               (hsPkgs."time" or (errorHandler.buildDepError "time"))
               (hsPkgs."unordered-containers" or (errorHandler.buildDepError "unordered-containers"))
               (hsPkgs."uuid" or (errorHandler.buildDepError "uuid"))
               (hsPkgs."validation-selective" or (errorHandler.buildDepError "validation-selective"))
-              (hsPkgs."cookie" or (errorHandler.buildDepError "cookie"))
-              (hsPkgs."cryptonite" or (errorHandler.buildDepError "cryptonite"))
-              (hsPkgs."fused-effects" or (errorHandler.buildDepError "fused-effects"))
-              (hsPkgs."jose" or (errorHandler.buildDepError "jose"))
-              (hsPkgs."servant" or (errorHandler.buildDepError "servant"))
-              (hsPkgs."servant-streamly" or (errorHandler.buildDepError "servant-streamly"))
-              (hsPkgs."streamly" or (errorHandler.buildDepError "streamly"))
               (hsPkgs."wai" or (errorHandler.buildDepError "wai"))
               (hsPkgs."focus" or (errorHandler.buildDepError "focus"))
               (hsPkgs."list-t" or (errorHandler.buildDepError "list-t"))
@@ -467,9 +381,7 @@
           hsSourceDirs = [
             "backend/app"
             ] ++ (pkgs.lib).optionals (flags.ghcid) [
-            "common/src/data"
-            "common/src/effect"
-            "common/src/api"
+            "common/src"
             "backend/src/api"
             "backend/src/carrier/mem"
             "backend/src/carrier/rel8"
@@ -485,23 +397,23 @@
             (hsPkgs."base" or (errorHandler.buildDepError "base"))
             (hsPkgs."relude" or (errorHandler.buildDepError "relude"))
             (hsPkgs."aeson" or (errorHandler.buildDepError "aeson"))
+            (hsPkgs."cookie" or (errorHandler.buildDepError "cookie"))
+            (hsPkgs."cryptonite" or (errorHandler.buildDepError "cryptonite"))
+            (hsPkgs."fused-effects" or (errorHandler.buildDepError "fused-effects"))
             (hsPkgs."generic-lens" or (errorHandler.buildDepError "generic-lens"))
             (hsPkgs."higgledy" or (errorHandler.buildDepError "higgledy"))
+            (hsPkgs."jose" or (errorHandler.buildDepError "jose"))
             (hsPkgs."password" or (errorHandler.buildDepError "password"))
+            (hsPkgs."servant" or (errorHandler.buildDepError "servant"))
             (hsPkgs."servant-auth-server" or (errorHandler.buildDepError "servant-auth-server"))
             (hsPkgs."servant-server" or (errorHandler.buildDepError "servant-server"))
+            (hsPkgs."servant-streamly" or (errorHandler.buildDepError "servant-streamly"))
+            (hsPkgs."streamly" or (errorHandler.buildDepError "streamly"))
             (hsPkgs."text" or (errorHandler.buildDepError "text"))
             (hsPkgs."time" or (errorHandler.buildDepError "time"))
             (hsPkgs."unordered-containers" or (errorHandler.buildDepError "unordered-containers"))
             (hsPkgs."uuid" or (errorHandler.buildDepError "uuid"))
             (hsPkgs."validation-selective" or (errorHandler.buildDepError "validation-selective"))
-            (hsPkgs."cookie" or (errorHandler.buildDepError "cookie"))
-            (hsPkgs."cryptonite" or (errorHandler.buildDepError "cryptonite"))
-            (hsPkgs."fused-effects" or (errorHandler.buildDepError "fused-effects"))
-            (hsPkgs."jose" or (errorHandler.buildDepError "jose"))
-            (hsPkgs."servant" or (errorHandler.buildDepError "servant"))
-            (hsPkgs."servant-streamly" or (errorHandler.buildDepError "servant-streamly"))
-            (hsPkgs."streamly" or (errorHandler.buildDepError "streamly"))
             (hsPkgs."wai" or (errorHandler.buildDepError "wai"))
             (hsPkgs."focus" or (errorHandler.buildDepError "focus"))
             (hsPkgs."list-t" or (errorHandler.buildDepError "list-t"))
@@ -536,9 +448,7 @@
             (hsPkgs."realworld-haskell".components.sublibs.backend-api-internal or (errorHandler.buildDepError "realworld-haskell:backend-api-internal"))
             (hsPkgs."realworld-haskell".components.sublibs.backend-in-mem-carrier-internal or (errorHandler.buildDepError "realworld-haskell:backend-in-mem-carrier-internal"))
             (hsPkgs."realworld-haskell".components.sublibs.backend-rel8-carrier-internal or (errorHandler.buildDepError "realworld-haskell:backend-rel8-carrier-internal"))
-            (hsPkgs."realworld-haskell".components.sublibs.common-data-internal or (errorHandler.buildDepError "realworld-haskell:common-data-internal"))
-            (hsPkgs."realworld-haskell".components.sublibs.common-api-internal or (errorHandler.buildDepError "realworld-haskell:common-api-internal"))
-            (hsPkgs."realworld-haskell".components.sublibs.common-effect-internal or (errorHandler.buildDepError "realworld-haskell:common-effect-internal"))
+            (hsPkgs."realworld-haskell".components.sublibs.common-internal or (errorHandler.buildDepError "realworld-haskell:common-internal"))
             ];
           buildable = true;
           modules = [
@@ -552,9 +462,7 @@
             "StateMachine/Util"
             ];
           hsSourceDirs = [ "test" ] ++ (pkgs.lib).optionals (!(!flags.ghcid)) [
-            "common/src/data"
-            "common/src/effect"
-            "common/src/api"
+            "common/src"
             "backend/src/api"
             "backend/src/carrier/mem"
             "backend/src/carrier/rel8"

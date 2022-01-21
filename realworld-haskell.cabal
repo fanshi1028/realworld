@@ -67,39 +67,25 @@ common prelude
     base hiding (Prelude),
     relude (Relude as Prelude, Relude.Extra)
 
-common common-data-deps
+common common-deps
   build-depends:
     , aeson                 ^>=1.5.6
+    , cookie                ^>=0.4.5
+    , cryptonite            ^>=0.29
+    , fused-effects         ^>=1.1.1
     , generic-lens          ^>=2.2.0
     , higgledy              ^>=0.4.1
+    , jose                  ^>=0.8.4
     , password              ^>=3.0.0
-    , servant-auth-server   ^>=0.4.6
-    , servant-server        ^>=0.18.3
-    , text                  ^>=1.2.4
-    , time                  ^>=1.9.3
-    , unordered-containers  ^>=0.2.14
-    , uuid                  ^>=1.3.15
-    , validation-selective  ^>=0.1.0
-
-common common-effect-deps
-  build-depends:
-    , cookie               ^>=0.4.5
-    , cryptonite           ^>=0.29
-    , fused-effects        ^>=1.1.1
-    , generic-lens         ^>=2.2.0
-    , jose                 ^>=0.8.4
-    , servant-auth-server  ^>=0.4.6
-
-common common-api-deps
-  build-depends:
-    , cookie                ^>=0.4.5
-    , fused-effects         ^>=1.1.1
     , servant               ^>=0.18.3
     , servant-auth-server   ^>=0.4.6
     , servant-server        ^>=0.18.3
     , servant-streamly      ^>=0.1.0
     , streamly              ^>=0.8.0
+    , text                  ^>=1.2.4
     , time                  ^>=1.9.3
+    , unordered-containers  ^>=0.2.14
+    , uuid                  ^>=1.3.15
     , validation-selective  ^>=0.1.0
     , wai                   ^>=3.2.3
 
@@ -150,116 +136,82 @@ common backend-rel8-carrier-deps
     , servant-server       ^>=0.18.3
     , uuid                 ^>=1.3.15
 
-library common-data-internal
-  import:          prelude, common-data-deps
-  hs-source-dirs:  common/src/data
+library common-internal
+  import:          prelude, common-deps
+  hs-source-dirs:  common/src
   exposed-modules:
-    Authentication.HasAuth
-    Authentication.Internal.HasAuth
-    Authentication.Internal.HasAuth.User
-    Domain
-    Domain.Article
-    Domain.Comment
-    Domain.Transform
-    Domain.User
-    Field.Bio
-    Field.Body
-    Field.Description
-    Field.Email
-    Field.Image
-    Field.Password
-    Field.Slug
-    Field.Tag
-    Field.Time
-    Field.Title
-    Field.Username
-    Paging
-    Storage.Error
-    Storage.Map
-    Storage.Map.Internal.HasCreate
-    Storage.Map.Internal.HasCreate.Article
-    Storage.Map.Internal.HasCreate.Comment
-    Storage.Map.Internal.HasCreate.User
-    Storage.Map.Internal.HasStorage
-    Storage.Map.Internal.HasStorage.Article
-    Storage.Map.Internal.HasStorage.Comment
-    Storage.Map.Internal.HasStorage.User
-    Storage.Map.Internal.HasUpdate
-    Storage.Map.Internal.HasUpdate.Article
-    Storage.Map.Internal.HasUpdate.User
-    Token.HasToken
-    Token.Internal.HasToken
-    Token.Internal.HasToken.User
-    Util.Impossible
-    Util.JSON.From
-    Util.JSON.To
-    Util.Sort
-    Util.Validation
-
-library common-effect-internal
-  import:          prelude, common-effect-deps
-
-  if flag(ghcid)
-    import:         common-data-deps
-    hs-source-dirs: common/src/data
-
-  else
-    build-depends: common-data-internal
-
-  hs-source-dirs:  common/src/effect
-  exposed-modules:
-    Authentication
-    Cookie.Xsrf
-    CreateSalt
-    OptionalAuthAction
-    OptionalAuthAction.Many
-    Token.Create
-    Token.Create.JWT
-    Token.Decode
-    Token.Decode.JWT
-    Token.Invalidate
-    Token.Invalidate.JWT
-    UserAction
-    UserAction.Many
-    VisitorAction
-
--- other-modules:
--- other-extensions:
-
-library common-api-internal
-  import:          prelude, common-api-deps
-
-  if flag(ghcid)
-    import:         common-data-deps, common-effect-deps
-    hs-source-dirs: common/src/data common/src/effect
-
-  else
-    build-depends:
-      , common-data-internal
-      , common-effect-internal
-
-  hs-source-dirs:  common/src/api
-  exposed-modules:
-    Authorization
-    HTTP
-    HTTP.Auth.User
-    HTTP.OptionalAuth
-    HTTP.Protected
-    HTTP.Public
-    HTTP.Util
+    API
+    API.Auth.User
+    API.Authorization
+    API.OptionalAuth
+    API.Protected
+    API.Public
+    API.Util
+    Data.Authentication.HasAuth
+    Data.Authentication.Internal.HasAuth
+    Data.Authentication.Internal.HasAuth.User
+    Data.Domain
+    Data.Domain.Article
+    Data.Domain.Comment
+    Data.Domain.Transform
+    Data.Domain.User
+    Data.Field.Bio
+    Data.Field.Body
+    Data.Field.Description
+    Data.Field.Email
+    Data.Field.Image
+    Data.Field.Password
+    Data.Field.Slug
+    Data.Field.Tag
+    Data.Field.Time
+    Data.Field.Title
+    Data.Field.Username
+    Data.Paging
+    Data.Storage.Error
+    Data.Storage.Map
+    Data.Storage.Map.Internal.HasCreate
+    Data.Storage.Map.Internal.HasCreate.Article
+    Data.Storage.Map.Internal.HasCreate.Comment
+    Data.Storage.Map.Internal.HasCreate.User
+    Data.Storage.Map.Internal.HasStorage
+    Data.Storage.Map.Internal.HasStorage.Article
+    Data.Storage.Map.Internal.HasStorage.Comment
+    Data.Storage.Map.Internal.HasStorage.User
+    Data.Storage.Map.Internal.HasUpdate
+    Data.Storage.Map.Internal.HasUpdate.Article
+    Data.Storage.Map.Internal.HasUpdate.User
+    Data.Token.HasToken
+    Data.Token.Internal.HasToken
+    Data.Token.Internal.HasToken.User
+    Data.Util.Impossible
+    Data.Util.JSON.From
+    Data.Util.JSON.To
+    Data.Util.Sort
+    Data.Util.Validation
+    Effect.Authentication
+    Effect.Cookie.Xsrf
+    Effect.CreateSalt
+    Effect.OptionalAuthAction
+    Effect.OptionalAuthAction.Many
+    Effect.Token.Create
+    Effect.Token.Create.JWT
+    Effect.Token.Decode
+    Effect.Token.Decode.JWT
+    Effect.Token.Invalidate
+    Effect.Token.Invalidate.JWT
+    Effect.UserAction
+    Effect.UserAction.Many
+    Effect.VisitorAction
 
 library backend-api-internal
   import:          prelude, backend-api-deps
 
   if flag(ghcid)
-    import:         common-data-deps, common-api-deps, common-effect-deps
-    hs-source-dirs: common/src/data common/src/api common/src/effect
+    import:         common-deps
+    hs-source-dirs: common/src
 
   else
-    build-depends:
-      , common-api-internal
-      , common-data-internal
-      , common-effect-internal
+    build-depends: common-internal
 
   hs-source-dirs:  backend/src/api
   exposed-modules:
@@ -273,15 +225,13 @@ library backend-in-mem-carrier-internal
   import:          prelude, backend-in-mem-carrier-deps
 
   if flag(ghcid)
-    import:         common-data-deps, common-effect-deps, backend-api-deps, common-api-deps
-    hs-source-dirs: common/src/data common/src/effect backend/src/api common/src/api
+    import:         common-deps, backend-api-deps
+    hs-source-dirs: common/src backend/src/api
 
   else
     build-depends:
       , backend-api-internal
-      , common-api-internal
-      , common-data-internal
-      , common-effect-internal
+      , common-internal
 
   hs-source-dirs:  backend/src/carrier/mem
   exposed-modules:
@@ -310,15 +260,13 @@ library backend-rel8-carrier-internal
   import:          prelude, backend-rel8-carrier-deps
 
   if flag(ghcid)
-    import:         common-data-deps, common-effect-deps, backend-api-deps, common-api-deps
-    hs-source-dirs: common/src/data common/src/effect backend/src/api common/src/api
+    import:         common-deps, backend-api-deps
+    hs-source-dirs: common/src backend/src/api
 
   else
     build-depends:
       , backend-api-internal
-      , common-data-internal
-      , common-api-internal
-      , common-effect-internal
+      , common-internal
 
   hs-source-dirs:  backend/src/carrier/rel8
   exposed-modules:
@@ -347,24 +295,25 @@ executable realworld-haskell-frontend
   hs-source-dirs: frontend/app
   ghc-options:    -threaded -rtsopts -with-rtsopts=-N
   build-depends:
-              -- , jsaddle-warp
-              , reflex
-              -- , reflex-dom
-              , reflex-vty
-              -- , servant-reflex
-              , vty
-              -- , brick
+    , reflex      ^>=0.8.2
+    , reflex-vty  ^>=0.2.0
+    , vty         ^>=5.28.2
+
+-- , jsaddle-warp
+-- , reflex-dom
+-- , servant-reflex
+-- , brick
 
 executable realworld-haskell-backend
   import:         prelude
 
   if flag(ghcid)
     import:
-      common-data-deps, common-effect-deps, common-api-deps, backend-api-deps, backend-in-mem-carrier-deps, backend-rel8-carrier-deps
+      common-deps, backend-api-deps, backend-in-mem-carrier-deps, backend-rel8-carrier-deps
 
     hs-source-dirs:
-      common/src/data common/src/effect common/src/api backend/src/api
-      backend/src/carrier/mem backend/src/carrier/rel8
+      common/src backend/src/api backend/src/carrier/mem
+      backend/src/carrier/rel8
 
   else
     build-depends:
@@ -382,21 +331,19 @@ executable realworld-haskell-backend
 
 test-suite realworld-haskell-backend-test
   import:
-    prelude, common-data-deps, common-effect-deps, backend-api-deps, backend-in-mem-carrier-deps, backend-rel8-carrier-deps
+    prelude, common-deps, backend-api-deps, backend-in-mem-carrier-deps, backend-rel8-carrier-deps
 
   if !flag(ghcid)
     build-depends:
       , backend-api-internal
       , backend-in-mem-carrier-internal
       , backend-rel8-carrier-internal
-      , common-data-internal
-      , common-api-internal
-      , common-effect-internal
+      , common-internal
 
   else
     hs-source-dirs:
-      common/src/data common/src/effect common/src/api backend/src/api
-      backend/src/carrier/mem backend/src/carrier/rel8
+      common/src backend/src/api backend/src/carrier/mem
+      backend/src/carrier/rel8
 
   type:           exitcode-stdio-1.0
   hs-source-dirs: test
