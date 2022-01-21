@@ -6,19 +6,19 @@
 -- |
 module StateMachine.Types where
 
+import Data.Domain (Domain (Article, Comment, User))
+import Data.Field.Email (Email)
+import Data.Field.Password (Password)
+import Data.Field.Tag (Tag)
 import Data.Functor.Classes (Show1)
-import Domain (Domain (Article, Comment, User))
-import Field.Email (Email)
-import Field.Password (Password)
-import Field.Tag (Tag)
+import Data.Storage.Map (CreateOf (..), IdOf (..), Patch, UpdateOf (..))
+import Data.Token.HasToken (TokenOf (..))
 import GHC.Generics (Generic1)
 import Orphans ()
-import Storage.Map (CreateOf (..), IdOf (..), Patch, UpdateOf (..))
 import Test.QuickCheck (Arbitrary, arbitrary, arbitraryBoundedEnum)
 import Test.StateMachine (CommandNames, Concrete, Reference, ToExpr, cmdName, cmdNames)
 import qualified Test.StateMachine.Types.Rank2 as R2
 import Text.Show (showString, showsPrec)
-import Token.HasToken (TokenOf (..))
 
 data StreamMode = NoStreaming | HasStreaming deriving (Show, Bounded, Enum)
 

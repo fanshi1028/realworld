@@ -12,23 +12,28 @@
 -- |
 module StateMachine where
 
-import Authentication.HasAuth (AuthOf (..), LoginOf (UserLogin))
+import API (Api)
 import Control.Exception.Safe (bracket)
 import Control.Lens ((%~))
 import Data.Aeson (FromJSON, ToJSON, eitherDecode, encode)
+import Data.Authentication.HasAuth (AuthOf (..), LoginOf (UserLogin))
+import Data.Domain.Transform (transform)
+import Data.Domain.User (UserAuthWithToken (UserAuthWithToken))
+import Data.Field.Slug (titleToSlug)
 import Data.Functor.Classes (Eq1, Ord1)
 import Data.Generics.Product (HasField' (field'), getField)
 import qualified Data.Semigroup as SG (Last (Last, getLast))
 import Data.Set (delete, insert, isSubsetOf)
 import qualified Data.Set as S (empty, foldl', insert, map, member)
+import Data.Storage.Map (CreateOf (..), IdOf (..), toArticleId, toUserId)
+import Data.Token.HasToken (TokenOf (UserToken))
+import Data.Util.JSON.From (In (In))
+import Data.Util.JSON.To (Out (Out))
+import Data.Util.Validation (WithValidation)
 import Database.PostgreSQL.Simple (close, connectPostgreSQL)
 import Database.PostgreSQL.Simple.Migration (MigrationCommand (MigrationCommands, MigrationFile, MigrationInitialization, MigrationValidation), MigrationResult (MigrationError, MigrationSuccess), defaultOptions, runMigrations)
 import Database.Postgres.Temp (Cache, Config, DB, cacheAction, cacheConfig, toConnectionString, withConfig)
-import Domain.Transform (transform)
-import Domain.User (UserAuthWithToken (UserAuthWithToken))
-import Field.Slug (titleToSlug)
 import Gen.Naive ()
-import HTTP (Api)
 import Network.HTTP.Client (Manager)
 import Network.Wai.Handler.Warp (testWithApplication)
 import Orphans ()
@@ -51,7 +56,6 @@ import StateMachine.Types
     VisitorResponse (..),
   )
 import StateMachine.Util (deleteByRef, findByRef, findByRef2, findByRef2All, findByRefAll)
-import Storage.Map (CreateOf (..), IdOf (..), toArticleId, toUserId)
 import Test.QuickCheck (Property, ioProperty)
 import Test.QuickCheck.Monadic (monadic)
 import Test.StateMachine
@@ -80,10 +84,6 @@ import Test.StateMachine
   )
 import Test.StateMachine.Logic (member)
 import Test.Tasty.QuickCheck ((===))
-import Token.HasToken (TokenOf (UserToken))
-import Util.JSON.From (In (In))
-import Util.JSON.To (Out (Out))
-import Util.Validation (WithValidation)
 import Validation (Validation (Failure, Success))
 
 initModel :: Model r
