@@ -2,20 +2,23 @@
 {-# LANGUAGE FlexibleContexts #-}
 
 -- |
--- Description : API & Server
+-- Description : API
 -- Copyright   : (c) 2021 fanshi1028
 -- Maintainer  : jackychany321@gmail.com
 -- Stability   : experimental
 --
--- API & Server for authorization
+-- API for authorization
 --
--- @since 0.1.0.0
-module HTTP.Auth.User where
+-- @since 0.4.0.0
+module API.Auth.User where
 
-import Authentication.HasAuth (HasAuth (LoginOf))
-import Domain (Domain (User))
-import Domain.User (UserAuthWithToken (..))
-import HTTP.Util (CreateApi)
+import API.Util (CreateApi)
+import Data.Authentication.HasAuth (HasAuth (LoginOf))
+import Data.Domain (Domain (User))
+import Data.Domain.User (UserAuthWithToken (..))
+import Data.Util.JSON.From (In)
+import Data.Util.JSON.To (Out)
+import Data.Util.Validation (WithValidation)
 import Servant
   ( Header,
     Headers,
@@ -26,9 +29,6 @@ import Servant
     type (:<|>),
     type (:>),
   )
-import Util.JSON.From (In)
-import Util.JSON.To (Out)
-import Util.Validation (WithValidation)
 import Web.Cookie (SetCookie)
 
 -- * API

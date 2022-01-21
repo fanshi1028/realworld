@@ -10,19 +10,19 @@
 --
 -- Integrate HTTP server with validation and provide convenient alias
 --
--- @since 0.1.0.0
-module HTTP.Util where
+-- @since 0.4.0.0
+module API.Util where
 
-import Domain (Domain)
-import Field.Tag (Tag)
-import Field.Username (Username)
+import Data.Domain (Domain)
+import Data.Field.Tag (Tag)
+import Data.Field.Username (Username)
+import Data.Paging (Limit, Offset)
+import Data.Storage.Map (CreateOf, Patch, UpdateOf)
+import Data.Util.JSON.From (In)
+import Data.Util.JSON.To (Out)
+import Data.Util.Validation (WithValidation)
 import GHC.TypeLits (Symbol)
-import Paging (Limit, Offset)
 import Servant (Capture, Delete, Get, JSON, NoContent, NoFraming, Post, Put, QueryParam, ReqBody, SourceIO, StreamGet, type (:<|>), type (:>))
-import Storage.Map (CreateOf, Patch, UpdateOf)
-import Util.JSON.From (In)
-import Util.JSON.To (Out)
-import Util.Validation (WithValidation)
 
 -- * QueryParam
 

@@ -10,16 +10,16 @@
 --
 -- API & Server, optional authed.
 --
--- @since 0.3.0.0
-module HTTP.OptionalAuth where
+-- @since 0.4.0.0
+module API.OptionalAuth where
 
-import Domain (Domain (Article, User))
-import Domain.Article (ArticleWithAuthorProfile)
-import Domain.Comment (CommentWithAuthorProfile)
-import Domain.User (UserProfile)
-import HTTP.Util (Cap, QP, ReadApi, ReadManyApi)
+import API.Util (Cap, QP, ReadApi, ReadManyApi)
+import Data.Domain (Domain (Article, User))
+import Data.Domain.Article (ArticleWithAuthorProfile)
+import Data.Domain.Comment (CommentWithAuthorProfile)
+import Data.Domain.User (UserProfile)
+import Data.Storage.Map (IdOf)
 import Servant (type (:<|>), type (:>))
-import Storage.Map (IdOf)
 
 -- * API
 

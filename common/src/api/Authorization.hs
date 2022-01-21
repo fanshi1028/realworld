@@ -13,25 +13,25 @@
 --
 -- Some IsAuth instances for servant
 --
--- @since 0.3.0.0
-module Authorization where
+-- @since 0.4.0.0
+module API.Authorization where
 
 import Control.Algebra (send)
 import Control.Carrier.Lift (runM)
 import qualified Control.Carrier.Reader as R (runReader)
 import Control.Carrier.Throw.Either (runThrow)
+import Data.Domain (Domain (User))
+import Data.Domain.User (UserAuthWithToken (UserAuthWithToken))
+import Data.Field.Time (getCurrentTime)
 import qualified Data.List as List (lookup)
-import Domain (Domain (User))
-import Domain.User (UserAuthWithToken (UserAuthWithToken))
-import Field.Time (getCurrentTime)
+import Data.Token.HasToken (TokenOf (..))
+import Effect.Token.Decode (DecodeTokenE (DecodeToken), InvalidToken)
+import Effect.Token.Decode.JWT (DecodeTokenJWTC (runDecodeTokenJWT), runDecodeTokenJWT)
 import Network.Wai (Request, requestHeaders)
 import Servant (FromHttpApiData (parseHeader))
 import Servant.Auth.Server (CookieSettings, JWTSettings)
 import qualified Servant.Auth.Server as Auth (AuthCheck (AuthCheck))
 import Servant.Auth.Server.Internal.Class (IsAuth (AuthArgs, runAuth))
-import Token.Decode (DecodeTokenE (DecodeToken), InvalidToken)
-import Token.Decode.JWT (DecodeTokenJWTC (runDecodeTokenJWT), runDecodeTokenJWT)
-import Token.HasToken (TokenOf (..))
 
 -- | @since 0.1.0.0
 -- extract token from request

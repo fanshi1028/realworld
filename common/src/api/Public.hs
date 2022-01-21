@@ -3,18 +3,18 @@
 {-# LANGUAGE FlexibleContexts #-}
 
 -- |
--- Description : API & Server
+-- Description : API
 -- Copyright   : (c) 2021 fanshi1028
 -- Maintainer  : jackychany321@gmail.com
 -- Stability   : experimental
 --
--- Public API & Server, for visitors.
+-- Public API for visitors.
 --
--- @since 0.1.0.0
-module HTTP.Public where
+-- @since 0.4.0.0
+module API.Public where
 
-import Field.Tag (Tag)
-import HTTP.Util (ReadManyApi)
+import API.Util (ReadManyApi)
+import Data.Field.Tag (Tag)
 import Servant (type (:>))
 
 -- * API

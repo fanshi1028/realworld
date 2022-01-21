@@ -2,23 +2,23 @@
 {-# LANGUAGE FlexibleContexts #-}
 
 -- |
--- Description : API & Server
+-- Description : API
 -- Copyright   : (c) 2021 fanshi1028
 -- Maintainer  : jackychany321@gmail.com
 -- Stability   : experimental
 --
--- Auth protected API & Server
+-- Auth protected API
 --
--- @since 0.1.0.0
-module HTTP.Protected where
+-- @since 0.4.0.0
+module API.Protected where
 
-import Domain (Domain (Article, Comment, User))
-import Domain.Article (ArticleWithAuthorProfile)
-import Domain.Comment (CommentWithAuthorProfile)
-import Domain.User (UserAuthWithToken, UserProfile)
-import HTTP.Util (Cap, CreateApi, QP, ReadApi, ReadManyApi, ToggleApi, UDApi, UpdateApi)
+import API.Util (Cap, CreateApi, QP, ReadApi, ReadManyApi, ToggleApi, UDApi, UpdateApi)
+import Data.Domain (Domain (Article, Comment, User))
+import Data.Domain.Article (ArticleWithAuthorProfile)
+import Data.Domain.Comment (CommentWithAuthorProfile)
+import Data.Domain.User (UserAuthWithToken, UserProfile)
+import Data.Storage.Map (IdOf)
 import Servant (Delete, JSON, NoContent, type (:<|>), type (:>))
-import Storage.Map (IdOf)
 
 -- * API
 

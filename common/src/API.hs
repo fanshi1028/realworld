@@ -3,22 +3,22 @@
 {-# LANGUAGE FlexibleContexts #-}
 
 -- |
--- Description : API & Server
+-- Description : API
 -- Copyright   : (c) 2021 fanshi1028
 -- Maintainer  : jackychany321@gmail.com
 -- Stability   : experimental
 --
--- All API & Server combined
+-- All API
 --
--- @since 0.1.0.0
-module HTTP where
+-- @since 0.4.0.0
+module API where
 
-import Authorization (TokenAuth)
-import Domain.User (UserAuthWithToken)
-import HTTP.Auth.User (AuthUserApi)
-import HTTP.OptionalAuth (OptionalAuthApi)
-import HTTP.Protected (ProtectedApi)
-import HTTP.Public (PublicApi)
+import API.Auth.User (AuthUserApi)
+import API.Authorization (TokenAuth)
+import API.OptionalAuth (OptionalAuthApi)
+import API.Protected (ProtectedApi)
+import API.Public (PublicApi)
+import Data.Domain.User (UserAuthWithToken)
 import Servant (Get, JSON, type (:<|>), type (:>))
 import Servant.Auth.Server (Auth)
 
