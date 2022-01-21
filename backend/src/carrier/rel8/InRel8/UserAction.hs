@@ -18,37 +18,22 @@
 -- @since 0.4.0.0
 module InRel8.UserAction where
 
-import Authentication (AuthenticationE (GetCurrentAuth))
-import Authentication.HasAuth (AuthOf (..), NotAuthorized)
 import Control.Algebra (Algebra (alg), send, type (:+:) (L, R))
 import Control.Effect.Catch (Catch)
 import qualified Control.Effect.Reader as R (Reader, ask)
 import Control.Effect.Sum (Member)
 import Control.Effect.Throw (Throw, throwError)
-import CreateSalt (CreateSaltE (CreateSalt))
+import Data.Authentication.HasAuth (AuthOf (..), NotAuthorized)
+import Data.Domain (Domain (Article, Comment, User))
+import Data.Domain.Article (ArticleWithAuthorProfile)
+import Data.Domain.User (UserAuthWithToken (UserAuthWithToken), UserProfile)
+import Data.Field.Email (Email)
+import Data.Field.Password (hashPassword)
+import Data.Field.Slug (titleToSlug)
 import Data.Generics.Product (getField)
 import qualified Data.Semigroup as SG (Last (Last, getLast))
-import Data.UUID (UUID)
-import Domain (Domain (Article, Comment, User))
-import Domain.Article (ArticleWithAuthorProfile)
-import Domain.User (UserAuthWithToken (UserAuthWithToken), UserProfile)
-import Field.Email (Email)
-import Field.Password (hashPassword)
-import Field.Slug (titleToSlug)
-import InRel8.Sql (SqlInRel8E (SqlSelect), deleteOneRow, insertOneRow, insertRows, toggleOff, toggleOn, updateOneRow)
-import InRel8.Storage (getArticleById, getArticles, getAuthorForArticle, getCommentById, getProfile, getUserById, mkArticle, mkAuth, mkComment, mkProfile)
-import InRel8.Storage.Schema.Article (ArticleRel8 (ArticleRel8), articleSchema)
-import InRel8.Storage.Schema.Article as ArticleRel8 (author, slug)
-import InRel8.Storage.Schema.ArticleHasTag (ArticleHasTagRel8 (ArticleHasTagRel8), articleHasTagSchema)
-import InRel8.Storage.Schema.Comment as CommentRel8 (CommentRel8 (CommentRel8, author), article, commentSchema, id)
-import InRel8.Storage.Schema.Tag as TagRel8 (TagRel8 (TagRel8), tag, tagSchema)
-import InRel8.Storage.Schema.User as UserRel8 (UserRel8 (UserRel8, email), userSchema, username)
-import InRel8.Storage.Schema.UserFavoriteArticle as UserFavoriteArticleRel8 (UserFavoriteArticleRel8 (UserFavoriteArticleRel8, favoritedBy, favoriting), userFavoriteArticleSchema)
-import InRel8.Storage.Schema.UserFollowUser as UserFollowUserRel8 (UserFollowUserRel8 (UserFollowUserRel8), followedBy, following, userFollowUserSchema)
-import OptionalAuthAction (OptionalAuthActionE)
-import Rel8 (Expr, each, filter, lit, select, unsafeDefault, (&&.), (/=.), (==.))
-import Storage.Error (AlreadyExists (AlreadyExists), NotFound (NotFound))
-import Storage.Map
+import Data.Storage.Error (AlreadyExists (AlreadyExists), NotFound (NotFound))
+import Data.Storage.Map
   ( CRUD (D, U),
     CreateOf (ArticleCreate, CommentCreate),
     Forbidden (Forbidden),
@@ -57,8 +42,13 @@ import Storage.Map
     IdOf (ArticleId, CommentId, UserId),
     toUserId,
   )
-import Token.HasToken (TokenOf)
-import UserAction
+import Data.Token.HasToken (TokenOf)
+import Data.UUID (UUID)
+import Data.Util.Impossible (Impossible (Impossible))
+import Effect.Authentication (AuthenticationE (GetCurrentAuth))
+import Effect.CreateSalt (CreateSaltE (CreateSalt))
+import Effect.OptionalAuthAction (OptionalAuthActionE)
+import Effect.UserAction
   ( UserActionE
       ( AddCommentToArticle,
         CreateArticle,
@@ -73,7 +63,17 @@ import UserAction
         UpdateUser
       ),
   )
-import Util.Impossible (Impossible (Impossible))
+import InRel8.Sql (SqlInRel8E (SqlSelect), deleteOneRow, insertOneRow, insertRows, toggleOff, toggleOn, updateOneRow)
+import InRel8.Storage (getArticleById, getArticles, getAuthorForArticle, getCommentById, getProfile, getUserById, mkArticle, mkAuth, mkComment, mkProfile)
+import InRel8.Storage.Schema.Article (ArticleRel8 (ArticleRel8), articleSchema)
+import InRel8.Storage.Schema.Article as ArticleRel8 (author, slug)
+import InRel8.Storage.Schema.ArticleHasTag (ArticleHasTagRel8 (ArticleHasTagRel8), articleHasTagSchema)
+import InRel8.Storage.Schema.Comment as CommentRel8 (CommentRel8 (CommentRel8, author), article, commentSchema, id)
+import InRel8.Storage.Schema.Tag as TagRel8 (TagRel8 (TagRel8), tag, tagSchema)
+import InRel8.Storage.Schema.User as UserRel8 (UserRel8 (UserRel8, email), userSchema, username)
+import InRel8.Storage.Schema.UserFavoriteArticle as UserFavoriteArticleRel8 (UserFavoriteArticleRel8 (UserFavoriteArticleRel8, favoritedBy, favoriting), userFavoriteArticleSchema)
+import InRel8.Storage.Schema.UserFollowUser as UserFollowUserRel8 (UserFollowUserRel8 (UserFollowUserRel8), followedBy, following, userFollowUserSchema)
+import Rel8 (Expr, each, filter, lit, select, unsafeDefault, (&&.), (/=.), (==.))
 
 -- | @since 0.4.0.0
 newtype UserActionInRel8C m a = UserActionInRel8C

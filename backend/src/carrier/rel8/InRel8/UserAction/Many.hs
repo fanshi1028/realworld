@@ -18,17 +18,17 @@
 -- @since 0.4.0.0
 module InRel8.UserAction.Many where
 
-import Authentication (AuthenticationE (GetCurrentAuth))
-import Authentication.HasAuth (AuthOf (..))
 import Control.Algebra (Algebra, alg, send, type (:+:) (L, R))
 import Control.Effect.Sum (Member)
-import Domain (Domain (User))
+import Data.Authentication.HasAuth (AuthOf (..))
+import Data.Domain (Domain (User))
+import Data.Storage.Map (toUserId)
+import Effect.Authentication (AuthenticationE (GetCurrentAuth))
+import Effect.UserAction.Many (UserActionManyE (FeedArticles))
 import InRel8.Sql (SqlInRel8E (SqlSelect))
 import InRel8.Storage (filterUserFollowUser, getArticles, mkArticle)
 import InRel8.Storage.Schema.User as UserRel8 (username)
 import Rel8 (lit, select)
-import Storage.Map (toUserId)
-import UserAction.Many (UserActionManyE (FeedArticles))
 
 -- | @since 0.4.0.0
 newtype UserActionManyInRel8C (f :: Type -> Type) m a = UserActionManyInRel8C

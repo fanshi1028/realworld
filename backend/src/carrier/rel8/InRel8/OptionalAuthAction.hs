@@ -16,19 +16,19 @@
 -- @since 0.4.0.0
 module InRel8.OptionalAuthAction where
 
-import Authentication (AuthenticationE (GetCurrentAuth))
 import Control.Algebra (Algebra (alg), send, type (:+:) (L, R))
 import Control.Effect.Catch (Catch)
 import Control.Effect.Sum (Member)
 import Control.Effect.Throw (Throw, throwError)
-import Domain (Domain (Article, Comment, User))
+import Data.Domain (Domain (Article, Comment, User))
+import Data.Storage.Error (NotFound (NotFound))
+import Data.Storage.Map (IdNotFound, IdOf)
+import Effect.Authentication (AuthenticationE (GetCurrentAuth))
+import Effect.OptionalAuthAction (OptionalAuthActionE (GetArticle, GetProfile))
 import InRel8.Sql (SqlInRel8E (SqlSelect))
 import InRel8.Storage (getArticles, getProfile, getUserById, mkArticle, mkProfile)
 import qualified InRel8.Storage.Schema.Article as Article (slug)
-import OptionalAuthAction (OptionalAuthActionE (GetArticle, GetProfile))
 import Rel8 (filter, lit, select, (==.))
-import Storage.Error (NotFound (NotFound))
-import Storage.Map (IdNotFound, IdOf)
 
 -- | @since 0.4.0.0
 newtype OptionalAuthActionInRel8C m a = OptionalAuthActionInRel8C

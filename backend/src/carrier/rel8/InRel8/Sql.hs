@@ -19,6 +19,7 @@ import Control.Effect.Lift (Lift, sendM)
 import Control.Effect.Sum (Member)
 import Control.Effect.Throw (Throw, throwError)
 import qualified Control.Effect.Trace as Trace
+import Data.Util.Impossible (Impossible (Impossible))
 import Hasql.Statement (Statement (Statement))
 import Hasql.Transaction (Transaction, statement)
 import Rel8
@@ -40,7 +41,6 @@ import Rel8
     update,
     values,
   )
-import Util.Impossible (Impossible (Impossible))
 
 -- | @since 0.4.0.0
 data SqlInRel8E (m :: Type -> Type) a where

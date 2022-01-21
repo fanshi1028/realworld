@@ -16,12 +16,13 @@
 -- @since 0.4.0.0
 module InRel8.Storage where
 
-import Authentication.HasAuth (AuthOf (..))
-import Domain (Domain (Article, Comment, User))
-import Domain.Article (ArticleWithAuthorProfile (ArticleWithAuthorProfile))
-import Domain.Comment (CommentWithAuthorProfile (CommentWithAuthorProfile))
-import Domain.User (UserProfile (UserProfile))
-import Field.Tag (Tag)
+import Data.Authentication.HasAuth (AuthOf (..))
+import Data.Domain (Domain (Article, Comment, User))
+import Data.Domain.Article (ArticleWithAuthorProfile (ArticleWithAuthorProfile))
+import Data.Domain.Comment (CommentWithAuthorProfile (CommentWithAuthorProfile))
+import Data.Domain.User (UserProfile (UserProfile))
+import Data.Field.Tag (Tag)
+import Data.Storage.Map (ContentOf (ArticleContent), IdOf (UserId), toUserId)
 import InRel8.Storage.Internal.Field ()
 import InRel8.Storage.Schema.Article as Article (ArticleRel8 (ArticleRel8, createdAt, slug), articleSchema, author)
 import InRel8.Storage.Schema.ArticleHasTag as AHT (ArticleHasTagRel8 (ArticleHasTagRel8), articleHasTagSchema)
@@ -31,7 +32,6 @@ import InRel8.Storage.Schema.User as User (UserRel8 (UserRel8), userSchema, user
 import InRel8.Storage.Schema.UserFavoriteArticle (UserFavoriteArticleRel8 (UserFavoriteArticleRel8), userFavoriteArticleSchema)
 import InRel8.Storage.Schema.UserFollowUser as UFU (UserFollowUserRel8 (UserFollowUserRel8), userFollowUserSchema)
 import Rel8 (Expr, ListTable, Query, Result, asc, countRows, each, exists, filter, lit, many, orderBy, where_, (&&.), (==.))
-import Storage.Map (ContentOf (ArticleContent), IdOf (UserId), toUserId)
 
 -- * Basic Query
 

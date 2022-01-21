@@ -14,16 +14,16 @@
 -- @since 0.4.0.0
 module InRel8.Storage.Schema.User where
 
-import Domain (Domain (User))
-import Field.Bio (Bio)
-import Field.Email (Email)
-import Field.Image (Image)
-import Field.Password (PasswordHash)
-import Field.Time (Time)
+import Data.Domain (Domain (User))
+import Data.Field.Bio (Bio)
+import Data.Field.Email (Email)
+import Data.Field.Image (Image)
+import Data.Field.Password (PasswordHash)
+import Data.Field.Time (Time)
+import Data.Storage.Map (IdOf)
 import InRel8.Storage.Internal.Field ()
 import InRel8.Storage.Schema.Util (snakeNamesFromLabels)
 import Rel8 (Column, Name, Rel8able, Result, TableSchema (TableSchema))
-import Storage.Map (IdOf)
 
 -- | @since 0.4.0.0
 data UserRel8 f = UserRel8

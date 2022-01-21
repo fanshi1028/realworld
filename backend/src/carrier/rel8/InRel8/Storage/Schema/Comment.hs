@@ -14,12 +14,12 @@
 -- @since 0.4.0.0
 module InRel8.Storage.Schema.Comment where
 
-import Domain (Domain (Article, Comment, User))
-import Field.Time (Time)
+import Data.Domain (Domain (Article, Comment, User))
+import Data.Field.Time (Time)
+import Data.Storage.Map (IdOf)
 import InRel8.Storage.Internal.Field ()
 import InRel8.Storage.Schema.Util (snakeNamesFromLabels)
 import Rel8 (Column, Name, Rel8able, Result, TableSchema (TableSchema))
-import Storage.Map (IdOf)
 
 -- | @since 0.4.0.0
 data CommentRel8 f = CommentRel8
