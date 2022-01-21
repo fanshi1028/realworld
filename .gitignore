@@ -39,4 +39,4 @@ node_modules/
 /.tasty-rerun-log
 /result
 /backend/postgres/data/
-/backend/postgres/.tmp-postgres/cache/**
+/backend/postgres/.tmp-postgres/
