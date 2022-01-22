@@ -3,7 +3,6 @@
 {-# LANGUAGE DuplicateRecordFields #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE TypeFamilies #-}
-{-# LANGUAGE TypeSynonymInstances #-}
 {-# OPTIONS_GHC -Wno-orphans #-}
 
 -- |
@@ -18,14 +17,14 @@
 module Data.Storage.Map.Internal.HasUpdate.User where
 
 import Data.Aeson (FromJSON (parseJSON), withObject, (.!=), (.:?))
-import Data.Generic.HKD (HKD, build, construct)
-import qualified Data.Semigroup as SG
 import Data.Domain (Domain (User))
 import Data.Field.Bio (Bio)
 import Data.Field.Email (Email)
 import Data.Field.Image (Image)
 import Data.Field.Password (Password)
 import Data.Field.Username (Username)
+import Data.Generic.HKD (HKD, build, construct)
+import qualified Data.Semigroup as SG
 import Data.Storage.Map.Internal.HasUpdate (HasUpdate (..), Patch, updatableKeys)
 import Data.Util.JSON.From (In, wrappedParseJSON)
 import Data.Util.Validation (WithValidation)

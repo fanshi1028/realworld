@@ -3,7 +3,6 @@
 {-# LANGUAGE DuplicateRecordFields #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE TypeFamilies #-}
-{-# LANGUAGE TypeSynonymInstances #-}
 {-# OPTIONS_GHC -Wno-orphans #-}
 
 -- |
@@ -18,14 +17,14 @@
 module Data.Storage.Map.Internal.HasUpdate.Article where
 
 import Data.Aeson (FromJSON (parseJSON), withObject, (.!=), (.:?))
-import Data.Generic.HKD (HKD, build, construct)
-import Data.Generics.Product (HasField' (field'))
-import Data.Generics.Product.Fields (getField)
-import qualified Data.Semigroup as SG
 import Data.Domain (Domain (Article))
 import Data.Field.Body (Body)
 import Data.Field.Description (Description)
 import Data.Field.Title (Title)
+import Data.Generic.HKD (HKD, build, construct)
+import Data.Generics.Product (HasField' (field'))
+import Data.Generics.Product.Fields (getField)
+import qualified Data.Semigroup as SG
 import Data.Storage.Map.Internal.HasStorage (ContentOf)
 import Data.Storage.Map.Internal.HasStorage.Article ()
 import Data.Storage.Map.Internal.HasUpdate (HasUpdate (UpdateOf), Patch, updatableKeys)
