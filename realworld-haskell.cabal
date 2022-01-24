@@ -136,12 +136,26 @@ common backend-rel8-carrier-deps
     , servant-server       ^>=0.18.3
     , uuid                 ^>=1.3.15
 
+common frontend-api-deps
+  build-depends:
+    , aeson                 ^>=1.5.6
+    , containers            ^>=0.6.5
+    , generic-lens          ^>=2.2.0
+    , http-types            ^>=0.12.3
+    , password              ^>=3.0.0
+    , servant               ^>=0.18.3
+    , servant-auth-server   ^>=0.4.6
+    , servant-client        ^>=0.18.3
+    , servant-client-core   ^>=0.18.3
+    , servant-flatten       ^>=0.2
+    , unordered-containers  ^>=0.2.16
+    , validation-selective  ^>=0.1.0
+
 common frontend-vty-deps
   build-depends:
-    , higgledy    ^>=0.4.1
-    , reflex      ^>=0.8.2
-    , reflex-vty  ^>=0.2.0
-    , vty         ^>=5.28.2
+    , reflex          ^>=0.8.2
+    , reflex-vty      ^>=0.2.0
+    , vty             ^>=5.28.2
 
 library common-internal
   import:          prelude, common-deps
@@ -296,8 +310,8 @@ library backend-rel8-carrier-internal
     InRel8.UserAction.Many
     InRel8.VisitorAction
 
-library frontend-vty-internal
-  import:          prelude, frontend-vty-deps
+library frontend-api-internal
+  import:          prelude, frontend-api-deps
 
   if flag(ghcid)
     import:         common-deps
@@ -305,6 +319,28 @@ library frontend-vty-internal
 
   else
     build-depends: common-internal
+
+  hs-source-dirs:  frontend/src/api
+  ghc-options:     -threaded -rtsopts -with-rtsopts=-N
+  exposed-modules:
+    Client
+    Client.Orphans
+    Client.Orphans.Internal.FromJSON
+    Client.Orphans.Internal.HasClient
+    Client.Orphans.Internal.ToHttpApiData
+    Client.Orphans.Internal.ToJSON
+
+library frontend-vty-internal
+  import:          prelude, frontend-vty-deps
+
+  if flag(ghcid)
+    import:         common-deps, frontend-api-deps
+    hs-source-dirs: common/src frontend/src/api
+
+  else
+    build-depends:
+      , common-internal
+      , frontend-api-internal
 
   hs-source-dirs:  frontend/src/vty
   ghc-options:     -threaded -rtsopts -with-rtsopts=-N
@@ -317,21 +353,29 @@ executable realworld-haskell-frontend
   import:         prelude
 
   if flag(ghcid)
-    import:         common-deps, frontend-vty-deps
-    hs-source-dirs: common/src frontend/src/vty
+    import:         common-deps, frontend-vty-deps, frontend-api-deps
+    hs-source-dirs: common/src frontend/src/vty frontend/src/api
 
   else
     build-depends:
       , common-internal
+      , frontend-api-internal
       , frontend-vty-internal
 
   main-is:        Main.hs
   hs-source-dirs: frontend/app
   ghc-options:    -threaded -rtsopts -with-rtsopts=-N
   build-depends:
-    , reflex      ^>=0.8.2
-    , reflex-vty  ^>=0.2.0
-    , vty         ^>=5.28.2
+    , servant-client
+    , servant-client-core
+    , http-client
+
+    , reflex               ^>=0.8.2
+    , reflex-vty           ^>=0.2.0
+    , servant              ^>=0.18.3
+    , servant-client       ^>=0.18.3
+    , servant-client-core  ^>=0.18.3
+    , vty                  ^>=5.28.2
 
 -- , jsaddle-warp
 -- , reflex-dom
@@ -365,7 +409,7 @@ executable realworld-haskell-backend
 
 test-suite realworld-haskell-backend-test
   import:
-    prelude, common-deps, backend-api-deps, backend-in-mem-carrier-deps, backend-rel8-carrier-deps
+    prelude, common-deps, backend-api-deps, backend-in-mem-carrier-deps, backend-rel8-carrier-deps, frontend-api-deps
 
   if !flag(ghcid)
     build-depends:
@@ -373,11 +417,12 @@ test-suite realworld-haskell-backend-test
       , backend-in-mem-carrier-internal
       , backend-rel8-carrier-internal
       , common-internal
+      , frontend-api-internal
 
   else
     hs-source-dirs:
       common/src backend/src/api backend/src/carrier/mem
-      backend/src/carrier/rel8
+      backend/src/carrier/rel8 frontend/src/api
 
   type:           exitcode-stdio-1.0
   hs-source-dirs: test
