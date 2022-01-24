@@ -1,5 +1,4 @@
 {-# LANGUAGE DataKinds #-}
-{-# LANGUAGE TupleSections #-}
 
 -- | @since 0.4.0.0
 module InVty.Component.Settings where
@@ -18,8 +17,8 @@ import Data.Text.Zipper (fromText)
 import Effect.UserAction (UserActionE (UpdateUser))
 import Graphics.Vty (bold, green, red, withBackColor, withForeColor, withStyle)
 import InVty.Component.InputBox (inputWithPlaceHolder)
-import InVty.Util (centerText, noBorderStyle, splitH3, splitV3, splitVRatio)
-import Reflex (Adjustable, Event, MonadHold, Reflex (Dynamic), current, sample, tag)
+import InVty.Util (centerText, noBorderStyle, splitH3, splitVRatio)
+import Reflex (Adjustable, Event, MonadHold, Reflex (Dynamic), current, leftmost, sample, tag)
 import Reflex.Vty
   ( HasDisplayRegion,
     HasFocus,
@@ -58,7 +57,7 @@ settingsBox ::
   ) =>
   Dynamic t Username ->
   Dynamic t Email ->
-  m (Event t (UserActionE n (AuthOf 'User)), Event t ())
+  m (Event t (Either () (UserActionE m (AuthOf 'User))))
 settingsBox dName dEmail = do
   let inputBoxWithPlaceHolder = inputWithPlaceHolder textInput singleBoxStyle doubleBoxStyle
       inputAreaWithPlaceHolder = inputWithPlaceHolder multilineTextInput singleBoxStyle doubleBoxStyle
@@ -90,22 +89,25 @@ settingsBox dName dEmail = do
         localTheme ((`withForeColor` red) <$>) $
           fst <$> splitH3 (textButtonStatic def "Or click here to logout.") blank blank
       thirdSection =
-        splitVRatio 2 (splitVRatio 2 emailInput pwInput) $ splitVRatio 2 updateButton logoutButton
+        splitVRatio 3 (splitVRatio 2 emailInput pwInput) $ splitVRatio 2 updateButton logoutButton
 
-  ((dAvatorInput, dNameInput), (dBioInput, ((dEmailInput, dPwInput), (eUpdate, eLogout)))) <- splitV3 firstSection sencodSection thirdSection
+  ((dAvatorInput, dNameInput), (dBioInput, ((dEmailInput, dPwInput), (eUpdate, eLogout)))) <-
+    splitVRatio 4 firstSection $ splitVRatio 2 sencodSection thirdSection
 
   pure $
-    (,eLogout) $
-      tag
-        ( UpdateUser
-            <$> current
-              ( construct $
-                  build @(Patch (UpdateOf 'User))
-                    (pure . pure <$> dEmailInput)
-                    (pure . pure <$> dPwInput)
-                    (pure . pure <$> dNameInput)
-                    (pure . pure <$> dBioInput)
-                    (pure . pure <$> dAvatorInput)
-              )
-        )
-        eUpdate
+    leftmost
+      [ Left <$> eLogout,
+        tag
+          ( Right . UpdateUser
+              <$> current
+                ( construct $
+                    build @(Patch (UpdateOf 'User))
+                      (pure . pure <$> dEmailInput)
+                      (pure . pure <$> dPwInput)
+                      (pure . pure <$> dNameInput)
+                      (pure . pure <$> dBioInput)
+                      (pure . pure <$> dAvatorInput)
+                )
+          )
+          eUpdate
+      ]
