@@ -155,6 +155,7 @@ common frontend-vty-deps
   build-depends:
     , reflex          ^>=0.8.2
     , reflex-vty      ^>=0.2.0
+    , servant-client  ^>=0.18.3
     , vty             ^>=5.28.2
 
 library common-internal
@@ -349,6 +350,8 @@ library frontend-vty-internal
     InVty.Component.Navbar
     InVty.Component.Settings
     InVty.Util
+    InVty.Scene.LoggedIn
+    InVty.Scene.LoggedOut
 
 executable realworld-haskell-frontend
   import:         prelude

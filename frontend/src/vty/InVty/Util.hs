@@ -1,16 +1,18 @@
 -- | @since 0.4.0.0
 module InVty.Util where
 
+import Data.Domain.User (UserAuthWithToken)
 import Data.Field.Slug (Slug)
 import Data.Field.Username (Username)
 import Reflex (Behavior, current)
 import Reflex.Vty (BoxStyle (BoxStyle), HasDisplayRegion, HasFocusReader, HasImageWriter, HasInput, HasTheme, displayWidth, splitH, splitV)
 
 -- | @since 0.4.0.0
-data LoginEvent = LoginEvent
+newtype LoggedIn = LoggedIn UserAuthWithToken
 
 -- | @since 0.4.0.0
-data LogoutEvent = LogoutEvent
+data LoggedOut = LoggedOut
+
 -- | @since 0.4.0.0
 data Page = Home | NewArticle | Settings | Article Slug | Profile Username | SignIn | SignUp deriving (Eq)
 
