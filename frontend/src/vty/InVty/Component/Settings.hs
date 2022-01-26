@@ -25,7 +25,17 @@ import GHC.Records (HasField (getField))
 import Graphics.Vty (bold, green, red, withBackColor, withForeColor, withStyle)
 import InVty.Component.InputBox (inputWithPlaceHolder)
 import InVty.Util (LoggedOut (LoggedOut), centerText, noBorderStyle, splitH3, splitVRatio)
-import Reflex (Adjustable, Event, MonadHold, PerformEvent (Performable, performEvent), Reflex (Dynamic), current, fanEither, sample, (<@))
+import Reflex
+  ( Adjustable,
+    Event,
+    MonadHold,
+    PerformEvent (Performable, performEvent),
+    Reflex (Dynamic),
+    current,
+    fanEither,
+    sample,
+    (<@),
+  )
 import Reflex.Vty
   ( HasDisplayRegion,
     HasFocus,
@@ -106,22 +116,17 @@ settingsBox clientEnv dAuth dToken = mdo
   ((dAvatorInput, dNameInput), (dBioInput, ((dEmailInput, dPwInput), (eUpdate, eLogout)))) <-
     splitVRatio 4 firstSection $ splitVRatio 2 sencodSection thirdSection
 
-  let eRequest =
-        current
-          ( updateUserClient
-              <$> dToken
-                <*> ( In . Success
-                        <$> construct
-                          ( build @(Patch (UpdateOf 'User))
-                              (pure . pure <$> dEmailInput)
-                              (pure . pure <$> dPwInput)
-                              (pure . pure <$> dNameInput)
-                              (pure . pure <$> dBioInput)
-                              (pure . pure <$> dAvatorInput)
-                          )
-                    )
-          )
-          <@ eUpdate
+  let dPayload =
+        In . Success
+          <$> construct
+            ( build @(Patch (UpdateOf 'User))
+                (pure . pure <$> dEmailInput)
+                (pure . pure <$> dPwInput)
+                (pure . pure <$> dNameInput)
+                (pure . pure <$> dBioInput)
+                (pure . pure <$> dAvatorInput)
+            )
+      eRequest = current (updateUserClient <$> dToken <*> dPayload) <@ eUpdate
       eRunRequest = liftIO <$> (flip withClientM clientEnv <$> eRequest ?? pure)
   (eErr, eRes) <- fanEither <$> performEvent eRunRequest
   pure (LoggedOut <$ eLogout, eErr, eRes)

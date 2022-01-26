@@ -86,7 +86,9 @@ inputWithPlaceHolder inputMaker nfStyle fStyle placeHolder = tile flex $ do
       wf1 = Workflow $ do
         -- NOTE: holdUniqDyn??
         -- NOTE: is (fromUniqDynamic . uniqDynamic) faster??
-        dText@(fmap toString . updated . fromUniqDynamic . uniqDynamic -> eString) <- _textInput_value <$> mkInput inputMaker bStyle (home placeHolder) (home <$ eFocus)
+        dText@(fmap toString . updated . fromUniqDynamic . uniqDynamic -> eString) <-
+          _textInput_value
+            <$> mkInput inputMaker bStyle (home placeHolder) (home <$ eFocus)
         pure . (dText,) . fforMaybe eString $ \case
           (ch : _) -> Just $ wf2 ch
           _ -> Nothing

@@ -47,32 +47,23 @@ signInBox ::
     )
 signInBox clientEnv = do
   let inputBoxWithPlaceHolder = inputWithPlaceHolder textInput singleBoxStyle doubleBoxStyle
-
       title = localTheme ((`withStyle` bold) <$>) $ centerText text "Sign in"
-
       needAnAcc = localTheme ((`withForeColor` green) <$>) $ linkStatic "Need an account?"
-
       emailInput = Email <<$>> inputBoxWithPlaceHolder "Email"
-
       pwInput = mkPassword <<$>> inputBoxWithPlaceHolder "Password"
       signInButton =
         snd . snd
-          <$> splitH3
-            blank
-            blank
-            ( button def {_buttonConfig_focusStyle = pure noBorderStyle} $
-                localTheme ((`withBackColor` green) <$>) $
-                  boxStatic noBorderStyle $ centerText text "Sign In"
-            )
+          <$> ( splitH3 blank blank $
+                  button def {_buttonConfig_focusStyle = pure noBorderStyle} $
+                    localTheme ((`withBackColor` green) <$>) $
+                      boxStatic noBorderStyle $ centerText text "Sign In"
+              )
   (_, ((eGoSignUp, (dEmailInput, (dPwInput, eSignIn))), _)) <-
     splitVRatio 5 title $
       splitVRatio
         2
-        ( splitVRatio 5 needAnAcc $
-            splitV3 emailInput pwInput signInButton
-        )
+        (splitVRatio 5 needAnAcc $ splitV3 emailInput pwInput signInButton)
         blank
-
   let ePayload =
         In . Success
           <$> current (UserLogin <$> dEmailInput <*> dPwInput)
