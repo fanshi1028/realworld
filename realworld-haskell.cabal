@@ -153,10 +153,13 @@ common frontend-api-deps
 
 common frontend-vty-deps
   build-depends:
-    , reflex          ^>=0.8.2
-    , reflex-vty      ^>=0.2.0
-    , servant-client  ^>=0.18.3
-    , vty             ^>=5.28.2
+    , generic-lens          ^>=2.2.0
+    , higgledy              ^>=0.4.1
+    , reflex                ^>=0.8.2
+    , reflex-vty            ^>=0.2.0
+    , servant-client        ^>=0.18.3
+    , validation-selective  ^>=0.1.0
+    , vty                   ^>=5.28.2
 
 library common-internal
   import:          prelude, common-deps

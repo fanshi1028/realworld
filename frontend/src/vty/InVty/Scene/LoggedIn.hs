@@ -14,7 +14,7 @@ import qualified InVty.Util as Page (Page (Article))
 import Reflex (Adjustable, Event, MonadHold, PerformEvent, Performable, ffilter, filterLeft, filterRight, fmapMaybe, hold, holdDyn, leftmost, never, switchDyn)
 import Reflex.Vty (HasDisplayRegion, HasFocus, HasFocusReader, HasImageWriter, HasInput, HasLayout, HasTheme, blank, text)
 import Reflex.Workflow (Workflow (Workflow), workflow)
-import Servant.Client (ClientEnv, ClientError)
+import Servant.Client (ClientEnv)
 
 -- | @since 0.4.0.0
 loggedInPages ::
@@ -43,7 +43,17 @@ loggedInPages clientEnv (LoggedIn (UserAuthWithToken auth token)) = mdo
         text $ pure $ "under construction: " <> tag
         pure (never, basicRouting)
       homePage = tempPage "home page /#/" -- TEMP FIXME
-      settingsPage = tempPage "settings page /#/settings" -- TEMP FIXME
+      settingsPage = Workflow $ do
+        -- NOTE: /#/settings"
+        (eLogout', eErr', eRes') <- settingsBox clientEnv dAuth dToken
+        pure
+          ( leftmost
+              [ Left . Left <$> eLogout',
+                Left . Right <$> eErr',
+                Right . Right <$> eRes'
+              ],
+            basicRouting
+          )
       editorCreatePage = tempPage "editor page /#/editor" -- TEMP FIXME
       -- editorEditPage = tempPage "editor page /#/editor/:slug" -- TEMP FIXME
       articlePage slug = tempPage "article page /#/article/:slug" -- TEMP FIXME
@@ -67,6 +77,7 @@ loggedInPages clientEnv (LoggedIn (UserAuthWithToken auth token)) = mdo
               `fmapMaybe` eGo
           ]
       navBar = navBarCommonPartWith navBarLoggedInPart
-      errorGot = hold "no error" (show @_ @ClientError <$> filterLeft eRes) >>= text
+      errorGot = hold "no error" (show <$> filterRight (filterLeft eRes)) >>= text
+  -- localTheme (flip withForeColor red <$>) . boxStatic thickBoxStyle .
   (eGo, (_, (eRes, _))) <- splitVRatio 8 navBar $ splitH3 errorGot (switchDyn <$> workflow homePage) blank
-  pure $ filterRight eRes
+  pure $ filterLeft (filterLeft eRes)
