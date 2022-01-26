@@ -24,15 +24,14 @@ import Data.Util.JSON.To (Out)
 import GHC.Records (HasField (getField))
 import Graphics.Vty (bold, green, red, withBackColor, withForeColor, withStyle)
 import InVty.Component.InputBox (inputWithPlaceHolder)
-import InVty.Util (LoggedOut (LoggedOut), centerText, noBorderStyle, splitH3, splitVRatio)
+import InVty.Util (LoggedOut (LoggedOut), centerText, noBorderStyle, runRequestE, splitH3, splitVRatio)
 import Reflex
   ( Adjustable,
     Event,
     MonadHold,
-    PerformEvent (Performable, performEvent),
+    PerformEvent (Performable),
     Reflex (Dynamic),
     current,
-    fanEither,
     sample,
     (<@),
   )
@@ -57,7 +56,7 @@ import Reflex.Vty
     textInput,
     _buttonConfig_focusStyle,
   )
-import Servant.Client.Streaming (ClientEnv, ClientError, withClientM)
+import Servant.Client.Streaming (ClientEnv, ClientError)
 import Validation (Validation (Success))
 
 -- | @since 0.4.0.0
@@ -127,6 +126,5 @@ settingsBox clientEnv dAuth dToken = mdo
                 (pure . pure <$> dAvatorInput)
             )
       eRequest = current (updateUserClient <$> dToken <*> dPayload) <@ eUpdate
-      eRunRequest = liftIO <$> (flip withClientM clientEnv <$> eRequest ?? pure)
-  (eErr, eRes) <- fanEither <$> performEvent eRunRequest
+  (eErr, eRes) <- runRequestE clientEnv eRequest
   pure (LoggedOut <$ eLogout, eErr, eRes)

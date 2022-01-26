@@ -15,11 +15,11 @@ import Data.Util.JSON.From (In (In))
 import Data.Util.JSON.To (Out)
 import Graphics.Vty (bold, green, withBackColor, withForeColor, withStyle)
 import InVty.Component.InputBox (inputWithPlaceHolder)
-import InVty.Util (Go (Go), Page (SignIn), centerText, noBorderStyle, splitH3, splitVRatio)
-import Reflex (Adjustable, Event, MonadHold, PerformEvent, Performable, Reflex, current, fanEither, performEvent, (<@))
+import InVty.Util (Go (Go), Page (SignIn), centerText, noBorderStyle, runRequestE, splitH3, splitVRatio)
+import Reflex (Adjustable, Event, MonadHold, PerformEvent, Performable, Reflex, current, (<@))
 import Reflex.Vty (HasDisplayRegion, HasFocus, HasFocusReader, HasImageWriter, HasInput, HasLayout, HasTheme, blank, boxStatic, button, def, doubleBoxStyle, linkStatic, localTheme, singleBoxStyle, text, textInput, _buttonConfig_focusStyle)
 import Servant.Client (ClientError)
-import Servant.Client.Streaming (ClientEnv, withClientM)
+import Servant.Client.Streaming (ClientEnv)
 import Validation (Validation (Success))
 
 -- | @since 0.4.0.0
@@ -78,7 +78,5 @@ signUpBox clientEnv = do
         In . Success
           <$> current (UserCreate <$> dNameInput <*> dEmailInput <*> dPwInput)
           <@ eSignUp
-      eRequest = registerClient <$> ePayload
-      eRunRequest = liftIO <$> (flip withClientM clientEnv <$> eRequest ?? pure)
-  (eErr, eRes) <- fanEither <$> performEvent eRunRequest
+  (eErr, eRes) <- runRequestE clientEnv $ registerClient <$> ePayload
   pure (Go SignIn <$ eGoSignIn, eErr, eRes)
