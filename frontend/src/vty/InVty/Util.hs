@@ -1,6 +1,8 @@
 -- | @since 0.4.0.0
 module InVty.Util where
 
+import Data.Field.Slug (Slug)
+import Data.Field.Username (Username)
 import Reflex (Behavior, current)
 import Reflex.Vty (BoxStyle (BoxStyle), HasDisplayRegion, HasFocusReader, HasImageWriter, HasInput, HasTheme, displayWidth, splitH, splitV)
 
@@ -9,6 +11,11 @@ data LoginEvent = LoginEvent
 
 -- | @since 0.4.0.0
 data LogoutEvent = LogoutEvent
+-- | @since 0.4.0.0
+data Page = Home | NewArticle | Settings | Article Slug | Profile Username | SignIn | SignUp deriving (Eq)
+
+-- | @since 0.4.0.0
+newtype Go = Go Page deriving (Eq)
 
 -- | @since 0.4.0.0
 splitHRatio :: (HasDisplayRegion t m, HasInput t m, HasImageWriter t m, HasFocusReader t m) => Int -> m a -> m b -> m (a, b)

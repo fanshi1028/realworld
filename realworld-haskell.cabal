@@ -346,6 +346,7 @@ library frontend-vty-internal
   ghc-options:     -threaded -rtsopts -with-rtsopts=-N
   exposed-modules:
     InVty.Component.InputBox
+    InVty.Component.Navbar
     InVty.Component.Settings
     InVty.Util
 
