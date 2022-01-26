@@ -34,7 +34,11 @@ import Data.Aeson.Encoding.Internal (colon, comma, wrapObject, (><))
 
 -- | @since 0.1.0.0
 -- Wrapping newtype for making an out 'ToJSON' instance
-newtype Out a = Out a deriving (Show, Generic)
+newtype Out a = Out
+  { -- | @since 0.4.0.0
+    unOut :: a
+  }
+  deriving (Show, Generic)
 
 -- | @since 0.2.0.0
 -- Wrap an Value with a key

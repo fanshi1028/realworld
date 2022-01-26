@@ -153,10 +153,12 @@ common frontend-api-deps
 
 common frontend-vty-deps
   build-depends:
+    , cookie               ^>=0.4.5
     , generic-lens          ^>=2.2.0
     , higgledy              ^>=0.4.1
     , reflex                ^>=0.8.2
     , reflex-vty            ^>=0.2.0
+    , servant              ^>=0.18.3
     , servant-client        ^>=0.18.3
     , validation-selective  ^>=0.1.0
     , vty                   ^>=5.28.2
@@ -352,9 +354,10 @@ library frontend-vty-internal
     InVty.Component.InputBox
     InVty.Component.Navbar
     InVty.Component.Settings
-    InVty.Util
+    InVty.Component.SignInBox
     InVty.Scene.LoggedIn
     InVty.Scene.LoggedOut
+    InVty.Util
 
 executable realworld-haskell-frontend
   import:         prelude
