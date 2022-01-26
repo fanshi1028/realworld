@@ -8,6 +8,7 @@ import Control.Monad.Fix (MonadFix)
 import Data.Util.JSON.To (Out (unOut))
 import InVty.Component.Navbar (navBarCommonPartWith, navBarLoggedOutPart)
 import InVty.Component.SignInBox (signInBox)
+import InVty.Component.SignUpBox (signUpBox)
 import InVty.Util (Go (Go), LoggedIn (LoggedIn), Page (Home, SignIn, SignUp), splitH3, splitVRatio)
 import Reflex (Adjustable, Event, MonadHold, PerformEvent, Performable, ffilter, filterLeft, filterRight, hold, leftmost, never, switchDyn)
 import Reflex.Vty (HasDisplayRegion, HasFocus, HasFocusReader, HasImageWriter, HasInput, HasLayout, HasTheme, blank, text)
@@ -37,7 +38,16 @@ loggedOutPages clientEnv = mdo
         text $ pure $ "under construction: " <> tag
         pure (never, basicRouting)
       homePage = tempPage "home page /#/" -- TEMP FIXME
-      signUpPage = tempPage "sign up page /#/register" -- TEMP FIXME
+      signUpPage = Workflow $ do
+        -- NOTE "sign up page /#/register"
+        (eGoSignIn, eErr', _) <- signUpBox clientEnv
+        pure
+          ( Left <$> eErr',
+            leftmost
+              [ signInPage <$ eGoSignIn,
+                basicRouting
+              ]
+          )
       signInPage = Workflow $ do
         -- NOTE "sign in page /#/login"
         (eGoSignUp, eErr', eRes') <- signInBox clientEnv

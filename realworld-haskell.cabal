@@ -355,6 +355,7 @@ library frontend-vty-internal
     InVty.Component.Navbar
     InVty.Component.Settings
     InVty.Component.SignInBox
+    InVty.Component.SignUpBox
     InVty.Scene.LoggedIn
     InVty.Scene.LoggedOut
     InVty.Util
