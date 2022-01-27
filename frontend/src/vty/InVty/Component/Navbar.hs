@@ -2,7 +2,7 @@
 module InVty.Component.Navbar where
 
 import Graphics.Vty (dim, green, withForeColor, withStyle)
-import InVty.Util (Go (Go), Page (Home, NewArticle, Profile, Settings, SignIn, SignUp, WhoAmI), noBorderStyle, splitH2, splitH3, splitHRatio)
+import InVty.Util (Go (Go), Page (EditArticle, Home, Profile, Settings, SignIn, SignUp, WhoAmI), noBorderStyle, splitH2, splitH3, splitHRatio)
 import Reflex (Event, Reflex, leftmost)
 import Reflex.Vty (ButtonConfig (ButtonConfig), HasDisplayRegion, HasFocusReader, HasImageWriter, HasInput, HasTheme, blank, localTheme, textButtonStatic)
 
@@ -48,7 +48,7 @@ navBarLoggedInPart = do
     splitH2
       ( splitH2
           (mkButton "Home" Home)
-          (mkButton "New article" NewArticle)
+          (mkButton "New article" $ EditArticle Nothing)
       )
       ( splitH2
           (mkButton "Settings" Settings)

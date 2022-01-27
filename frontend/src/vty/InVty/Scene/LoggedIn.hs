@@ -9,9 +9,10 @@ module InVty.Scene.LoggedIn where
 import Control.Monad.Fix (MonadFix)
 import Data.Domain.User (UserAuthWithToken (UserAuthWithToken))
 import Graphics.Vty (red, withForeColor)
+import InVty.Component.ArticleEditBox (articleEditBox)
 import InVty.Component.Navbar (navBarCommonPartWith, navBarLoggedInPart)
 import InVty.Component.Settings (settingsBox)
-import InVty.Util (Go (Go), LoggedIn (LoggedIn), LoggedOut, Page (Home, NewArticle, Profile, Settings), noBorderStyle, splitH3, splitVRatio)
+import InVty.Util (Go (Go), LoggedIn (LoggedIn), LoggedOut, Page (EditArticle, Home, Profile, Settings), noBorderStyle, splitH3, splitVRatio)
 import qualified InVty.Util as Page (Page (Article))
 import Reflex (Adjustable, Event, MonadHold, PerformEvent, Performable, fanEither, ffilter, fmapMaybe, hold, holdDyn, leftmost, never, switchDyn)
 import Reflex.Vty (HasDisplayRegion, HasFocus, HasFocusReader, HasImageWriter, HasInput, HasLayout, HasTheme, blank, boxStatic, localTheme, text)
@@ -56,8 +57,11 @@ loggedInPages clientEnv (LoggedIn (UserAuthWithToken auth token)) = mdo
               ],
             basicRouting
           )
-      editorCreatePage = tempPage "editor page /#/editor" -- TEMP FIXME
-      -- editorEditPage = tempPage "editor page /#/editor/:slug" -- TEMP FIXME
+      editorArticlePage mAid = Workflow $ do
+        -- NOTE: new article page /#/editor --
+        -- NOTE: edit article page /#/editor/:slug --
+        (eErr', eRes') <- articleEditBox clientEnv mAid dToken
+        pure (Left . Right <$> eErr', basicRouting)
       articlePage slug = tempPage "article page /#/article/:slug" -- TEMP FIXME
       profilePage username = tempPage "article page /#/profile/:name" -- TEMP FIXME
       -- favouriteUserPage username = tempPage "article page /#/profile/:name/favorites" -- TEMP FIXME
@@ -65,7 +69,11 @@ loggedInPages clientEnv (LoggedIn (UserAuthWithToken auth token)) = mdo
         leftmost
           [ homePage <$ ffilter (== Go Home) eGo,
             settingsPage <$ ffilter (== Go Settings) eGo,
-            editorCreatePage <$ ffilter (== Go NewArticle) eGo,
+            ( \case
+                Go (EditArticle mAid) -> Just $ editorArticlePage mAid
+                _ -> Nothing
+            )
+              `fmapMaybe` eGo,
             ( \case
                 Go (Profile name) -> Just $ profilePage name
                 _ -> Nothing
