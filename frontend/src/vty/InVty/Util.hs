@@ -18,7 +18,7 @@ newtype LoggedIn = LoggedIn UserAuthWithToken
 data LoggedOut = LoggedOut
 
 -- | @since 0.4.0.0
-data Page = Home | NewArticle | Settings | Article Slug | Profile Username | SignIn | SignUp deriving (Eq)
+data Page = Home | NewArticle | Settings | Article Slug | Profile Username | WhoAmI | SignIn | SignUp deriving (Eq)
 
 -- | @since 0.4.0.0
 newtype Go = Go Page deriving (Eq)
