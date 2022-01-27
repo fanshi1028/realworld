@@ -1,18 +1,20 @@
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE RecursiveDo #-}
+{-# LANGUAGE ViewPatterns #-}
 
 -- | @since 0.4.0.0
 module InVty.Scene.LoggedIn where
 
 import Control.Monad.Fix (MonadFix)
 import Data.Domain.User (UserAuthWithToken (UserAuthWithToken))
+import Graphics.Vty (red, withForeColor)
 import InVty.Component.Navbar (navBarCommonPartWith, navBarLoggedInPart)
 import InVty.Component.Settings (settingsBox)
-import InVty.Util (Go (Go), LoggedIn (LoggedIn), LoggedOut, Page (Home, NewArticle, Profile, Settings), splitH3, splitVRatio)
+import InVty.Util (Go (Go), LoggedIn (LoggedIn), LoggedOut, Page (Home, NewArticle, Profile, Settings), noBorderStyle, splitH3, splitVRatio)
 import qualified InVty.Util as Page (Page (Article))
-import Reflex (Adjustable, Event, MonadHold, PerformEvent, Performable, ffilter, filterLeft, filterRight, fmapMaybe, hold, holdDyn, leftmost, never, switchDyn)
-import Reflex.Vty (HasDisplayRegion, HasFocus, HasFocusReader, HasImageWriter, HasInput, HasLayout, HasTheme, blank, text)
+import Reflex (Adjustable, Event, MonadHold, PerformEvent, Performable, fanEither, ffilter, fmapMaybe, hold, holdDyn, leftmost, never, switchDyn)
+import Reflex.Vty (HasDisplayRegion, HasFocus, HasFocusReader, HasImageWriter, HasInput, HasLayout, HasTheme, blank, boxStatic, localTheme, text)
 import Reflex.Workflow (Workflow (Workflow), workflow)
 import Servant.Client (ClientEnv)
 
@@ -77,7 +79,12 @@ loggedInPages clientEnv (LoggedIn (UserAuthWithToken auth token)) = mdo
               `fmapMaybe` eGo
           ]
       navBar = navBarCommonPartWith navBarLoggedInPart
-      errorGot = hold "no error" (show <$> filterRight (filterLeft eRes)) >>= text
-  -- localTheme (flip withForeColor red <$>) . boxStatic thickBoxStyle .
-  (eGo, (_, (eRes, _))) <- splitVRatio 8 navBar $ splitH3 errorGot (switchDyn <$> workflow homePage) blank
-  pure $ filterLeft (filterLeft eRes)
+      errorDisplay =
+        localTheme (flip withForeColor red <$>) . boxStatic noBorderStyle $
+          hold "" (leftmost [show <$> eErr, "" <$ eOk])
+            >>= text
+  (eGo, (_, (eRes, _))) <- splitVRatio 8 navBar $ splitH3 errorDisplay (switchDyn <$> workflow homePage) blank
+  let ( fanEither -> (eLogout, eErr),
+        fanEither -> (_, eOk)
+        ) = fanEither eRes
+  pure eLogout

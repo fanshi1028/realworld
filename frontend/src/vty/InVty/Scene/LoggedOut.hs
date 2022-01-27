@@ -1,17 +1,19 @@
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE RecursiveDo #-}
+{-# LANGUAGE ViewPatterns #-}
 
 -- | @since 0.4.0.0
 module InVty.Scene.LoggedOut where
 
 import Control.Monad.Fix (MonadFix)
 import Data.Util.JSON.To (Out (unOut))
+import Graphics.Vty (red, withForeColor)
 import InVty.Component.Navbar (navBarCommonPartWith, navBarLoggedOutPart)
 import InVty.Component.SignInBox (signInBox)
 import InVty.Component.SignUpBox (signUpBox)
-import InVty.Util (Go (Go), LoggedIn (LoggedIn), Page (Home, SignIn, SignUp), splitH3, splitVRatio)
-import Reflex (Adjustable, Event, MonadHold, PerformEvent, Performable, ffilter, filterLeft, filterRight, hold, leftmost, never, switchDyn)
-import Reflex.Vty (HasDisplayRegion, HasFocus, HasFocusReader, HasImageWriter, HasInput, HasLayout, HasTheme, blank, text)
+import InVty.Util (Go (Go), LoggedIn (LoggedIn), Page (Home, SignIn, SignUp), noBorderStyle, splitH3, splitVRatio)
+import Reflex (Adjustable, Event, MonadHold, PerformEvent, Performable, fanEither, ffilter, hold, leftmost, never, switchDyn)
+import Reflex.Vty (HasDisplayRegion, HasFocus, HasFocusReader, HasImageWriter, HasInput, HasLayout, HasTheme, blank, boxStatic, localTheme, text)
 import Reflex.Workflow (Workflow (Workflow), workflow)
 import Servant.API (Headers (getResponse))
 import Servant.Client (ClientEnv)
@@ -65,7 +67,9 @@ loggedOutPages clientEnv = mdo
             signUpPage <$ ffilter (== Go SignUp) eGo
           ]
       navBar = navBarCommonPartWith navBarLoggedOutPart
-      errorGot = hold "no error" (show <$> filterLeft eRes) >>= text
-  -- localTheme (flip withForeColor red <$>) . boxStatic thickBoxStyle .
-  (eGo, (_, (eRes, _))) <- splitVRatio 8 navBar $ splitH3 errorGot (switchDyn <$> workflow homePage) blank
-  pure $ LoggedIn . unOut . getResponse <$> filterRight eRes
+      errorDisplay =
+        localTheme (flip withForeColor red <$>) . boxStatic noBorderStyle $
+          hold "" (leftmost [show <$> eErr, "" <$ eOk])
+            >>= text
+  (eGo, (_, (fanEither -> (eErr, eOk), _))) <- splitVRatio 8 navBar $ splitH3 errorDisplay (switchDyn <$> workflow homePage) blank
+  pure $ LoggedIn . unOut . getResponse <$> eOk
