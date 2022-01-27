@@ -27,6 +27,9 @@ newtype Go = Go Page deriving (Eq)
 splitHRatio :: (HasDisplayRegion t m, HasInput t m, HasImageWriter t m, HasFocusReader t m) => Int -> m a -> m b -> m (a, b)
 splitHRatio n = splitH (pure (`div` n)) (pure (True, True))
 
+splitH2 :: (HasDisplayRegion t m, HasInput t m, HasImageWriter t m, HasFocusReader t m) => m a -> m b -> m (a, b)
+splitH2 = splitHRatio 2
+
 -- | @since 0.4.0.0
 splitH3 :: (HasDisplayRegion t m, HasInput t m, HasImageWriter t m, HasFocusReader t m) => m a -> m b -> m c -> m (a, (b, c))
 splitH3 l m r = splitHRatio 3 l $ splitHRatio 2 m r

@@ -2,7 +2,7 @@
 module InVty.Component.Navbar where
 
 import Graphics.Vty (dim, green, withForeColor, withStyle)
-import InVty.Util (Go (Go), Page (Home, NewArticle, Profile, Settings, SignIn, SignUp, WhoAmI), noBorderStyle, splitH3, splitHRatio)
+import InVty.Util (Go (Go), Page (Home, NewArticle, Profile, Settings, SignIn, SignUp, WhoAmI), noBorderStyle, splitH2, splitH3, splitHRatio)
 import Reflex (Event, Reflex, leftmost)
 import Reflex.Vty (ButtonConfig (ButtonConfig), HasDisplayRegion, HasFocusReader, HasImageWriter, HasInput, HasTheme, blank, localTheme, textButtonStatic)
 
@@ -45,11 +45,16 @@ navBarLoggedInPart ::
   m (Event t Go)
 navBarLoggedInPart = do
   (_, ((eGo1, eGo2), (eGo3, eGo4))) <-
-    splitHRatio 2 blank $
-      splitHRatio
-        2
-        (splitHRatio 2 (mkButton "Home" Home) (mkButton "New article" NewArticle))
-        $ splitHRatio 2 (mkButton "Settings" Settings) (mkButton "Who am I" WhoAmI)
+    splitH2 blank $
+      splitH2
+        ( splitH2
+            (mkButton "Home" Home)
+            (mkButton "New article" NewArticle)
+        )
+        ( splitH2
+            (mkButton "Settings" Settings)
+            (mkButton "Who am I" WhoAmI)
+        )
   pure $ leftmost [eGo1, eGo2, eGo3, eGo4]
 
 -- | @since 0.4.0.0
@@ -63,7 +68,7 @@ navBarLoggedOutPart ::
   m (Event t Go)
 navBarLoggedOutPart = do
   (_, (eGo1, (eGo2, eGo3))) <-
-    splitHRatio 2 blank $
+    splitH2 blank $
       splitH3
         (mkButton "Home" Home)
         (mkDimButton "Sign in" SignIn)
