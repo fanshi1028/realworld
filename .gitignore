@@ -38,5 +38,5 @@ node_modules/
 /.hie/
 /.tasty-rerun-log
 /result
-/backend/postgres/data/
-/backend/postgres/.tmp-postgres/
+/backend/.postgres/data/
+/backend/.postgres/.tmp-postgres/
