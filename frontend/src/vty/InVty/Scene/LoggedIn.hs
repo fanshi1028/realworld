@@ -66,7 +66,6 @@ loggedInPages clientEnv (LoggedIn (UserAuthWithToken auth token)) = mdo
           [ homePage <$ ffilter (== Go Home) eGo,
             settingsPage <$ ffilter (== Go Settings) eGo,
             editorCreatePage <$ ffilter (== Go NewArticle) eGo,
-            settingsPage <$ ffilter (== Go Settings) eGo,
             ( \case
                 Go (Profile name) -> Just $ profilePage name
                 _ -> Nothing
