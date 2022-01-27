@@ -23,7 +23,7 @@ import Data.Util.JSON.From (In (In))
 import Data.Util.JSON.To (Out)
 import GHC.Records (HasField (getField))
 import Graphics.Vty (bold, green, red, withBackColor, withForeColor, withStyle)
-import InVty.Component.InputBox (inputWithPlaceHolder)
+import InVty.Component.InputBox (PlaceHolderMode (Edit, Replace), inputWithPlaceHolder)
 import InVty.Util (LoggedOut (LoggedOut), centerText, noBorderStyle, runRequestE, splitH3, splitV3, splitVRatio)
 import Reflex
   ( Adjustable,
@@ -84,20 +84,20 @@ settingsBox clientEnv dAuth dToken = mdo
       inputAreaWithPlaceHolder = inputWithPlaceHolder multilineTextInput singleBoxStyle doubleBoxStyle
 
       title = localTheme ((`withStyle` bold) <$>) $ centerText text "Settings"
-      avatorInput = Image <<$>> inputBoxWithPlaceHolder "https://api.realworld.io/images/smiley-cyrus.jpeg"
+      avatorInput = Image <<$>> inputBoxWithPlaceHolder Edit "https://api.realworld.io/images/smiley-cyrus.jpeg"
       nameInput =
         Username <<$>> do
           Username name' <- sample $ getField @"username" <$> current dAuth
-          inputBoxWithPlaceHolder $ fromText name'
+          inputBoxWithPlaceHolder Edit $ fromText name'
       firstSection = snd <$> splitV3 title avatorInput nameInput
 
-      sencodSection = Bio <<$>> inputAreaWithPlaceHolder "Short bio about you"
+      sencodSection = Bio <<$>> inputAreaWithPlaceHolder Replace "Short bio about you"
 
       emailInput =
         Email <<$>> do
           Email email' <- sample $ getField @"email" <$> current dAuth
-          inputBoxWithPlaceHolder $ fromText email'
-      pwInput = mkPassword <<$>> inputBoxWithPlaceHolder "New Password"
+          inputBoxWithPlaceHolder Edit $ fromText email'
+      pwInput = mkPassword <<$>> inputBoxWithPlaceHolder Replace "New Password"
       updateButton =
         snd . snd
           <$> splitH3

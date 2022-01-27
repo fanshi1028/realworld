@@ -13,8 +13,8 @@ import Data.Field.Password (mkPassword)
 import Data.Util.JSON.From (In (In))
 import Data.Util.JSON.To (Out)
 import Graphics.Vty (bold, green, withBackColor, withForeColor, withStyle)
-import InVty.Component.InputBox (inputWithPlaceHolder)
 import Reflex (Adjustable, Event, MonadHold, PerformEvent (Performable), Reflex, current, (<@))
+import InVty.Component.InputBox (PlaceHolderMode (Replace), inputWithPlaceHolder)
 import InVty.Util (Go (Go), Page (SignUp), centerText, noBorderStyle, runRequestE, splitH3, splitVRatio)
 import Reflex.Vty (HasDisplayRegion, HasFocus, HasFocusReader, HasImageWriter, HasInput, HasLayout, HasTheme, blank, boxStatic, button, def, doubleBoxStyle, linkStatic, localTheme, singleBoxStyle, text, textInput, _buttonConfig_focusStyle)
 import Servant.API (Header, Headers)
@@ -48,8 +48,8 @@ signInBox clientEnv = do
   let inputBoxWithPlaceHolder = inputWithPlaceHolder textInput singleBoxStyle doubleBoxStyle
       title = localTheme ((`withStyle` bold) <$>) $ centerText text "Sign in"
       needAnAcc = localTheme ((`withForeColor` green) <$>) $ linkStatic "Need an account?"
-      emailInput = Email <<$>> inputBoxWithPlaceHolder "Email"
-      pwInput = mkPassword <<$>> inputBoxWithPlaceHolder "Password"
+      emailInput = Email <<$>> inputBoxWithPlaceHolder Replace "Email"
+      pwInput = mkPassword <<$>> inputBoxWithPlaceHolder Replace "Password"
       signInButton =
         snd . snd
           <$> ( splitH3 blank blank $
