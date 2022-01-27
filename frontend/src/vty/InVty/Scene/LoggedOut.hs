@@ -42,11 +42,12 @@ loggedOutPages clientEnv = mdo
       homePage = tempPage "home page /#/" -- TEMP FIXME
       signUpPage = Workflow $ do
         -- NOTE "sign up page /#/register"
-        (eGoSignIn, eErr', _) <- signUpBox clientEnv
+        (eGoSignIn, eErr', eRes') <- signUpBox clientEnv
         pure
           ( Left <$> eErr',
             leftmost
               [ signInPage <$ eGoSignIn,
+                signInPage <$ eRes',
                 basicRouting
               ]
           )
