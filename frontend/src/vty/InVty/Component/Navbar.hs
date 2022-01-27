@@ -44,17 +44,16 @@ navBarLoggedInPart ::
   ) =>
   m (Event t Go)
 navBarLoggedInPart = do
-  (_, ((eGo1, eGo2), (eGo3, eGo4))) <-
-    splitH2 blank $
-      splitH2
-        ( splitH2
-            (mkButton "Home" Home)
-            (mkButton "New article" NewArticle)
-        )
-        ( splitH2
-            (mkButton "Settings" Settings)
-            (mkButton "Who am I" WhoAmI)
-        )
+  ((eGo1, eGo2), (eGo3, eGo4)) <-
+    splitH2
+      ( splitH2
+          (mkButton "Home" Home)
+          (mkButton "New article" NewArticle)
+      )
+      ( splitH2
+          (mkButton "Settings" Settings)
+          (mkButton "Who am I" WhoAmI)
+      )
   pure $ leftmost [eGo1, eGo2, eGo3, eGo4]
 
 -- | @since 0.4.0.0

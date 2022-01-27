@@ -14,8 +14,8 @@ import Data.Util.JSON.From (In (In))
 import Data.Util.JSON.To (Out)
 import Graphics.Vty (bold, green, withBackColor, withForeColor, withStyle)
 import InVty.Component.InputBox (inputWithPlaceHolder)
-import InVty.Util (Go (Go), Page (SignUp), centerText, noBorderStyle, runRequestE, splitH3, splitV3, splitVRatio)
 import Reflex (Adjustable, Event, MonadHold, PerformEvent (Performable), Reflex, current, (<@))
+import InVty.Util (Go (Go), Page (SignUp), centerText, noBorderStyle, runRequestE, splitH3, splitVRatio)
 import Reflex.Vty (HasDisplayRegion, HasFocus, HasFocusReader, HasImageWriter, HasInput, HasLayout, HasTheme, blank, boxStatic, button, def, doubleBoxStyle, linkStatic, localTheme, singleBoxStyle, text, textInput, _buttonConfig_focusStyle)
 import Servant.API (Header, Headers)
 import Servant.Client (ClientEnv, ClientError)
@@ -57,12 +57,10 @@ signInBox clientEnv = do
                     localTheme ((`withBackColor` green) <$>) $
                       boxStatic noBorderStyle $ centerText text "Sign In"
               )
-  (_, ((eGoSignUp, (dEmailInput, (dPwInput, eSignIn))), _)) <-
+  (_, (eGoSignUp, (dEmailInput, (dPwInput, (eSignIn, _))))) <-
     splitVRatio 5 title $
-      splitVRatio
-        2
-        (splitVRatio 5 needAnAcc $ splitV3 emailInput pwInput signInButton)
-        blank
+      splitVRatio 10 needAnAcc . splitVRatio 6 emailInput . splitVRatio 5 pwInput $
+        splitVRatio 4 signInButton blank
   let ePayload =
         In . Success
           <$> current (UserLogin <$> dEmailInput <*> dPwInput)

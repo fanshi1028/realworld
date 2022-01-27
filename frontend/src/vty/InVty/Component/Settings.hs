@@ -24,7 +24,7 @@ import Data.Util.JSON.To (Out)
 import GHC.Records (HasField (getField))
 import Graphics.Vty (bold, green, red, withBackColor, withForeColor, withStyle)
 import InVty.Component.InputBox (inputWithPlaceHolder)
-import InVty.Util (LoggedOut (LoggedOut), centerText, noBorderStyle, runRequestE, splitH3, splitVRatio)
+import InVty.Util (LoggedOut (LoggedOut), centerText, noBorderStyle, runRequestE, splitH3, splitV3, splitVRatio)
 import Reflex
   ( Adjustable,
     Event,
@@ -89,7 +89,7 @@ settingsBox clientEnv dAuth dToken = mdo
         Username <<$>> do
           Username name' <- sample $ getField @"username" <$> current dAuth
           inputBoxWithPlaceHolder $ fromText name'
-      firstSection = snd <$> splitVRatio 2 (splitVRatio 2 blank title) (splitVRatio 2 avatorInput nameInput)
+      firstSection = snd <$> splitV3 title avatorInput nameInput
 
       sencodSection = Bio <<$>> inputAreaWithPlaceHolder "Short bio about you"
 
@@ -110,10 +110,10 @@ settingsBox clientEnv dAuth dToken = mdo
         localTheme ((`withForeColor` red) <$>) $
           fst <$> splitH3 (textButtonStatic def "Or click here to logout.") blank blank
       thirdSection =
-        splitVRatio 3 (splitVRatio 2 emailInput pwInput) $ splitVRatio 2 updateButton logoutButton
+        splitVRatio 5 emailInput $ splitVRatio 4 pwInput $ splitVRatio 2 updateButton logoutButton
 
-  ((dAvatorInput, dNameInput), (dBioInput, ((dEmailInput, dPwInput), (eUpdate, eLogout)))) <-
-    splitVRatio 4 firstSection $ splitVRatio 2 sencodSection thirdSection
+  ((dAvatorInput, dNameInput), (dBioInput, (dEmailInput, (dPwInput, (eUpdate, eLogout))))) <-
+    splitVRatio 5 firstSection $ splitVRatio 2 sencodSection thirdSection
 
   let dPayload =
         In . Success

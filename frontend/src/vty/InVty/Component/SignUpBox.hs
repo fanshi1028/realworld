@@ -65,14 +65,14 @@ signUpBox clientEnv = do
                 localTheme ((`withBackColor` green) <$>) $
                   boxStatic noBorderStyle $ centerText text "Sign Up"
             )
-  (_, ((eGoSignIn, ((dNameInput, dEmailInput), (dPwInput, eSignUp))), _)) <-
+  (_, (eGoSignIn, (dNameInput, (dEmailInput, ((dPwInput, eSignUp), _))))) <-
     splitVRatio 5 title $
       splitVRatio
-        2
-        ( splitVRatio 5 haveAnAcc $
-            splitVRatio 2 (splitVRatio 2 usernameInput emailInput) (splitVRatio 2 pwInput signUpButton)
-        )
-        blank
+        10
+        haveAnAcc
+        $ splitVRatio 6 usernameInput $
+          splitVRatio 5 emailInput $
+            splitVRatio 2 (splitVRatio 2 pwInput signUpButton) blank
 
   let ePayload =
         In . Success
