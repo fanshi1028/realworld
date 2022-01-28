@@ -89,7 +89,7 @@ inputWithPlaceHolder ::
   BoxStyle ->
   PlaceHolderMode ->
   TextZipper ->
-  m (Dynamic t Text)
+  m (Dynamic t (Maybe Text))
 inputWithPlaceHolder inputMaker nfStyle fStyle mode placeHolder = tile flex $ do
   df <- focus
   let eFocus = ffilter id $ updated df
@@ -98,17 +98,17 @@ inputWithPlaceHolder inputMaker nfStyle fStyle mode placeHolder = tile flex $ do
       wf1 = Workflow $ do
         -- NOTE: holdUniqDyn??
         -- NOTE: is (fromUniqDynamic . uniqDynamic) faster??
-        dText@(fmap toString . updated . fromUniqDynamic . uniqDynamic -> eString) <-
+        (fmap toString . updated . fromUniqDynamic . uniqDynamic -> eString) <-
           _textInput_value
             <$> mkInput inputMaker bStyle (home placeHolder) (home <$ eFocus)
-        pure . (dText,) $
+        pure . (pure Nothing,) $
           fforMaybe eString $ \case
             (ch : _) -> Just $ wf2 $ fromString [ch]
             _ -> Nothing
 
       wf2 txt = Workflow $ do
         dText@(updated -> eText) <- _textInput_value <$> mkInput inputMaker bStyle txt never
-        pure . (dText,) $
+        pure . (Just <$> dText,) $
           if mode == Replace
             then never
             else wf1 <$ ffilter (null . toString) eText

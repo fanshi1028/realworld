@@ -84,20 +84,20 @@ settingsBox clientEnv dAuth dToken = mdo
       inputAreaWithPlaceHolder = inputWithPlaceHolder multilineTextInput singleBoxStyle doubleBoxStyle
 
       title = localTheme ((`withStyle` bold) <$>) $ centerText text "Settings"
-      avatorInput = Image <<$>> inputBoxWithPlaceHolder Edit "https://api.realworld.io/images/smiley-cyrus.jpeg"
+      avatorInput = fmap Image <<$>> inputBoxWithPlaceHolder Edit "https://api.realworld.io/images/smiley-cyrus.jpeg"
       nameInput =
-        Username <<$>> do
+        fmap Username <<$>> do
           Username name' <- sample $ getField @"username" <$> current dAuth
           inputBoxWithPlaceHolder Edit $ fromText name'
       firstSection = snd <$> splitV3 title avatorInput nameInput
 
-      sencodSection = Bio <<$>> inputAreaWithPlaceHolder Replace "Short bio about you"
+      sencodSection = fmap Bio <<$>> inputAreaWithPlaceHolder Replace "Short bio about you"
 
       emailInput =
-        Email <<$>> do
+        fmap Email <<$>> do
           Email email' <- sample $ getField @"email" <$> current dAuth
           inputBoxWithPlaceHolder Edit $ fromText email'
-      pwInput = mkPassword <<$>> inputBoxWithPlaceHolder Replace "New Password"
+      pwInput = fmap mkPassword <<$>> inputBoxWithPlaceHolder Replace "New Password"
       updateButton =
         snd . snd
           <$> splitH3
@@ -112,18 +112,18 @@ settingsBox clientEnv dAuth dToken = mdo
       thirdSection =
         splitVRatio 5 emailInput $ splitVRatio 4 pwInput $ splitVRatio 2 updateButton logoutButton
 
-  ((dAvatorInput, dNameInput), (dBioInput, (dEmailInput, (dPwInput, (eUpdate, eLogout))))) <-
+  ((dMAvatorInput, dMNameInput), (dMBioInput, (dMEmailInput, (dMPwInput, (eUpdate, eLogout))))) <-
     splitVRatio 5 firstSection $ splitVRatio 2 sencodSection thirdSection
 
   let dPayload =
         In . Success
           <$> construct
             ( build @(Patch (UpdateOf 'User))
-                (pure . pure <$> dEmailInput)
-                (pure . pure <$> dPwInput)
-                (pure . pure <$> dNameInput)
-                (pure . pure <$> dBioInput)
-                (pure . pure <$> dAvatorInput)
+                (pure <<$>> dMEmailInput)
+                (pure <<$>> dMPwInput)
+                (pure <<$>> dMNameInput)
+                (pure <<$>> dMBioInput)
+                (pure <<$>> dMAvatorInput)
             )
       eRequest = current (updateUserClient <$> dToken <*> dPayload) <@ eUpdate
   (eErr, eRes) <- runRequestE clientEnv eRequest

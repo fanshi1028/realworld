@@ -1,5 +1,6 @@
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE ViewPatterns #-}
 
 -- | @since 0.4.0.0
 module InVty.Component.SignUpBox where
@@ -13,14 +14,15 @@ import Data.Field.Username (Username (Username))
 import Data.Storage.Map (CreateOf (UserCreate))
 import Data.Util.JSON.From (In (In))
 import Data.Util.JSON.To (Out)
+import Data.Util.Validation (ValidationErr)
 import Graphics.Vty (bold, green, withBackColor, withForeColor, withStyle)
 import InVty.Component.InputBox (PlaceHolderMode (Replace), inputWithPlaceHolder)
 import InVty.Util (Go (Go), Page (SignIn), centerText, noBorderStyle, runRequestE, splitH3, splitVRatio)
-import Reflex (Adjustable, Event, MonadHold, PerformEvent, Performable, Reflex, current, (<@))
+import Reflex (Adjustable, Event, MonadHold, PerformEvent, Performable, Reflex, current, fanEither, (<@))
 import Reflex.Vty (HasDisplayRegion, HasFocus, HasFocusReader, HasImageWriter, HasInput, HasLayout, HasTheme, blank, boxStatic, button, def, doubleBoxStyle, linkStatic, localTheme, singleBoxStyle, text, textInput, _buttonConfig_focusStyle)
 import Servant.Client (ClientError)
 import Servant.Client.Streaming (ClientEnv)
-import Validation (Validation (Success))
+import Validation (Validation (Failure), maybeToSuccess)
 
 -- | @since 0.4.0.0
 signUpBox ::
@@ -51,11 +53,11 @@ signUpBox clientEnv = do
 
       haveAnAcc = localTheme ((`withForeColor` green) <$>) $ linkStatic "Have an account?"
 
-      usernameInput = Username <<$>> inputBoxWithPlaceHolder Replace "Your name"
+      usernameInput = fmap Username <<$>> inputBoxWithPlaceHolder Replace "Your name"
 
-      emailInput = Email <<$>> inputBoxWithPlaceHolder Replace "Email"
+      emailInput = fmap Email <<$>> inputBoxWithPlaceHolder Replace "Email"
 
-      pwInput = mkPassword <<$>> inputBoxWithPlaceHolder Replace "Password"
+      pwInput = fmap mkPassword <<$>> inputBoxWithPlaceHolder Replace "Password"
 
       signUpButton =
         snd . snd
@@ -67,7 +69,7 @@ signUpBox clientEnv = do
                   boxStatic noBorderStyle $ centerText text "Sign Up"
             )
 
-  (_, (eGoSignIn, (dNameInput, (dEmailInput, ((dPwInput, eSignUp), _))))) <-
+  (_, (eGoSignIn, (dMNameInput, (dMEmailInput, ((dMPwInput, eSignUp), _))))) <-
     splitVRatio 5 title $
       splitVRatio
         10
@@ -76,11 +78,22 @@ signUpBox clientEnv = do
           splitVRatio 5 emailInput $
             splitVRatio 2 (splitVRatio 2 pwInput signUpButton) blank
 
-  let ePayload =
-        In . Success
-          <$> current (UserCreate <$> dNameInput <*> dEmailInput <*> dPwInput)
+  -- TEMP FIXME need Validaton, so refactor out them in backend??
+  let bVUserCreate = current $ do
+        dName <- maybeToSuccess ("empty name" :| []) <$> dMNameInput
+        dEmail <- maybeToSuccess ("empty email" :| []) <$> dMEmailInput
+        dPw <- maybeToSuccess ("empty password" :| []) <$> dMPwInput
+        pure $ UserCreate <$> dName <*> dEmail <*> dPw
+
+      (fanEither @_ @ValidationErr -> (eVErrs, ePayload)) =
+        ( \case
+            Failure errs -> Left errs
+            ok -> Right $ In ok
+        )
+          <$> bVUserCreate
           <@ eSignUp
 
   (eErr, eRes) <- runRequestE clientEnv $ registerClient <$> ePayload
 
+  -- TEMP FIXME This validation should output validtion error event too, but ignore it for now, we will fix it later.
   pure (Go SignIn <$ eGoSignIn, eErr, eRes)
