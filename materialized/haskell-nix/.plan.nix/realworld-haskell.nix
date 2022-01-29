@@ -27,7 +27,7 @@
       dataDir = ".";
       dataFiles = [];
       extraSrcFiles = [
-        "backend/postgres/migration/*.sql"
+        "backend/.postgres/migration/*.sql"
         "CHANGELOG.md"
         "golden/*.json"
         "README.md"

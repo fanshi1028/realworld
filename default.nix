@@ -37,7 +37,7 @@ haskell-nix.project {
 
   plan-sha256 = if materializedDir != null && ghcVersion == "8107"
   && builtins.currentSystem == "x86_64-darwin" then
-    "1dsrz4xw5i717hsdpbyrcdva2b80vdajc3y2xbmlpgfdsrk7dx8c"
+    "0afq0vd7hy2wxri0kcrpsq8pdzzgn776sy8jk7wm0px9nhb8q1xy"
   else
     null;
 
