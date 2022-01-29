@@ -108,10 +108,10 @@ inputWithPlaceHolder inputMaker nfStyle fStyle mode placeHolder = tile flex $ do
 
       wf2 txt = Workflow $ do
         dText@(updated -> eText) <- _textInput_value <$> mkInput inputMaker bStyle txt never
-        pure . (Just <$> dText,) $
-          if mode == Replace
-            then never
-            else wf1 <$ ffilter (null . toString) eText
+        pure
+          ( Just <$> dText,
+            wf1 <$ ffilter (null . toString) eText
+          )
   join
     <$> workflow
       ( if mode == Replace
