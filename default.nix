@@ -1,10 +1,5 @@
-{ nixpkgsPin ? "2111", ghcVersion ? if nixpkgsPin == "2111" then
-  "8107"
-else if nixpkgsPin == "unstable" then
-  "921"
-else
-  null, checkMaterialization ? false }:
-assert ghcVersion != null;
+{ nixpkgsPin ? "unstable", ghcVersion ? "8107", checkMaterialization ? false
+, materializedDir ? ./materialized }:
 with import ./nix/pkgs.nix { inherit nixpkgsPin; };
 haskell-nix.project {
   inherit checkMaterialization;
@@ -14,10 +9,11 @@ haskell-nix.project {
     name = "realworld-haskell";
     src = ./.;
   };
+
   # Specify the GHC version to use.
   compiler-nix-name = "ghc${ghcVersion}";
 
-  index-state = "2021-12-31T00:00:00Z";
+  index-state = "2022-01-28T00:00:00Z";
 
   modules = [
     {
@@ -39,11 +35,15 @@ haskell-nix.project {
     })
   ];
 
-  plan-sha256 = if ghcVersion == "8107" then
-    "07m98qfk9y6smlgyg75dva2mq8037gp5m8ld46jycwagnhns3kai"
+  plan-sha256 = if materializedDir != null && ghcVersion == "8107"
+  && builtins.currentSystem == "x86_64-darwin" then
+    "0cblmh1gdkj72f1i81w7wkcsmzrdvcrpza9bqirfm60b7a9mw6k5"
   else
     null;
 
-  materialized =
-    if ghcVersion == "8107" then ./materialized/haskell-nix else null;
+  materialized = if materializedDir != null && ghcVersion == "8107"
+  && builtins.currentSystem == "x86_64-darwin" then
+    materializedDir + /haskell-nix
+  else
+    null;
 }

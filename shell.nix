@@ -1,20 +1,15 @@
 # shell.nix
-{ nixpkgsPin ? "2111", ghcVersion ? if nixpkgsPin == "2111" then
-  "8107"
-else if nixpkgsPin == "unstable" then
-  "921"
-else
-  null, checkMaterialization ? false }:
-assert ghcVersion != null;
+{ nixpkgsPin ? "unstable", ghcVersion ? "8107", checkMaterialization ? false
+, materializedDir ? ./materialized }:
 let
   project = import ./default.nix {
     inherit nixpkgsPin ghcVersion checkMaterialization;
   };
   index-state = project.index-state;
-  materializedDir = ./materialized;
+
   tool-common = { inherit index-state checkMaterialization; };
   ony-ghc8107-materialize-config = plan-sha256: subpath:
-    if ghcVersion == "8107" then {
+    if materializedDir != null && ghcVersion == "8107" then {
       inherit plan-sha256;
       materialized = materializedDir + subpath;
     } else
