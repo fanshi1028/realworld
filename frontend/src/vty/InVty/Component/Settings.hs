@@ -20,7 +20,7 @@ import Data.Storage.Map (Patch, UpdateOf)
 import Data.Text.Zipper (fromText)
 import Data.Token.HasToken (TokenOf (..))
 import Data.Util.JSON.From (In (In))
-import Data.Util.JSON.To (Out)
+import Data.Util.JSON.To (Out (unOut))
 import GHC.Records (HasField (getField))
 import Graphics.Vty (bold, green, red, withBackColor, withForeColor, withStyle)
 import InVty.Component.InputBox (PlaceHolderMode (Edit, Replace), inputWithPlaceHolder)
@@ -78,8 +78,8 @@ settingsBox ::
   ClientEnv ->
   Dynamic t (AuthOf 'User) ->
   Dynamic t (TokenOf 'User) ->
-  m (Event t LoggedOut, Event t ClientError, Event t (Out UserAuthWithToken))
 settingsBox clientEnv dAuth dToken = mdo
+  m (Event t LoggedOut, Event t ClientError, Event t UserAuthWithToken)
   let inputBoxWithPlaceHolder = inputWithPlaceHolder textInput singleBoxStyle doubleBoxStyle
       inputAreaWithPlaceHolder = inputWithPlaceHolder multilineTextInput singleBoxStyle doubleBoxStyle
 
@@ -91,7 +91,10 @@ settingsBox clientEnv dAuth dToken = mdo
           inputBoxWithPlaceHolder Edit $ fromText name'
       firstSection = snd <$> splitV3 title avatorInput nameInput
 
-      sencodSection = fmap Bio <<$>> inputAreaWithPlaceHolder Replace "Short bio about you"
+      sencodSection =
+        fmap Bio <<$>> do
+          Bio bio' <- sample $ getField @"bio" <$> current dAuth
+          inputAreaWithPlaceHolder Edit $ fromText bio'
 
       emailInput =
         fmap Email <<$>> do
@@ -107,8 +110,8 @@ settingsBox clientEnv dAuth dToken = mdo
                 boxStatic noBorderStyle $ centerText text "Update Settings"
             )
       logoutButton =
-        localTheme ((`withForeColor` red) <$>) $
-          fst <$> splitH3 (textButtonStatic def "Or click here to logout.") blank blank
+        (LoggedOut <$)
+          <$> localTheme ((`withForeColor` red) <$>) (fst <$> splitH3 (textButtonStatic def "Or click here to logout.") blank blank)
       thirdSection =
         splitVRatio 5 emailInput $ splitVRatio 4 pwInput $ splitVRatio 2 updateButton logoutButton
 
@@ -127,4 +130,4 @@ settingsBox clientEnv dAuth dToken = mdo
             )
       eRequest = current (updateUserClient <$> dToken <*> dPayload) <@ eUpdate
   (eErr, eRes) <- runRequestE clientEnv eRequest
-  pure (LoggedOut <$ eLogout, eErr, eRes)
+  pure (eLogout, eErr, unOut <$> eRes)

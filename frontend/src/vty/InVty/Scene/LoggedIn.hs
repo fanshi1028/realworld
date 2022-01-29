@@ -46,10 +46,9 @@ loggedInPages ::
   LoggedIn ->
   m (Event t LoggedOut)
 loggedInPages clientEnv (LoggedIn (UserAuthWithToken auth token)) = mdo
-  -- FIXME
-  dAuth <- holdDyn auth never
-  -- FIXME
-  dToken <- holdDyn token never
+  dAuth <- holdDyn auth $ eAuth <&> \(UserAuthWithToken auth' _) -> auth'
+  dToken <- holdDyn token $ eAuth <&> \(UserAuthWithToken _ t) -> t
+
   let tempPage tag = Workflow $ do
         text $ pure $ "under construction: " <> tag
         pure (never, eNavbar)
@@ -91,10 +90,10 @@ loggedInPages clientEnv (LoggedIn (UserAuthWithToken auth token)) = mdo
       err500Page err = tempPage "err500 page" -- TEMP FIXME
       errorDisplay =
         localTheme (flip withForeColor red <$>) . boxStatic noBorderStyle $
-          hold "" (leftmost [show <$> eErr, "" <$ eOk])
+          hold "" (leftmost [show <$> eErr, "" <$ eAuth])
             >>= text
   (eNavbar, (_, (eRes, _))) <- splitVRatio 8 navBar $ splitH3 errorDisplay (switchDyn <$> workflow homePage) blank
   let ( fanEither -> (eLogout, eErr),
-        fanEither -> (_, eOk)
+        fanEither -> (_, eAuth)
         ) = fanEither eRes
   pure eLogout
