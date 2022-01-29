@@ -14,7 +14,7 @@ homepage:           https://github.com/fanshi1028/realworld
 category:           Web
 build-type:         Simple
 extra-source-files:
-  backend/postgres/migration/*.sql
+  backend/.postgres/migration/*.sql
   CHANGELOG.md
   golden/*.json
   README.md
