@@ -10,11 +10,9 @@ jobs:
         # https://docs.github.com/en/actions/using-github-hosted-runners/about-github-hosted-runners
         os: [ubuntu-20.04, macos-10.15]
         # https://github.com/input-output-hk/haskell.nix/blob/85755332c0698ab90d061c079f3c25710675bb85/docs/reference/supported-ghc-versions.md
-        # NOTE: won't build on ghc921 yet, so only 2111 for now
-        nixpkgsPin: [2111]
-        # nixpkgsPin: [2111,unstable]
-        # NOTE: ghcVersion is determine by nipkgsPin in nix expression, 2111 -> ghc8107, unstable -> ghc921
-        # ghcVerson: [ghc8107, ghc921]
+        nixpkgsPin: [unstable]
+        # NOTE: won't build on ghc921 yet
+        ghcVersion: [8107]
 
     runs-on: ${{matrix.os}}
 
@@ -35,4 +33,13 @@ jobs:
 
     - name: nix build
       run: |
-        nix-build -j4 --argstr nixpkgsPin ${{matrix.nixpkgsPin}} --arg checkMaterialization true
+        nix-build -j4 --argstr nixpkgsPin ${{matrix.nixpkgsPin}} \
+        --argstr ghc-version ${{matrix.ghcVersion}} \
+        --arg checkMaterialization true
+
+    - name: nix shell
+      if: ${{matrix.os}} == macos-10.15 && ${{matrix.ghcVersion}} == 8107
+      run: |
+        nix-shell -j4 --argstr nixpkgsPin ${{matrix.nixpkgsPin}} \
+        --argstr ghc-version ${{matrix.ghcVersion}} \
+        --arg checkMaterialization true
