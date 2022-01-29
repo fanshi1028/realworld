@@ -60,7 +60,7 @@ loggedInPages clientEnv (LoggedIn (UserAuthWithToken auth token)) = mdo
       editorArticlePage mAid = Workflow $ do
         -- NOTE: new article page /#/editor --
         -- NOTE: edit article page /#/editor/:slug --
-        (eErr', eRes') <- articleEditBox clientEnv mAid dToken
+        (eVErr', eErr', eRes') <- articleEditBox clientEnv mAid dToken
         pure (Left . Right <$> eErr', basicRouting)
       articlePage slug = tempPage "article page /#/article/:slug" -- TEMP FIXME
       profilePage username = tempPage "article page /#/profile/:name" -- TEMP FIXME

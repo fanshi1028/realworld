@@ -20,7 +20,10 @@ import Data.Util.Validation (WithValidation, validate)
 -- >>> import Data.Aeson (eitherDecode')
 
 -- | @since 0.2.0.0
-newtype Title = Title Text
+newtype Title = Title
+  { -- | @since 0.4.0.0
+    unTitle :: Text
+  }
   deriving newtype (Show, Eq, ToJSON, FromJSON)
 
 -- | @since 0.2.0.0

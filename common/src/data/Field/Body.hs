@@ -17,7 +17,11 @@ import Data.Aeson (FromJSON, ToJSON)
 import Data.Util.Validation (NoValidation (..), WithNoValidation, WithValidation)
 
 -- | @since 0.2.0.0
-newtype Body = Body Text deriving newtype (Show, Eq, ToJSON, FromJSON)
+newtype Body = Body
+  { -- | @since 0.4.0.0
+    unBody :: Text
+  }
+  deriving newtype (Show, Eq, ToJSON, FromJSON)
 
 -- | @since 0.2.0.0
 deriving via (WithNoValidation Text) instance FromJSON (WithValidation Body)

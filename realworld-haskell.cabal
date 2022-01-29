@@ -162,6 +162,7 @@ common frontend-vty-deps
     , servant-client        ^>=0.18.3
     , validation-selective  ^>=0.1.0
     , vty                   ^>=5.28.2
+    , text                  ^>=1.2.4
 
 library common-internal
   import:          prelude, common-deps
@@ -353,6 +354,7 @@ library frontend-vty-internal
   exposed-modules:
     InVty.Component.InputBox
     InVty.Component.Navbar
+    InVty.Component.ArticleEditBox
     InVty.Component.Settings
     InVty.Component.SignInBox
     InVty.Component.SignUpBox
