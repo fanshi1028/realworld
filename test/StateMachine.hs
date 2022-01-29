@@ -543,7 +543,7 @@ checkInMemAppProp new mgr mkUrl =
       prettyCommands sm hist $ coverCommandNames cmds $ checkCommandNames cmds $ res === Ok
 
 postgresDir :: FilePath
-postgresDir = "./backend/postgres"
+postgresDir = "./backend/.postgres"
 
 doMigration :: DB -> IO ()
 doMigration config =
