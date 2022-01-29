@@ -4,10 +4,10 @@
 -- | @since 0.4.0.0
 module InVty.Util where
 
+import Data.Domain (Domain (User))
 import qualified Data.Domain as Domain (Domain (Article))
 import Data.Domain.User (UserAuthWithToken)
 import Data.Field.Slug (Slug)
-import Data.Field.Username (Username)
 import Data.Storage.Map (IdOf)
 import Reflex (Behavior, Event, PerformEvent, Performable, Reflex, current, fanEither, performEvent)
 import Reflex.Vty (BoxStyle (BoxStyle), HasDisplayRegion, HasFocusReader, HasImageWriter, HasInput, HasTheme, displayWidth, splitH, splitV)
@@ -21,7 +21,22 @@ newtype LoggedIn = LoggedIn UserAuthWithToken
 data LoggedOut = LoggedOut
 
 -- | @since 0.4.0.0
-data Page = Home | EditArticle (Maybe (IdOf 'Domain.Article)) | Settings | Article Slug | Profile Username | WhoAmI | SignIn | SignUp deriving (Eq)
+data Page
+  = -- | @since 0.4.0.0
+    Home
+  | -- | @since 0.4.0.0
+    EditArticle (Maybe (IdOf 'Domain.Article))
+  | -- | @since 0.4.0.0
+    Settings
+  | -- | @since 0.4.0.0
+    Article Slug
+  | -- | @since 0.4.0.0
+    Profile (Maybe (IdOf 'User))
+  | -- | @since 0.4.0.0
+    SignIn
+  | -- | @since 0.4.0.0
+    SignUp
+  deriving (Eq)
 
 -- | @since 0.4.0.0
 newtype Go = Go Page deriving (Eq)

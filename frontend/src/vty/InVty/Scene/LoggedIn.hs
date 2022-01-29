@@ -12,9 +12,17 @@ import Graphics.Vty (red, withForeColor)
 import InVty.Component.ArticleEditBox (articleEditBox)
 import InVty.Component.Navbar (navBarCommonPartWith, navBarLoggedInPart)
 import InVty.Component.Settings (settingsBox)
-import InVty.Util (Go (Go), LoggedIn (LoggedIn), LoggedOut, Page (EditArticle, Home, Profile, Settings), noBorderStyle, splitH3, splitVRatio)
+import InVty.Util
+  ( Go (Go),
+    LoggedIn (LoggedIn),
+    LoggedOut,
+    Page (EditArticle, Home, Profile, Settings, SignIn, SignUp),
+    noBorderStyle,
+    splitH3,
+    splitVRatio,
+  )
 import qualified InVty.Util as Page (Page (Article))
-import Reflex (Adjustable, Event, MonadHold, PerformEvent, Performable, fanEither, ffilter, fmapMaybe, hold, holdDyn, leftmost, never, switchDyn)
+import Reflex (Adjustable, Event, MonadHold, PerformEvent, Performable, fanEither, hold, holdDyn, leftmost, never, switchDyn)
 import Reflex.Vty (HasDisplayRegion, HasFocus, HasFocusReader, HasImageWriter, HasInput, HasLayout, HasTheme, blank, boxStatic, localTheme, text)
 import Reflex.Workflow (Workflow (Workflow), workflow)
 import Servant.Client (ClientEnv)
@@ -44,7 +52,7 @@ loggedInPages clientEnv (LoggedIn (UserAuthWithToken auth token)) = mdo
   dToken <- holdDyn token never
   let tempPage tag = Workflow $ do
         text $ pure $ "under construction: " <> tag
-        pure (never, basicRouting)
+        pure (never, eNavbar)
       homePage = tempPage "home page /#/" -- TEMP FIXME
       settingsPage = Workflow $ do
         -- NOTE: /#/settings"
@@ -55,42 +63,37 @@ loggedInPages clientEnv (LoggedIn (UserAuthWithToken auth token)) = mdo
                 Left . Right <$> eErr',
                 Right . Right <$> eRes'
               ],
-            basicRouting
+            eNavbar
           )
       editorArticlePage mAid = Workflow $ do
         -- NOTE: new article page /#/editor --
         -- NOTE: edit article page /#/editor/:slug --
         (eVErr', eErr', eRes') <- articleEditBox clientEnv mAid dToken
-        pure (Left . Right <$> eErr', basicRouting)
+        pure (Left . Right <$> eErr', eNavbar)
       articlePage slug = tempPage "article page /#/article/:slug" -- TEMP FIXME
-      profilePage username = tempPage "article page /#/profile/:name" -- TEMP FIXME
+      profilePage mUid = tempPage "article page /#/profile/:name" -- TEMP FIXME
       -- favouriteUserPage username = tempPage "article page /#/profile/:name/favorites" -- TEMP FIXME
-      basicRouting =
-        leftmost
-          [ homePage <$ ffilter (== Go Home) eGo,
-            settingsPage <$ ffilter (== Go Settings) eGo,
-            ( \case
-                Go (EditArticle mAid) -> Just $ editorArticlePage mAid
-                _ -> Nothing
-            )
-              `fmapMaybe` eGo,
-            ( \case
-                Go (Profile name) -> Just $ profilePage name
-                _ -> Nothing
-            )
-              `fmapMaybe` eGo,
-            ( \case
-                Go (Page.Article slug) -> Just $ articlePage slug
-                _ -> Nothing
-            )
-              `fmapMaybe` eGo
-          ]
-      navBar = navBarCommonPartWith navBarLoggedInPart
+      router' (Go p) = case p of
+        Home -> homePage
+        EditArticle mAid -> editorArticlePage mAid
+        Settings -> settingsPage
+        Page.Article slug -> articlePage slug
+        Profile mUid -> profilePage mUid
+        -- NOTE: Already logged. Just redirect to home page in case it happen? Or 500?
+        SignIn -> homePage
+        SignUp -> homePage
+
+      navBar = router' <<$>> navBarCommonPartWith navBarLoggedInPart
+
+      router eGo = leftmost [router' <$> eGo, eNavbar]
+
+      err404Page err = tempPage "err404 page" -- TEMP FIXME
+      err500Page err = tempPage "err500 page" -- TEMP FIXME
       errorDisplay =
         localTheme (flip withForeColor red <$>) . boxStatic noBorderStyle $
           hold "" (leftmost [show <$> eErr, "" <$ eOk])
             >>= text
-  (eGo, (_, (eRes, _))) <- splitVRatio 8 navBar $ splitH3 errorDisplay (switchDyn <$> workflow homePage) blank
+  (eNavbar, (_, (eRes, _))) <- splitVRatio 8 navBar $ splitH3 errorDisplay (switchDyn <$> workflow homePage) blank
   let ( fanEither -> (eLogout, eErr),
         fanEither -> (_, eOk)
         ) = fanEither eRes

@@ -48,7 +48,7 @@ signInBox ::
 signInBox clientEnv = do
   let inputBoxWithPlaceHolder = inputWithPlaceHolder textInput singleBoxStyle doubleBoxStyle
       title = localTheme ((`withStyle` bold) <$>) $ centerText text "Sign in"
-      needAnAcc = localTheme ((`withForeColor` green) <$>) $ linkStatic "Need an account?"
+      needAnAcc = (Go SignUp <$) <$> localTheme ((`withForeColor` green) <$>) (linkStatic "Need an account?")
       emailInput = fmap Email <<$>> inputBoxWithPlaceHolder Replace "Email"
       pwInput = fmap mkPassword <<$>> inputBoxWithPlaceHolder Replace "Password"
       signInButton =
@@ -58,7 +58,7 @@ signInBox clientEnv = do
                     localTheme ((`withBackColor` green) <$>) $
                       boxStatic noBorderStyle $ centerText text "Sign In"
               )
-  (_, (eGoSignUp, (dMEmailInput, (dMPwInput, (eSignIn, _))))) <-
+  (_, (eGo, (dMEmailInput, (dMPwInput, (eSignIn, _))))) <-
     splitVRatio 5 title $
       splitVRatio 10 needAnAcc . splitVRatio 6 emailInput . splitVRatio 5 pwInput $
         splitVRatio 4 signInButton blank
@@ -74,4 +74,4 @@ signInBox clientEnv = do
           <$> bVUserLogin
           <@ eSignIn
   (eErr, eRes) <- runRequestE clientEnv $ loginClient <$> ePayload
-  pure (Go SignUp <$ eGoSignUp, eErr, eRes)
+  pure (eGo, eErr, eRes)
