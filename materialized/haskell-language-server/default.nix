@@ -34,7 +34,7 @@
         "hls-haddock-comments-plugin".revision = (((hackage."hls-haddock-comments-plugin")."1.0.0.4").revisions).default;
         "streaming-commons".revision = (((hackage."streaming-commons")."0.2.2.3").revisions).default;
         "streaming-commons".flags.use-bytestring-builder = false;
-        "monoid-subclasses".revision = (((hackage."monoid-subclasses")."1.1.2").revisions).default;
+        "monoid-subclasses".revision = (((hackage."monoid-subclasses")."1.1.3").revisions).default;
         "ghc-paths".revision = (((hackage."ghc-paths")."0.1.0.12").revisions).default;
         "ormolu".revision = (((hackage."ormolu")."0.1.4.1").revisions).default;
         "ormolu".flags.dev = false;
@@ -104,7 +104,7 @@
         "unagi-chan".flags.compare-benchmarks = false;
         "parser-combinators".revision = (((hackage."parser-combinators")."1.3.0").revisions).default;
         "parser-combinators".flags.dev = false;
-        "semigroupoids".revision = (((hackage."semigroupoids")."5.3.6").revisions).default;
+        "semigroupoids".revision = (((hackage."semigroupoids")."5.3.7").revisions).default;
         "semigroupoids".flags.distributive = true;
         "semigroupoids".flags.tagged = true;
         "semigroupoids".flags.containers = true;
@@ -125,7 +125,7 @@
         "vector".flags.internalchecks = false;
         "vector".flags.wall = false;
         "vector".flags.boundschecks = true;
-        "network".revision = (((hackage."network")."3.1.2.5").revisions).default;
+        "network".revision = (((hackage."network")."3.1.2.7").revisions).default;
         "network".flags.devel = false;
         "invariant".revision = (((hackage."invariant")."0.5.5").revisions).default;
         "hscolour".revision = (((hackage."hscolour")."1.24.4").revisions).default;
@@ -151,7 +151,7 @@
         "lens".flags.inlining = true;
         "lens".flags.test-properties = true;
         "unsafe".revision = (((hackage."unsafe")."0.0").revisions).default;
-        "monad-memo".revision = (((hackage."monad-memo")."0.5.3").revisions).default;
+        "monad-memo".revision = (((hackage."monad-memo")."0.5.4").revisions).default;
         "prettyprinter-ansi-terminal".revision = (((hackage."prettyprinter-ansi-terminal")."1.1.3").revisions).default;
         "hls-retrie-plugin".revision = (((hackage."hls-retrie-plugin")."1.0.1.4").revisions).default;
         "hlint".revision = (((hackage."hlint")."3.2.8").revisions).default;
@@ -187,7 +187,7 @@
         "contravariant".flags.tagged = true;
         "contravariant".flags.semigroups = true;
         "contravariant".flags.statevar = true;
-        "generic-lens-core".revision = (((hackage."generic-lens-core")."2.2.0.0").revisions).default;
+        "generic-lens-core".revision = (((hackage."generic-lens-core")."2.2.1.0").revisions).default;
         "base-orphans".revision = (((hackage."base-orphans")."0.8.6").revisions).default;
         "HsYAML-aeson".revision = (((hackage."HsYAML-aeson")."0.2.0.1").revisions).default;
         "HsYAML-aeson".flags.exe = false;
@@ -223,7 +223,7 @@
         "primitive".revision = (((hackage."primitive")."0.7.3.0").revisions).default;
         "apply-refact".revision = (((hackage."apply-refact")."0.9.3.0").revisions).default;
         "hpc".revision = (((hackage."hpc")."0.6.1.0").revisions).default;
-        "unliftio".revision = (((hackage."unliftio")."0.2.20").revisions).default;
+        "unliftio".revision = (((hackage."unliftio")."0.2.20.1").revisions).default;
         "directory".revision = (((hackage."directory")."1.3.6.0").revisions).default;
         "clock".revision = (((hackage."clock")."0.8.2").revisions).default;
         "clock".flags.llvm = false;
@@ -244,8 +244,7 @@
         "prettyprinter".flags.buildreadme = false;
         "prettyprinter".flags.text = true;
         "js-dgtable".revision = (((hackage."js-dgtable")."0.5.2").revisions).default;
-        "alex".revision = (((hackage."alex")."3.2.6").revisions).default;
-        "alex".flags.small_base = true;
+        "alex".revision = (((hackage."alex")."3.2.7.1").revisions).default;
         "old-locale".revision = (((hackage."old-locale")."1.0.0.7").revisions).default;
         "monad-control".revision = (((hackage."monad-control")."1.0.3.1").revisions).default;
         "hls-plugin-api".revision = (((hackage."hls-plugin-api")."1.2.0.2").revisions).default;
@@ -258,7 +257,7 @@
         "mtl".revision = (((hackage."mtl")."2.2.2").revisions).default;
         "transformers".revision = (((hackage."transformers")."0.5.6.2").revisions).default;
         "rts".revision = (((hackage."rts")."1.0.1").revisions).default;
-        "generic-lens".revision = (((hackage."generic-lens")."2.2.0.0").revisions).default;
+        "generic-lens".revision = (((hackage."generic-lens")."2.2.1.0").revisions).default;
         "ghc-check".revision = (((hackage."ghc-check")."0.5.0.6").revisions).default;
         "ghc-check".flags.ghc-check-use-package-abis = true;
         "OneTuple".revision = (((hackage."OneTuple")."0.3.1").revisions).default;
@@ -312,13 +311,13 @@
         "tagged".flags.deepseq = true;
         "tagged".flags.transformers = true;
         "file-embed".revision = (((hackage."file-embed")."0.0.15.0").revisions).default;
-        "hie-bios".revision = (((hackage."hie-bios")."0.8.0").revisions).default;
+        "hie-bios".revision = (((hackage."hie-bios")."0.8.1").revisions).default;
         "deepseq".revision = (((hackage."deepseq")."1.4.4.0").revisions).default;
         "splitmix".revision = (((hackage."splitmix")."0.1.0.4").revisions).default;
         "splitmix".flags.optimised-mixer = false;
         "unix".revision = (((hackage."unix")."2.7.2.2").revisions).default;
         "filemanip".revision = (((hackage."filemanip")."0.3.6.3").revisions).default;
-        "attoparsec".revision = (((hackage."attoparsec")."0.14.3").revisions).default;
+        "attoparsec".revision = (((hackage."attoparsec")."0.14.4").revisions).default;
         "attoparsec".flags.developer = false;
         "conduit-extra".revision = (((hackage."conduit-extra")."1.3.5").revisions).default;
         "algebraic-graphs".revision = (((hackage."algebraic-graphs")."0.6").revisions).default;
@@ -339,8 +338,7 @@
         "microlens-th".revision = (((hackage."microlens-th")."0.4.3.10").revisions).default;
         "blaze-builder".revision = (((hackage."blaze-builder")."0.4.2.2").revisions).default;
         "terminal-size".revision = (((hackage."terminal-size")."0.3.2.1").revisions).default;
-        "th-extras".revision = (((hackage."th-extras")."0.0.0.5").revisions).default;
-        "th-extras".flags.base4 = true;
+        "th-extras".revision = (((hackage."th-extras")."0.0.0.6").revisions).default;
         "hie-compat".revision = (((hackage."hie-compat")."0.2.1.0").revisions).default;
         "hie-compat".flags.ghc-lib = false;
         "hls-tactics-plugin".revision = (((hackage."hls-tactics-plugin")."1.5.0.1").revisions).default;
@@ -360,7 +358,7 @@
         "cmdargs".revision = (((hackage."cmdargs")."0.10.21").revisions).default;
         "cmdargs".flags.quotation = true;
         "cmdargs".flags.testprog = false;
-        "multistate".revision = (((hackage."multistate")."0.8.0.3").revisions).default;
+        "multistate".revision = (((hackage."multistate")."0.8.0.4").revisions).default;
         "multistate".flags.build-example = false;
         "free".revision = (((hackage."free")."5.1.7").revisions).default;
         "integer-gmp".revision = (((hackage."integer-gmp")."1.0.3.0").revisions).default;
@@ -419,7 +417,7 @@
         "foldl".revision = (((hackage."foldl")."1.4.12").revisions).default;
         "Glob".revision = (((hackage."Glob")."0.10.2").revisions).default;
         "sqlite-simple".revision = (((hackage."sqlite-simple")."0.4.18.0").revisions).default;
-        "unix-compat".revision = (((hackage."unix-compat")."0.5.3").revisions).default;
+        "unix-compat".revision = (((hackage."unix-compat")."0.5.4").revisions).default;
         "unix-compat".flags.old-time = false;
         "implicit-hie".revision = (((hackage."implicit-hie")."0.1.2.6").revisions).default;
         "case-insensitive".revision = (((hackage."case-insensitive")."1.2.1.0").revisions).default;
@@ -686,6 +684,7 @@
           "hls-refine-imports-plugin".components.library.planned = lib.mkOverride 900 true;
           "unbounded-delays".components.library.planned = lib.mkOverride 900 true;
           "vector".components.library.planned = lib.mkOverride 900 true;
+          "attoparsec".components.sublibs."attoparsec-internal".planned = lib.mkOverride 900 true;
           "hlint".components.exes."hlint".planned = lib.mkOverride 900 true;
           "hiedb".components.exes."hiedb".planned = lib.mkOverride 900 true;
           "transformers".components.library.planned = lib.mkOverride 900 true;

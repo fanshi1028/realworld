@@ -33,23 +33,23 @@ in project.shellFor {
   tools = {
     cabal = tool-config {
       version = "3.6.2.0";
-      plan-sha256 = "03i9rdvnpkr96x3ng5zfvfd9h49qsyzmxlckh2i1yr4xn991yid3";
+      plan-sha256 = "1ccslngsyc42bxbcx4hj20vx70ivvgp0rhd0kf8r5b85dxn3z7rb";
       materialized = /cabal;
     };
     hlint = tool-config {
       version = "3.3.6";
-      plan-sha256 = "17km3wxl79sl6vcgjl3yadqm41lb503hd8vsr9rc0z95yg20n91j";
+      plan-sha256 = "0qzcqh2g02kjdzkkhcm0qyjfsdvwk614fdpn8ql8syng1calhcy7";
       materialized = /hlint;
     };
     haskell-language-server = tool-config {
       version = "1.5.1.0";
-      plan-sha256 = "0vhq2gvbwssgbh54ciwg2jcjsqsbrc9ml54yqnvv758ykga6xrsk";
+      plan-sha256 = "06kjwi3xfwzygwqa7s8jmdmkhvh8faw6wcn6asz9frr9568hcrmy";
       materialized = /haskell-language-server;
     };
     # error: builder for '/nix/store/9w46v4709ddiycqg6zdrssfwsjlz64nq-ormolu-lib-ormolu-0.4.0.0.drv' failed with exit code 1
     ormolu = tool-config {
       version = "0.4.0.0";
-      plan-sha256 = "1g1g88bi46lx7kf2zc7lq7bgcqvcs5h7d53v5zclhgihfww1w5hl";
+      plan-sha256 = "0fp9hzdx9187i3nd4k0xkp0ynzsqxr2nff5g027mgr03n4vdqhld";
       materialized = /ormolu;
       # TEMP FIXME NOTE: https://github.com/input-output-hk/haskell.nix/issues/1337
       modules = [
@@ -61,7 +61,7 @@ in project.shellFor {
     };
     ghcid = tool-config {
       version = "0.8.7";
-      plan-sha256 = "0z35zpx7x0qncqiddnq4acdq3cgqlalwc2kb28dv8lk1rvn377ri";
+      plan-sha256 = "1s21mdfqpc397wslqkmbazfvgcwwlnq4gfjd841v2q62nkbjdkps";
       materialized = /ghcid;
     };
     # use cabal-docspec instead of doctest(which I failed to set it up right), yet it seesm that cabal-docspec is not on hackage yet
@@ -74,12 +74,12 @@ in project.shellFor {
     };
     stan = tool-config {
       version = "0.0.1.0";
-      plan-sha256 = "1b5ckkajsf87jczavx18glwfa06zcvi7w1dp45xbpiyjqf7wmpi2";
+      plan-sha256 = "06sim1kdr4qrricazds4ig7h5l8d9v0q0iivdbf2p8f3dqn3bh36";
       materialized = /stan;
     };
     hoogle = tool-config {
       version = "5.0.18.3";
-      plan-sha256 = "0knhl9icjpmbqz18vw4pxs6n5m6m32b1jyss6cmlz86s6df7pwik";
+      plan-sha256 = "0jdm31dglax25gz5pf8sh7hc3vwhxcybhga7xbiv7zc5lfqbi54c";
       materialized = /hoogle;
     };
   };
