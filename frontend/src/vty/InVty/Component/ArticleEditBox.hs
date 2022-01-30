@@ -11,13 +11,12 @@ import Data.Domain (Domain (Article, User))
 import Data.Domain.Article (ArticleWithAuthorProfile (..))
 import Data.Field.Body (Body (Body, unBody))
 import Data.Field.Description (Description (Description, unDescription))
-import Data.Field.Tag (Tag (Tag))
+import Data.Field.Tag (splitToTags, tagsToText)
 import Data.Field.Title (Title (Title, unTitle))
 import Data.Generic.HKD (build, construct)
 import Data.Generics.Product.Fields (getField)
 import qualified Data.Semigroup as SG
 import Data.Storage.Map (CreateOf (ArticleCreate), HasStorage (IdOf), Patch, UpdateOf)
-import Data.Text as T (intercalate, split, strip)
 import Data.Text.Zipper (fromText)
 import Data.Token.HasToken (TokenOf)
 import Data.Util.JSON.From (In (In))
@@ -70,8 +69,6 @@ articleEditBox ::
 articleEditBox clientEnv mAid dToken = do
   let inputBoxWithPlaceHolder = inputWithPlaceHolder textInput singleBoxStyle doubleBoxStyle
       inputAreaWithPlaceHolder = inputWithPlaceHolder multilineTextInput singleBoxStyle doubleBoxStyle
-
-      splitToTags = (Tag . strip <$>) . filter (== "") . split (== ',')
 
       mkBoxHelper title titleInput descriptionInput bodyInput tagsInput doneTxt =
         let title' = localTheme ((`withStyle` bold) <$>) $ centerText text title
@@ -131,13 +128,7 @@ articleEditBox clientEnv mAid dToken = do
                     (fmap Title <<$>> inputBoxWithPlaceHolder Edit (fromText . unTitle $ getField @"title" a'))
                     (fmap Description <<$>> inputBoxWithPlaceHolder Edit (fromText . unDescription $ getField @"description" a'))
                     (fmap Body <<$>> inputBoxWithPlaceHolder Edit (fromText . unBody $ getField @"body" a'))
-                    ( fmap splitToTags
-                        <<$>> inputAreaWithPlaceHolder
-                          Edit
-                          ( fromText . T.intercalate "," $
-                              (\(Tag t) -> t) <$> getField @"tagList" a
-                          )
-                    )
+                    (fmap splitToTags <<$>> inputAreaWithPlaceHolder Edit (fromText . tagsToText $ getField @"tagList" a))
                     "Save Changes"
                 -- FIXME TEMP validation ??
                 let bArticleUpdate =
