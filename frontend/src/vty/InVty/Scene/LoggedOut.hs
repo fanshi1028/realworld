@@ -13,7 +13,7 @@ import InVty.Component.SignInBox (signInBox)
 import InVty.Component.SignUpBox (signUpBox)
 import InVty.Util (Go (Go), LoggedIn (LoggedIn), Page (EditArticle, Home, Profile, Settings, SignIn, SignUp), noBorderStyle, splitH3, splitVRatio)
 import qualified InVty.Util as Page (Page (Article))
-import Reflex (Adjustable, Event, MonadHold, PerformEvent, Performable, fanEither, ffilter, hold, leftmost, never, switchDyn)
+import Reflex (Adjustable, Event, MonadHold, PerformEvent, Performable, fanEither, hold, leftmost, never, switchDyn)
 import Reflex.Vty (HasDisplayRegion, HasFocus, HasFocusReader, HasImageWriter, HasInput, HasLayout, HasTheme, blank, boxStatic, localTheme, text)
 import Reflex.Workflow (Workflow (Workflow), workflow)
 import Servant.API (Headers (getResponse))
@@ -43,12 +43,19 @@ loggedOutPages clientEnv = mdo
       homePage = tempPage "home page /#/" -- TEMP FIXME
       signUpPage = Workflow $ do
         -- NOTE "sign up page /#/register"
-        (eErr', eGo) <- signUpBox clientEnv
-        pure (Left <$> eErr', router eGo)
+        (eErr', eVErr', eGo) <- signUpBox clientEnv
+        pure (leftmost [Left . Left <$> eVErr', Left . Right <$> eErr'], router eGo)
       signInPage = Workflow $ do
         -- NOTE "sign in page /#/login"
-        (eGo, eErr', eRes') <- signInBox clientEnv
-        pure (leftmost [Left <$> eErr', Right <$> eRes'], router eGo)
+        (eGo, eErr', eVErr', eRes') <- signInBox clientEnv
+        pure
+          ( leftmost
+              [ Left . Left <$> eVErr',
+                Left . Right <$> eErr',
+                Right . Right <$> eRes'
+              ],
+            router eGo
+          )
 
       articlePage slug = tempPage "article page /#/article/:slug" -- TEMP FIXME
       profilePage uid = tempPage "profile page /#/profile/:name" -- TEMP FIXME
@@ -70,7 +77,13 @@ loggedOutPages clientEnv = mdo
       err401Page = tempPage "err401 page" -- TEMP FIXME
       errorDisplay =
         localTheme (flip withForeColor red <$>) . boxStatic noBorderStyle $
-          hold "" (leftmost [show <$> eErr, "" <$ eOk])
+          hold "" (leftmost [show <$> eVErr, show <$> eErr, "" <$ eOk, "" <$ eNavbar])
             >>= text
-  (eNavbar, (_, (fanEither -> (eErr, eOk), _))) <- splitVRatio 8 navBar $ splitH3 errorDisplay (switchDyn <$> workflow homePage) blank
+  (eNavbar, (_, (eRes, _))) <-
+    splitVRatio 8 navBar $ splitH3 errorDisplay (switchDyn <$> workflow homePage) blank
+  let ( fanEither ->
+          ( fanEither -> (eVErr, eErr),
+            fanEither -> (_, eOk)
+            )
+        ) = eRes
   pure $ LoggedIn . unOut . getResponse <$> eOk

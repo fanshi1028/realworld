@@ -23,7 +23,19 @@ import InVty.Util
   )
 import qualified InVty.Util as Page (Page (Article))
 import Reflex (Adjustable, Event, MonadHold, PerformEvent, Performable, fanEither, hold, holdDyn, leftmost, never, switchDyn)
-import Reflex.Vty (HasDisplayRegion, HasFocus, HasFocusReader, HasImageWriter, HasInput, HasLayout, HasTheme, blank, boxStatic, localTheme, text)
+import Reflex.Vty
+  ( HasDisplayRegion,
+    HasFocus,
+    HasFocusReader,
+    HasImageWriter,
+    HasInput,
+    HasLayout,
+    HasTheme,
+    blank,
+    boxStatic,
+    localTheme,
+    text,
+  )
 import Reflex.Workflow (Workflow (Workflow), workflow)
 import Servant.Client (ClientEnv)
 
@@ -58,8 +70,8 @@ loggedInPages clientEnv (LoggedIn (UserAuthWithToken auth token)) = mdo
         (eLogout', eErr', eRes') <- settingsBox clientEnv dAuth dToken
         pure
           ( leftmost
-              [ Left . Left <$> eLogout',
-                Left . Right <$> eErr',
+              [ Left . Right <$> eErr',
+                Right . Left <$> eLogout',
                 Right . Right <$> eRes'
               ],
             eNavbar
@@ -68,7 +80,7 @@ loggedInPages clientEnv (LoggedIn (UserAuthWithToken auth token)) = mdo
         -- NOTE: new article page /#/editor --
         -- NOTE: edit article page /#/editor/:slug --
         (eVErr', eErr', eRes') <- articleEditBox clientEnv mAid dToken
-        pure (Left . Right <$> eErr', eNavbar)
+        pure (leftmost [Left . Left <$> eVErr', Left . Right <$> eErr'], eNavbar)
       articlePage slug = tempPage "article page /#/article/:slug" -- TEMP FIXME
       profilePage mUid = tempPage "article page /#/profile/:name" -- TEMP FIXME
       -- favouriteUserPage username = tempPage "article page /#/profile/:name/favorites" -- TEMP FIXME
@@ -90,10 +102,10 @@ loggedInPages clientEnv (LoggedIn (UserAuthWithToken auth token)) = mdo
       err500Page err = tempPage "err500 page" -- TEMP FIXME
       errorDisplay =
         localTheme (flip withForeColor red <$>) . boxStatic noBorderStyle $
-          hold "" (leftmost [show <$> eErr, "" <$ eAuth])
+          hold "" (leftmost [show <$> eErr, show <$> eVErr, "" <$ eAuth, "" <$ eNavbar])
             >>= text
   (eNavbar, (_, (eRes, _))) <- splitVRatio 8 navBar $ splitH3 errorDisplay (switchDyn <$> workflow homePage) blank
-  let ( fanEither -> (eLogout, eErr),
-        fanEither -> (_, eAuth)
+  let ( fanEither -> (eVErr, eErr),
+        fanEither -> (eLogout, eAuth)
         ) = fanEither eRes
   pure eLogout

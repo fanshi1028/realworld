@@ -13,6 +13,7 @@ import Data.Field.Email (Email (Email))
 import Data.Field.Password (mkPassword)
 import Data.Util.JSON.From (In (In))
 import Data.Util.JSON.To (Out)
+import Data.Util.Validation (ValidationErr)
 import Graphics.Vty (bold, green, withBackColor, withForeColor, withStyle)
 import InVty.Component.InputBox (PlaceHolderMode (Replace), inputWithPlaceHolder)
 import InVty.Util (Go (Go), Page (SignUp), centerText, noBorderStyle, runRequestE, splitH3, splitVRatio)
@@ -43,6 +44,7 @@ signInBox ::
   m
     ( Event t Go,
       Event t ClientError,
+      Event t ValidationErr,
       Event t (Headers '[Header "Set-Cookie" SetCookie, Header "Set-Cookie" SetCookie] (Out UserAuthWithToken))
     )
 signInBox clientEnv = do
@@ -74,4 +76,4 @@ signInBox clientEnv = do
           <$> bVUserLogin
           <@ eSignIn
   (eErr, eRes) <- runRequestE clientEnv $ loginClient <$> ePayload
-  pure (eGo, eErr, eRes)
+  pure (eGo, eErr, eVErrs, eRes)

@@ -58,7 +58,7 @@ signUpBox ::
     PerformEvent t m
   ) =>
   ClientEnv ->
-  m (Event t ClientError, Event t Go)
+  m (Event t ClientError, Event t ValidationErr, Event t Go)
 signUpBox clientEnv = do
   let inputBoxWithPlaceHolder = inputWithPlaceHolder textInput singleBoxStyle doubleBoxStyle
 
@@ -109,4 +109,4 @@ signUpBox clientEnv = do
   (eErr, eRes) <- runRequestE clientEnv $ registerClient <$> ePayload
 
   -- TEMP FIXME This validation should output validtion error event too, but ignore it for now, we will fix it later.
-  pure (eErr, leftmost [eGo, Go SignIn <$ eRes])
+  pure (eErr, eVErrs, leftmost [eGo, Go SignIn <$ eRes])
