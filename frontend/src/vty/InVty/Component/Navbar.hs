@@ -7,7 +7,7 @@ import Control.Monad.Fix (MonadFix)
 import Graphics.Vty (defAttr, dim, green, withForeColor, withStyle)
 import InVty.Component.Tab (SelectConfig (SelectConfig), TabConfig (TabConfig), mkTab)
 import InVty.Util (Go (Go), Page (EditArticle, Home, Profile, Settings, SignIn, SignUp), noBorderStyle, splitH2, splitH3)
-import Reflex (Event, MonadHold, Reflex, leftmost)
+import Reflex (Event, MonadHold, Reflex, holdDyn, leftmost)
 import Reflex.Vty
   ( ButtonConfig (ButtonConfig),
     HasDisplayRegion,
@@ -59,7 +59,7 @@ navBarLoggedInPart ::
 navBarLoggedInPart =
   Go <<$>> do
     rec let eGo = leftmost [eGo1, eGo2, eGo3, eGo4]
-            mkTab' = mkTab tabCfg eGo "Home"
+        mkTab' <- mkTab tabCfg <$> holdDyn Home eGo
         ((eGo1, eGo2), (eGo3, eGo4)) <-
           splitH2
             ( splitH2
@@ -86,7 +86,7 @@ navBarLoggedOutPart ::
 navBarLoggedOutPart =
   Go <<$>> do
     rec let eGo = leftmost [eGo1, eGo2, eGo3]
-            mkTab' = mkTab tabCfg eGo "Home"
+        mkTab' <- mkTab tabCfg <$> holdDyn Home eGo
         (_, (eGo1, (eGo2, eGo3))) <- do
           splitH2 blank $ splitH3 (mkTab' "Home" Home) (mkTab' "Sign in" SignIn) (mkTab' "Sign up" SignUp)
     pure eGo

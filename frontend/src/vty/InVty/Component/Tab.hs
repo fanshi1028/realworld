@@ -6,7 +6,7 @@ module InVty.Component.Tab where
 
 import Control.Monad.Fix (MonadFix)
 import Graphics.Vty (Attr)
-import Reflex (Behavior, Event, Reflex, difference, hold, mergeWith)
+import Reflex (Behavior, Event, Reflex (Dynamic, current), difference, gate, hold, leftmost, mergeWith, sample, updated)
 import Reflex.Vty
   ( ButtonConfig,
     HasDisplayRegion,
@@ -58,11 +58,11 @@ mkTab ::
     HasImageWriter t m,
     HasInput t m,
     MonadHold t m,
-    MonadFix m
+    MonadFix m,
+    Eq a
   ) =>
   TabConfig t ->
-  Event t b ->
-  Text ->
+  Dynamic t a ->
   Text ->
   a ->
   m (Event t a)
@@ -75,16 +75,18 @@ mkTab
             selectThemeModifier
           }
     }
-  eSomeSelect
-  defSelect
+  dSelected
   key
   page = do
-    rec eSelectThis <- localTheme mdf $ (page <$) <$> textButtonStatic buttonCfg key
+    initSelected <- sample $ current dSelected
+    rec eSelectThis <- localTheme (mdf <*>) $ gate ((/= page) <$> current dSelected) <$> textButtonStatic buttonCfg key
         mdf <-
-          mkThemeModifier
-            eSelectThis
-            (difference eSomeSelect eSelectThis)
-            (if defSelect == key then selectThemeModifier else unselectThemeModifier)
-            unselectThemeModifier
-            selectThemeModifier
-    pure eSelectThis
+          hold (if initSelected == page then selectThemeModifier else unselectThemeModifier) $
+            leftmost
+              [ selectThemeModifier <$ eSelectThis,
+                unselectThemeModifier
+                  <$ gate
+                    ((== page) <$> current dSelected)
+                    (difference (updated dSelected) eSelectThis)
+              ]
+    pure $ page <$ eSelectThis
