@@ -358,6 +358,7 @@ library frontend-vty-internal
     InVty.Component.Settings
     InVty.Component.SignInBox
     InVty.Component.SignUpBox
+    InVty.Component.Tab
     InVty.Scene.LoggedIn
     InVty.Scene.LoggedOut
     InVty.Util
