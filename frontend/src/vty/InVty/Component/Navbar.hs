@@ -6,14 +6,16 @@ module InVty.Component.Navbar where
 import Control.Monad.Fix (MonadFix)
 import Graphics.Vty (defAttr, dim, green, withForeColor, withStyle)
 import InVty.Component.Tab (SelectConfig (SelectConfig), TabConfig (TabConfig), mkTab)
-import InVty.Util (Go (Go), Page (EditArticle, Home, Profile, Settings, SignIn, SignUp), noBorderStyle, splitH2, splitH3)
-import Reflex (Event, MonadHold, Reflex, holdDyn, leftmost)
+import InVty.Util (Go (Go), Page (EditArticle, Home, Profile, Settings, SignIn, SignUp), noBorderStyle, splitH3)
+import Reflex (Adjustable, Event, MonadHold, PostBuild, Reflex, leftmost)
 import Reflex.Vty
   ( ButtonConfig (ButtonConfig),
     HasDisplayRegion,
+    HasFocus,
     HasFocusReader,
     HasImageWriter,
     HasInput,
+    HasLayout,
     HasTheme,
     blank,
     localTheme,
@@ -53,24 +55,22 @@ navBarLoggedInPart ::
     HasImageWriter t m,
     HasInput t m,
     MonadFix m,
-    MonadHold t m
+    MonadHold t m,
+    Adjustable t m,
+    PostBuild t m,
+    HasFocus t m,
+    HasLayout t m
   ) =>
   m (Event t Go)
 navBarLoggedInPart =
-  Go <<$>> do
-    rec let eGo = leftmost [eGo1, eGo2, eGo3, eGo4]
-        mkTab' <- mkTab tabCfg <$> holdDyn Home eGo
-        ((eGo1, eGo2), (eGo3, eGo4)) <-
-          splitH2
-            ( splitH2
-                (mkTab' "Home" Home)
-                (mkTab' "New article" $ EditArticle Nothing)
-            )
-            ( splitH2
-                (mkTab' "Settings" Settings)
-                (mkTab' "Who am I" $ Profile Nothing)
-            )
-    pure eGo
+  Go <<$>> mdo
+    mkTab tabCfg "Home" $
+      fromList
+        [ ("Home", Home),
+          ("New article", EditArticle Nothing),
+          ("Settings", Settings),
+          ("Who am I", Profile Nothing)
+        ]
 
 -- | @since 0.4.0.0
 navBarLoggedOutPart ::
@@ -80,13 +80,14 @@ navBarLoggedOutPart ::
     HasImageWriter t m,
     HasInput t m,
     MonadHold t m,
-    MonadFix m
+    MonadFix m,
+    Adjustable t m,
+    PostBuild t m,
+    HasFocus t m,
+    HasLayout t m
   ) =>
   m (Event t Go)
 navBarLoggedOutPart =
-  Go <<$>> do
-    rec let eGo = leftmost [eGo1, eGo2, eGo3]
-        mkTab' <- mkTab tabCfg <$> holdDyn Home eGo
-        (_, (eGo1, (eGo2, eGo3))) <- do
-          splitH2 blank $ splitH3 (mkTab' "Home" Home) (mkTab' "Sign in" SignIn) (mkTab' "Sign up" SignUp)
-    pure eGo
+  Go <<$>> mdo
+    mkTab tabCfg "Home" $
+      fromList [("Home", Home), ("Sign in", SignIn), ("Sign up", SignUp)]
