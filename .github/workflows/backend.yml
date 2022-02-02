@@ -35,7 +35,7 @@ jobs:
       run: |
         nix-build -j4 --argstr nixpkgsPin ${{matrix.nixpkgsPin}} \
         --argstr ghc-version ${{matrix.ghcVersion}} \
-        --arg materializedDir null
+        --arg materializedDir null \
         --arg checkMaterialization false
 
     - name: nix shell
@@ -43,5 +43,5 @@ jobs:
       run: |
         nix-shell -j4 --argstr nixpkgsPin ${{matrix.nixpkgsPin}} \
         --argstr ghc-version ${{matrix.ghcVersion}} \
-        --arg materializedDir null
+        --arg materializedDir null \
         --arg checkMaterialization false
