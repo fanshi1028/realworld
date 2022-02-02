@@ -13,7 +13,7 @@ haskell-nix.project {
   # Specify the GHC version to use.
   compiler-nix-name = "ghc${ghcVersion}";
 
-  index-state = "2022-01-28T00:00:00Z";
+  index-state = "2022-02-01T00:00:00Z";
 
   modules = [
     {

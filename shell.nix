@@ -42,7 +42,7 @@ in project.shellFor {
       materialized = /hlint;
     };
     haskell-language-server = tool-config {
-      version = "1.5.1.0";
+      version = "1.6.1.0";
       plan-sha256 = "06kjwi3xfwzygwqa7s8jmdmkhvh8faw6wcn6asz9frr9568hcrmy";
       materialized = /haskell-language-server;
     };
