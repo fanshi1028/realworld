@@ -35,11 +35,13 @@ jobs:
       run: |
         nix-build -j4 --argstr nixpkgsPin ${{matrix.nixpkgsPin}} \
         --argstr ghc-version ${{matrix.ghcVersion}} \
-        --arg checkMaterialization true
+        --arg materializedDir null
+        --arg checkMaterialization false
 
     - name: nix shell
       if: ${{matrix.os}} == macos-10.15 && ${{matrix.ghcVersion}} == 8107
       run: |
         nix-shell -j4 --argstr nixpkgsPin ${{matrix.nixpkgsPin}} \
         --argstr ghc-version ${{matrix.ghcVersion}} \
-        --arg checkMaterialization true
+        --arg materializedDir null
+        --arg checkMaterialization false
