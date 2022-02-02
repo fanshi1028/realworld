@@ -42,7 +42,7 @@ in project.shellFor {
     };
     haskell-language-server = tool-config {
       version = "1.6.1.0";
-      plan-sha256 = "06kjwi3xfwzygwqa7s8jmdmkhvh8faw6wcn6asz9frr9568hcrmy";
+      plan-sha256 = "03n82xn92flbi5nnnba6z73ar1qn4qnkfwk1amcxnn0x8bqy7xpg";
       materialized = /haskell-language-server;
     };
     # error: builder for '/nix/store/9w46v4709ddiycqg6zdrssfwsjlz64nq-ormolu-lib-ormolu-0.4.0.0.drv' failed with exit code 1
@@ -78,7 +78,7 @@ in project.shellFor {
     };
     hoogle = tool-config {
       version = "5.0.18.3";
-      plan-sha256 = "0jdm31dglax25gz5pf8sh7hc3vwhxcybhga7xbiv7zc5lfqbi54c";
+      plan-sha256 = "16xvyynw5dmqlw1c02z2ym53izalfnciyjjac10k2ifdjqf9smma";
       materialized = /hoogle;
     };
   };

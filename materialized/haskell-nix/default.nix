@@ -90,7 +90,7 @@
         "parsers".flags.binary = true;
         "parsers".flags.parsec = true;
         "parsers".flags.attoparsec = true;
-        "network-info".revision = (((hackage."network-info")."0.2.0.10").revisions).default;
+        "network-info".revision = (((hackage."network-info")."0.2.1").revisions).default;
         "random".revision = (((hackage."random")."1.2.1").revisions).default;
         "unix-time".revision = (((hackage."unix-time")."0.4.7").revisions).default;
         "dlist".revision = (((hackage."dlist")."1.0").revisions).default;
@@ -163,7 +163,7 @@
         "vector-algorithms".flags.boundschecks = true;
         "heaps".revision = (((hackage."heaps")."0.4").revisions).default;
         "generic-monoid".revision = (((hackage."generic-monoid")."0.1.0.1").revisions).default;
-        "wai-logger".revision = (((hackage."wai-logger")."2.3.7").revisions).default;
+        "wai-logger".revision = (((hackage."wai-logger")."2.4.0").revisions).default;
         "validation-selective".revision = (((hackage."validation-selective")."0.1.0.1").revisions).default;
         "lens".revision = (((hackage."lens")."5.0.1").revisions).default;
         "lens".flags.j = false;
@@ -268,7 +268,7 @@
         "tasty".revision = (((hackage."tasty")."1.4.2.1").revisions).default;
         "tasty".flags.unix = true;
         "tasty".flags.clock = true;
-        "string-random".revision = (((hackage."string-random")."0.1.4.1").revisions).default;
+        "string-random".revision = (((hackage."string-random")."0.1.4.2").revisions).default;
         "wai-app-static".revision = (((hackage."wai-app-static")."3.1.7.2").revisions).default;
         "wai-app-static".flags.print = false;
         "mtl".revision = (((hackage."mtl")."2.2.2").revisions).default;

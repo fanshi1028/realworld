@@ -96,7 +96,7 @@
         "vector-algorithms".flags.properties = true;
         "vector-algorithms".flags.boundschecks = true;
         "socks".revision = (((hackage."socks")."0.6.1").revisions).default;
-        "wai-logger".revision = (((hackage."wai-logger")."2.3.7").revisions).default;
+        "wai-logger".revision = (((hackage."wai-logger")."2.4.0").revisions).default;
         "x509".revision = (((hackage."x509")."1.7.6").revisions).default;
         "http-types".revision = (((hackage."http-types")."0.12.3").revisions).default;
         "comonad".revision = (((hackage."comonad")."5.0.8").revisions).default;
