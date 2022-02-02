@@ -3,21 +3,20 @@
 , materializedDir ? ./materialized }:
 let
   project = import ./default.nix {
-    inherit nixpkgsPin ghcVersion checkMaterialization;
+    inherit nixpkgsPin ghcVersion materializedDir checkMaterialization;
   };
   index-state = project.index-state;
 
   tool-common = { inherit index-state checkMaterialization; };
-  ony-ghc8107-materialize-config = plan-sha256: subpath:
+  ony-ghc8107-materialize-config = subpath:
     if materializedDir != null && ghcVersion == "8107" then {
-      inherit plan-sha256;
       materialized = materializedDir + subpath;
-    } else
-      { };
-  tool-config = { version, plan-sha256, materialized, ... }@args:
-    tool-common // args // {
-      inherit version;
-    } // (ony-ghc8107-materialize-config plan-sha256 materialized);
+    } else {
+      plan-sha256 = null;
+      materialized = null;
+    };
+  tool-config = { materialized, ... }@args:
+    tool-common // args // (ony-ghc8107-materialize-config materialized);
 in project.shellFor {
   # ALL of these arguments are optional.
 
