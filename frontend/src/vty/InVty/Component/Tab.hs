@@ -11,7 +11,7 @@ import Reflex
   ( Adjustable,
     Event,
     PostBuild,
-    Reflex (current),
+    Reflex (Dynamic, current),
     fromUniqDynamic,
     holdDyn,
     selectViewListWithKey,
@@ -35,6 +35,7 @@ import Reflex.Vty
     textButtonStatic,
     tile,
   )
+import qualified Reflex.Vty.Widget.Layout as Layout (Constraint)
 
 -- | @since 0.4.0.0
 data SelectConfig = SelectConfig
@@ -63,8 +64,9 @@ mkTab ::
     HasLayout t m
   ) =>
   TabConfig t ->
+  Dynamic t Layout.Constraint ->
   Text ->
-  Map Text tab ->
+  Dynamic t (Map Text tab) ->
   m (Event t tab)
 mkTab
   TabConfig
@@ -75,12 +77,13 @@ mkTab
             selectThemeModifier
           }
     }
+  dConstraint
   initSelectKey
-  tabs = do
+  dTabs = do
     rec dFocusedTab <- fromUniqDynamic . uniqDynamic <$> holdDyn initSelectKey eKey
         (splitE -> (eKey, eTab)) <- row $
-          selectViewListWithKey dFocusedTab (pure tabs) $ \k dTab dSelected ->
-            tile flex $ do
+          selectViewListWithKey dFocusedTab dTabs $ \k dTab dSelected ->
+            tile dConstraint $ do
               let bThemeMdf = bool unselectThemeModifier selectThemeModifier <$> current dSelected
               (current dTab <@) <$> localTheme (bThemeMdf <*>) (textButtonStatic buttonCfg k)
     pure eTab

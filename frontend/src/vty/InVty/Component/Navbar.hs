@@ -18,6 +18,7 @@ import Reflex.Vty
     HasLayout,
     HasTheme,
     blank,
+    flex,
     localTheme,
     textButtonStatic,
   )
@@ -64,7 +65,7 @@ navBarLoggedInPart ::
   m (Event t Go)
 navBarLoggedInPart =
   Go <<$>> mdo
-    mkTab tabCfg "Home" $
+    mkTab tabCfg flex "Home" . pure $
       fromList
         [ ("Home", Home),
           ("New article", EditArticle Nothing),
@@ -89,5 +90,5 @@ navBarLoggedOutPart ::
   m (Event t Go)
 navBarLoggedOutPart =
   Go <<$>> mdo
-    mkTab tabCfg "Home" $
+    mkTab tabCfg flex "Home" . pure $
       fromList [("Home", Home), ("Sign in", SignIn), ("Sign up", SignUp)]
