@@ -488,7 +488,7 @@ semantics =
           case m_ref of
             Nothing -> pure $ FailResponse ""
             Just ref ->
-              let _ :<|> (getCurrentUser :<|> updateUser) :<|> withUser :<|> createArticle :<|> feedArticles :<|> withArticle = apisClient $ concrete ref
+              let _ :<|> (getCurrentUser :<|> updateUser) :<|> withUser :<|> feedArticles :<|> createArticle :<|> withArticle = apisClient $ concrete ref
                in case uc of
                     GetCurrentUser -> run getCurrentUser $ const $ UserResponse GotCurrentUser
                     UpdateUser ur -> run (updateUser $ In $ pure ur) $ \(UserAuthWithToken _ t) ->

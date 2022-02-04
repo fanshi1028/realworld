@@ -25,9 +25,9 @@ getUserClient
   :<|> updateUserClient
   :<|> followUserClient
   :<|> unfollowUserClient
-  :<|> createArticleClient
   :<|> getFeedsClient
   :<|> getFeedsStreamClient
+  :<|> createArticleClient
   :<|> updateArticleClient
   :<|> deleteArticleClient
   :<|> deleteCommentClient

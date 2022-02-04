@@ -32,13 +32,15 @@ type ProtectedFavoriteApi = ToggleApi ArticleWithAuthorProfile
 
 -- | @since 0.4.0.0
 type ProtectedArticleApi =
-  CreateApi 'Article ArticleWithAuthorProfile
-    :<|> "feed" :> QP "limit" :> QP "offset" :> ReadManyApi ArticleWithAuthorProfile
-    :<|> ( Cap "slug" (IdOf 'Article)
-             :> ( UDApi 'Article ArticleWithAuthorProfile
-                    :<|> "comments" :> ProtectedCommentApi
-                    :<|> "favorite" :> ProtectedFavoriteApi
-                )
+  "feed" :> QP "limit" :> QP "offset" :> ReadManyApi ArticleWithAuthorProfile
+    :<|> "articles"
+      :> ( CreateApi 'Article ArticleWithAuthorProfile
+             :<|> ( Cap "slug" (IdOf 'Article)
+                      :> ( UDApi 'Article ArticleWithAuthorProfile
+                             :<|> "comments" :> ProtectedCommentApi
+                             :<|> "favorite" :> ProtectedFavoriteApi
+                         )
+                  )
          )
 
 -- | @since 0.4.0.0
@@ -51,4 +53,4 @@ type ProtectedUserApi = ReadApi UserAuthWithToken :<|> UpdateApi 'User UserAuthW
 type ProtectedApi =
   "user" :> ProtectedUserApi
     :<|> "profiles" :> ProtectedFollowApi
-    :<|> "articles" :> ProtectedArticleApi
+    :<|> ProtectedArticleApi

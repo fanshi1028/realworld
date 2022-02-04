@@ -12,22 +12,22 @@
 -- @since 0.1.0.0
 module Server.Protected where
 
+import API.Protected (ProtectedApi, ProtectedArticleApi, ProtectedFollowApi, ProtectedUserApi)
 import Control.Algebra (Algebra, send)
 import qualified Control.Effect.Reader as R (Reader, ask)
 import Control.Effect.Sum (Member)
 import Control.Effect.Throw (Throw, throwError)
 import Data.Domain (Domain (User))
 import Data.Domain.User (UserAuthWithToken (UserAuthWithToken))
-import API.Protected (ProtectedApi, ProtectedArticleApi, ProtectedFollowApi, ProtectedUserApi)
 import Data.Paging (HasPaging (paging), Limit, Offset, Paging (LimitOffset))
-import Servant (NoContent (NoContent), ServerT, type (:<|>) ((:<|>)))
-import Servant.Types.SourceT (source)
-import Effect.Token.Create (CreateTokenE (CreateToken))
-import Effect.UserAction (UserActionE (AddCommentToArticle, CreateArticle, DeleteArticle, DeleteComment, FavoriteArticle, FollowUser, GetCurrentUser, UnfavoriteArticle, UnfollowUser, UpdateArticle, UpdateUser))
-import Effect.UserAction.Many (UserActionManyE (FeedArticles))
 import Data.Util.JSON.From (In (In))
 import Data.Util.JSON.To (Out (Out))
 import Data.Util.Validation (ValidationErr)
+import Effect.Token.Create (CreateTokenE (CreateToken))
+import Effect.UserAction (UserActionE (AddCommentToArticle, CreateArticle, DeleteArticle, DeleteComment, FavoriteArticle, FollowUser, GetCurrentUser, UnfavoriteArticle, UnfollowUser, UpdateArticle, UpdateUser))
+import Effect.UserAction.Many (UserActionManyE (FeedArticles))
+import Servant (NoContent (NoContent), ServerT, type (:<|>) ((:<|>)))
+import Servant.Types.SourceT (source)
 import Validation (Validation (Failure, Success), validation)
 
 -- * Server
@@ -75,19 +75,19 @@ articleServer =
   let fromUnValidatedInput f = \case
         In (Failure err) -> throwError err
         In (Success r) -> f r
-   in fromUnValidatedInput (Out <<$>> send . CreateArticle)
-        :<|> ( \mLimit mOffset -> do
-                 let getVPaging =
-                       liftA2 LimitOffset
-                         <$> (R.ask <&> \lim -> fromMaybe (pure lim) mLimit)
-                         <*> (R.ask <&> \off -> fromMaybe (pure off) mOffset)
-                     fa =
-                       getVPaging
-                         >>= validation
-                           (throwError @ValidationErr)
-                           (\p -> paging p <$> send FeedArticles)
-                  in Out <$> fa :<|> (source <$> fa)
-             )
+   in ( \mLimit mOffset -> do
+          let getVPaging =
+                liftA2 LimitOffset
+                  <$> (R.ask <&> \lim -> fromMaybe (pure lim) mLimit)
+                  <*> (R.ask <&> \off -> fromMaybe (pure off) mOffset)
+              fa =
+                getVPaging
+                  >>= validation
+                    (throwError @ValidationErr)
+                    (\p -> paging p <$> send FeedArticles)
+           in Out <$> fa :<|> (source <$> fa)
+      )
+        :<|> fromUnValidatedInput (Out <<$>> send . CreateArticle)
         :<|> ( \case
                  Success aid ->
                    ( fromUnValidatedInput (Out <<$>> send . UpdateArticle aid)
