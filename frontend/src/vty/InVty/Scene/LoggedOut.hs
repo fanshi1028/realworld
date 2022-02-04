@@ -11,10 +11,9 @@ import Graphics.Vty (red, withForeColor)
 import InVty.Component.Navbar (navBarCommonPartWith, navBarLoggedOutPart)
 import InVty.Component.SignInBox (signInBox)
 import InVty.Component.SignUpBox (signUpBox)
-import InVty.Util (Go (Go), LoggedIn (LoggedIn), Page (EditArticle, Home, Profile, Settings, SignIn, SignUp), noBorderStyle, splitH3, splitVRatio)
-import qualified InVty.Util as Page (Page (Article))
 import Reflex (Adjustable, Event, MonadHold, PerformEvent, Performable, fanEither, hold, leftmost, never, switchDyn)
 import Reflex.Vty (HasDisplayRegion, HasFocus, HasFocusReader, HasImageWriter, HasInput, HasLayout, HasTheme, blank, boxStatic, localTheme, text)
+import InVty.Util (Go (Go), LoggedIn (LoggedIn), Page (ArticleContentPage, EditorPage, HomePage, ProfilePage, SettingsPage, SignInPage, SignUpPage), centerText, noBorderStyle, splitH3, splitVRatio)
 import Reflex.Workflow (Workflow (Workflow), workflow)
 import Servant.API (Headers (getResponse))
 import Servant.Client (ClientEnv)
@@ -32,7 +31,8 @@ loggedOutPages ::
     HasFocus t m,
     HasLayout t m,
     MonadIO (Performable m),
-    PerformEvent t m
+    PerformEvent t m,
+    PostBuild t m
   ) =>
   ClientEnv ->
   m (Event t LoggedIn)
@@ -60,15 +60,15 @@ loggedOutPages clientEnv = mdo
       articlePage slug = tempPage "article page /#/article/:slug" -- TEMP FIXME
       profilePage uid = tempPage "profile page /#/profile/:name" -- TEMP FIXME
       router' (Go p) = case p of
-        Home -> homePage
-        SignIn -> signInPage
-        SignUp -> signUpPage
-        Page.Article slug -> articlePage slug
-        Profile (Just uid) -> profilePage uid
+        HomePage -> homePage
+        SignInPage -> signInPage
+        SignUpPage -> signUpPage
+        ArticleContentPage slug -> articlePage slug
+        ProfilePage (Just uid) -> profilePage uid
         -- NOTE: below shouldn't be triggered from while logged out.
-        Profile Nothing -> err401Page
-        EditArticle _ -> err401Page
-        Settings -> err401Page
+        ProfilePage Nothing -> err401Page
+        EditorPage _ -> err401Page
+        SettingsPage -> err401Page
 
       navBar = router' <<$>> navBarCommonPartWith navBarLoggedOutPart
 

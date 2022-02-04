@@ -1,5 +1,6 @@
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE TupleSections #-}
 {-# LANGUAGE ViewPatterns #-}
 
 -- | @since 0.4.0.0
@@ -16,15 +17,15 @@ import Data.Field.Title (Title (Title, unTitle))
 import Data.Generic.HKD (build, construct)
 import Data.Generics.Product.Fields (getField)
 import qualified Data.Semigroup as SG
-import Data.Storage.Map (CreateOf (ArticleCreate), HasStorage (IdOf), Patch, UpdateOf)
+import Data.Storage.Map (CreateOf (ArticleCreate), Patch, UpdateOf, toArticleId)
 import Data.Text.Zipper (fromText)
 import Data.Token.HasToken (TokenOf)
 import Data.Util.JSON.From (In (In))
-import Data.Util.JSON.To (Out (Out))
+import Data.Util.JSON.To (Out (Out, unOut))
 import Data.Util.Validation (ValidationErr)
 import Graphics.Vty (bold, green, withBackColor, withStyle)
 import InVty.Component.InputBox (PlaceHolderMode (Edit, Replace), inputWithPlaceHolder)
-import InVty.Util (centerText, noBorderStyle, runRequestE, splitH3, splitV3)
+import InVty.Util (ArticleIdOrContent, centerText, noBorderStyle, runRequestE, splitH3, splitV3)
 import Reflex
   ( Adjustable,
     Dynamic,
@@ -63,7 +64,7 @@ articleEditBox ::
     MonadIO (Performable m)
   ) =>
   ClientEnv ->
-  Maybe (IdOf 'Article) ->
+  Maybe ArticleIdOrContent ->
   Dynamic t (TokenOf 'User) ->
   m (Event t ValidationErr, Event t ClientError, Event t (Out ArticleWithAuthorProfile))
 articleEditBox clientEnv mAid dToken = do
@@ -112,13 +113,17 @@ articleEditBox clientEnv mAid dToken = do
               <@ ePublish
       (eErr, eRes) <- runRequestE clientEnv eRequest
       pure (eVErr, eErr, eRes)
-    Just aid -> do
-      eNow <- now
-      (eErr1, eRes') <- runRequestE clientEnv $ getArticleClient <$> current dToken ?? Success aid <@ eNow
+    Just aidOrAcontent -> do
+      (eErr1, eRes') <- case aidOrAcontent of
+        Left aid ->
+          second (unOut <$>) <$> do
+            eNow <- now
+            runRequestE clientEnv $ getArticleClient <$> current dToken ?? Success aid <@ eNow
+        Right content -> (never,) . (content <$) <$> now
       let wf1 = Workflow $ do
             blank
             pure (never, wf2 <$> eRes')
-          wf2 (Out a@(getField @"article" @_ @ArticleWithAuthorProfile -> a')) =
+          wf2 a@(getField @"article" @_ @ArticleWithAuthorProfile -> a') =
             Workflow $
               do
                 -- FIXME TEMP tags ui and logic
@@ -141,7 +146,7 @@ articleEditBox clientEnv mAid dToken = do
                     eRequest =
                       ( updateArticleClient
                           <$> current dToken
-                            ?? Success aid
+                            ?? Success (toArticleId a')
                             <*> (In . Success <$> bArticleUpdate)
                       )
                         <@ eUpdate

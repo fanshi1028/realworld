@@ -26,10 +26,10 @@ import Data.Field.Description (Description)
 import Data.Field.Slug (Slug, titleToSlug)
 import Data.Field.Time (Time)
 import Data.Field.Title (Title)
+import Data.Generics.Product (HasField', getField)
 import Data.Storage.Map.Internal.HasStorage (HasStorage (..))
 import Data.Storage.Map.Internal.HasStorage.User ()
 import Data.Util.Validation (WithValidation)
-import GHC.Records (HasField, getField)
 import Servant (FromHttpApiData)
 
 -- | @since 0.3.0.0
@@ -62,5 +62,5 @@ instance ToJSON (ContentOf 'Article)
 -- * Helper
 
 -- | @since 0.3.0.0
-toArticleId :: HasField "title" a Title => a -> IdOf 'Article
+toArticleId :: (HasField' "title" a Title) => a -> IdOf 'Article
 toArticleId = ArticleId . titleToSlug . getField @"title"

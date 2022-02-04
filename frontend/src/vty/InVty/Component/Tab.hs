@@ -29,10 +29,9 @@ import Reflex.Vty
     HasLayout,
     HasTheme,
     MonadHold,
-    flex,
     localTheme,
     row,
-    textButtonStatic,
+    textButton,
     tile,
   )
 import qualified Reflex.Vty.Widget.Layout as Layout (Constraint)
@@ -61,12 +60,13 @@ mkTab ::
     Adjustable t m,
     PostBuild t m,
     HasFocus t m,
-    HasLayout t m
+    HasLayout t m,
+    Ord key
   ) =>
   TabConfig t ->
   Dynamic t Layout.Constraint ->
-  Text ->
-  Dynamic t (Map Text tab) ->
+  key ->
+  Dynamic t (Map key (Text, tab)) ->
   m (Event t tab)
 mkTab
   TabConfig
@@ -82,8 +82,8 @@ mkTab
   dTabs = do
     rec dFocusedTab <- fromUniqDynamic . uniqDynamic <$> holdDyn initSelectKey eKey
         (splitE -> (eKey, eTab)) <- row $
-          selectViewListWithKey dFocusedTab dTabs $ \k dTab dSelected ->
+          selectViewListWithKey dFocusedTab dTabs $ \_key dTab dSelected ->
             tile dConstraint $ do
               let bThemeMdf = bool unselectThemeModifier selectThemeModifier <$> current dSelected
-              (current dTab <@) <$> localTheme (bThemeMdf <*>) (textButtonStatic buttonCfg k)
+              ((snd <$> current dTab) <@) <$> localTheme (bThemeMdf <*>) (textButton buttonCfg $ fst <$> current dTab)
     pure eTab

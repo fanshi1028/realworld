@@ -15,8 +15,8 @@ import Data.Util.JSON.From (In (In))
 import Data.Util.Validation (ValidationErr)
 import Graphics.Vty (bold, green, withBackColor, withForeColor, withStyle)
 import InVty.Component.InputBox (PlaceHolderMode (Replace), inputWithPlaceHolder)
-import InVty.Util (Go (Go), Page (SignIn), centerText, noBorderStyle, runRequestE, splitH3, splitVRatio)
 import Reflex (Adjustable, Event, MonadHold, PerformEvent, Performable, Reflex, current, fanEither, leftmost, (<@))
+import InVty.Util (Go (Go), Page (SignInPage), centerText, noBorderStyle, runRequestE, splitH3, splitVRatio)
 import Reflex.Vty
   ( HasDisplayRegion,
     HasFocus,
@@ -64,7 +64,7 @@ signUpBox clientEnv = do
 
       title = localTheme ((`withStyle` bold) <$>) $ centerText text "Sign up"
 
-      haveAnAcc = (Go SignIn <$) <$> localTheme ((`withForeColor` green) <$>) (linkStatic "Have an account?")
+      haveAnAcc = (Go SignInPage <$) <$> localTheme ((`withForeColor` green) <$>) (linkStatic "Have an account?")
 
       usernameInput = fmap Username <<$>> inputBoxWithPlaceHolder Replace "Your name"
 
@@ -109,4 +109,4 @@ signUpBox clientEnv = do
   (eErr, eRes) <- runRequestE clientEnv $ registerClient <$> ePayload
 
   -- TEMP FIXME This validation should output validtion error event too, but ignore it for now, we will fix it later.
-  pure (eErr, eVErrs, leftmost [eGo, Go SignIn <$ eRes])
+  pure (eErr, eVErrs, leftmost [eGo, Go SignInPage <$ eRes])

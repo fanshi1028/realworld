@@ -16,13 +16,12 @@ import InVty.Util
   ( Go (Go),
     LoggedIn (LoggedIn),
     LoggedOut,
-    Page (EditArticle, Home, Profile, Settings, SignIn, SignUp),
+    Page (ArticleContentPage, EditorPage, HomePage, ProfilePage, SettingsPage, SignInPage, SignUpPage),
     noBorderStyle,
     splitH3,
     splitVRatio,
   )
-import qualified InVty.Util as Page (Page (Article))
-import Reflex (Adjustable, Event, MonadHold, PerformEvent, Performable, fanEither, hold, holdDyn, leftmost, never, switchDyn)
+import Reflex (Adjustable, Event, MonadHold, PerformEvent, Performable, PostBuild, fanEither, hold, holdDyn, leftmost, never, switchDyn)
 import Reflex.Vty
   ( HasDisplayRegion,
     HasFocus,
@@ -52,7 +51,8 @@ loggedInPages ::
     HasFocus t m,
     HasLayout t m,
     MonadIO (Performable m),
-    PerformEvent t m
+    PerformEvent t m,
+    PostBuild t m
   ) =>
   ClientEnv ->
   LoggedIn ->
@@ -85,14 +85,14 @@ loggedInPages clientEnv (LoggedIn (UserAuthWithToken auth token)) = mdo
       profilePage mUid = tempPage "article page /#/profile/:name" -- TEMP FIXME
       -- favouriteUserPage username = tempPage "article page /#/profile/:name/favorites" -- TEMP FIXME
       router' (Go p) = case p of
-        Home -> homePage
-        EditArticle mAid -> editorArticlePage mAid
-        Settings -> settingsPage
-        Page.Article slug -> articlePage slug
-        Profile mUid -> profilePage mUid
+        HomePage -> homePage
+        EditorPage mAid -> editorArticlePage mAid
+        SettingsPage -> settingsPage
+        ArticleContentPage slug -> articlePage slug
+        ProfilePage mUid -> profilePage mUid
         -- NOTE: Already logged. Just redirect to home page in case it happen? Or 500?
-        SignIn -> homePage
-        SignUp -> homePage
+        SignInPage -> homePage
+        SignUpPage -> homePage
 
       navBar = router' <<$>> navBarCommonPartWith navBarLoggedInPart
 

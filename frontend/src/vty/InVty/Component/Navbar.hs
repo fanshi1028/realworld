@@ -6,7 +6,7 @@ module InVty.Component.Navbar where
 import Control.Monad.Fix (MonadFix)
 import Graphics.Vty (defAttr, dim, green, withForeColor, withStyle)
 import InVty.Component.Tab (SelectConfig (SelectConfig), TabConfig (TabConfig), mkTab)
-import InVty.Util (Go (Go), Page (EditArticle, Home, Profile, Settings, SignIn, SignUp), noBorderStyle, splitH3)
+import InVty.Util (Go (Go), Page (EditorPage, HomePage, ProfilePage, SettingsPage, SignInPage, SignUpPage), noBorderStyle, splitH3)
 import Reflex (Adjustable, Event, MonadHold, PostBuild, Reflex, leftmost)
 import Reflex.Vty
   ( ButtonConfig (ButtonConfig),
@@ -43,7 +43,7 @@ navBarCommonPartWith ::
   m (Event t Go)
 navBarCommonPartWith thirdSection = do
   let title = localTheme ((`withForeColor` green) <$>) $ textButtonStatic buttonCfg "conduit"
-      firstSection = (Go Home <$) . fst <$> splitH3 title blank blank
+      firstSection = (Go HomePage <$) . fst <$> splitH3 title blank blank
       secondSection = blank
   (eGo1, (_, eGo2)) <- splitH3 firstSection secondSection thirdSection
   pure $ leftmost [eGo1, eGo2]
@@ -65,12 +65,12 @@ navBarLoggedInPart ::
   m (Event t Go)
 navBarLoggedInPart =
   Go <<$>> mdo
-    mkTab tabCfg flex "Home" . pure $
+    mkTab tabCfg flex (1 :: Integer) . pure $
       fromList
-        [ ("Home", Home),
-          ("New article", EditArticle Nothing),
-          ("Settings", Settings),
-          ("Who am I", Profile Nothing)
+        [ (1, ("Home", HomePage)),
+          (2, ("New article", EditorPage Nothing)),
+          (3, ("Settings", SettingsPage)),
+          (4, ("Who am I", ProfilePage Nothing))
         ]
 
 -- | @since 0.4.0.0
@@ -90,5 +90,5 @@ navBarLoggedOutPart ::
   m (Event t Go)
 navBarLoggedOutPart =
   Go <<$>> mdo
-    mkTab tabCfg flex "Home" . pure $
-      fromList [("Home", Home), ("Sign in", SignIn), ("Sign up", SignUp)]
+    mkTab tabCfg flex (1 :: Integer) . pure $
+      fromList [(1, ("Home", HomePage)), (2, ("Sign in", SignInPage)), (3, ("Sign up", SignUpPage))]
