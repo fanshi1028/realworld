@@ -12,6 +12,7 @@ import InVty.Component.ArticleList (articleList)
 import InVty.Component.Navbar (navBarCommonPartWith, navBarLoggedOutPart)
 import InVty.Component.SignInBox (signInBox)
 import InVty.Component.SignUpBox (signUpBox)
+import InVty.Component.TagsCollection (mkTagCollecton)
 import InVty.Util
   ( Go (Go),
     LoggedIn (LoggedIn),
@@ -21,7 +22,7 @@ import InVty.Util
     splitH3,
     splitVRatio,
   )
-import Reflex (Adjustable, Event, MonadHold, PerformEvent, Performable, PostBuild, fanEither, hold, leftmost, never, switchDyn)
+import Reflex (Adjustable, Event, MonadHold, PerformEvent, Performable, PostBuild, fanEither, hold, holdDyn, leftmost, never, switchDyn)
 import Reflex.Vty
   ( HasDisplayRegion,
     HasFocus,
@@ -33,8 +34,12 @@ import Reflex.Vty
     blank,
     box,
     boxStatic,
+    col,
+    fixed,
     flex,
+    grout,
     localTheme,
+    row,
     splitH,
     splitV,
     text,
@@ -69,21 +74,20 @@ loggedOutPages clientEnv = mdo
 
       -- NOTE: homePage = tempPage "home page /#/" -- TEMP FIXME
       homePage = Workflow $ do
-        (_, (eGo, ())) <-
-          attachBanner
-            ( splitV
-                (pure $ (`div` 6) . (* 5))
-                (pure (True, True))
-                (splitVRatio 5 (text "") (centerText text "Conduit"))
-                $ localTheme ((`withStyle` reverseVideo) <$>) $ centerText text "A place to share your knowledge."
-                --  $ centerText text "A place to share your knowledge."
-            )
-            ( splitH
-                (pure $ (`div` 3) . (* 2))
-                (pure (True, True))
-                (articleList clientEnv Nothing $ pure Nothing)
-                blank
-            )
+        rec dMTag <- holdDyn Nothing $ Just <$> eTag
+            (_, (eGo, eTag)) <-
+              attachBanner
+                ( splitV
+                    (pure $ (`div` 6) . (* 5))
+                    (pure (True, True))
+                    (splitVRatio 5 (text "") (centerText text "Conduit"))
+                    $ localTheme ((`withStyle` reverseVideo) <$>) $ centerText text "A place to share your knowledge."
+                )
+                ( row $
+                    (,)
+                      <$> tile flex (articleList clientEnv Nothing dMTag)
+                      <*> tile (fixed 25) (mkTagCollecton clientEnv)
+                )
         pure (never, leftmost [eNavbar, router eGo])
       -- NOTE "sign up page /#/register"
       signUpPage = Workflow $ do
@@ -124,9 +128,10 @@ loggedOutPages clientEnv = mdo
             >>= text
       attachBanner bannerEle contentEle =
         splitVRatio
-          5
-          ( tile flex . localTheme ((`withBackColor` green) <$>) $
-              box (pure noBorderStyle) bannerEle
+          4
+          ( tile flex . localTheme ((`withBackColor` green) <$>) . col $
+              tile flex (box (pure noBorderStyle) bannerEle)
+                <* grout (fixed 1) blank
           )
           contentEle
 

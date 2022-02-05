@@ -106,8 +106,6 @@ articleList ::
   m (Event t Go)
 articleList clientenv mDToken dMFilterTag =
   (switchDyn <$>) . (leftmost <<$>>) . col $ do
-    grout (fixed 1) blank
-
     dSelectedTab <- tile (fixed 3) . row $ do
       let yourFeedTab = [(1, ("Your Feed", Feeds))]
           globalFeedTab = [(2, ("Global Feed", Global))]
@@ -132,9 +130,7 @@ articleList clientenv mDToken dMFilterTag =
               fmap Tag
                 <<$>> inputWithPlaceHolder textInput singleBoxStyle doubleBoxStyle Replace "filter by tag"
 
-      grout (fixed 1) blank
-
-      pure dSelectedTab'
+      dSelectedTab' <$ grout (fixed 1) blank
 
     let dToken = fromMaybe (pure $ UserToken "") mDToken
         dRequest =
@@ -154,10 +150,7 @@ articleList clientenv mDToken dMFilterTag =
 
     dArticleList <- holdDyn [] $ leftmost [[] <$ eErr, unOut <$> eRes]
 
-    hi <- col $ simpleList dArticleList $ \dArticle -> tile (fixed 12) . mkArticlePreview $ current dArticle
-
-    tile flex blank
-
-    pure hi
+    col (simpleList dArticleList $ \dArticle -> tile (fixed 12) . mkArticlePreview $ current dArticle)
+      <* grout flex blank
 
 -- sortableList

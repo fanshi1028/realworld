@@ -360,6 +360,7 @@ library frontend-vty-internal
     InVty.Component.SignInBox
     InVty.Component.SignUpBox
     InVty.Component.Tab
+    InVty.Component.TagsCollection
     InVty.Scene.LoggedIn
     InVty.Scene.LoggedOut
     InVty.Util
