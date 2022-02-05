@@ -153,16 +153,16 @@ common frontend-api-deps
 
 common frontend-vty-deps
   build-depends:
-    , cookie               ^>=0.4.5
+    , cookie                ^>=0.4.5
     , generic-lens          ^>=2.2.0
     , higgledy              ^>=0.4.1
     , reflex                ^>=0.8.2
     , reflex-vty            ^>=0.2.0
-    , servant              ^>=0.18.3
+    , servant               ^>=0.18.3
     , servant-client        ^>=0.18.3
+    , text                  ^>=1.2.4
     , validation-selective  ^>=0.1.0
     , vty                   ^>=5.28.2
-    , text                  ^>=1.2.4
 
 library common-internal
   import:          prelude, common-deps
@@ -381,12 +381,12 @@ executable realworld-haskell-frontend
   hs-source-dirs: frontend/app
   ghc-options:    -threaded -rtsopts -with-rtsopts=-N
   build-depends:
-    , http-client          ^>=0.6.4
-    , http-client-tls      ^>=0.3.5
-    , reflex               ^>=0.8.2
-    , reflex-vty           ^>=0.2.0
-    , servant-client       ^>=0.18.3
-    , vty                  ^>=5.28.2
+    , http-client      ^>=0.6.4
+    , http-client-tls  ^>=0.3.5
+    , reflex           ^>=0.8.2
+    , reflex-vty       ^>=0.2.0
+    , servant-client   ^>=0.18.3
+    , vty              ^>=5.28.2
 
 -- , jsaddle-warp
 -- , reflex-dom
