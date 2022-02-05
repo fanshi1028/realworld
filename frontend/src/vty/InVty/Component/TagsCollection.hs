@@ -8,7 +8,21 @@ import Control.Monad.Fix (MonadFix)
 import Data.Field.Tag (Tag (Tag, unTag))
 import Data.Util.JSON.To (unOut)
 import InVty.Util (runRequestE)
-import Reflex (Adjustable, Event, MonadHold (holdDyn), PerformEvent, Performable, PostBuild, current, getPostBuild, leftmost, never, simpleList, switchDyn, traceEvent, (<@))
+import Reflex
+  ( Adjustable,
+    Event,
+    MonadHold (holdDyn),
+    PerformEvent,
+    Performable,
+    PostBuild,
+    current,
+    getPostBuild,
+    leftmost,
+    simpleList,
+    switchDyn,
+    traceEvent,
+    (<@),
+  )
 import Reflex.Vty
   ( ButtonConfig (ButtonConfig),
     HasDisplayRegion,
@@ -51,8 +65,7 @@ mkTagCollecton ::
   m (Event t Tag)
 mkTagCollecton clientEnv = (switchDyn <$>) . (leftmost <<$>>) . tile flex $ do
   (eErr, eRes) <- getPostBuild >>= runRequestE clientEnv . (getTagsClient <$)
-  dTags <- holdDyn [Tag "init"] $ leftmost [unOut <$> traceEvent "hi" eRes, [] <$ eErr]
-  -- dTags <- holdDyn [Tag "init", Tag "init1", Tag "init2"] never
+  dTags <- holdDyn [] $ leftmost [unOut <$> traceEvent "hi" eRes, [] <$ eErr]
   boxStatic singleBoxStyle . col . simpleList dTags $ \dTag ->
     tile (fixed 3) $
       row $ do
