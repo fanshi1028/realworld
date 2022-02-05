@@ -1,0 +1,6 @@
+-c "cabal new-repl realworld-haskell:realworld-haskell-frontend --project-file=cabal.project --repl-options=-w -fghcid -O0 -fno-code +RTS -N -T -K34K -RTS"
+--reload=./app/Main.hs
+--reload=./src/
+--reload=../common/src/
+-r
+--restart=../realworld-haskell.cabal

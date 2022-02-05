@@ -15,21 +15,21 @@
 -- @since 0.4.0.0
 module InRel8.Storage.Internal.Field where
 
+import Data.Domain (Domain (Article, Comment, User))
+import Data.Field.Bio (Bio (..))
+import Data.Field.Body (Body (Body))
+import Data.Field.Description (Description (Description))
+import Data.Field.Email (Email (..))
+import Data.Field.Image (Image (..))
+import Data.Field.Password (PasswordHash (..))
+import Data.Field.Slug (Slug (Slug))
+import Data.Field.Tag (Tag (Tag))
+import Data.Field.Time (Time (Time))
+import Data.Field.Title (Title (Title))
+import Data.Field.Username (Username (Username))
 import qualified Data.Password.Argon2 as Argon2 (Argon2, PasswordHash (..))
-import Domain (Domain (Article, Comment, User))
-import Field.Bio (Bio (..))
-import Field.Body (Body (Body))
-import Field.Description (Description (Description))
-import Field.Email (Email (..))
-import Field.Image (Image (..))
-import Field.Password (PasswordHash (..))
-import Field.Slug (Slug (Slug))
-import Field.Tag (Tag (Tag))
-import Field.Time (Time (Time))
-import Field.Title (Title (Title))
-import Field.Username (Username (Username))
+import Data.Storage.Map (IdOf (..))
 import Rel8 (DBEq, DBOrd, DBType)
-import Storage.Map (IdOf (..))
 
 -- | @since 0.4.0.0
 deriving newtype instance DBType Email

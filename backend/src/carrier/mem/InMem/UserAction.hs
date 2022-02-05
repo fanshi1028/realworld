@@ -18,28 +18,45 @@
 -- @since 0.3.0.0
 module InMem.UserAction where
 
-import Authentication (AuthenticationE (GetCurrentAuth))
-import Authentication.HasAuth (AuthOf (..), NotAuthorized)
 import Control.Algebra (Algebra (alg), send, type (:+:) (L, R))
 import Control.Effect.Catch (Catch)
 import Control.Effect.Error (catchError)
 import qualified Control.Effect.Reader as R (Reader, ask)
 import Control.Effect.Sum (Member)
 import Control.Effect.Throw (Throw, throwError)
-import CreateSalt (CreateSaltE (CreateSalt))
+import Data.Authentication.HasAuth (AuthOf (..), NotAuthorized)
+import Data.Domain (Domain (Article, Comment, User))
+import Data.Domain.Article (ArticleWithAuthorProfile (ArticleWithAuthorProfile))
+import Data.Domain.Comment (CommentWithAuthorProfile (CommentWithAuthorProfile))
+import Data.Domain.Transform (Transform (transform))
+import Data.Domain.User (UserAuthWithToken (UserAuthWithToken), UserProfile (UserProfile))
+import Data.Field.Email (Email)
+import Data.Field.Password (hashPassword)
+import Data.Field.Slug (titleToSlug)
+import Data.Field.Time (Time)
 import Data.Generic.HKD (Build (build), Construct (construct), HKD, deconstruct)
 import Data.Generics.Product (HasField' (field'), getField)
 import qualified Data.Semigroup as SG (Last (Last, getLast))
+import Data.Storage.Error (AlreadyExists (AlreadyExists), NotFound (NotFound))
+import Data.Storage.Map
+  ( CRUD (D, U),
+    ContentOf (..),
+    CreateOf (ArticleCreate, CommentCreate),
+    Forbidden (Forbidden),
+    HasStorage (ContentOf),
+    IdAlreadyExists,
+    IdNotFound,
+    IdOf (ArticleId, CommentId, UserId),
+    toArticleId,
+    toArticlePatch,
+    toUserId,
+  )
+import Data.Token.HasToken (TokenOf)
 import Data.UUID (UUID)
-import Domain (Domain (Article, Comment, User))
-import Domain.Article (ArticleWithAuthorProfile (ArticleWithAuthorProfile))
-import Domain.Comment (CommentWithAuthorProfile (CommentWithAuthorProfile))
-import Domain.Transform (Transform (transform))
-import Domain.User (UserAuthWithToken (UserAuthWithToken), UserProfile (UserProfile))
-import Field.Email (Email)
-import Field.Password (hashPassword)
-import Field.Slug (titleToSlug)
-import Field.Time (Time)
+import Effect.Authentication (AuthenticationE (GetCurrentAuth))
+import Effect.CreateSalt (CreateSaltE (CreateSalt))
+import Effect.OptionalAuthAction (OptionalAuthActionE (GetProfile))
+import Effect.UserAction (UserActionE (AddCommentToArticle, CreateArticle, DeleteArticle, DeleteComment, FavoriteArticle, FollowUser, GetCurrentUser, UnfavoriteArticle, UnfollowUser, UpdateArticle, UpdateUser))
 import InMem.Relation
   ( ArticleHasComment,
     ArticleTaggedByTag,
@@ -65,24 +82,7 @@ import InMem.Relation
     relateToMany,
   )
 import InMem.Storage (MapInMemE, deleteByIdMapInMem, getByIdMapInMem, insertMapInMem, updateByIdMapInMem)
-import OptionalAuthAction (OptionalAuthActionE (GetProfile))
 import Relude.Extra ((.~), (^.))
-import Storage.Error (AlreadyExists (AlreadyExists), NotFound (NotFound))
-import Storage.Map
-  ( CRUD (D, U),
-    ContentOf (..),
-    CreateOf (ArticleCreate, CommentCreate),
-    Forbidden (Forbidden),
-    HasStorage (ContentOf),
-    IdAlreadyExists,
-    IdNotFound,
-    IdOf (ArticleId, CommentId, UserId),
-    toArticleId,
-    toArticlePatch,
-    toUserId,
-  )
-import Token.HasToken (TokenOf)
-import UserAction (UserActionE (AddCommentToArticle, CreateArticle, DeleteArticle, DeleteComment, FavoriteArticle, FollowUser, GetCurrentUser, UnfavoriteArticle, UnfollowUser, UpdateArticle, UpdateUser))
 
 -- | @since 0.3.0.0
 newtype UserActionInMemC m a = UserActionInMemC
@@ -264,7 +264,7 @@ instance
                   Nothing -> error "Impossible: Missing field when update"
                   Just (construct -> SG.Last r) -> insertMapInMem (toArticleId r) r $> r
                 ArticleWithAuthorProfile a tags (authUserId `elem` fus) (genericLength fus)
-                  <$> send (OptionalAuthAction.GetProfile $ getField @"author" orig)
+                  <$> send (GetProfile $ getField @"author" orig)
         DeleteArticle articleId ->
           getByIdMapInMem articleId >>= \case
             (getField @"author" -> auid)
@@ -313,7 +313,7 @@ instance
             <$> getRelatedLeftManyToMany @ArticleTaggedByTag articleId
             <*> isRelatedManyToMany @UserFavoriteArticle authUserId articleId
             <*> (genericLength <$> getRelatedRightManyToMany @UserFavoriteArticle articleId)
-            <*> send (OptionalAuthAction.GetProfile authorId)
+            <*> send (GetProfile authorId)
         UnfavoriteArticle articleId -> do
           a@(getField @"author" -> authorId) <- getByIdMapInMem articleId
           unrelateManyToMany @UserFavoriteArticle authUserId articleId
@@ -321,6 +321,6 @@ instance
             <$> getRelatedLeftManyToMany @ArticleTaggedByTag articleId
             <*> isRelatedManyToMany @UserFavoriteArticle authUserId articleId
             <*> (genericLength <$> getRelatedRightManyToMany @UserFavoriteArticle articleId)
-            <*> send (OptionalAuthAction.GetProfile authorId)
+            <*> send (GetProfile authorId)
   alg hdl (R other) ctx = UserActionInMemC $ alg (runUserActionInMem . hdl) other ctx
   {-# INLINE alg #-}

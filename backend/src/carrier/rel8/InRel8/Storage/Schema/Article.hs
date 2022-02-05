@@ -14,15 +14,15 @@
 -- @since 0.4.0.0
 module InRel8.Storage.Schema.Article where
 
-import Domain (Domain (Article, User))
-import Field.Body (Body)
-import Field.Description (Description)
-import Field.Time (Time)
-import Field.Title (Title)
+import Data.Domain (Domain (Article, User))
+import Data.Field.Body (Body)
+import Data.Field.Description (Description)
+import Data.Field.Time (Time)
+import Data.Field.Title (Title)
+import Data.Storage.Map (IdOf)
 import InRel8.Storage.Internal.Field ()
 import InRel8.Storage.Schema.Util (snakeNamesFromLabels)
 import Rel8 (Column, Name, Rel8able, Result, TableSchema (TableSchema))
-import Storage.Map (IdOf)
 
 -- | @since 0.4.0.0
 data ArticleRel8 f = ArticleRel8

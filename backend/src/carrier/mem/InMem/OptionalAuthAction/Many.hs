@@ -18,22 +18,22 @@
 -- @since 0.3.0.0
 module InMem.OptionalAuthAction.Many where
 
-import Authentication (AuthenticationE (GetCurrentAuth))
-import Authentication.HasAuth (AuthOf (..))
 import Control.Algebra (Algebra, alg, send, type (:+:) (L, R))
 import Control.Carrier.NonDet.Church (runNonDetA)
 import Control.Effect.Error (Catch, Throw, catchError, throwError)
 import Control.Effect.NonDet (oneOf)
 import Control.Effect.Sum (Member)
-import Domain (Domain (Article, Comment, User))
-import Domain.Article (ArticleWithAuthorProfile (ArticleWithAuthorProfile))
-import Domain.Comment (CommentWithAuthorProfile (CommentWithAuthorProfile))
+import Data.Authentication.HasAuth (AuthOf (..))
+import Data.Domain (Domain (Article, Comment, User))
+import Data.Domain.Article (ArticleWithAuthorProfile (ArticleWithAuthorProfile))
+import Data.Domain.Comment (CommentWithAuthorProfile (CommentWithAuthorProfile))
+import Data.Storage.Map (ContentOf (..), IdNotFound, IdOf (UserId), toUserId)
+import Effect.Authentication (AuthenticationE (GetCurrentAuth))
+import Effect.OptionalAuthAction (OptionalAuthActionE (GetProfile))
+import Effect.OptionalAuthAction.Many (OptionalAuthActionManyE (GetComments, ListArticles))
 import GHC.Records (getField)
 import InMem.Relation (ArticleHasComment, ArticleTaggedByTag, ManyToManyRelationE, ToMany (getRelatedToMany), ToManyRelationE, UserFavoriteArticle, getRelatedLeftManyToMany, getRelatedRightManyToMany)
 import InMem.Storage (MapInMemE, getAllMapInMem, getByIdMapInMem)
-import OptionalAuthAction (OptionalAuthActionE (GetProfile))
-import OptionalAuthAction.Many (OptionalAuthActionManyE (GetComments, ListArticles))
-import Storage.Map (ContentOf (..), IdNotFound, IdOf (UserId), toUserId)
 import Prelude hiding (id)
 
 -- | @since 0.3.0.0

@@ -12,30 +12,35 @@
 -- |
 module StateMachine where
 
-import Authentication.HasAuth (AuthOf (..), LoginOf (UserLogin))
+import Client (apisClient, getTagsClient, getTagsStreamClient, loginClient, registerClient)
 import Control.Exception.Safe (bracket)
 import Control.Lens ((%~))
 import Data.Aeson (FromJSON, ToJSON, eitherDecode, encode)
+import Data.Authentication.HasAuth (AuthOf (..), LoginOf (UserLogin))
+import Data.Domain.Transform (transform)
+import Data.Domain.User (UserAuthWithToken (UserAuthWithToken))
+import Data.Field.Slug (titleToSlug)
 import Data.Functor.Classes (Eq1, Ord1)
 import Data.Generics.Product (HasField' (field'), getField)
 import qualified Data.Semigroup as SG (Last (Last, getLast))
 import Data.Set (delete, insert, isSubsetOf)
 import qualified Data.Set as S (empty, foldl', insert, map, member)
+import Data.Storage.Map (CreateOf (..), IdOf (..), toArticleId, toUserId)
+import Data.Token.HasToken (TokenOf (UserToken))
+import Data.Util.JSON.From (In (In))
+import Data.Util.JSON.To (Out (Out))
+import Data.Util.Validation (WithValidation)
 import Database.PostgreSQL.Simple (close, connectPostgreSQL)
 import Database.PostgreSQL.Simple.Migration (MigrationCommand (MigrationCommands, MigrationFile, MigrationInitialization, MigrationValidation), MigrationResult (MigrationError, MigrationSuccess), defaultOptions, runMigrations)
 import Database.Postgres.Temp (Cache, Config, DB, cacheAction, cacheConfig, toConnectionString, withConfig)
-import Domain.Transform (transform)
-import Domain.User (UserAuthWithToken (UserAuthWithToken))
-import Field.Slug (titleToSlug)
 import Gen.Naive ()
-import HTTP (Api)
 import Network.HTTP.Client (Manager)
 import Network.Wai.Handler.Warp (testWithApplication)
 import Orphans ()
 import Relude.Extra (un, (^.))
 import Servant (Application, Headers (Headers), type (:<|>) ((:<|>)))
 import Servant.Client (BaseUrl, ClientEnv, ClientError, mkClientEnv)
-import Servant.Client.Streaming (ClientM, client, withClientM)
+import Servant.Client.Streaming (ClientM, withClientM)
 import Servant.Types.SourceT (runSourceT)
 import StateMachine.Gen (generator, shrinker)
 import StateMachine.Types
@@ -51,7 +56,6 @@ import StateMachine.Types
     VisitorResponse (..),
   )
 import StateMachine.Util (deleteByRef, findByRef, findByRef2, findByRef2All, findByRefAll)
-import Storage.Map (CreateOf (..), IdOf (..), toArticleId, toUserId)
 import Test.QuickCheck (Property, ioProperty)
 import Test.QuickCheck.Monadic (monadic)
 import Test.StateMachine
@@ -80,10 +84,6 @@ import Test.StateMachine
   )
 import Test.StateMachine.Logic (member)
 import Test.Tasty.QuickCheck ((===))
-import Token.HasToken (TokenOf (UserToken))
-import Util.JSON.From (In (In))
-import Util.JSON.To (Out (Out))
-import Util.Validation (WithValidation)
 import Validation (Validation (Failure, Success))
 
 initModel :: Model r
@@ -454,13 +454,11 @@ semantics =
       runByCases noStreamClient hasStreamClient = \case
         NoStreaming -> run noStreamClient
         HasStreaming -> runStream hasStreamClient
-
-      (apis :<|> (login :<|> register) :<|> (getTags :<|> getTagsStream)) :<|> _healthcheck = client $ Proxy @Api
    in \case
         AuthCommand _m_ref ac ->
           case ac of
             Register cr ->
-              run (register $ In $ pure cr) $ \(UserAuthWithToken u t) ->
+              run (registerClient $ In $ pure cr) $ \(UserAuthWithToken u t) ->
                 AuthResponse $
                   Registered
                     (reference $ toUserId u)
@@ -468,11 +466,11 @@ semantics =
                     (reference $ getField @"password" cr)
                     $ reference t
             Login em pw ->
-              run' (login $ In $ pure $ UserLogin (concrete em) $ concrete pw) >>= \case
+              run' (loginClient $ In $ pure $ UserLogin (concrete em) $ concrete pw) >>= \case
                 Left ce -> pure $ FailResponse $ show ce
                 Right (Headers (Out _) _) -> pure $ AuthResponse LoggedIn
         VisitorCommand m_ref vc ->
-          let (getProfile :<|> (listArticles :<|> withArticle)) :<|> _ = apis $ maybe (UserToken "") concrete m_ref
+          let (getProfile :<|> (listArticles :<|> withArticle)) :<|> _ = apisClient $ maybe (UserToken "") concrete m_ref
            in case vc of
                 GetProfile ref -> run (getProfile $ pure $ concrete ref) $ const $ VisitorResponse GotProfile
                 GetArticle ref ->
@@ -482,7 +480,7 @@ semantics =
                 ListArticles (fmap pure -> mTags) ((pure . un . concrete <$>) -> mAuthor) ((pure . un . concrete <$>) -> mFav) streamMode ->
                   let listArticlesNoStream :<|> listArticlesStream = listArticles mTags mAuthor mFav Nothing Nothing
                    in runByCases listArticlesNoStream listArticlesStream streamMode $ const $ VisitorResponse ListedArticles
-                GetTags streamMode -> runByCases getTags getTagsStream streamMode $ const $ VisitorResponse GotTags
+                GetTags streamMode -> runByCases getTagsClient getTagsStreamClient streamMode $ const $ VisitorResponse GotTags
                 GetComments ref streamMode ->
                   let _ :<|> (getComments :<|> getCommentsStream) = withArticle $ pure $ concrete ref
                    in runByCases getComments getCommentsStream streamMode $ const $ VisitorResponse GotComments
@@ -490,7 +488,7 @@ semantics =
           case m_ref of
             Nothing -> pure $ FailResponse ""
             Just ref ->
-              let _ :<|> (getCurrentUser :<|> updateUser) :<|> withUser :<|> createArticle :<|> feedArticles :<|> withArticle = apis $ concrete ref
+              let _ :<|> (getCurrentUser :<|> updateUser) :<|> withUser :<|> feedArticles :<|> createArticle :<|> withArticle = apisClient $ concrete ref
                in case uc of
                     GetCurrentUser -> run getCurrentUser $ const $ UserResponse GotCurrentUser
                     UpdateUser ur -> run (updateUser $ In $ pure ur) $ \(UserAuthWithToken _ t) ->

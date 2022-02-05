@@ -16,12 +16,9 @@ module InMem.VisitorAction where
 
 import Control.Algebra (Algebra (alg), type (:+:) (L, R))
 import Control.Effect.Lift (Lift)
-import qualified Control.Effect.Reader as R (Reader)
 import Control.Effect.Sum (Member)
-import Field.Tag (Tag)
-import InMem.Storage (getAllSetInMem)
-import qualified StmContainers.Set as STMSet (Set)
-import VisitorAction (VisitorActionE (GetTags))
+import Effect.VisitorAction (VisitorActionE (GetTags))
+import InMem.Relation (ArticleTaggedByTag, ManyToMany (getAllRightManyToMany), ManyToManyRelationE)
 
 -- | @since 0.3.0.0
 newtype VisitorActionInMemC (f :: Type -> Type) m a = VisitorActionInMemC
@@ -30,14 +27,14 @@ newtype VisitorActionInMemC (f :: Type -> Type) m a = VisitorActionInMemC
   }
   deriving (Functor, Applicative, Monad)
 
--- | @since 0.3.0.0
+-- | @since 0.4.0.0
 instance
   ( Algebra sig m,
     Member (Lift STM) sig,
-    Member (R.Reader (STMSet.Set Tag)) sig
+    ManyToManyRelationE ArticleTaggedByTag sig
   ) =>
   Algebra (VisitorActionE [] :+: sig) (VisitorActionInMemC [] m)
   where
-  alg _ (L GetTags) ctx = (<$ ctx) <$> getAllSetInMem @_ @_ @Tag
+  alg _ (L GetTags) ctx = (<$ ctx) <$> getAllRightManyToMany @ArticleTaggedByTag
   alg hdl (R other) ctx = VisitorActionInMemC $ alg (runVisitorActionInMem . hdl) other ctx
   {-# INLINE alg #-}

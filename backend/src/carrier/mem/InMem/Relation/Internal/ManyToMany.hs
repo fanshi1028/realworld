@@ -26,6 +26,7 @@ import InMem.Relation.Internal.ToMany
   ( ToMany
       ( ToManyKey,
         ToManyValue,
+        getAllKeyValueToMany,
         getRelatedToMany,
         isRelatedToMany,
         relateToMany,
@@ -33,6 +34,7 @@ import InMem.Relation.Internal.ToMany
         unrelateToMany
       ),
     ToManyRelationE,
+    getAllKeyToMany,
   )
 
 -- | @since 0.3.0.0
@@ -115,3 +117,13 @@ class
   getRelatedRightManyToMany :: (ManyToManyRelationE label sig, Algebra sig m) => ToManyKey (ManyRight label) -> m [ToManyValue (ManyRight label)]
   getRelatedRightManyToMany = getRelatedToMany @(ManyRight label)
   {-# INLINE getRelatedRightManyToMany #-}
+
+  -- | @since 0.4.0.0
+  getAllLeftManyToMany :: (ManyToManyRelationE label sig, Algebra sig m) => m [ToManyKey (ManyLeft label)]
+  getAllLeftManyToMany = getAllKeyToMany @(ManyLeft label)
+  {-# INLINE getAllLeftManyToMany #-}
+
+  -- | @since 0.4.0.0
+  getAllRightManyToMany :: (ManyToManyRelationE label sig, Algebra sig m) => m [ToManyKey (ManyRight label)]
+  getAllRightManyToMany = getAllKeyToMany @(ManyRight label)
+  {-# INLINE getAllRightManyToMany #-}

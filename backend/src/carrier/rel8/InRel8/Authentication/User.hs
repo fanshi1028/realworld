@@ -16,25 +16,25 @@
 -- @since 0.4.0.0
 module InRel8.Authentication.User where
 
-import Authentication (AuthenticationE (GetCurrentAuth, Login, Register))
-import Authentication.HasAuth (AuthOf, LoginOf (UserLogin), NotAuthorized (BadPassword, NoSuchUser))
 import Control.Algebra (Algebra (alg), send, type (:+:) (L, R))
 import Control.Effect.Catch (Catch)
 import qualified Control.Effect.Reader as R (Reader, ask)
 import Control.Effect.Sum (Member)
 import Control.Effect.Throw (Throw, throwError)
-import CreateSalt (CreateSaltE (CreateSalt))
+import Data.Authentication.HasAuth (AuthOf, LoginOf (UserLogin), NotAuthorized (BadPassword, NoSuchUser))
+import Data.Domain (Domain (User))
+import Data.Field.Email (Email)
+import Data.Field.Password (checkPassword, hashPassword)
 import Data.Password.Argon2 (PasswordCheck (PasswordCheckFail, PasswordCheckSuccess))
-import Domain (Domain (User))
-import Field.Email (Email)
-import Field.Password (checkPassword, hashPassword)
+import Data.Storage.Error (AlreadyExists (AlreadyExists))
+import Data.Storage.Map (CreateOf (UserCreate), IdAlreadyExists, IdNotFound, IdOf (UserId))
+import Data.Util.Impossible (Impossible (Impossible))
+import Effect.Authentication (AuthenticationE (GetCurrentAuth, Login, Register))
+import Effect.CreateSalt (CreateSaltE (CreateSalt))
 import InRel8.Sql (SqlInRel8E (SqlSelect), insertOneRow)
 import InRel8.Storage (getUserById, mkAuth)
 import InRel8.Storage.Schema.User as UserRel8 (UserRel8 (UserRel8, email, password), userSchema)
 import Rel8 (each, filter, lit, select, unsafeDefault, (==.))
-import Storage.Error (AlreadyExists (AlreadyExists))
-import Storage.Map (CreateOf (UserCreate), IdAlreadyExists, IdNotFound, IdOf (UserId))
-import Util.Impossible (Impossible (Impossible))
 
 -- | @since 0.4.0.0
 newtype AuthenticationUserInRel8C m a = AuthenticationUserInRel8C

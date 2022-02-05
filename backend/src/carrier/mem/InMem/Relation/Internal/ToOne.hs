@@ -23,7 +23,8 @@ import Control.Effect.Lift (Lift)
 import qualified Control.Effect.Reader.Labelled as R (Reader, ask)
 import Control.Effect.Sum (Member)
 import qualified Focus (update)
-import qualified StmContainers.Map as STMMap
+import qualified ListT (toList)
+import qualified StmContainers.Map as STMMap (Map, focus, insert, listT, lookup)
 
 -- | @since 0.3.0.0
 type ToOneRelationE label sig =
@@ -53,3 +54,8 @@ class (Eq (ToOneKey label), Eq (ToOneValue label), Hashable (ToOneKey label)) =>
   getRelatedToOne :: (ToOneRelationE label sig, Algebra sig m) => ToOneKey label -> m (Maybe (ToOneValue label))
   getRelatedToOne r1 = R.ask @label >>= sendM . STMMap.lookup r1
   {-# INLINE getRelatedToOne #-}
+
+  -- | @since 0.4.0.0
+  getAllKeyValueToOne :: (ToOneRelationE label sig, Algebra sig m) => m [(ToOneKey label, ToOneValue label)]
+  getAllKeyValueToOne = R.ask @label >>= sendM . ListT.toList . STMMap.listT
+  {-# INLINE getAllKeyValueToOne #-}

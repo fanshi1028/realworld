@@ -8,12 +8,24 @@
 -- | @since 0.2.0.0
 module Gen.Realistic where
 
-import Authentication.HasAuth (AuthOf (..), HasAuth (..), LoginOf (UserLogin))
+import Data.Authentication.HasAuth (AuthOf (..), HasAuth (..), LoginOf (UserLogin))
+import Data.Domain (Domain (Article, Comment, User))
+import Data.Field.Bio (Bio (Bio))
+import Data.Field.Body (Body (Body))
+import Data.Field.Description (Description (Description))
+import Data.Field.Email (Email (Email))
+import Data.Field.Image (Image (Image))
+import Data.Field.Password (Password (Password))
+import Data.Field.Tag (Tag (Tag))
+import Data.Field.Time (Time)
+import Data.Field.Title (Title (Title))
+import Data.Field.Username (Username (Username))
 import Data.Generic.HKD (build, construct)
 import Data.Password.Argon2 (mkPassword)
 import Data.Password.Validate (ValidationResult (ValidPassword), defaultPasswordPolicy_, validatePassword)
 import qualified Data.Semigroup as SG
-import Domain (Domain (Article, Comment, User))
+import Data.Storage.Map (CreateOf (ArticleCreate, CommentCreate, UserCreate), IdOf (UserId), Patch, UpdateOf)
+import Data.Util.JSON.From (In (In))
 import Faker (Fake)
 import qualified Faker.Book as Book
 import qualified Faker.Book.CultureSeries as CultureSeries
@@ -38,21 +50,9 @@ import qualified Faker.TvShow.GameOfThrones as GameOfThrones
 import qualified Faker.TvShow.SiliconValley as SiliconValley
 import qualified Faker.TvShow.SouthPark as SouthPark
 import qualified Faker.TvShow.TheItCrowd as TheItCrowd
-import Field.Bio (Bio (Bio))
-import Field.Body (Body (Body))
-import Field.Description (Description (Description))
-import Field.Email (Email (Email))
-import Field.Image (Image (Image))
-import Field.Password (Password (Password))
-import Field.Tag (Tag (Tag))
-import Field.Time (Time)
-import Field.Title (Title (Title))
-import Field.Username (Username (Username))
 import Gen.Naive ()
-import Storage.Map (CreateOf (ArticleCreate, CommentCreate, UserCreate), IdOf (UserId), Patch, UpdateOf)
 import Test.QuickCheck (Arbitrary (arbitrary, shrink), Gen, arbitraryASCIIChar, elements, frequency, listOf, suchThat)
 import Test.QuickCheck.Gen.Faker (fakeQuickcheck)
-import Util.JSON.From (In (In))
 
 -- $setup
 -- >>> import Test.QuickCheck (sample')

@@ -23,7 +23,7 @@ import Control.Effect.Lift (Lift)
 import qualified Control.Effect.Reader.Labelled as R (Reader, ask)
 import Control.Effect.Sum (Member)
 import qualified ListT (toList)
-import qualified StmContainers.Multimap as STMMulti (Multimap, delete, deleteByKey, insert, listTByKey, lookup)
+import qualified StmContainers.Multimap as STMMulti (Multimap, delete, deleteByKey, insert, listT, listTByKey, listTKeys, lookup)
 
 -- | @since 0.3.0.0
 type ToManyRelationE label sig =
@@ -70,3 +70,13 @@ class
   getRelatedToMany :: (ToManyRelationE label sig, Algebra sig m) => ToManyKey label -> m [ToManyValue label]
   getRelatedToMany k = R.ask @label >>= sendM . ListT.toList . STMMulti.listTByKey k
   {-# INLINE getRelatedToMany #-}
+
+  -- | @since 0.4.0.0
+  getAllKeyToMany :: (ToManyRelationE label sig, Algebra sig m) => m [ToManyKey label]
+  getAllKeyToMany = R.ask @label >>= sendM . ListT.toList . STMMulti.listTKeys
+  {-# INLINE getAllKeyToMany #-}
+
+  -- | @since 0.4.0.0
+  getAllKeyValueToMany :: (ToManyRelationE label sig, Algebra sig m) => m [(ToManyKey label, ToManyValue label)]
+  getAllKeyValueToMany = R.ask @label >>= sendM . ListT.toList . STMMulti.listT
+  {-# INLINE getAllKeyValueToMany #-}

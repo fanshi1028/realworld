@@ -13,7 +13,7 @@
 -- @since 0.2.0.0
 module InMem.App where
 
-import Authentication.HasAuth (AlreadyLogin, AuthOf, NotAuthorized, NotLogin)
+import API (Api)
 import qualified Control.Carrier.Error.Church as Church (runError)
 import Control.Carrier.Lift (runM)
 import qualified Control.Carrier.Reader as R (runReader)
@@ -23,16 +23,23 @@ import Control.Carrier.Trace.Returning (runTrace)
 import Control.Effect.Labelled (runLabelled)
 import Control.Effect.Lift (sendM)
 import Control.Exception.Safe (catch)
-import Cookie.Xsrf (runCreateXsrfCookie)
-import CreateSalt (CreateSaltC (runCreateSalt))
 import qualified Crypto.JOSE (Error)
 import Crypto.Random (SystemDRG, getSystemDRG)
+import Data.Authentication.HasAuth (AlreadyLogin, AuthOf, NotAuthorized, NotLogin)
+import Data.Domain (Domain (Article, Comment, User))
+import Data.Field.Email (Email)
+import Data.Field.Tag (Tag)
+import Data.Field.Time (getCurrentTime)
+import Data.Paging (Limit (Limit), Offset (Offset))
+import Data.Storage.Error (AlreadyExists, NotFound)
+import Data.Storage.Map (CRUD (D, U), Forbidden, IdAlreadyExists, IdNotFound, IdOf)
+import Data.Token.HasToken (TokenOf (..))
 import Data.UUID.V4 (nextRandom)
-import Domain (Domain (Article, Comment, User))
-import Field.Email (Email)
-import Field.Tag (Tag)
-import Field.Time (getCurrentTime)
-import HTTP (Api, server)
+import Data.Util.Validation (ValidationErr)
+import Effect.Cookie.Xsrf (runCreateXsrfCookie)
+import Effect.CreateSalt (CreateSaltC (runCreateSalt))
+import Effect.Token.Create.JWT (runCreateTokenJWT)
+import Effect.Token.Decode (InvalidToken)
 import InMem.Authentication.User (runAuthenticationUserInMem)
 import InMem.OptionalAuthAction (runOptionalAuthActionInMem)
 import InMem.OptionalAuthAction.Many (runOptionalAuthActionManyInMem)
@@ -41,22 +48,14 @@ import InMem.Storage (TableInMem)
 import InMem.UserAction (runUserActionInMem)
 import InMem.UserAction.Many (runUserActionManyInMem)
 import InMem.VisitorAction (runVisitorActionInMem)
-import Paging (Limit (Limit), Offset (Offset))
 import Servant (Application, Context (EmptyContext, (:.)), ServerError (errBody), err400, err401, err404, err500, hoistServerWithContext, serveWithContext, throwError)
 import Servant.Auth.Server (CookieSettings, JWTSettings, defaultCookieSettings, defaultJWTSettings, generateKey)
 import Servant.Server (err403)
+import Server (server)
 import StmContainers.Map as STM.Map (newIO)
 import qualified StmContainers.Map as STM (Map)
 import StmContainers.Multimap (Multimap)
 import qualified StmContainers.Multimap as STM.Multimap (newIO)
-import StmContainers.Set as STM.Set (newIO)
-import qualified StmContainers.Set as STM (Set)
-import Storage.Error (AlreadyExists, NotFound)
-import Storage.Map (CRUD (D, U), Forbidden, IdAlreadyExists, IdNotFound, IdOf)
-import Token.Create.JWT (runCreateTokenJWT)
-import Token.Decode (InvalidToken)
-import Token.HasToken (TokenOf (..))
-import Util.Validation (ValidationErr)
 
 -- | @since 0.4.0.0
 -- Error runner to throw in memory as 'ServerError' with HTTP status code
@@ -94,7 +93,6 @@ mkApp ::
   TableInMem 'User ->
   TableInMem 'Article ->
   TableInMem 'Comment ->
-  STM.Set Tag ->
   -- | email of user
   STM.Map Email (IdOf 'User) ->
   -- | article has comment
@@ -116,7 +114,7 @@ mkApp ::
   -- | user created comment
   Multimap (IdOf 'User) (IdOf 'Comment) ->
   Application
-mkApp cs jwts userDb articleDb commentDb tagDb emailUserIndex db0 db1 db2 db3 db4 db5 db6 db7 db8 =
+mkApp cs jwts userDb articleDb commentDb emailUserIndex db0 db1 db2 db3 db4 db5 db6 db7 db8 =
   serveWithContext (Proxy @Api) (cs :. jwts :. EmptyContext) $
     hoistServerWithContext
       (Proxy @Api)
@@ -145,7 +143,6 @@ mkApp cs jwts userDb articleDb commentDb tagDb emailUserIndex db0 db1 db2 db3 db
                   >>> R.runReader userDb
                   >>> R.runReader articleDb
                   >>> R.runReader commentDb
-                  >>> R.runReader tagDb
           ( eff
               & runStorageInMem
               & runCreateTokenJWT @'User @SystemDRG
@@ -179,7 +176,6 @@ newApp =
     <*> STM.Map.newIO
     <*> STM.Map.newIO
     <*> STM.Map.newIO
-    <*> STM.Set.newIO
     <*> STM.Map.newIO
     <*> STM.Multimap.newIO
     <*> STM.Multimap.newIO

@@ -13,10 +13,10 @@
 -- @since 0.3.0.0
 module InMem.Relation.Internal.ManyToMany.Follow where
 
-import Domain (Domain (User))
+import Data.Domain (Domain (User))
+import Data.Storage.Map (IdOf)
 import InMem.Relation.Internal.ManyToMany (ManyToMany (..))
 import InMem.Relation.Internal.ToMany (ToMany (..))
-import Storage.Map (IdOf)
 
 -- | @since 0.3.0.0
 data UserFollowUser
