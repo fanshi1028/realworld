@@ -13,18 +13,7 @@
 --
 -- @since 0.3.0.0
 module InMem.Storage
-  ( -- * Set storage in memory effect
-
-    -- ** Helper
-    isMemberSetInMem,
-    getAllSetInMem,
-    insertSetInMem,
-    deleteSetInMem,
-
-    -- ** Constraint
-    SetInMemE,
-
-    -- * Map storage in memory effect
+  ( -- * Map storage in memory effect
 
     -- ** Type alias
     TableInMem,
@@ -52,66 +41,8 @@ import Data.Domain.Transform (Transform, transform)
 import Data.Storage.Error (AlreadyExists (AlreadyExists), NotFound (NotFound))
 import Data.Storage.Map (HasStorage (ContentOf), IdOf)
 import qualified Focus as FC (Change (Leave, Remove), cases)
-import qualified ListT (fold, toList)
+import qualified ListT (toList)
 import qualified StmContainers.Map as STMMap (Map, delete, focus, insert, listT, lookup)
-import qualified StmContainers.Set as STMSet (Set, focus, insert, listT, lookup)
-
--- | @since 0.3.0.0
-isMemberSetInMem ::
-  ( Eq item,
-    Hashable item,
-    Algebra sig m,
-    Member (Lift STM) sig,
-    Member (R.Reader (STMSet.Set item)) sig
-  ) =>
-  item ->
-  m Bool
-isMemberSetInMem e = R.ask >>= sendM . STMSet.lookup e
-{-# INLINE isMemberSetInMem #-}
-
--- | @since 0.3.0.0
-getAllSetInMem :: (Algebra sig m, Member (Lift STM) sig, Member (R.Reader (STMSet.Set item)) sig) => m [item]
-getAllSetInMem = R.ask >>= sendM . ListT.fold (\r e -> pure $ e : r) [] . STMSet.listT
-{-# INLINE getAllSetInMem #-}
-
--- | @since 0.3.0.0
-insertSetInMem ::
-  ( Eq item,
-    Hashable item,
-    Member (Lift STM) sig,
-    Member (R.Reader (STMSet.Set item)) sig,
-    Algebra sig m
-  ) =>
-  item ->
-  m ()
-insertSetInMem e = R.ask >>= sendM . STMSet.insert e
-{-# INLINE insertSetInMem #-}
-
--- | @since 0.3.0.0
-deleteSetInMem ::
-  ( Eq item,
-    Hashable item,
-    Algebra sig m,
-    Member (R.Reader (STMSet.Set item)) sig,
-    Member (Throw (NotFound item)) sig,
-    Member (Lift STM) sig
-  ) =>
-  item ->
-  m ()
-deleteSetInMem e =
-  R.ask
-    >>= sendM . STMSet.focus (FC.cases (Nothing, FC.Leave) (const (Just (), FC.Remove))) e
-    >>= maybe (throwError $ NotFound e) pure
-{-# INLINE deleteSetInMem #-}
-
--- | @since 0.3.0.0
-type SetInMemE item sig =
-  ( Eq item,
-    Hashable item,
-    Member (R.Reader (STMSet.Set item)) sig,
-    Member (Throw (NotFound item)) sig,
-    Member (Lift STM) sig
-  )
 
 -- | @since 0.3.0.0
 type TableInMem s = STMMap.Map (IdOf s) (ContentOf s)

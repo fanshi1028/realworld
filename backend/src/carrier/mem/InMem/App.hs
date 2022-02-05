@@ -56,8 +56,6 @@ import StmContainers.Map as STM.Map (newIO)
 import qualified StmContainers.Map as STM (Map)
 import StmContainers.Multimap (Multimap)
 import qualified StmContainers.Multimap as STM.Multimap (newIO)
-import StmContainers.Set as STM.Set (newIO)
-import qualified StmContainers.Set as STM (Set)
 
 -- | @since 0.4.0.0
 -- Error runner to throw in memory as 'ServerError' with HTTP status code
@@ -95,7 +93,6 @@ mkApp ::
   TableInMem 'User ->
   TableInMem 'Article ->
   TableInMem 'Comment ->
-  STM.Set Tag ->
   -- | email of user
   STM.Map Email (IdOf 'User) ->
   -- | article has comment
@@ -117,7 +114,7 @@ mkApp ::
   -- | user created comment
   Multimap (IdOf 'User) (IdOf 'Comment) ->
   Application
-mkApp cs jwts userDb articleDb commentDb tagDb emailUserIndex db0 db1 db2 db3 db4 db5 db6 db7 db8 =
+mkApp cs jwts userDb articleDb commentDb emailUserIndex db0 db1 db2 db3 db4 db5 db6 db7 db8 =
   serveWithContext (Proxy @Api) (cs :. jwts :. EmptyContext) $
     hoistServerWithContext
       (Proxy @Api)
@@ -146,7 +143,6 @@ mkApp cs jwts userDb articleDb commentDb tagDb emailUserIndex db0 db1 db2 db3 db
                   >>> R.runReader userDb
                   >>> R.runReader articleDb
                   >>> R.runReader commentDb
-                  >>> R.runReader tagDb
           ( eff
               & runStorageInMem
               & runCreateTokenJWT @'User @SystemDRG
@@ -180,7 +176,6 @@ newApp =
     <*> STM.Map.newIO
     <*> STM.Map.newIO
     <*> STM.Map.newIO
-    <*> STM.Set.newIO
     <*> STM.Map.newIO
     <*> STM.Multimap.newIO
     <*> STM.Multimap.newIO
