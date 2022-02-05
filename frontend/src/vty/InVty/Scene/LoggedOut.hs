@@ -7,13 +7,39 @@ module InVty.Scene.LoggedOut where
 
 import Control.Monad.Fix (MonadFix)
 import Data.Util.JSON.To (Out (unOut))
-import Graphics.Vty (red, withForeColor)
+import Graphics.Vty (green, red, reverseVideo, withBackColor, withForeColor, withStyle)
+import InVty.Component.ArticleList (articleList)
 import InVty.Component.Navbar (navBarCommonPartWith, navBarLoggedOutPart)
 import InVty.Component.SignInBox (signInBox)
 import InVty.Component.SignUpBox (signUpBox)
-import Reflex (Adjustable, Event, MonadHold, PerformEvent, Performable, fanEither, hold, leftmost, never, switchDyn)
-import Reflex.Vty (HasDisplayRegion, HasFocus, HasFocusReader, HasImageWriter, HasInput, HasLayout, HasTheme, blank, boxStatic, localTheme, text)
-import InVty.Util (Go (Go), LoggedIn (LoggedIn), Page (ArticleContentPage, EditorPage, HomePage, ProfilePage, SettingsPage, SignInPage, SignUpPage), centerText, noBorderStyle, splitH3, splitVRatio)
+import InVty.Util
+  ( Go (Go),
+    LoggedIn (LoggedIn),
+    Page (ArticleContentPage, EditorPage, HomePage, ProfilePage, SettingsPage, SignInPage, SignUpPage),
+    centerText,
+    noBorderStyle,
+    splitH3,
+    splitVRatio,
+  )
+import Reflex (Adjustable, Event, MonadHold, PerformEvent, Performable, PostBuild, fanEither, hold, leftmost, never, switchDyn)
+import Reflex.Vty
+  ( HasDisplayRegion,
+    HasFocus,
+    HasFocusReader,
+    HasImageWriter,
+    HasInput,
+    HasLayout,
+    HasTheme,
+    blank,
+    box,
+    boxStatic,
+    flex,
+    localTheme,
+    splitH,
+    splitV,
+    text,
+    tile,
+  )
 import Reflex.Workflow (Workflow (Workflow), workflow)
 import Servant.API (Headers (getResponse))
 import Servant.Client (ClientEnv)
@@ -40,14 +66,32 @@ loggedOutPages clientEnv = mdo
   let tempPage tag = Workflow $ do
         text $ pure $ "under construction: " <> tag
         pure (never, eNavbar)
-      homePage = tempPage "home page /#/" -- TEMP FIXME
+
+      -- NOTE: homePage = tempPage "home page /#/" -- TEMP FIXME
+      homePage = Workflow $ do
+        (_, (eGo, ())) <-
+          attachBanner
+            ( splitV
+                (pure $ (`div` 6) . (* 5))
+                (pure (True, True))
+                (splitVRatio 5 (text "") (centerText text "Conduit"))
+                $ localTheme ((`withStyle` reverseVideo) <$>) $ centerText text "A place to share your knowledge."
+                --  $ centerText text "A place to share your knowledge."
+            )
+            ( splitH
+                (pure $ (`div` 3) . (* 2))
+                (pure (True, True))
+                (articleList clientEnv Nothing $ pure Nothing)
+                blank
+            )
+        pure (never, leftmost [eNavbar, router eGo])
+      -- NOTE "sign up page /#/register"
       signUpPage = Workflow $ do
-        -- NOTE "sign up page /#/register"
-        (eErr', eVErr', eGo) <- signUpBox clientEnv
+        (eErr', eVErr', eGo) <- fst . snd <$> splitH3 errorDisplay (signUpBox clientEnv) blank
         pure (leftmost [Left . Left <$> eVErr', Left . Right <$> eErr'], router eGo)
+      -- NOTE "sign in page /#/login"
       signInPage = Workflow $ do
-        -- NOTE "sign in page /#/login"
-        (eGo, eErr', eVErr', eRes') <- signInBox clientEnv
+        (eGo, eErr', eVErr', eRes') <- fst . snd <$> splitH3 errorDisplay (signInBox clientEnv) blank
         pure
           ( leftmost
               [ Left . Left <$> eVErr',
@@ -56,7 +100,6 @@ loggedOutPages clientEnv = mdo
               ],
             router eGo
           )
-
       articlePage slug = tempPage "article page /#/article/:slug" -- TEMP FIXME
       profilePage uid = tempPage "profile page /#/profile/:name" -- TEMP FIXME
       router' (Go p) = case p of
@@ -79,8 +122,16 @@ loggedOutPages clientEnv = mdo
         localTheme (flip withForeColor red <$>) . boxStatic noBorderStyle $
           hold "" (leftmost [show <$> eVErr, show <$> eErr, "" <$ eOk, "" <$ eNavbar])
             >>= text
-  (eNavbar, (_, (eRes, _))) <-
-    splitVRatio 8 navBar $ splitH3 errorDisplay (switchDyn <$> workflow homePage) blank
+      attachBanner bannerEle contentEle =
+        splitVRatio
+          5
+          ( tile flex . localTheme ((`withBackColor` green) <$>) $
+              box (pure noBorderStyle) bannerEle
+          )
+          contentEle
+
+  (eNavbar, eRes) <- splitVRatio 8 navBar $ switchDyn <$> workflow homePage
+
   let ( fanEither ->
           ( fanEither -> (eVErr, eErr),
             fanEither -> (_, eOk)

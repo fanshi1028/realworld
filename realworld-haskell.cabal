@@ -352,9 +352,10 @@ library frontend-vty-internal
   hs-source-dirs:  frontend/src/vty
   ghc-options:     -threaded -rtsopts -with-rtsopts=-N
   exposed-modules:
+    InVty.Component.ArticleEditBox
+    InVty.Component.ArticleList
     InVty.Component.InputBox
     InVty.Component.Navbar
-    InVty.Component.ArticleEditBox
     InVty.Component.Settings
     InVty.Component.SignInBox
     InVty.Component.SignUpBox
