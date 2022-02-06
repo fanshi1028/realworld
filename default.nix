@@ -1,9 +1,7 @@
 { nixpkgsPin ? "unstable", ghcVersion ? "8107", checkMaterialization ? false
-, materializedDir ? ./materialized }:
+, materializedDir ? ./materialized, flags ? { } }:
 with import ./nix/pkgs.nix { inherit nixpkgsPin; };
 haskell-nix.project {
-  inherit checkMaterialization;
-
   # 'cleanGit' cleans a source directory based on the files known by git
   src = haskell-nix.haskellLib.cleanGit {
     name = "realworld-haskell";
@@ -23,9 +21,12 @@ haskell-nix.project {
       packages.streamly.components.library.libs =
         lib.optionals (builtins.currentSystem == "x86_64-darwin")
         [ darwin.apple_sdk.frameworks.Cocoa ];
-      packages.realworld-haskell.components.exes.realworld-haskell = {
-        dontStrip = false;
-        ghcOptions = [ "-O2" ];
+      packages.realworld-haskell = {
+        inherit flags;
+        components.exes.realworld-haskell = {
+          dontStrip = false;
+          ghcOptions = [ "-O2" ];
+        };
       };
     }
     # https://github.com/input-output-hk/haskell.nix/issues/1111
@@ -35,15 +36,18 @@ haskell-nix.project {
     })
   ];
 
-  plan-sha256 = if materializedDir != null && ghcVersion == "8107"
-  && builtins.currentSystem == "x86_64-darwin" then
-    "1dpvqsnl0sbd8rcsns6gh6226f78yck4v69gdkyvsvrd89mga769"
-  else
-    null;
+  # NOTE: no materialization as we change cabal file quite frequently at this stage of development
+  # inherit checkMaterialization;
 
-  materialized = if materializedDir != null && ghcVersion == "8107"
-  && builtins.currentSystem == "x86_64-darwin" then
-    materializedDir + /haskell-nix
-  else
-    null;
+  # plan-sha256 = if materializedDir != null && ghcVersion == "8107"
+  # && builtins.currentSystem == "x86_64-darwin" then
+  #   "16bvlg18771clda8gydcm12syrf7igpgp2346n77lv20zc0l8av3"
+  # else
+  #   null;
+
+  # materialized = if materializedDir != null && ghcVersion == "8107"
+  # && builtins.currentSystem == "x86_64-darwin" then
+  #   materializedDir + /haskell-nix
+  # else
+  #   null;
 }
