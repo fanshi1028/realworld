@@ -1,0 +1,4 @@
+packages: .
+
+package realworld-haskell
+ flags: +backend-in-mem

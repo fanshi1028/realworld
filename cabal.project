@@ -1,1 +1,4 @@
 packages: .
+
+package realworld-haskell
+ flags: +frontend-vty +backend-in-mem +backend-rel8

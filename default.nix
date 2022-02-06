@@ -1,5 +1,5 @@
 { nixpkgsPin ? "unstable", ghcVersion ? "8107", checkMaterialization ? false
-, materializedDir ? ./materialized, flags ? { } }:
+, materializedDir ? ./materialized, exeFlag ? null }:
 with import ./nix/pkgs.nix { inherit nixpkgsPin; };
 haskell-nix.project {
   # 'cleanGit' cleans a source directory based on the files known by git
@@ -7,6 +7,9 @@ haskell-nix.project {
     name = "realworld-haskell";
     src = ./.;
   };
+
+  cabalProjectFileName = "cabal.project"
+    + (if exeFlag != null then ".${exeFlag}" else "");
 
   # Specify the GHC version to use.
   compiler-nix-name = "ghc${ghcVersion}";
@@ -22,9 +25,12 @@ haskell-nix.project {
         lib.optionals (builtins.currentSystem == "x86_64-darwin")
         [ darwin.apple_sdk.frameworks.Cocoa ];
       packages.realworld-haskell = {
-        inherit flags;
+        # NOTE: https://github.com/input-output-hk/haskell.nix/issues/1165
+        # flags = lib.genAttrs cabalFlags (flag: lib.mkOverride 10 true);
         ghcOptions = [ "-O2" "-j4" ];
-        components.exes.realworld-haskell = { dontStrip = false; };
+        components.exes = lib.genAttrs
+          (builtins.map (suffix: "realworld-haskell") [ "frontend" "backend" ])
+          (_: { dontStrip = false; });
       };
     }
     # https://github.com/input-output-hk/haskell.nix/issues/1111
