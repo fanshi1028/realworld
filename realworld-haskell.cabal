@@ -13,6 +13,11 @@ copyright:          Francis Chan (c) 2021-2022
 homepage:           https://github.com/fanshi1028/realworld
 category:           Web
 build-type:         Simple
+synopsis:           "realworld" implementation
+description:
+  "realworld" fullstack web service example, main stack using reflex-frp and fused-effects
+
+license:            MIT
 extra-source-files:
   backend/.postgres/migration/*.sql
   CHANGELOG.md
@@ -23,11 +28,13 @@ extra-source-files:
 -- https://github.com/haskell/cabal/blob/bbc11f1c71651e910976c16498bc4871d7b416ea/Cabal/src/Distribution/Simple/Glob.hs#L179
 -- https://github.com/haskell/cabal/issues/703
 -- https://github.com/haskell/cabal/issues/5883
-
--- synopsis:
--- description:
 -- bug-reports:
--- license:
+
+-- source-repository this
+--   type:     git
+--   location: git://github.com/fanshi1028/realworld.git
+--   branch:   release
+--   tag:      0.3.0.0
 
 flag ghcid
   default: False
@@ -235,14 +242,14 @@ common prelude
   ghc-options:
     -W -Wall -Wincomplete-uni-patterns -Wincomplete-record-updates
     -Wcompat -Wnoncanonical-monad-instances "--disable-optimization"
-    -j4 +RTS -A64m -n2m -RTS -haddock
+    +RTS -A64m -n2m -RTS -haddock
 
   -- -ddump-timings
   if flag(stan)
     ghc-options: -fwrite-ide-info -hiedir=.hie
 
   build-depends:
-    , base    >=4.14.0
+    , base    ^>=4.14.0
     , relude  ^>=1.0.0
 
   mixins:
@@ -388,9 +395,9 @@ test-suite realworld-haskell-backend-test
 
     hs-source-dirs: common/src
 
-  else:
+  else
     import:
-    backend-api-deps, backend-in-mem-deps, backend-in-rel8-deps, frontend-api-deps, frontend-vty-deps
+      backend-api-deps, backend-in-mem-deps, backend-in-rel8-deps, frontend-api-deps, frontend-vty-deps
 
   type:           exitcode-stdio-1.0
   hs-source-dirs: test

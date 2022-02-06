@@ -23,10 +23,8 @@ haskell-nix.project {
         [ darwin.apple_sdk.frameworks.Cocoa ];
       packages.realworld-haskell = {
         inherit flags;
-        components.exes.realworld-haskell = {
-          dontStrip = false;
-          ghcOptions = [ "-O2" ];
-        };
+        ghcOptions = [ "-O2" "-j4" ];
+        components.exes.realworld-haskell = { dontStrip = false; };
       };
     }
     # https://github.com/input-output-hk/haskell.nix/issues/1111
