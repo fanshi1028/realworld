@@ -1,6 +1,10 @@
 # shell.nix
 { nixpkgsPin ? "unstable", ghcVersion ? "8107", checkMaterialization ? false
-, materializedDir ? ./materialized }:
+, materializedDir ? ./materialized, flags ? {
+  backendInMem = true;
+  backendRel8 = true;
+  frontendVty = true;
+} }:
 let
   project = import ./default.nix {
     inherit nixpkgsPin ghcVersion materializedDir checkMaterialization;
