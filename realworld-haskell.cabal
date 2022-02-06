@@ -52,8 +52,8 @@ common prelude
 
   ghc-options:
     -W -Wall -Wincomplete-uni-patterns -Wincomplete-record-updates
-    -Wcompat -Wnoncanonical-monad-instances -O0 -j4 +RTS -A64m -n2m
-    -RTS -haddock
+    -Wcompat -Wnoncanonical-monad-instances --disable-optimization
+    -j4 +RTS -A64m -n2m -RTS -haddock
 
   -- -ddump-timings
   if flag(stan)
@@ -328,7 +328,6 @@ library frontend-api-internal
     build-depends: common-internal
 
   hs-source-dirs:  frontend/src/api
-  ghc-options:     -threaded -rtsopts -with-rtsopts=-N
   exposed-modules:
     Client
     Client.Orphans
@@ -350,7 +349,6 @@ library frontend-vty-internal
       , frontend-api-internal
 
   hs-source-dirs:  frontend/src/vty
-  ghc-options:     -threaded -rtsopts -with-rtsopts=-N
   exposed-modules:
     InVty.Component.ArticleEditBox
     InVty.Component.ArticleList
@@ -411,6 +409,7 @@ executable realworld-haskell-backend
       , backend-rel8-carrier-internal
 
   main-is:        Main.hs
+  ghc-options:    -threaded -rtsopts -with-rtsopts=-N
   hs-source-dirs: backend/app
   build-depends:  warp ^>=3.3.17
 
