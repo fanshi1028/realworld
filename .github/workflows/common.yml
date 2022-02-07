@@ -1,0 +1,60 @@
+name: common
+
+on:
+  workflow_call:
+    inputs:
+      exe:
+        description: frontend or backend
+        required: true
+        type: string
+      matrixFlags:
+        description: array of flags for build matrix cases
+        required: true
+        type: array
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        # https://docs.github.com/en/actions/using-github-hosted-runners/about-github-hosted-runners
+        os: [ubuntu-20.04, macos-10.15]
+        # https://github.com/input-output-hk/haskell.nix/blob/85755332c0698ab90d061c079f3c25710675bb85/docs/reference/supported-ghc-versions.md
+        nixpkgsPin: [unstable]
+        # NOTE: won't build on ghc921 yet
+        ghcVersion: [8107]
+        flag: ${{github.event.inputs.matrixFlags}}
+
+    runs-on: ${{matrix.os}}
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - uses: cachix/install-nix-action@v16
+      with:
+        extra_nix_config: |
+          substituters = https://cache.nixos.org https://hydra.iohk.io
+          trusted-public-keys = cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY= hydra.iohk.io:f/Ea+s+dFdN+3Y/G+FDgSq+a5NEWhJGzdjvKNGv0/EQ=
+
+    - uses: cachix/cachix-action@v10
+      with:
+        name: fanshi1028-realworld-haskell
+        authToken: '${{ secrets.CACHIX_AUTH_TOKEN }}'
+        extraPullNames: nix-community
+
+    - name: nix build
+      run: |
+        nix-build -j4 --argstr nixpkgsPin ${{matrix.nixpkgsPin}} \
+        --argstr ghc-version ${{matrix.ghcVersion}} \
+        --argstr flags ${{matrix.flag}} \
+        --arg materializedDir null \
+        --arg checkMaterialization false \
+        -A realworld-haskell.components.exe.${{github.event.inputs.exe}}
+
+    # - name: nix shell
+    #   if: ${{matrix.os}} == macos-10.15 && ${{matrix.ghcVersion}} == 8107
+    #   run: |
+    #     nix-shell -j4 --argstr nixpkgsPin ${{matrix.nixpkgsPin}} \
+    #     --argstr ghc-version ${{matrix.ghcVersion}} \
+    #     --arg materializedDir null \
+    #     --arg checkMaterialization false
