@@ -26,7 +26,6 @@ import InMem.Relation.Internal.ToMany
   ( ToMany
       ( ToManyKey,
         ToManyValue,
-        getAllKeyValueToMany,
         getRelatedToMany,
         isRelatedToMany,
         relateToMany,
