@@ -4,7 +4,7 @@
 module Client where
 
 import API (Api)
-import Client.Orphans ()
+import Client.Internal.Orphans ()
 import Servant.API (type (:<|>) ((:<|>)))
 import Servant.API.Flatten (flatten)
 import Servant.Client.Streaming (client)

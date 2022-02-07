@@ -4,7 +4,7 @@
 {-# OPTIONS_GHC -Wno-orphans #-}
 
 -- |
-module Client.Orphans.Internal.ToJSON where
+module Client.Internal.Orphans.ToJSON where
 
 import Data.Aeson (ToJSON (toEncoding, toJSON), Value (Object))
 import Data.Authentication.HasAuth (HasAuth (LoginOf))

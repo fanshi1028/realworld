@@ -7,7 +7,7 @@
 {-# OPTIONS_GHC -Wno-orphans #-}
 
 -- |
-module Client.Orphans.Internal.HasClient where
+module Client.Internal.Orphans.HasClient where
 
 import API.Authorization (TokenAuth)
 import Data.Domain (Domain (User))

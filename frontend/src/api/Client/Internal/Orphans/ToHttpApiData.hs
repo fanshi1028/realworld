@@ -5,7 +5,7 @@
 {-# OPTIONS_GHC -Wno-orphans #-}
 
 -- |
-module Client.Orphans.Internal.ToHttpApiData where
+module Client.Internal.Orphans.ToHttpApiData where
 
 import Data.Domain (Domain (Article, Comment, User))
 import Data.Field.Slug (Slug (Slug))

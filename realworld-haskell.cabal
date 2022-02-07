@@ -268,8 +268,6 @@ library
     API.Public
     API.Util
     Data.Authentication.HasAuth
-    Data.Authentication.Internal.HasAuth
-    Data.Authentication.Internal.HasAuth.User
     Data.Domain
     Data.Domain.Article
     Data.Domain.Comment
@@ -289,20 +287,7 @@ library
     Data.Paging
     Data.Storage.Error
     Data.Storage.Map
-    Data.Storage.Map.Internal.HasCreate
-    Data.Storage.Map.Internal.HasCreate.Article
-    Data.Storage.Map.Internal.HasCreate.Comment
-    Data.Storage.Map.Internal.HasCreate.User
-    Data.Storage.Map.Internal.HasStorage
-    Data.Storage.Map.Internal.HasStorage.Article
-    Data.Storage.Map.Internal.HasStorage.Comment
-    Data.Storage.Map.Internal.HasStorage.User
-    Data.Storage.Map.Internal.HasUpdate
-    Data.Storage.Map.Internal.HasUpdate.Article
-    Data.Storage.Map.Internal.HasUpdate.User
     Data.Token.HasToken
-    Data.Token.Internal.HasToken
-    Data.Token.Internal.HasToken.User
     Data.Util.Impossible
     Data.Util.JSON.From
     Data.Util.JSON.To
@@ -322,6 +307,22 @@ library
     Effect.UserAction
     Effect.UserAction.Many
     Effect.VisitorAction
+  other-modules:
+    Data.Authentication.Internal.HasAuth
+    Data.Authentication.Internal.HasAuth.User
+    Data.Storage.Map.Internal.HasCreate
+    Data.Storage.Map.Internal.HasCreate.Article
+    Data.Storage.Map.Internal.HasCreate.Comment
+    Data.Storage.Map.Internal.HasCreate.User
+    Data.Storage.Map.Internal.HasStorage
+    Data.Storage.Map.Internal.HasStorage.Article
+    Data.Storage.Map.Internal.HasStorage.Comment
+    Data.Storage.Map.Internal.HasStorage.User
+    Data.Storage.Map.Internal.HasUpdate
+    Data.Storage.Map.Internal.HasUpdate.Article
+    Data.Storage.Map.Internal.HasUpdate.User
+    Data.Token.Internal.HasToken
+    Data.Token.Internal.HasToken.User
 
 library backend-api-internal
   import:         prelude, backend-api-deps
@@ -349,11 +350,11 @@ library frontend-api-internal
   exposed-modules:
     Client
   other-modules:
-    Client.Orphans
-    Client.Orphans.Internal.FromJSON
-    Client.Orphans.Internal.HasClient
-    Client.Orphans.Internal.ToHttpApiData
-    Client.Orphans.Internal.ToJSON
+    Client.Internal.Orphans
+    Client.Internal.Orphans.FromJSON
+    Client.Internal.Orphans.HasClient
+    Client.Internal.Orphans.ToHttpApiData
+    Client.Internal.Orphans.ToJSON
 
 executable backend
   import:         prelude, backend-in-mem, backend-rel8

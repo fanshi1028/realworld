@@ -5,6 +5,7 @@
 -- |
 module Roundtrip (aesonRoundtripTests) where
 
+import Client ()
 import Data.Aeson (FromJSON, ToJSON, eitherDecode', encode)
 import Data.Authentication.HasAuth (LoginOf)
 import Data.Domain (Domain (Article, Comment, User))
@@ -22,7 +23,6 @@ import Data.Util.Validation (WithValidation)
 import Gen.Naive ()
 import Gen.Realistic (Realistic (Realistic))
 import Orphans ()
-import Client.Orphans ()
 import Test.Aeson.GenericSpecs (defaultSettings, roundtripAndGoldenSpecsWithSettings, roundtripSpecs, sampleSize)
 import Test.Aeson.Internal.Utils (addBrackets)
 import Test.Hspec (Spec, describe)

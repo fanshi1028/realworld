@@ -5,7 +5,7 @@
 {-# OPTIONS_GHC -Wno-orphans #-}
 
 -- |
-module Client.Orphans.Internal.FromJSON where
+module Client.Internal.Orphans.FromJSON where
 
 import Data.Aeson (FromJSON (parseJSON), Value (Object, String), withObject, (.:))
 import Data.Aeson.Types (Parser)
