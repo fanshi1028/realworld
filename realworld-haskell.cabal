@@ -120,7 +120,8 @@ common prelude
 
   ghc-options:
     -W -Wall -Wincomplete-uni-patterns -Wincomplete-record-updates
-    -Wcompat -Wnoncanonical-monad-instances +RTS -A64m -n2m -RTS -haddock
+    -Wcompat -Wnoncanonical-monad-instances +RTS -A64m -n2m -RTS
+    -haddock
 
   -- -ddump-timings
   if flag(stan)
@@ -235,6 +236,7 @@ library
     Effect.UserAction
     Effect.UserAction.Many
     Effect.VisitorAction
+
   other-modules:
     Data.Authentication.Internal.HasAuth
     Data.Authentication.Internal.HasAuth.User
@@ -253,9 +255,9 @@ library
     Data.Token.Internal.HasToken.User
 
 library backend-api-internal
-  import:         prelude, backend-api-deps
-  build-depends: realworld-haskell
-  hs-source-dirs: backend/src/api
+  import:          prelude, backend-api-deps
+  build-depends:   realworld-haskell
+  hs-source-dirs:  backend/src/api
   exposed-modules:
     Server
     Server.Auth.User
@@ -264,71 +266,77 @@ library backend-api-internal
     Server.Public
 
 library backend-in-mem-internal
-  import: prelude, backend-in-mem-deps
+  import:          prelude, backend-in-mem-deps
+
   if !flag(backend-in-mem)
     buildable: False
-  hs-source-dirs: backend/src/carrier/mem
+
+  hs-source-dirs:  backend/src/carrier/mem
   build-depends:
-      ,realworld-haskell
-      ,backend-api-internal
+    , backend-api-internal
+    , realworld-haskell
+
   exposed-modules:
-      InMem.App
-      InMem.Authentication.User
-      InMem.Authorization
-      InMem.OptionalAuthAction
-      InMem.OptionalAuthAction.Many
-      InMem.Relation
-      InMem.Storage
-      InMem.UserAction
-      InMem.UserAction.Many
-      InMem.VisitorAction
+    InMem.App
+    InMem.Authentication.User
+    InMem.Authorization
+    InMem.OptionalAuthAction
+    InMem.OptionalAuthAction.Many
+    InMem.Relation
+    InMem.Storage
+    InMem.UserAction
+    InMem.UserAction.Many
+    InMem.VisitorAction
+
   other-modules:
-      InMem.Relation.Internal.ManyToMany
-      InMem.Relation.Internal.ManyToMany.Favorite
-      InMem.Relation.Internal.ManyToMany.Follow
-      InMem.Relation.Internal.ManyToMany.Tag
-      InMem.Relation.Internal.ToMany
-      InMem.Relation.Internal.ToMany.ArticleHasComment
-      InMem.Relation.Internal.ToMany.UserCreateArticle
-      InMem.Relation.Internal.ToMany.UserCreateComment
-      InMem.Relation.Internal.ToOne
-      InMem.Relation.Internal.ToOne.EmailOfUser
+    InMem.Relation.Internal.ManyToMany
+    InMem.Relation.Internal.ManyToMany.Favorite
+    InMem.Relation.Internal.ManyToMany.Follow
+    InMem.Relation.Internal.ManyToMany.Tag
+    InMem.Relation.Internal.ToMany
+    InMem.Relation.Internal.ToMany.ArticleHasComment
+    InMem.Relation.Internal.ToMany.UserCreateArticle
+    InMem.Relation.Internal.ToMany.UserCreateComment
+    InMem.Relation.Internal.ToOne
+    InMem.Relation.Internal.ToOne.EmailOfUser
 
 library backend-rel8-internal
-  import:  prelude, backend-rel8-deps
+  import:          prelude, backend-rel8-deps
+
   if !flag(backend-rel8)
     buildable: False
+
   build-depends:
-      ,realworld-haskell
-      ,backend-api-internal
-  hs-source-dirs: backend/src/carrier/rel8
+    , backend-api-internal
+    , realworld-haskell
+
+  hs-source-dirs:  backend/src/carrier/rel8
   exposed-modules:
-      InRel8.App
-      InRel8.Authentication.User
-      InRel8.OptionalAuthAction
-      InRel8.OptionalAuthAction.Many
-      InRel8.Sql
-      InRel8.Storage
-      InRel8.Storage.Schema.Article
-      InRel8.Storage.Schema.ArticleHasTag
-      InRel8.Storage.Schema.Comment
-      InRel8.Storage.Schema.Tag
-      InRel8.Storage.Schema.User
-      InRel8.Storage.Schema.UserFavoriteArticle
-      InRel8.Storage.Schema.UserFollowUser
-      InRel8.Storage.Schema.Util
-      InRel8.UserAction
-      InRel8.UserAction.Many
-      InRel8.VisitorAction
-  other-modules:
-      InRel8.Storage.Internal.Field
+    InRel8.App
+    InRel8.Authentication.User
+    InRel8.OptionalAuthAction
+    InRel8.OptionalAuthAction.Many
+    InRel8.Sql
+    InRel8.Storage
+    InRel8.Storage.Schema.Article
+    InRel8.Storage.Schema.ArticleHasTag
+    InRel8.Storage.Schema.Comment
+    InRel8.Storage.Schema.Tag
+    InRel8.Storage.Schema.User
+    InRel8.Storage.Schema.UserFavoriteArticle
+    InRel8.Storage.Schema.UserFollowUser
+    InRel8.Storage.Schema.Util
+    InRel8.UserAction
+    InRel8.UserAction.Many
+    InRel8.VisitorAction
+
+  other-modules:   InRel8.Storage.Internal.Field
 
 library frontend-api-internal
-  import:         prelude, frontend-api-deps
-  build-depends: realworld-haskell
-  hs-source-dirs: frontend/src/api
-  exposed-modules:
-    Client
+  import:          prelude, frontend-api-deps
+  build-depends:   realworld-haskell
+  hs-source-dirs:  frontend/src/api
+  exposed-modules: Client
   other-modules:
     Client.Internal.Orphans
     Client.Internal.Orphans.FromJSON
@@ -337,54 +345,64 @@ library frontend-api-internal
     Client.Internal.Orphans.ToJSON
 
 library frontend-vty-internal
-  import: prelude, frontend-vty-deps
+  import:          prelude, frontend-vty-deps
+
   if !flag(frontend-vty)
     buildable: False
+
   build-depends:
-      ,realworld-haskell
-      ,frontend-api-internal
-  hs-source-dirs: frontend/src/vty
+    , frontend-api-internal
+    , realworld-haskell
+
+  hs-source-dirs:  frontend/src/vty
   exposed-modules:
-      InVty.Component.ArticleEditBox
-      InVty.Component.ArticleList
-      InVty.Component.InputBox
-      InVty.Component.Navbar
-      InVty.Component.Settings
-      InVty.Component.SignInBox
-      InVty.Component.SignUpBox
-      InVty.Component.Tab
-      InVty.Component.TagsCollection
-      InVty.Scene.LoggedIn
-      InVty.Scene.LoggedOut
-      InVty.Util
+    InVty.Component.ArticleEditBox
+    InVty.Component.ArticleList
+    InVty.Component.InputBox
+    InVty.Component.Navbar
+    InVty.Component.Settings
+    InVty.Component.SignInBox
+    InVty.Component.SignUpBox
+    InVty.Component.Tab
+    InVty.Component.TagsCollection
+    InVty.Scene.LoggedIn
+    InVty.Scene.LoggedOut
+    InVty.Util
 
 executable backend
-  import:  prelude
+  import:         prelude
 
   if flag(ghcid)
-    import:         common-deps, backend-api-deps, backend-in-mem-deps, backend-rel8-deps
+    import:
+      common-deps, backend-api-deps, backend-in-mem-deps, backend-rel8-deps
+
     hs-source-dirs: common/src backend/src/api
+
   else
     build-depends:
-      ,realworld-haskell
-      ,backend-api-internal
+      , backend-api-internal
+      , realworld-haskell
 
   if flag(backend-in-mem)
     cpp-options: -DbackendInMem
+
     if flag(ghcid)
       hs-source-dirs: backend/src/carrier/mem
+
     else
       build-depends: backend-in-mem-internal
 
   elif flag(backend-rel8)
     cpp-options: -DbackendRel8
+
     if flag(ghcid)
       hs-source-dirs: backend/src/carrier/rel8
+
     else
       build-depends: backend-rel8-internal
 
   else
-       buildable: False
+    buildable: False
 
   main-is:        Main.hs
   ghc-options:    -threaded -rtsopts -with-rtsopts=-N
@@ -397,16 +415,19 @@ executable frontend
   if flag(ghcid)
     import:         common-deps, frontend-api-deps, frontend-vty-deps
     hs-source-dirs: common/src frontend/src/api
+
   else
     build-depends:
-      ,realworld-haskell
-      ,frontend-api-internal
+      , frontend-api-internal
+      , realworld-haskell
 
   if flag(frontend-vty)
     if flag(ghcid)
       hs-source-dirs: frontend/src/vty
+
     else
       build-depends: frontend-vty-internal
+
   else
     buildable: False
 
@@ -422,40 +443,46 @@ executable frontend
     , vty              ^>=5.28.2
 
 test-suite test
-  import:         prelude, common-deps, backend-api-deps, frontend-api-deps, backend-in-mem-deps, backend-rel8-deps, frontend-vty-deps
+  import:
+    prelude, common-deps, backend-api-deps, frontend-api-deps, backend-in-mem-deps, backend-rel8-deps, frontend-vty-deps
 
   if flag(ghcid)
     hs-source-dirs: common/src backend/src/api frontend/src/api
+
   else
     build-depends:
-      , realworld-haskell
       , backend-api-internal
       , frontend-api-internal
+      , realworld-haskell
 
   if flag(backend-in-mem)
-     cpp-options: -DbackendInMem
-     hs-source-dirs: test/src/carrier/mem
-     other-modules: InMem.StateMachine
-     if flag(ghcid)
-        hs-source-dirs: backend/src/carrier/mem
-     else
-        build-depends: backend-in-mem-internal
+    cpp-options:    -DbackendInMem
+    hs-source-dirs: test/src/carrier/mem
+    other-modules:  InMem.StateMachine
 
+    if flag(ghcid)
+      hs-source-dirs: backend/src/carrier/mem
+
+    else
+      build-depends: backend-in-mem-internal
 
   if flag(backend-rel8)
-     cpp-options: -DbackendRel8
-     hs-source-dirs: test/src/carrier/rel8
-     other-modules: InRel8.StateMachine
-     if flag(ghcid)
-        hs-source-dirs: backend/src/carrier/rel8
-     else
-       build-depends: backend-rel8-internal
+    cpp-options:    -DbackendRel8
+    hs-source-dirs: test/src/carrier/rel8
+    other-modules:  InRel8.StateMachine
+
+    if flag(ghcid)
+      hs-source-dirs: backend/src/carrier/rel8
+
+    else
+      build-depends: backend-rel8-internal
 
   if flag(frontend-vty)
-     if flag(ghcid)
-        hs-source-dirs: frontend/src/vty
-     else
-       build-depends: frontend-vty-internal
+    if flag(ghcid)
+      hs-source-dirs: frontend/src/vty
+
+    else
+      build-depends: frontend-vty-internal
 
   type:           exitcode-stdio-1.0
   hs-source-dirs: test/app test/src/common
