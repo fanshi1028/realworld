@@ -21,6 +21,3 @@ jobs:
     uses: ./.github/workflows/common.yml
     with:
       exe: backend
-      matrixFlags:
-        - backend-in-mem
-        - backend-rel8

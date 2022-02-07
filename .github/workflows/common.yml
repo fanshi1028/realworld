@@ -7,13 +7,22 @@ on:
         description: frontend or backend
         required: true
         type: string
-      matrixFlags:
-        description: array of flags for build matrix cases
-        required: true
-        type: array
 
 jobs:
+  prep:
+    runs-on: ubuntu-latest
+    outputs:
+      flags: ${{ steps.set-matrix.outputs.flags }}
+    steps:
+      - id: set-matrix
+        run: |
+          if ${{inputs.exe == 'backend'}}
+             then echo "::set-output name=flags::[\"backend-in-mem\",\"backend-rel8\"]"
+          elif ${{inputs.exe == 'frontend'}}
+             then echo "::set-output name=flags::[\"frontend-vty\"]"
+          fi
   build:
+    needs: [prep]
     strategy:
       fail-fast: false
       matrix:
@@ -23,7 +32,7 @@ jobs:
         nixpkgsPin: [unstable]
         # NOTE: won't build on ghc921 yet
         ghcVersion: [8107]
-        flag: ${{github.event.inputs.matrixFlags}}
+        flag: ${{fromJson(needs.prep.outputs.flags)}}
 
     runs-on: ${{matrix.os}}
 
@@ -49,7 +58,7 @@ jobs:
         --argstr flags ${{matrix.flag}} \
         --arg materializedDir null \
         --arg checkMaterialization false \
-        -A realworld-haskell.components.exe.${{github.event.inputs.exe}}
+        -A realworld-haskell.components.exe.${{inputs.exe}}
 
     # - name: nix shell
     #   if: ${{matrix.os}} == macos-10.15 && ${{matrix.ghcVersion}} == 8107
