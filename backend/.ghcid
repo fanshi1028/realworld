@@ -1,4 +1,4 @@
--c "cabal new-repl realworld-haskell:realworld-haskell-backend --project-file=cabal.project --repl-options=-w -fghcid -O0 -fno-code +RTS -N -T -K34K -RTS"
+-c "cabal new-repl realworld-haskell:backend --project-file=cabal.project --repl-options=-w -fghcid -O0 -fno-code +RTS -N -T -K34K -RTS"
 --reload=./app/Main.hs
 --reload=./src/
 --reload=../common/src/
