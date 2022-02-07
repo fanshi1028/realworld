@@ -17,7 +17,7 @@ import GHC.Generics (Generic1)
 import Orphans ()
 import Test.QuickCheck (Arbitrary, arbitrary, arbitraryBoundedEnum)
 import Test.StateMachine (CommandNames, Concrete, Reference, ToExpr, cmdName, cmdNames)
-import qualified Test.StateMachine.Types.Rank2 as R2
+import qualified Test.StateMachine.Types.Rank2 as R2 (Foldable, Functor, Traversable)
 import Text.Show (showString, showsPrec)
 
 data StreamMode = NoStreaming | HasStreaming deriving (Show, Bounded, Enum)

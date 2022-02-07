@@ -421,22 +421,44 @@ executable frontend
     , servant-client   ^>=0.18.3
     , vty              ^>=5.28.2
 
-test-suite backend-test
+test-suite test
   import:         prelude, common-deps, backend-api-deps, frontend-api-deps, backend-in-mem-deps, backend-rel8-deps, frontend-vty-deps
 
   if flag(ghcid)
-    hs-source-dirs: common/src backend/src/api frontend/src/api backend/src/carrier/mem backend/src/carrier/rel8 frontend/src/vty
+    hs-source-dirs: common/src backend/src/api frontend/src/api
   else
     build-depends:
       , realworld-haskell
       , backend-api-internal
-      , backend-in-mem-internal
-      , backend-rel8-internal
       , frontend-api-internal
-      , frontend-vty-internal
+
+  if flag(backend-in-mem)
+     cpp-options: -DbackendInMem
+     hs-source-dirs: test/src/carrier/mem
+     other-modules: InMem.StateMachine
+     if flag(ghcid)
+        hs-source-dirs: backend/src/carrier/mem
+     else
+        build-depends: backend-in-mem-internal
+
+
+  if flag(backend-rel8)
+     cpp-options: -DbackendRel8
+     hs-source-dirs: test/src/carrier/rel8
+     other-modules: InRel8.StateMachine
+     if flag(ghcid)
+        hs-source-dirs: backend/src/carrier/rel8
+     else
+       build-depends: backend-rel8-internal
+
+  if flag(frontend-vty)
+     if flag(ghcid)
+        hs-source-dirs: frontend/src/vty
+     else
+       build-depends: frontend-vty-internal
 
   type:           exitcode-stdio-1.0
-  hs-source-dirs: test
+  hs-source-dirs: test/app test/src/common
   main-is:        Main.hs
   other-modules:
     Gen.Naive

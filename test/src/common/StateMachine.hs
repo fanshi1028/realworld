@@ -10,10 +10,9 @@
 {-# LANGUAGE ViewPatterns #-}
 
 -- |
-module StateMachine where
+module StateMachine (stateMachine) where
 
 import Client (apisClient, getTagsClient, getTagsStreamClient, loginClient, registerClient)
-import Control.Exception.Safe (bracket)
 import Control.Lens ((%~))
 import Data.Aeson (FromJSON, ToJSON, eitherDecode, encode)
 import Data.Authentication.HasAuth (AuthOf (..), LoginOf (UserLogin))
@@ -30,16 +29,11 @@ import Data.Token.HasToken (TokenOf (UserToken))
 import Data.Util.JSON.From (In (In))
 import Data.Util.JSON.To (Out (Out))
 import Data.Util.Validation (WithValidation)
-import Database.PostgreSQL.Simple (close, connectPostgreSQL)
-import Database.PostgreSQL.Simple.Migration (MigrationCommand (MigrationCommands, MigrationFile, MigrationInitialization, MigrationValidation), MigrationResult (MigrationError, MigrationSuccess), defaultOptions, runMigrations)
-import Database.Postgres.Temp (Cache, Config, DB, cacheAction, cacheConfig, toConnectionString, withConfig)
 import Gen.Naive ()
-import Network.HTTP.Client (Manager)
-import Network.Wai.Handler.Warp (testWithApplication)
 import Orphans ()
 import Relude.Extra (un, (^.))
-import Servant (Application, Headers (Headers), type (:<|>) ((:<|>)))
-import Servant.Client (BaseUrl, ClientEnv, ClientError, mkClientEnv)
+import Servant (Headers (Headers), type (:<|>) ((:<|>)))
+import Servant.Client (ClientEnv, ClientError)
 import Servant.Client.Streaming (ClientM, withClientM)
 import Servant.Types.SourceT (runSourceT)
 import StateMachine.Gen (generator, shrinker)
@@ -56,34 +50,22 @@ import StateMachine.Types
     VisitorResponse (..),
   )
 import StateMachine.Util (deleteByRef, findByRef, findByRef2, findByRef2All, findByRefAll)
-import Test.QuickCheck (Property, ioProperty)
-import Test.QuickCheck.Monadic (monadic)
 import Test.StateMachine
   ( Concrete,
     GenSym,
     Logic (Boolean, Bot, Forall, Not, Top),
-    Reason (Ok),
     StateMachine (StateMachine),
     Symbolic,
-    checkCommandNames,
     concrete,
-    coverCommandNames,
-    forAllCommands,
-    forAllParallelCommands,
     genSym,
     noCleanup,
     notMember,
-    prettyCommands,
-    prettyParallelCommands,
     reference,
-    runCommands,
-    runParallelCommandsNTimes,
     (.&&),
     (.//),
     (.==),
   )
 import Test.StateMachine.Logic (member)
-import Test.Tasty.QuickCheck ((===))
 import Validation (Validation (Failure, Success))
 
 initModel :: Model r
@@ -527,82 +509,14 @@ semantics =
                       let feedArticlesNoStream :<|> feedArticlesStream = feedArticles Nothing Nothing
                        in runByCases feedArticlesNoStream feedArticlesStream streamMode $ const $ UserResponse FeededArticles
 
-sm :: StateMachine Model Command (ReaderT ClientEnv IO) Response
-sm = StateMachine initModel transition precondition postcondition Nothing generator shrinker semantics mock noCleanup
+stateMachine :: StateMachine Model Command (ReaderT ClientEnv IO) Response
+stateMachine = StateMachine initModel transition precondition postcondition Nothing generator shrinker semantics mock noCleanup
 
-checkInMemAppProp :: IO Application -> Manager -> (Int -> BaseUrl) -> Property
-checkInMemAppProp new mgr mkUrl =
-  forAllCommands sm Nothing $ \cmds -> monadic
-    ( ioProperty
-        . \prop -> testWithApplication new $ \port -> usingReaderT (mkClientEnv mgr $ mkUrl port) prop
-    )
-    $ do
-      (hist, _, res) <- runCommands sm cmds
-      prettyCommands sm hist $ coverCommandNames cmds $ checkCommandNames cmds $ res === Ok
-
-postgresDir :: FilePath
-postgresDir = "./backend/.postgres"
-
-doMigration :: DB -> IO ()
-doMigration config =
-  let migrateTableCmd tbn = MigrationFile ("create " <> tbn <> " table") $ postgresDir <> "/migration/" <> tbn <> ".sql"
-      tables =
-        [ "accounts",
-          "articles",
-          "comments",
-          "tags",
-          "article_has_tag",
-          "user_follow_user",
-          "user_favorite_article"
-        ]
-      cmds = migrateTableCmd <$> tables
-   in bracket
-        (connectPostgreSQL $ toConnectionString config)
-        close
-        $ \conn ->
-          runMigrations
-            conn
-            defaultOptions
-            ( MigrationInitialization :
-              cmds
-                <> [ MigrationValidation $
-                       MigrationCommands cmds
-                   ]
-            )
-            >>= \case
-              MigrationError err -> error $ fromString err
-              MigrationSuccess -> pure ()
-
-mkMigratedCacheConfig :: Cache -> IO Config
-mkMigratedCacheConfig (cacheConfig -> cfg) =
-  cacheAction (postgresDir <> "/.tmp-postgres/cache") doMigration cfg
-    >>= either (error . show) pure
-
-checkRel8AppProp :: IO Cache -> (ByteString -> IO Application) -> Manager -> (Int -> BaseUrl) -> Property
-checkRel8AppProp getDbCache newApp mgr mkUrl =
-  forAllCommands sm Nothing $ \cmds -> monadic
-    ( ioProperty
-        . \readerProp -> do
-          migratedCfg <- getDbCache >>= mkMigratedCacheConfig
-          withConfig
-            migratedCfg
-            ( \cfg ->
-                testWithApplication (newApp $ toConnectionString cfg) $ \port ->
-                  usingReaderT (mkClientEnv mgr $ mkUrl port) readerProp
-            )
-            >>= \case
-              (Left se) -> error $ show se
-              (Right prop') -> pure prop'
-    )
-    $ do
-      (hist, _, res) <- runCommands sm cmds
-      prettyCommands sm hist $ coverCommandNames cmds $ checkCommandNames cmds $ res === Ok
-
-prop2 :: IO Application -> Manager -> (Int -> BaseUrl) -> Property
-prop2 new mgr mkUrl =
-  forAllParallelCommands sm Nothing $ \cmds -> monadic
-    ( ioProperty
-        . \prop -> testWithApplication new $ \port -> usingReaderT (mkClientEnv mgr $ mkUrl port) prop
-    )
-    $ do
-      prettyParallelCommands cmds =<< runParallelCommandsNTimes 30 sm cmds
+-- prop :: IO Application -> Manager -> (Int -> BaseUrl) -> Property
+-- prop new mgr mkUrl =
+--   forAllParallelCommands sm Nothing $ \cmds -> monadic
+--     ( ioProperty
+--         . \prop -> testWithApplication new $ \port -> usingReaderT (mkClientEnv mgr $ mkUrl port) prop
+--     )
+--     $ do
+--       prettyParallelCommands cmds =<< runParallelCommandsNTimes 30 sm cmds
