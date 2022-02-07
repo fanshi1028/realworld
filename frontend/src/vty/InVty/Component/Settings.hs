@@ -78,8 +78,8 @@ settingsBox ::
   ClientEnv ->
   Dynamic t (AuthOf 'User) ->
   Dynamic t (TokenOf 'User) ->
-settingsBox clientEnv dAuth dToken = mdo
   m (Event t LoggedOut, Event t ClientError, Event t UserAuthWithToken)
+settingsBox clientEnv dAuth dToken = mdo
   let inputBoxWithPlaceHolder = inputWithPlaceHolder textInput singleBoxStyle doubleBoxStyle
       inputAreaWithPlaceHolder = inputWithPlaceHolder multilineTextInput singleBoxStyle doubleBoxStyle
 
