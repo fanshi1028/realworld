@@ -1,4 +1,4 @@
-name: backend
+name: frontend
 
 on:
   push:
@@ -6,7 +6,7 @@ on:
       - github-action
     paths:
       - 'common/**.hs'
-      - 'backend/**.hs'
+      - 'frontend/**.hs'
       - 'test/**.hs'
       - 'cabal.project'
       - 'realworld-haskell.cabal'
@@ -14,13 +14,12 @@ on:
       - 'nix/**'
       - 'default.nix'
       - '.github/workflows/common.yml'
-      - '.github/workflows/backend.yml'
+      - '.github/workflows/frontend.yml'
 
 jobs:
-  backend-build:
+  frontend-build:
     uses: ./.github/workflows/common.yml
     with:
-      exe: backend
-      matrixFlags:
-        - backend-in-mem
-        - backend-rel8
+       exe: frontend
+       matrixFlags:
+         - frotend-vty
