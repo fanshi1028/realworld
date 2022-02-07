@@ -2,23 +2,27 @@
 
 module Main where
 
-#if backendinmem
+import Network.Wai.Handler.Warp
+  ( Port,
+#if backendInMem || backendRel8
+    run,
+#endif
+  )
+
+#if backendInMem
 import InMem.App (newApp)
-#else if backendrel8
+#elif backendRel8
 import InRel8.App (newApp)
 #endif
 
-import Network.Wai.Handler.Warp (run)
-
 main :: IO ()
 main = do
-  putStrLn $
-    "server running at port: " <> show port
-#if backendinmem
-  InMem.App.newApp
-#else if backendrel8
-  InRel8.App.newApp ""
+  putStrLn $ "server running at port: " <> show @_ @Port port
+#if backendInMem
+  InMem.App.newApp >>= run port
+#elif backendRel8
+  InRel8.App.newApp "" >>= run port
 #endif
-      >>= run port
+  putStrLn "Just kidding! Server is not running, probably wrong cpp-options"
   where
     port = 8080

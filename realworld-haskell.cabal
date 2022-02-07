@@ -370,14 +370,14 @@ executable backend
       ,backend-api-internal
 
   if flag(backend-in-mem)
-    cpp-options: -Dbackendinmem
+    cpp-options: -DbackendInMem
     if flag(ghcid)
       hs-source-dirs: backend/src/carrier/mem
     else
       build-depends: backend-in-mem-internal
 
   elif flag(backend-rel8)
-    cpp-options: -Dbackendrel8
+    cpp-options: -DbackendRel8
     if flag(ghcid)
       hs-source-dirs: backend/src/carrier/rel8
     else
