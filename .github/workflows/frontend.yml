@@ -20,6 +20,4 @@ jobs:
   frontend-build:
     uses: ./.github/workflows/common.yml
     with:
-       exe: frontend
-       matrixFlags:
-         - frotend-vty
+      exe: frontend
