@@ -54,8 +54,8 @@ jobs:
     - name: nix build
       run: |
         nix-build -j4 --argstr nixpkgsPin ${{matrix.nixpkgsPin}} \
-        --argstr ghc-version ${{matrix.ghcVersion}} \
-        --argstr flags ${{matrix.flag}} \
+        --argstr ghcVersion ${{matrix.ghcVersion}} \
+        --argstr exeFlag ${{matrix.flag}} \
         --arg materializedDir null \
         --arg checkMaterialization false \
         -A realworld-haskell.components.exes.${{inputs.exe}}
