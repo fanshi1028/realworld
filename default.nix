@@ -28,9 +28,8 @@ haskell-nix.project {
         # NOTE: https://github.com/input-output-hk/haskell.nix/issues/1165
         # flags = lib.genAttrs cabalFlags (flag: lib.mkOverride 10 true);
         ghcOptions = [ "-O2" "-j4" ];
-        components.exes = lib.genAttrs
-          (builtins.map (suffix: "realworld-haskell") [ "frontend" "backend" ])
-          (_: { dontStrip = false; });
+        components.exes =
+          lib.genAttrs [ "frontend" "backend" ] (_: { dontStrip = false; });
       };
     }
     # https://github.com/input-output-hk/haskell.nix/issues/1111
