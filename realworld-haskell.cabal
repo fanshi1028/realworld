@@ -120,8 +120,7 @@ common prelude
 
   ghc-options:
     -W -Wall -Wincomplete-uni-patterns -Wincomplete-record-updates
-    -Wcompat -Wnoncanonical-monad-instances +RTS -A64m -n2m -RTS
-    -haddock
+    -Wcompat -Wnoncanonical-monad-instances -haddock
 
   -- -ddump-timings
   if flag(stan)

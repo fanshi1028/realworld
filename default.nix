@@ -27,7 +27,8 @@ haskell-nix.project {
       packages.realworld-haskell = {
         # NOTE: https://github.com/input-output-hk/haskell.nix/issues/1165
         # flags = lib.genAttrs cabalFlags (flag: lib.mkOverride 10 true);
-        ghcOptions = [ "-O2" "-j4" ];
+        # NOTE: https://www.parsonsmatt.org/2019/11/27/keeping_compilation_fast.html
+        ghcOptions = [ "-O2" "-j4" "+RTS -A128m -n2m -RTS" ];
         components.exes =
           lib.genAttrs [ "frontend" "backend" ] (_: { dontStrip = false; });
       };
