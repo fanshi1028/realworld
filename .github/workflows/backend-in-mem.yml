@@ -1,4 +1,4 @@
-name: backend
+name: backend-in-mem
 
 on:
   push:
@@ -6,18 +6,20 @@ on:
       - github-action
     paths:
       - 'common/**.hs'
-      - 'backend/**.hs'
+      - 'backend/app/**.hs'
+      - 'backend/src/carrier/mem/**.hs'
       - 'test/**.hs'
-      - 'cabal.project'
+      - 'cabal.project.backend-in-mem'
       - 'realworld-haskell.cabal'
       - 'Setup.hs'
       - 'nix/**'
       - 'default.nix'
       - '.github/workflows/common.yml'
-      - '.github/workflows/backend.yml'
+      - '.github/workflows/backend/in-mem.yml'
 
 jobs:
   backend-build:
     uses: ./.github/workflows/common.yml
     with:
       exe: backend
+      flag: in-mem

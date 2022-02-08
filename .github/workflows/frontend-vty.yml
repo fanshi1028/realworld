@@ -1,4 +1,4 @@
-name: frontend
+name: frontend-vty
 
 on:
   push:
@@ -6,18 +6,20 @@ on:
       - github-action
     paths:
       - 'common/**.hs'
-      - 'frontend/**.hs'
+      - 'frontend/app/**.hs'
+      - 'frontend/src/vty/**.hs'
       - 'test/**.hs'
-      - 'cabal.project'
+      - 'cabal.project.frontend-vty'
       - 'realworld-haskell.cabal'
       - 'Setup.hs'
       - 'nix/**'
       - 'default.nix'
       - '.github/workflows/common.yml'
-      - '.github/workflows/frontend.yml'
+      - '.github/workflows/frontend/vty.yml'
 
 jobs:
-  frontend-build:
+  backend-build:
     uses: ./.github/workflows/common.yml
     with:
       exe: frontend
+      flag: vty

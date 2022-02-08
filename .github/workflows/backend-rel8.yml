@@ -1,0 +1,25 @@
+name: backend-rel8
+
+on:
+  push:
+    branches:
+      - github-action
+    paths:
+      - 'common/**.hs'
+      - 'backend/app/**.hs'
+      - 'backend/src/carrier/rel8/**.hs'
+      - 'test/**.hs'
+      - 'cabal.project.backend-rel8'
+      - 'realworld-haskell.cabal'
+      - 'Setup.hs'
+      - 'nix/**'
+      - 'default.nix'
+      - '.github/workflows/common.yml'
+      - '.github/workflows/backend/rel8.yml'
+
+jobs:
+  backend-build:
+    uses: ./.github/workflows/common.yml
+    with:
+      exe: backend
+      flag: rel8
