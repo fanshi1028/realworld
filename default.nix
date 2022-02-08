@@ -8,8 +8,8 @@ haskell-nix.project {
     src = ./.;
   };
 
-  cabalProjectFileName = "cabal.project"
-    + (if exeFlag != null then ".${exeFlag}" else "");
+  cabalProjectFileName = lib.mkForce
+    ("cabal.project" + (if exeFlag != null then ".${exeFlag}" else ""));
 
   # Specify the GHC version to use.
   compiler-nix-name = "ghc${ghcVersion}";
