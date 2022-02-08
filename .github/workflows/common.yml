@@ -4,25 +4,16 @@ on:
   workflow_call:
     inputs:
       exe:
-        description: frontend or backend
+        description: backend or frontend
+        required: true
+        type: string
+      flag:
+        description: in-mem, rel8 or vty
         required: true
         type: string
 
 jobs:
-  prep:
-    runs-on: ubuntu-latest
-    outputs:
-      flags: ${{ steps.set-matrix.outputs.flags }}
-    steps:
-      - id: set-matrix
-        run: |
-          if ${{inputs.exe == 'backend'}}
-             then echo "::set-output name=flags::[\"backend-in-mem\",\"backend-rel8\"]"
-          elif ${{inputs.exe == 'frontend'}}
-             then echo "::set-output name=flags::[\"frontend-vty\"]"
-          fi
   build:
-    needs: [prep]
     strategy:
       fail-fast: false
       matrix:
@@ -32,7 +23,6 @@ jobs:
         nixpkgsPin: [unstable]
         # NOTE: won't build on ghc921 yet
         ghcVersion: [8107]
-        flag: ${{fromJson(needs.prep.outputs.flags)}}
 
     runs-on: ${{matrix.os}}
 
@@ -55,7 +45,7 @@ jobs:
       run: |
         nix-build -j4 --argstr nixpkgsPin ${{matrix.nixpkgsPin}} \
         --argstr ghcVersion ${{matrix.ghcVersion}} \
-        --argstr exeFlag ${{matrix.flag}} \
+        --argstr exeFlag ${{inputs.exe}}-${{inputs.flag}} \
         --arg materializedDir null \
         --arg checkMaterialization false \
         -A realworld-haskell.components.exes.${{inputs.exe}}
