@@ -15,7 +15,7 @@ on:
       - 'nix/**'
       - 'default.nix'
       - '.github/workflows/common.yml'
-      - '.github/workflows/frontend.yml'
+      - '.github/workflows/frontend/vty.yml'
 
 jobs:
   backend-build:
