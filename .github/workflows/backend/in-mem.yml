@@ -15,7 +15,7 @@ on:
       - 'nix/**'
       - 'default.nix'
       - '.github/workflows/common.yml'
-      - '.github/workflows/backend.yml'
+      - '.github/workflows/backend/in-mem.yml'
 
 jobs:
   backend-build:
