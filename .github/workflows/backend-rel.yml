@@ -15,7 +15,7 @@ on:
       - 'nix/**'
       - 'default.nix'
       - '.github/workflows/common.yml'
-      - '.github/workflows/backend/rel8.yml'
+      - '.github/workflows/backend-rel8.yml'
 
 jobs:
   backend-rel8:
