@@ -83,7 +83,7 @@ runErrors =
         >>> runThrowInMem (asStatus @(AlreadyLogin 'User) err400)
         >>> runThrowInMem (asStatus @ValidationErr err400)
         >>> runThrowInMem (asStatus @Crypto.JOSE.Error err500)
-{-# INLINEABLE runErrors #-}
+{-# INLINE runErrors #-}
 
 -- | @since 0.3.0.0
 -- create app by supplying settings and databases(in memory)

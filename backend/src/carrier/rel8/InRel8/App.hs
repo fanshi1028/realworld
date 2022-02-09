@@ -102,7 +102,7 @@ runErrors =
         >>> runThrowInRel8 (asStatus @ValidationErr err400)
         >>> runThrowInRel8 (asStatus @Crypto.JOSE.Error err500)
         >>> runThrowInRel8 (asStatus @Impossible err500)
-{-# INLINEABLE runErrors #-}
+{-# INLINE runErrors #-}
 
 -- | @since 0.4.0.0
 mkApp :: CookieSettings -> JWTSettings -> ByteString -> Application
