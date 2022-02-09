@@ -21,7 +21,6 @@ jobs:
   backend-in-mem:
     uses: ./.github/workflows/common.yml
     with:
-      exe: backend
-      flag: in-mem
+      flag: backend-in-mem
     secrets:
       CACHIX_AUTH_TOKEN: ${{secrets.CACHIX_AUTH_TOKEN}}
