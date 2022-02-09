@@ -30,8 +30,11 @@ haskell-nix.project {
       packages.realworld-haskell = {
         # NOTE: https://github.com/input-output-hk/haskell.nix/issues/1165
         # flags = lib.genAttrs cabalFlags (flag: lib.mkOverride 10 true);
-        ghcOptions = [ "-j${threads}" "-O${optimize}" "+RTS ${RTS} -RTS" ]
-          ++ ghcOptions;
+        ghcOptions = [
+          "-j${builtins.toString threads}"
+          "-O${builtins.toString optimize}"
+          "+RTS ${RTS} -RTS"
+        ] ++ ghcOptions;
         components.exes =
           lib.genAttrs [ "frontend" "backend" ] (_: { dontStrip = false; });
       };
