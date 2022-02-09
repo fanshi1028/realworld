@@ -46,7 +46,7 @@ jobs:
 
     - name: nix build (-O1)
       # NOTE: if -O2 for this case, memory explode.
-      if: ${{matrix.os == ubuntu-20.04 && inputs.exe == in-mem}}
+      if: ${{matrix.os == 'ubuntu-20.04' && inputs.exe == 'in-mem'}}
       run: |
         nix-build -j4 --argstr nixpkgsPin ${{matrix.nixpkgsPin}} \
         --argstr ghcVersion ${{matrix.ghcVersion}} \
@@ -57,7 +57,7 @@ jobs:
         -A realworld-haskell.components.exes.${{inputs.exe}}
 
     - name: nix build (-O2)
-      if: ${{matrix.os != ubuntu-20.04 || inputs.exe != in-mem}}
+      if: ${{matrix.os != 'ubuntu-20.04' || inputs.exe != 'in-mem'}}
       run: |
         nix-build -j4 --argstr nixpkgsPin ${{matrix.nixpkgsPin}} \
         --argstr ghcVersion ${{matrix.ghcVersion}} \
