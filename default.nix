@@ -29,7 +29,7 @@ haskell-nix.project {
       packages.realworld-haskell = {
         # NOTE: https://github.com/input-output-hk/haskell.nix/issues/1165
         # flags = lib.genAttrs cabalFlags (flag: lib.mkOverride 10 true);
-        inherit ghcOptions;
+        # inherit ghcOptions;
         components.exes =
           lib.genAttrs [ "frontend" "backend" ] (_: { dontStrip = false; });
       };
