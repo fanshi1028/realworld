@@ -23,3 +23,5 @@ jobs:
     with:
       exe: frontend
       flag: vty
+    secrets:
+      CACHIX_AUTH_TOKEN: ${{secrets.CACHIX_AUTH_TOKEN}}
