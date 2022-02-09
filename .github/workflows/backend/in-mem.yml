@@ -18,7 +18,7 @@ on:
       - '.github/workflows/backend/in-mem.yml'
 
 jobs:
-  backend-build:
+  backend-in-mem:
     uses: ./.github/workflows/common.yml
     with:
       exe: backend
