@@ -23,3 +23,5 @@ jobs:
     with:
       exe: backend
       flag: rel8
+    secrets:
+      CACHIX_AUTH_TOKEN: ${{secrets.CACHIX_AUTH_TOKEN}}
