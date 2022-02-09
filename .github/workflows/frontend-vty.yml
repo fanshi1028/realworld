@@ -21,7 +21,6 @@ jobs:
   frontend-vty:
     uses: ./.github/workflows/common.yml
     with:
-      exe: frontend
-      flag: vty
+      flag: frontend-vty
     secrets:
       CACHIX_AUTH_TOKEN: ${{secrets.CACHIX_AUTH_TOKEN}}
