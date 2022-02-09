@@ -2,4 +2,5 @@ packages: .
 
 package realworld-haskell
  flags: +backend-rel8
- optimization: 2
+ -- https://github.com/haskell/cabal/issues/6343
+ -- optimization: 2

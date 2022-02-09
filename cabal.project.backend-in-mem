@@ -2,4 +2,5 @@ packages: .
 
 package realworld-haskell
  flags: +backend-in-mem
- optimization: 2
+ -- https://github.com/haskell/cabal/issues/6343
+ -- optimization: 2
