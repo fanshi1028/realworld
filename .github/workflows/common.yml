@@ -11,6 +11,9 @@ on:
         description: in-mem, rel8 or vty
         required: true
         type: string
+    secrets:
+      CACHIX_AUTH_TOKEN:
+        description: cachix token
 
 jobs:
   build:
@@ -38,7 +41,7 @@ jobs:
     - uses: cachix/cachix-action@v10
       with:
         name: fanshi1028-realworld-haskell
-        authToken: '${{ secrets.CACHIX_AUTH_TOKEN }}'
+        authToken: ${{secrets.CACHIX_AUTH_TOKEN}}
         extraPullNames: nix-community
 
     - name: nix build
