@@ -114,6 +114,7 @@ common frontend-js-deps
     build-depends:
       , reflex                ^>=0.8.2
       , reflex-dom            ^>=0.6.1.1
+      , servant-client        ^>=0.18.3
 
 common prelude
   default-language:   Haskell2010
@@ -365,6 +366,7 @@ library frontend-vty-internal
 
   hs-source-dirs:  frontend/src/vty
   exposed-modules:
+    InVty.App
     InVty.Component.ArticleEditBox
     InVty.Component.ArticleList
     InVty.Component.InputBox
@@ -389,6 +391,7 @@ library frontend-js-internal
     , realworld-haskell
 
   hs-source-dirs:  frontend/src/js
+  exposed-modules: InJs.App
 
 executable backend
   import:         prelude
@@ -443,6 +446,7 @@ executable frontend
       , realworld-haskell
 
   if flag(frontend-vty)
+    cpp-options: -DfrontendVty
     if flag(ghcid)
       hs-source-dirs: frontend/src/vty
 
@@ -450,6 +454,7 @@ executable frontend
       build-depends: frontend-vty-internal
 
   elif flag(frontend-js)
+    cpp-options: -DfrontendJs
     if flag(ghcid)
       hs-source-dirs: frontend/src/js
 
@@ -513,6 +518,7 @@ test-suite test
       build-depends: backend-rel8-internal
 
   if flag(frontend-vty)
+    cpp-options: -DfrontendVty
     if flag(ghcid)
       hs-source-dirs: frontend/src/vty
 
@@ -520,6 +526,7 @@ test-suite test
       build-depends: frontend-vty-internal
 
   if flag(frontend-js)
+    cpp-options: -DfrontendJs
     if flag(ghcid)
       hs-source-dirs: frontend/src/js
 
