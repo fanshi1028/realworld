@@ -1,9 +1,9 @@
-name: backend-in-mem
+name: test-ghc-options-nix
 
 on:
   push:
     branches:
-      - github-action
+      - test-ghc-options-nix
     paths:
       - 'common/**.hs'
       - 'backend/app/**.hs'
