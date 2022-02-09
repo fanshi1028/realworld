@@ -18,7 +18,7 @@ on:
       - '.github/workflows/frontend/vty.yml'
 
 jobs:
-  backend-build:
+  frontend-vty:
     uses: ./.github/workflows/common.yml
     with:
       exe: frontend
