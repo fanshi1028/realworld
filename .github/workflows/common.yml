@@ -3,12 +3,8 @@ name: common
 on:
   workflow_call:
     inputs:
-      exe:
-        description: backend or frontend
-        required: true
-        type: string
       flag:
-        description: in-mem, rel8 or vty
+        description: flag to choose an executable
         required: true
         type: string
     secrets:
@@ -44,27 +40,28 @@ jobs:
         authToken: ${{secrets.CACHIX_AUTH_TOKEN}}
         extraPullNames: nix-community
 
-    - name: nix build (-O1)
-      # NOTE: if -O2 for this case, memory explode.
-      if: ${{matrix.os == 'ubuntu-20.04' && inputs.exe == 'in-mem'}}
+    - name: nix build exe (-O0, no tweak to RTS)
+      # NOTE: avoid memory explode for this case
+      if: ${{matrix.os == 'ubuntu-20.04' && inputs.flag == 'backend-in-mem'}}
       run: |
         nix-build -j4 --argstr nixpkgsPin ${{matrix.nixpkgsPin}} \
         --argstr ghcVersion ${{matrix.ghcVersion}} \
-        --argstr exeFlag ${{inputs.exe}}-${{inputs.flag}} \
-        --arg optimize 1 \
+        --argstr exeFlag ${{inputs.flag}} \
+        --argstr RTS "" \
+        --arg optimize 0 \
         --arg materializedDir null \
         --arg checkMaterialization false \
-        -A realworld-haskell.components.exes.${{inputs.exe}}
+        -A realworld-haskell
 
-    - name: nix build (-O2)
-      if: ${{matrix.os != 'ubuntu-20.04' || inputs.exe != 'in-mem'}}
+    - name: nix build exe (-O2)
+      if: ${{matrix.os != 'ubuntu-20.04' || inputs.flag != 'backend-in-mem'}}
       run: |
         nix-build -j4 --argstr nixpkgsPin ${{matrix.nixpkgsPin}} \
         --argstr ghcVersion ${{matrix.ghcVersion}} \
-        --argstr exeFlag ${{inputs.exe}}-${{inputs.flag}} \
+        --argstr exeFlag ${{inputs.flag}} \
         --arg materializedDir null \
         --arg checkMaterialization false \
-        -A realworld-haskell.components.exes.${{inputs.exe}}
+        -A realworld-haskell
 
     # - name: nix shell
     #   if: ${{matrix.os}} == macos-10.15 && ${{matrix.ghcVersion}} == 8107
