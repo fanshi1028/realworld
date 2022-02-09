@@ -2,3 +2,4 @@ packages: .
 
 package realworld-haskell
  flags: +backend-rel8
+ optimization: 2

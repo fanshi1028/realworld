@@ -2,3 +2,4 @@ packages: .
 
 package realworld-haskell
  flags: +frontend-vty
+ optimization: 2

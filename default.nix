@@ -1,5 +1,7 @@
 { nixpkgsPin ? "unstable", ghcVersion ? "8107", checkMaterialization ? false
-, materializedDir ? ./materialized, exeFlag ? null }:
+, materializedDir ? ./materialized, exeFlag ? null
+  # NOTE: https://www.parsonsmatt.org/2019/11/27/keeping_compilation_fast.html
+, ghcOptions ? [ "-j" "+RTS -A128m -n2m -RTS" ] }:
 with import ./nix/pkgs.nix { inherit nixpkgsPin; };
 haskell-nix.project {
   # 'cleanGit' cleans a source directory based on the files known by git
@@ -27,8 +29,7 @@ haskell-nix.project {
       packages.realworld-haskell = {
         # NOTE: https://github.com/input-output-hk/haskell.nix/issues/1165
         # flags = lib.genAttrs cabalFlags (flag: lib.mkOverride 10 true);
-        # NOTE: https://www.parsonsmatt.org/2019/11/27/keeping_compilation_fast.html
-        ghcOptions = [ "-O2" "-j4" "+RTS -A128m -n2m -RTS" ];
+        inherit ghcOptions;
         components.exes =
           lib.genAttrs [ "frontend" "backend" ] (_: { dontStrip = false; });
       };
