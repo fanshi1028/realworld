@@ -113,7 +113,7 @@ common frontend-js-deps
   if flag(frontend-js)
     build-depends:
       , reflex                ^>=0.8.2
-      , reflex-doem           ^>=0.6.1.1
+      , reflex-dom            ^>=0.6.1.1
 
 common prelude
   default-language:   Haskell2010
