@@ -44,13 +44,14 @@ jobs:
         authToken: ${{secrets.CACHIX_AUTH_TOKEN}}
         extraPullNames: nix-community
 
-    - name: nix build (-O1)
-      # NOTE: if -O2 for this case, memory explode.
+    - name: nix build (-O1, no tweak to RTS)
+      # NOTE: avoid memory explode for this case
       if: ${{matrix.os == 'ubuntu-20.04' && inputs.flag == 'in-mem'}}
       run: |
         nix-build -j4 --argstr nixpkgsPin ${{matrix.nixpkgsPin}} \
         --argstr ghcVersion ${{matrix.ghcVersion}} \
         --argstr exeFlag ${{inputs.exe}}-${{inputs.flag}} \
+        --argstr RTS "" \
         --arg optimize 1 \
         --arg materializedDir null \
         --arg checkMaterialization false \
