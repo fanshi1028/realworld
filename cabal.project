@@ -1,4 +1,7 @@
 packages: .
 
+package streamly
+ frameworks: Cocoa
+
 package realworld-haskell
  flags: +frontend-vty +backend-in-mem +backend-rel8
