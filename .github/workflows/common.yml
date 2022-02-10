@@ -21,11 +21,12 @@ jobs:
       fail-fast: false
       matrix:
         # https://docs.github.com/en/actions/using-github-hosted-runners/about-github-hosted-runners
-        os: [ubuntu-20.04, macos-10.15]
+        os: [ubuntu-20.04]
         # https://github.com/input-output-hk/haskell.nix/blob/85755332c0698ab90d061c079f3c25710675bb85/docs/reference/supported-ghc-versions.md
         nixpkgsPin: [unstable]
         # NOTE: won't build on ghc921 yet
         ghcVersion: [8107]
+        optimize: [0, "", 1, 2]
 
     runs-on: ${{matrix.os}}
 
@@ -43,26 +44,17 @@ jobs:
         name: fanshi1028-realworld-haskell
         authToken: ${{secrets.CACHIX_AUTH_TOKEN}}
         extraPullNames: nix-community
+        skipPush: true
 
-    - name: nix build (-O1, no tweak to RTS)
+    - name: nix build
       # NOTE: avoid memory explode for this case
       if: ${{matrix.os == 'ubuntu-20.04' && inputs.flag == 'in-mem'}}
       run: |
         nix-build -j4 --argstr nixpkgsPin ${{matrix.nixpkgsPin}} \
         --argstr ghcVersion ${{matrix.ghcVersion}} \
         --argstr exeFlag ${{inputs.exe}}-${{inputs.flag}} \
-        --argstr RTS "" \
-        --arg optimize 1 \
-        --arg materializedDir null \
-        --arg checkMaterialization false \
-        -A realworld-haskell.components.exes.${{inputs.exe}}
-
-    - name: nix build (-O2)
-      if: ${{matrix.os != 'ubuntu-20.04' || inputs.exe != 'in-mem'}}
-      run: |
-        nix-build -j4 --argstr nixpkgsPin ${{matrix.nixpkgsPin}} \
-        --argstr ghcVersion ${{matrix.ghcVersion}} \
-        --argstr exeFlag ${{inputs.exe}}-${{inputs.flag}} \
+        --arg optimize ${{matrix.ghcOptions}} \
+        --arg ghcOptions ["-v2"] \
         --arg materializedDir null \
         --arg checkMaterialization false \
         -A realworld-haskell.components.exes.${{inputs.exe}}

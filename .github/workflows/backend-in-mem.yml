@@ -1,9 +1,9 @@
-name: backend-in-mem
+name: backend-in-mem-debug
 
 on:
   push:
     branches:
-      - github-action
+      - github-action-debug
     paths:
       - 'common/**.hs'
       - 'backend/app/**.hs'
