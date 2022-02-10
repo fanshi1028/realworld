@@ -26,7 +26,7 @@ jobs:
         nixpkgsPin: [unstable]
         # NOTE: won't build on ghc921 yet
         ghcVersion: [8107]
-        optimize: [0, "", 1, 2]
+        optimize: [0, "\"\"", 1, 2]
 
     runs-on: ${{matrix.os}}
 
@@ -53,7 +53,7 @@ jobs:
         nix-build -j4 --argstr nixpkgsPin ${{matrix.nixpkgsPin}} \
         --argstr ghcVersion ${{matrix.ghcVersion}} \
         --argstr exeFlag ${{inputs.exe}}-${{inputs.flag}} \
-        --arg optimize ${{matrix.ghcOptions}} \
+        --arg optimize ${{matrix.optimize}} \
         --arg ghcOptions ["-v2"] \
         --arg materializedDir null \
         --arg checkMaterialization false \
