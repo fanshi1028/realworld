@@ -435,7 +435,9 @@ executable frontend
   ghc-options:    -threaded -rtsopts -with-rtsopts=-N
   build-depends:
     , http-client      ^>=0.6.4
-    , http-client-tls  ^>=0.3.5
+    -- https://github.com/snoyberg/http-client/issues/482
+    -- , http-client-tls  ^>=0.3.5
+    , http-client-tls  ==0.3.5
     , reflex           ^>=0.8.2
     , reflex-vty       ^>=0.2.0
     , servant-client   ^>=0.18.3

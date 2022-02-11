@@ -23,9 +23,10 @@ haskell-nix.project {
     # https://github.com/composewell/streamly/issues/1132
     # https://github.com/NixOS/cabal2nix/issues/470
     # https://github.com/input-output-hk/haskell.nix/issues/1164
-    # packages.streamly.components.library.frameworks =
-    # lib.optionals (builtins.currentSystem == "x86_64-darwin")
-    # [ darwin.apple_sdk.frameworks.Cocoa ];
+    # TEMP FIXME
+    packages.streamly.components.library.libs =
+      lib.optionals (builtins.currentSystem == "x86_64-darwin")
+      [ darwin.apple_sdk.frameworks.Cocoa ];
 
     packages.realworld-haskell = {
       # NOTE: https://github.com/input-output-hk/haskell.nix/issues/1165

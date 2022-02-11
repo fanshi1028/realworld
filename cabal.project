@@ -1,8 +1,5 @@
 packages: .
 
-package streamly
- frameworks: Cocoa
-
 -- NOTE: https://github.com/jfischoff/tmp-postgres/issues/251
 source-repository-package
     type: git

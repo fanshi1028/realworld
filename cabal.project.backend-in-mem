@@ -1,8 +1,5 @@
 packages: .
 
-package streamly
- frameworks: Cocoa
-
 package realworld-haskell
  flags: +backend-in-mem
  -- https://github.com/haskell/cabal/issues/6343
