@@ -18,7 +18,7 @@ on:
       - '.github/workflows/frontend-js.yml'
 
 jobs:
-  frontend-vty:
+  frontend-js:
     uses: ./.github/workflows/common.yml
     with:
       flag: frontend-js
