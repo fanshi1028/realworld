@@ -40,14 +40,14 @@ jobs:
         authToken: ${{secrets.CACHIX_AUTH_TOKEN}}
         extraPullNames: nix-community
 
-    - name: nix build exe (-O1, no tweak to RTS)
+    - name: nix build exe (-O1, -M16g)
       # NOTE: avoid memory explode for this case
       if: ${{matrix.os == 'ubuntu-20.04' && inputs.flag == 'backend-in-mem'}}
       run: |
         nix-build --argstr nixpkgsPin ${{matrix.nixpkgsPin}} \
         --argstr ghcVersion ${{matrix.ghcVersion}} \
         --argstr exeFlag ${{inputs.flag}} \
-        --argstr RTS "-M16g" \
+        --argstr RTS "-N -A128m -n2m -M16g" \
         --arg optimize 1 \
         --arg materializedDir null \
         --arg checkMaterialization false \
