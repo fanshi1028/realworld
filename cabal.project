@@ -3,5 +3,12 @@ packages: .
 package streamly
  frameworks: Cocoa
 
+-- NOTE: https://github.com/jfischoff/tmp-postgres/issues/251
+source-repository-package
+    type: git
+    location: https://github.com/circuithub/tmp-postgres.git
+    tag: 551767c4f233a9f57bf55218fef0df8076642901
+    --sha256: 0bba3kg6x9dfnk5x9h13x11y1jpdhnifrc122qxjbngjqpldfnwg
+
 package realworld-haskell
  flags: +frontend-vty +backend-in-mem +backend-rel8
