@@ -1,0 +1,26 @@
+name: frontend-js
+
+on:
+  push:
+    branches:
+      - github-action
+    paths:
+      - 'common/**.hs'
+      - 'frontend/app/**.hs'
+      - 'frontend/src/js/**.hs'
+      - 'test/**.hs'
+      - 'cabal.project.frontend-dom'
+      - 'realworld-haskell.cabal'
+      - 'Setup.hs'
+      - 'nix/**'
+      - 'default.nix'
+      - '.github/workflows/common.yml'
+      - '.github/workflows/frontend-js.yml'
+
+jobs:
+  frontend-js:
+    uses: ./.github/workflows/common.yml
+    with:
+      flag: frontend-js
+    secrets:
+      CACHIX_AUTH_TOKEN: ${{secrets.CACHIX_AUTH_TOKEN}}
