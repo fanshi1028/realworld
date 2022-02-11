@@ -469,6 +469,11 @@ test-suite test
     cpp-options:    -DbackendRel8
     hs-source-dirs: test/src/carrier/rel8
     other-modules:  InRel8.StateMachine
+    -- https://github.com/haskellari/postgresql-libpq/blob/7441ca8628e19218ac1d8b82ea038636615aead4/postgresql-libpq.cabal#L82
+    if os(windows)
+      extra-libraries: libpq
+    else
+      extra-libraries: pq
 
     if flag(ghcid)
       hs-source-dirs: backend/src/carrier/rel8
