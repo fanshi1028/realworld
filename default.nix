@@ -12,7 +12,7 @@ haskell-nix.project {
   };
 
   cabalProjectFileName = lib.mkForce
-    ("cabal.project" + (if exeFlag != null then ".${exeFlag}" else ""));
+    ("cabal.project" + lib.optionalString (exeFlag != null) ".${exeFlag}");
 
   # Specify the GHC version to use.
   compiler-nix-name = "ghc${ghcVersion}";
