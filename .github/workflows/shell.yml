@@ -40,9 +40,14 @@ jobs:
         authToken: ${{secrets.CACHIX_AUTH_TOKEN}}
         extraPullNames: nix-community
 
+    # NOTE: https://github.com/NixOS/nixpkgs/issues/155706
+    # inherit_errexit: invalid shell option name
+    # Therefore we set nixpath!!
     - name: nix shell
       run: |
-        nix-shell --pure -j4 --argstr nixpkgsPin ${{matrix.nixpkgsPin}} \
+        nix-shell --pure -j4 \
+        -I ./nix/pkgs.nix \
+        --argstr nixpkgsPin ${{matrix.nixpkgsPin}} \
         --argstr ghcVersion ${{matrix.ghcVersion}} \
         --arg materializedDir null \
         --arg checkMaterialization false \
