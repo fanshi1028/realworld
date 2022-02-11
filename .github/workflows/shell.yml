@@ -32,7 +32,7 @@ jobs:
       with:
         # NOTE: https://github.com/NixOS/nixpkgs/issues/155706
         # inherit_errexit: invalid shell option name
-        nix_path: 'https://github.com/NixOS/nixpkgs/archive/nixos-21.11.tar.gz'
+        nix_path: 'nixpkgs=channel:nixpkgs-21.11-darwin'
         extra_nix_config: |
           substituters = https://cache.nixos.org https://hydra.iohk.io
           trusted-public-keys = cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY= hydra.iohk.io:f/Ea+s+dFdN+3Y/G+FDgSq+a5NEWhJGzdjvKNGv0/EQ=
