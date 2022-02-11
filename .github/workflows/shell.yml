@@ -44,9 +44,10 @@ jobs:
     # inherit_errexit: invalid shell option name
     # Therefore we set nixpath!!
     - name: nix shell
+      env:
+        NIX_PATH: './nix/pkgs.nix'
       run: |
-        nix-shell --pure -j4 \
-        -I ./nix/pkgs.nix \
+        nix-shell -j4 \
         --argstr nixpkgsPin ${{matrix.nixpkgsPin}} \
         --argstr ghcVersion ${{matrix.ghcVersion}} \
         --arg materializedDir null \
