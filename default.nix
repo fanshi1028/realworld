@@ -19,30 +19,29 @@ haskell-nix.project {
 
   index-state = "2022-02-10T00:00:00Z";
 
-  modules = [
-    {
-      # https://github.com/composewell/streamly/issues/1132
-      # https://github.com/NixOS/cabal2nix/issues/470
-      # https://github.com/input-output-hk/haskell.nix/issues/1164
-      # packages.streamly.components.library.frameworks =
-      # lib.optionals (builtins.currentSystem == "x86_64-darwin")
-      # [ darwin.apple_sdk.frameworks.Cocoa ];
+  modules = [{
+    # https://github.com/composewell/streamly/issues/1132
+    # https://github.com/NixOS/cabal2nix/issues/470
+    # https://github.com/input-output-hk/haskell.nix/issues/1164
+    # packages.streamly.components.library.frameworks =
+    # lib.optionals (builtins.currentSystem == "x86_64-darwin")
+    # [ darwin.apple_sdk.frameworks.Cocoa ];
 
-      packages.realworld-haskell = {
-        # NOTE: https://github.com/input-output-hk/haskell.nix/issues/1165
-        # flags = lib.genAttrs cabalFlags (flag: lib.mkOverride 10 true);
-        ghcOptions = [
-          "-j${builtins.toString threads}"
-          "-O${builtins.toString optimize}"
-          "+RTS ${RTS} -RTS"
-        ] ++ ghcOptions;
-        components.exes =
-          lib.genAttrs [ "frontend" "backend" ] (_: { dontStrip = false; });
-      };
-    }
+    packages.realworld-haskell = {
+      # NOTE: https://github.com/input-output-hk/haskell.nix/issues/1165
+      # flags = lib.genAttrs cabalFlags (flag: lib.mkOverride 10 true);
+      ghcOptions = [
+        "-j${builtins.toString threads}"
+        "-O${builtins.toString optimize}"
+        "+RTS ${RTS} -RTS"
+      ] ++ ghcOptions;
+      components.exes =
+        lib.genAttrs [ "frontend" "backend" ] (_: { dontStrip = false; });
+    };
+  }] ++ lib.optionals (exeFlag == "backend-rel8") [
     # https://github.com/input-output-hk/haskell.nix/issues/1111
     ({ pkgs, ... }: {
-      packages.realworld-haskell.components.tests.realworld-haskell-test.build-tools =
+      packages.realworld-haskell.components.tests.realworld-haskell-test.libs =
         pkgs.lib.mkForce [ pkgs.postgresql_13 ];
     })
   ];
