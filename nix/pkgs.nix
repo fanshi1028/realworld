@@ -1,4 +1,4 @@
-{ nixpkgsPin ? "2111" }:
+{ nixpkgsPin ? "unstable" }:
 let
   sources = import ./sources.nix { };
   haskellNix = import sources.haskellNix { };
