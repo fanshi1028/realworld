@@ -2,6 +2,7 @@
 { nixpkgsPin ? "unstable", ghcVersion ? "8107", checkMaterialization ? false
 , materializedDir ? ./materialized }:
 let
+  pkgs = import ./nix/pkgs.nix { inherit nixpkgsPin; };
   project = import ./default.nix {
     inherit nixpkgsPin ghcVersion materializedDir checkMaterialization;
   };
@@ -22,7 +23,7 @@ in project.shellFor {
 
   # List of packages from the project you want to work on in
   # the shell (default is all the projects local packages).
-  packages = ps: with ps; [ realworld-haskell ];
+  packages = ps: builtins.attrValues { inherit (ps) realworld-haskell; };
 
   # Builds a Hoogle documentation index of all dependencies,
   # and provides a "hoogle" command to search the index.
@@ -85,14 +86,10 @@ in project.shellFor {
   # See overlays/tools.nix for more details
 
   # Some you may need to get some other way.
-  buildInputs = with import ./nix/pkgs.nix { inherit nixpkgsPin; }; [
-    postgresql_13
-    sqls
-  ];
+  buildInputs = builtins.attrValues { inherit (pkgs) sqls; };
 
   # Sellect cross compilers to include.
   crossPlatforms = ps:
-    with ps;
     [
       # ghcjs # Adds support for `js-unknown-ghcjs-cabal build` in the shell
       # mingwW64 # Adds support for `x86_64-W64-mingw32-cabal build` in the shell

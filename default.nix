@@ -3,8 +3,10 @@
   # NOTE: https://www.parsonsmatt.org/2019/11/27/keeping_compilation_fast.html
   #  ghcOptions:  [ "-j" "-O2" "+RTS -A128m -n2m -RTS" ]
 , threads ? "", optimize ? 2, RTS ? "-N -A128m -n2m", ghcOptions ? [ ] }:
-with import ./nix/pkgs.nix { inherit nixpkgsPin; };
-haskell-nix.project {
+let
+  pkgs = import ./nix/pkgs.nix { inherit nixpkgsPin; };
+  inherit (pkgs) haskell-nix lib;
+in haskell-nix.project {
   # 'cleanGit' cleans a source directory based on the files known by git
   src = haskell-nix.haskellLib.cleanGit {
     name = "realworld-haskell";
@@ -26,7 +28,7 @@ haskell-nix.project {
     # TEMP FIXME
     packages.streamly.components.library.libs =
       lib.optionals (builtins.currentSystem == "x86_64-darwin")
-      [ darwin.apple_sdk.frameworks.Cocoa ];
+      [ pkgs.darwin.apple_sdk.frameworks.Cocoa ];
 
     packages.realworld-haskell = {
       # NOTE: https://github.com/input-output-hk/haskell.nix/issues/1165
@@ -39,13 +41,12 @@ haskell-nix.project {
       components.exes =
         lib.genAttrs [ "frontend" "backend" ] (_: { dontStrip = false; });
     };
-  }] ++ lib.optionals (exeFlag == "backend-rel8") [
+
+  }] ++ lib.optionals (exeFlag == "backend-rel8") [{
     # https://github.com/input-output-hk/haskell.nix/issues/1111
-    ({ pkgs, ... }: {
-      packages.realworld-haskell.components.tests.realworld-haskell-test.libs =
-        pkgs.lib.mkForce [ pkgs.postgresql_13 ];
-    })
-  ];
+    packages.realworld-haskell.components.tests.realworld-haskell-test.libs =
+      pkgs.lib.mkForce [ pkgs.postgresql_13 ];
+  }];
 
   # NOTE: no materialization as we change cabal file quite frequently at this stage of development
   # inherit checkMaterialization;
