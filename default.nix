@@ -2,7 +2,7 @@
 , materializedDir ? ./materialized, exeFlag ? null
   # NOTE: https://www.parsonsmatt.org/2019/11/27/keeping_compilation_fast.html
   #  ghcOptions:  [ "-j" "-O2" "+RTS -A128m -n2m -RTS" ]
-, threads ? "", optimize ? 2, RTS ? "-A128m -n2m", ghcOptions ? [ ] }:
+, threads ? "", optimize ? 2, RTS ? "-N -A128m -n2m", ghcOptions ? [ ] }:
 with import ./nix/pkgs.nix { inherit nixpkgsPin; };
 haskell-nix.project {
   # 'cleanGit' cleans a source directory based on the files known by git
