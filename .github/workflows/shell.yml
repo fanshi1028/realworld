@@ -42,7 +42,7 @@ jobs:
 
     - name: nix shell
       run: |
-        nix-shell -j4 --argstr nixpkgsPin ${{matrix.nixpkgsPin}} \
+        nix-shell --pure -j4 --argstr nixpkgsPin ${{matrix.nixpkgsPin}} \
         --argstr ghcVersion ${{matrix.ghcVersion}} \
         --arg materializedDir null \
         --arg checkMaterialization false \
