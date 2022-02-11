@@ -47,7 +47,7 @@ jobs:
         nix-build --argstr nixpkgsPin ${{matrix.nixpkgsPin}} \
         --argstr ghcVersion ${{matrix.ghcVersion}} \
         --argstr exeFlag ${{inputs.flag}} \
-        --argstr RTS "" \
+        --argstr RTS "-M16g" \
         --arg optimize 1 \
         --arg materializedDir null \
         --arg checkMaterialization false \
