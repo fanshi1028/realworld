@@ -22,12 +22,12 @@ jobs:
         nixpkgsPin: [unstable]
         # NOTE: won't build on ghc921 yet
         ghcVersion: [8107]
-        maxMemory: [7, 14]
+        maxMemory: [10, 20]
         exclude:
           - os: ubuntu-20.04
-            maxMemory: 14
+            maxMemory: 20
           - os: macos-10.15
-            maxMemory: 7
+            maxMemory: 10
 
 
     runs-on: ${{matrix.os}}
