@@ -55,6 +55,10 @@ flag frontend-vty
   default: False
   manual:  True
 
+flag frontend-js
+  default: False
+  manual:  True
+
 common backend-in-mem-deps
   if flag(backend-in-mem)
     build-depends:
@@ -104,6 +108,13 @@ common frontend-vty-deps
       , text                  ^>=1.2.4
       , validation-selective  ^>=0.1.0
       , vty                   ^>=5.28.2
+
+common frontend-js-deps
+  if flag(frontend-js)
+    build-depends:
+      , reflex                ^>=0.8.2
+      , reflex-dom            ^>=0.6.1.1
+      , servant-client        ^>=0.18.3
 
 common prelude
   default-language:   Haskell2010
@@ -355,6 +366,7 @@ library frontend-vty-internal
 
   hs-source-dirs:  frontend/src/vty
   exposed-modules:
+    InVty.App
     InVty.Component.ArticleEditBox
     InVty.Component.ArticleList
     InVty.Component.InputBox
@@ -367,6 +379,19 @@ library frontend-vty-internal
     InVty.Scene.LoggedIn
     InVty.Scene.LoggedOut
     InVty.Util
+
+library frontend-js-internal
+  import:          prelude, frontend-js-deps
+
+  if !flag(frontend-js)
+    buildable: False
+
+  build-depends:
+    , frontend-api-internal
+    , realworld-haskell
+
+  hs-source-dirs:  frontend/src/js
+  exposed-modules: InJs.App
 
 executable backend
   import:         prelude
@@ -412,7 +437,7 @@ executable frontend
   import:         prelude
 
   if flag(ghcid)
-    import:         common-deps, frontend-api-deps, frontend-vty-deps
+    import:         common-deps, frontend-api-deps, frontend-vty-deps, frontend-js-deps
     hs-source-dirs: common/src frontend/src/api
 
   else
@@ -421,11 +446,20 @@ executable frontend
       , realworld-haskell
 
   if flag(frontend-vty)
+    cpp-options: -DfrontendVty
     if flag(ghcid)
       hs-source-dirs: frontend/src/vty
 
     else
       build-depends: frontend-vty-internal
+
+  elif flag(frontend-js)
+    cpp-options: -DfrontendJs
+    if flag(ghcid)
+      hs-source-dirs: frontend/src/js
+
+    else
+      build-depends: frontend-js-internal
 
   else
     buildable: False
@@ -445,7 +479,7 @@ executable frontend
 
 test-suite test
   import:
-    prelude, common-deps, backend-api-deps, frontend-api-deps, backend-in-mem-deps, backend-rel8-deps, frontend-vty-deps
+    prelude, common-deps, backend-api-deps, frontend-api-deps, backend-in-mem-deps, backend-rel8-deps, frontend-vty-deps, frontend-js-deps
 
   if flag(ghcid)
     hs-source-dirs: common/src backend/src/api frontend/src/api
@@ -484,11 +518,20 @@ test-suite test
       build-depends: backend-rel8-internal
 
   if flag(frontend-vty)
+    cpp-options: -DfrontendVty
     if flag(ghcid)
       hs-source-dirs: frontend/src/vty
 
     else
       build-depends: frontend-vty-internal
+
+  if flag(frontend-js)
+    cpp-options: -DfrontendJs
+    if flag(ghcid)
+      hs-source-dirs: frontend/src/js
+
+    else
+      build-depends: frontend-js-internal
 
   type:           exitcode-stdio-1.0
   hs-source-dirs: test/app test/src/common

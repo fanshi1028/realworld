@@ -8,4 +8,4 @@ source-repository-package
     --sha256: 0bba3kg6x9dfnk5x9h13x11y1jpdhnifrc122qxjbngjqpldfnwg
 
 package realworld-haskell
- flags: +frontend-vty +backend-in-mem +backend-rel8
+ flags: +frontend-vty +frontend-js +backend-in-mem +backend-rel8
