@@ -17,4 +17,9 @@ package realworld-haskell
 --    |
 -- 74 |              , Hashable1
 --    |                ^^^^^^^^^
-constraints: monoidal-containers == 0.6.2.0
+-- constraints: monoidal-containers == 0.6.2.0
+
+-- NOTE: monoidal-containers == 0.6.2.0 can't be satisfied due to reflex-0.8.2.0 has witherable >= 0.3 && < 0.4
+-- https://github.com/reflex-frp/reflex/commit/022999ec4fd38917b2e9819a9288c9ae26361949
+allow-newer: reflex-0.8.2.0:witherable
+constraints: witherable >= 0.3 && < 0.5
