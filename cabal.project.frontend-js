@@ -23,3 +23,10 @@ package realworld-haskell
 -- https://github.com/reflex-frp/reflex/commit/022999ec4fd38917b2e9819a9288c9ae26361949
 allow-newer: reflex-0.8.2.0:witherable
 constraints: witherable >= 0.3 && < 0.5
+
+-- NOTE: https://github.com/snoyberg/http-client/commit/7e9923cd9bc03c9a64fb504bc528095aa710fa86
+-- too lazy to update the hackage index, let's do it next time, update http-client-tls -> 0.3.6.1
+constraints: http-client >= 0.7.11
+
+-- NOTE: servant-streamly may need a version bump on http-client
+allow-newer: servant-streamly-0.1.0.0:http-client
