@@ -71,8 +71,8 @@ common backend-in-mem-deps
       , list-t               ^>=1.0.5
       , password             ^>=3.0.0
       , safe-exceptions      ^>=0.1.7
-      , servant-auth-server  ^>=0.4.6
-      , servant-server       ^>=0.18.3
+      , servant-auth-server  ^>=0.4.7
+      , servant-server       ^>=0.19
       , stm-containers       ^>=1.2
       , streamly             ^>=0.8.0
       , time                 ^>=1.9.3
@@ -85,14 +85,14 @@ common backend-rel8-deps
       , cryptonite           ^>=0.29
       , fused-effects        ^>=1.1.1
       , generic-lens         ^>=2.2.0
-      , hasql                ^>=1.4.5
+      , hasql                ^>=1.5.0
       , hasql-transaction    ^>=1.0.1
       , jose                 ^>=0.8.4
       , password             ^>=3.0.0
-      , rel8                 ^>=1.1.0
+      , rel8                 ^>=1.3.0
       , safe-exceptions      ^>=0.1.7
-      , servant-auth-server  ^>=0.4.6
-      , servant-server       ^>=0.18.3
+      , servant-auth-server  ^>=0.4.7
+      , servant-server       ^>=0.19
       , uuid                 ^>=1.3.15
 
 common frontend-vty-deps
@@ -103,8 +103,8 @@ common frontend-vty-deps
       , higgledy              ^>=0.4.1
       , reflex                ^>=0.8.2
       , reflex-vty            ^>=0.2.0
-      , servant               ^>=0.18.3
-      , servant-client        ^>=0.18.3
+      , servant               ^>=0.19
+      , servant-client        ^>=0.19
       , text                  ^>=1.2.4
       , validation-selective  ^>=0.1.0
       , vty                   ^>=5.28.2
@@ -114,7 +114,7 @@ common frontend-js-deps
     build-depends:
       , reflex                ^>=0.8.2
       , reflex-dom            ^>=0.6.1.1
-      , servant-client        ^>=0.18.3
+      , servant-client        ^>=0.19
 
 common prelude
   default-language:   Haskell2010
@@ -155,9 +155,9 @@ common common-deps
     , higgledy              ^>=0.4.1
     , jose                  ^>=0.8.4
     , password              ^>=3.0.0
-    , servant               ^>=0.18.3
-    , servant-auth-server   ^>=0.4.6
-    , servant-server        ^>=0.18.3
+    , servant               ^>=0.19
+    , servant-auth-server   ^>=0.4.7
+    , servant-server        ^>=0.19
     , servant-streamly      ^>=0.1.0
     , streamly              ^>=0.8.0
     , text                  ^>=1.2.4
@@ -171,9 +171,9 @@ common backend-api-deps
   build-depends:
     , cookie                ^>=0.4.5
     , fused-effects         ^>=1.1.1
-    , servant               ^>=0.18.3
-    , servant-auth-server   ^>=0.4.6
-    , servant-server        ^>=0.18.3
+    , servant               ^>=0.19
+    , servant-auth-server   ^>=0.4.7
+    , servant-server        ^>=0.19
     , servant-streamly      ^>=0.1.0
     , streamly              ^>=0.8.0
     , time                  ^>=1.9.3
@@ -187,10 +187,10 @@ common frontend-api-deps
     , generic-lens          ^>=2.2.0
     , http-types            ^>=0.12.3
     , password              ^>=3.0.0
-    , servant               ^>=0.18.3
-    , servant-auth-server   ^>=0.4.6
-    , servant-client        ^>=0.18.3
-    , servant-client-core   ^>=0.18.3
+    , servant               ^>=0.19
+    , servant-auth-server   ^>=0.4.7
+    , servant-client        ^>=0.19
+    , servant-client-core   ^>=0.19
     , servant-flatten       ^>=0.2
     , unordered-containers  ^>=0.2.16
     , validation-selective  ^>=0.1.0
@@ -469,12 +469,10 @@ executable frontend
   ghc-options:    -threaded -rtsopts -with-rtsopts=-N
   build-depends:
     , http-client      ^>=0.6.4
-    -- https://github.com/snoyberg/http-client/issues/482
-    -- , http-client-tls  ^>=0.3.5
-    , http-client-tls  ==0.3.5
+    , http-client-tls  ^>=0.3.6
     , reflex           ^>=0.8.2
     , reflex-vty       ^>=0.2.0
-    , servant-client   ^>=0.18.3
+    , servant-client   ^>=0.19
     , vty              ^>=5.28.2
 
 test-suite test
