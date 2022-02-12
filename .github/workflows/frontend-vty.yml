@@ -3,7 +3,7 @@ name: frontend-vty
 on:
   push:
     branches:
-      - github-action
+      - github-action-update-hs-deps
     paths:
       - 'common/**.hs'
       - 'frontend/app/**.hs'
