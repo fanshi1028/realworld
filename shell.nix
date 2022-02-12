@@ -23,7 +23,7 @@ in project.shellFor {
 
   # List of packages from the project you want to work on in
   # the shell (default is all the projects local packages).
-  packages = ps: builtins.attrValues { inherit (ps) realworld-haskell; };
+  packages = ps: [ ];
 
   # Builds a Hoogle documentation index of all dependencies,
   # and provides a "hoogle" command to search the index.
