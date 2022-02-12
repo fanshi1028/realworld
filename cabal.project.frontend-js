@@ -2,3 +2,19 @@ packages: .
 
 package realworld-haskell
  flags: +frontend-js
+
+-- NOTE: reflex deps, solver gave us v0.6.0.1, OSX build fine, but on linux we got this:
+-- src/Data/HashMap/Monoidal.hs:74:16: error:
+--     • Could not deduce (Data.Functor.Classes.Eq1 (MonoidalHashMap k))
+--         arising from the 'deriving' clause of a data type declaration
+--       from the context: Hashable k
+--         bound by the deriving clause for ‘Hashable1 (MonoidalHashMap k)’
+--         at src/Data/HashMap/Monoidal.hs:74:16-24
+--       Possible fix:
+--         use a standalone 'deriving instance' declaration,
+--           so you can specify the instance context yourself
+--     • When deriving the instance for (Hashable1 (MonoidalHashMap k))
+--    |
+-- 74 |              , Hashable1
+--    |                ^^^^^^^^^
+constraints: monoidal-containers == 0.6.2.0
