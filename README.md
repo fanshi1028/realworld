@@ -3,6 +3,7 @@
 [![backend-in-mem](https://github.com/fanshi1028/realworld/actions/workflows/backend-in-mem.yml/badge.svg?branch=github-action)](https://github.com/fanshi1028/realworld/actions/workflows/backend-in-mem.yml)
 [![backend-rel8](https://github.com/fanshi1028/realworld/actions/workflows/backend-rel8.yml/badge.svg?branch=github-action)](https://github.com/fanshi1028/realworld/actions/workflows/backend-rel8.yml)
 [![frontend-vty](https://github.com/fanshi1028/realworld/actions/workflows/frontend-vty.yml/badge.svg?branch=github-action)](https://github.com/fanshi1028/realworld/actions/workflows/frontend-vty.yml)
+[![frontend-js](https://github.com/fanshi1028/realworld/actions/workflows/frontend-js.yml/badge.svg?branch=github-action)](https://github.com/fanshi1028/realworld/actions/workflows/frontend-js.yml)
 
 ### Stay on the bleeding edge — [join our GitHub Discussions!](https://github.com/gothinkster/realworld/discussions) 🎉
 
