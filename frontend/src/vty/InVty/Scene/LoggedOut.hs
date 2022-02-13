@@ -67,7 +67,7 @@ loggedOutPages clientEnv = mdo
         text $ pure $ "under construction: " <> tag
         pure (never, eNavbar)
 
-      -- NOTE: homePage = tempPage "home page /#/" -- TEMP FIXME
+      -- NOTE: "home page /#/"
       homePage = Workflow $ do
         rec dMTag <- holdDyn Nothing $ Just <$> eTag
             (eBanner, (eGo, eTag)) <-

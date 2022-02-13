@@ -71,8 +71,8 @@ loggedInPages clientEnv (LoggedIn (UserAuthWithToken auth token)) = mdo
   let tempPage tag = Workflow $ do
         text $ pure $ "under construction: " <> tag
         pure (never, eNavbar)
+      -- NOTE: home page /#/
       homePage = Workflow $ do
-        -- NOTE: home page /#/
         rec dMTag <- holdDyn Nothing $ Just <$> eTag
             (eBanner, (eGo, eTag)) <-
               attachProfileBanner . row $
@@ -80,10 +80,9 @@ loggedInPages clientEnv (LoggedIn (UserAuthWithToken auth token)) = mdo
                   <$> tile flex (articleList clientEnv (Just dToken) dMTag)
                   <*> tile (fixed 25) (mkTagCollecton clientEnv)
         pure (never, leftmost [eNavbar, router eGo])
+      -- NOTE: /#/settings"
       settingsPage = Workflow $ do
-        -- NOTE: /#/settings"
         (_, ((eLogout', eErr', eRes'), _)) <- splitH3 errorDisplay (settingsBox clientEnv dAuth dToken) blank
-
         pure
           ( leftmost
               [ Left . Right <$> eErr',
@@ -92,9 +91,9 @@ loggedInPages clientEnv (LoggedIn (UserAuthWithToken auth token)) = mdo
               ],
             eNavbar
           )
+      -- NOTE: new article page /#/editor --
+      -- NOTE: edit article page /#/editor/:slug --
       editorArticlePage mAid = Workflow $ do
-        -- NOTE: new article page /#/editor --
-        -- NOTE: edit article page /#/editor/:slug --
         (_, ((eVErr', eErr', eRes'), _)) <- splitH3 errorDisplay (articleEditBox clientEnv mAid dToken) blank
         pure (leftmost [Left . Left <$> eVErr', Left . Right <$> eErr'], eNavbar)
       articlePage slug = tempPage "article page /#/article/:slug" -- TEMP FIXME
