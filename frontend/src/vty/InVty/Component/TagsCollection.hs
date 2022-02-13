@@ -5,7 +5,7 @@ module InVty.Component.TagsCollection where
 
 import Client (getTagsClient)
 import Control.Monad.Fix (MonadFix)
-import Data.Field.Tag (Tag (Tag, unTag))
+import Data.Field.Tag (Tag (unTag))
 import Data.Util.JSON.To (unOut)
 import InVty.Util (runRequestE)
 import Reflex
@@ -20,7 +20,6 @@ import Reflex
     leftmost,
     simpleList,
     switchDyn,
-    traceEvent,
     (<@),
   )
 import Reflex.Vty
@@ -65,7 +64,7 @@ mkTagCollecton ::
   m (Event t Tag)
 mkTagCollecton clientEnv = (switchDyn <$>) . (leftmost <<$>>) . tile flex $ do
   (eErr, eRes) <- getPostBuild >>= runRequestE clientEnv . (getTagsClient <$)
-  dTags <- holdDyn [] $ leftmost [unOut <$> traceEvent "hi" eRes, [] <$ eErr]
+  dTags <- holdDyn [] $ leftmost [unOut <$> eRes, [] <$ eErr]
   boxStatic singleBoxStyle . col . simpleList dTags $ \dTag ->
     tile (fixed 3) $
       row $ do
