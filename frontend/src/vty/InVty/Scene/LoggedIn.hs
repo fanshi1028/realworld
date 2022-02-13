@@ -10,8 +10,11 @@ import Control.Monad.Fix (MonadFix)
 import Data.Domain.User (UserAuthWithToken (UserAuthWithToken))
 import Graphics.Vty (red, withForeColor)
 import InVty.Component.ArticleEditBox (articleEditBox)
+import InVty.Component.ArticleList (articleList)
+import InVty.Component.Banner (attachProfileBanner)
 import InVty.Component.Navbar (navBarCommonPartWith, navBarLoggedInPart)
 import InVty.Component.Settings (settingsBox)
+import InVty.Component.TagsCollection (mkTagCollecton)
 import InVty.Util
   ( Go (Go),
     LoggedIn (LoggedIn),
@@ -32,8 +35,12 @@ import Reflex.Vty
     HasTheme,
     blank,
     boxStatic,
+    fixed,
+    flex,
     localTheme,
+    row,
     text,
+    tile,
   )
 import Reflex.Workflow (Workflow (Workflow), workflow)
 import Servant.Client (ClientEnv)
@@ -64,10 +71,19 @@ loggedInPages clientEnv (LoggedIn (UserAuthWithToken auth token)) = mdo
   let tempPage tag = Workflow $ do
         text $ pure $ "under construction: " <> tag
         pure (never, eNavbar)
-      homePage = tempPage "home page /#/" -- TEMP FIXME
+      homePage = Workflow $ do
+        -- NOTE: home page /#/
+        rec dMTag <- holdDyn Nothing $ Just <$> eTag
+            (eBanner, (eGo, eTag)) <-
+              attachProfileBanner . row $
+                (,)
+                  <$> tile flex (articleList clientEnv (Just dToken) dMTag)
+                  <*> tile (fixed 25) (mkTagCollecton clientEnv)
+        pure (never, leftmost [eNavbar, router eGo])
       settingsPage = Workflow $ do
         -- NOTE: /#/settings"
-        (eLogout', eErr', eRes') <- settingsBox clientEnv dAuth dToken
+        (_, ((eLogout', eErr', eRes'), _)) <- splitH3 errorDisplay (settingsBox clientEnv dAuth dToken) blank
+
         pure
           ( leftmost
               [ Left . Right <$> eErr',
@@ -79,7 +95,7 @@ loggedInPages clientEnv (LoggedIn (UserAuthWithToken auth token)) = mdo
       editorArticlePage mAid = Workflow $ do
         -- NOTE: new article page /#/editor --
         -- NOTE: edit article page /#/editor/:slug --
-        (eVErr', eErr', eRes') <- articleEditBox clientEnv mAid dToken
+        (_, ((eVErr', eErr', eRes'), _)) <- splitH3 errorDisplay (articleEditBox clientEnv mAid dToken) blank
         pure (leftmost [Left . Left <$> eVErr', Left . Right <$> eErr'], eNavbar)
       articlePage slug = tempPage "article page /#/article/:slug" -- TEMP FIXME
       profilePage mUid = tempPage "article page /#/profile/:name" -- TEMP FIXME
@@ -104,7 +120,7 @@ loggedInPages clientEnv (LoggedIn (UserAuthWithToken auth token)) = mdo
         localTheme (flip withForeColor red <$>) . boxStatic noBorderStyle $
           hold "" (leftmost [show <$> eErr, show <$> eVErr, "" <$ eAuth, "" <$ eNavbar])
             >>= text
-  (eNavbar, (_, (eRes, _))) <- splitVRatio 8 navBar $ splitH3 errorDisplay (switchDyn <$> workflow homePage) blank
+  (eNavbar, eRes) <- splitVRatio 8 navBar $ switchDyn <$> workflow homePage
   let ( fanEither -> (eVErr, eErr),
         fanEither -> (eLogout, eAuth)
         ) = fanEither eRes
