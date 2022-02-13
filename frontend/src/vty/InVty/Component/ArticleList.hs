@@ -1,6 +1,7 @@
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE RecursiveDo #-}
+{-# LANGUAGE ViewPatterns #-}
 
 -- |
 module InVty.Component.ArticleList where
@@ -25,7 +26,9 @@ import Reflex
     Performable,
     PostBuild (getPostBuild),
     Reflex (Behavior),
+    TriggerEvent,
     current,
+    debounce,
     holdDyn,
     leftmost,
     listHoldWithKey,
@@ -123,16 +126,17 @@ articleList ::
     MonadHold t m,
     MonadFix m,
     PerformEvent t m,
-    MonadIO (Performable m)
+    MonadIO (Performable m),
+    TriggerEvent t m
   ) =>
   ClientEnv ->
   Maybe (Dynamic t (TokenOf 'User)) ->
   Dynamic t (Maybe Tag) ->
   m (Event t Go)
-articleList clientenv mDToken dMFilterTag =
+articleList clientenv mDToken (updated -> eMFilterTag) =
   (switchDyn <$>) . (leftmost <<$>>) . col $ do
     dSelectedTab <- tile (fixed 3) . row $ do
-      rec let eFilterTagInput = leftmost [updated dMFilterTag, updated dMFilterTag']
+      rec let eFilterTagInput = leftmost [eMFilterTag, eMFilterTag']
               iniitSelectTab = maybe Global (const Feeds) mDToken
           dTabs <- listHoldWithKey
             (fromList $ (toTabKey &&& id) <$> maybe [Global] (const [Feeds, Global]) mDToken)
@@ -149,10 +153,10 @@ articleList clientenv mDToken dMFilterTag =
               mkTab' tabCfg (fixed 15) iniitSelectTab dTabs $
                 maybe iniitSelectTab ByTag <$> eFilterTagInput
 
-          dMFilterTag' <-
+          eMFilterTag' <-
             tile (fixed 25) $
               fmap Tag
-                <<$>> inputWithPlaceHolder textInput singleBoxStyle doubleBoxStyle Replace "filter by tag"
+                <<$>> inputWithPlaceHolder textInput singleBoxStyle doubleBoxStyle Replace "filter by tag" >>= debounce 0.5 . updated
 
       dSelectedTab' <$ grout (fixed 1) blank
 

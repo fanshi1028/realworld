@@ -22,7 +22,21 @@ import InVty.Util
     splitH3,
     splitVRatio,
   )
-import Reflex (Adjustable, Event, MonadHold, PerformEvent, Performable, PostBuild, fanEither, hold, holdDyn, leftmost, never, switchDyn)
+import Reflex
+  ( Adjustable,
+    Event,
+    MonadHold,
+    PerformEvent,
+    Performable,
+    PostBuild,
+    TriggerEvent,
+    fanEither,
+    hold,
+    holdDyn,
+    leftmost,
+    never,
+    switchDyn,
+  )
 import Reflex.Vty
   ( HasDisplayRegion,
     HasFocus,
@@ -58,7 +72,8 @@ loggedOutPages ::
     HasLayout t m,
     MonadIO (Performable m),
     PerformEvent t m,
-    PostBuild t m
+    PostBuild t m,
+    TriggerEvent t m
   ) =>
   ClientEnv ->
   m (Event t LoggedIn)
