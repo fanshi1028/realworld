@@ -7,8 +7,9 @@ module InVty.Scene.LoggedOut where
 
 import Control.Monad.Fix (MonadFix)
 import Data.Util.JSON.To (Out (unOut))
-import Graphics.Vty (green, red, reverseVideo, withBackColor, withForeColor, withStyle)
+import Graphics.Vty (red, withForeColor)
 import InVty.Component.ArticleList (articleList)
+import InVty.Component.Banner (attachConduitBanner)
 import InVty.Component.Navbar (navBarCommonPartWith, navBarLoggedOutPart)
 import InVty.Component.SignInBox (signInBox)
 import InVty.Component.SignUpBox (signUpBox)
@@ -17,7 +18,6 @@ import InVty.Util
   ( Go (Go),
     LoggedIn (LoggedIn),
     Page (ArticleContentPage, EditorPage, HomePage, ProfilePage, SettingsPage, SignInPage, SignUpPage),
-    centerText,
     noBorderStyle,
     splitH3,
     splitVRatio,
@@ -32,16 +32,11 @@ import Reflex.Vty
     HasLayout,
     HasTheme,
     blank,
-    box,
     boxStatic,
-    col,
     fixed,
     flex,
-    grout,
     localTheme,
     row,
-    splitH,
-    splitV,
     text,
     tile,
   )
@@ -75,19 +70,11 @@ loggedOutPages clientEnv = mdo
       -- NOTE: homePage = tempPage "home page /#/" -- TEMP FIXME
       homePage = Workflow $ do
         rec dMTag <- holdDyn Nothing $ Just <$> eTag
-            (_, (eGo, eTag)) <-
-              attachBanner
-                ( splitV
-                    (pure $ (`div` 6) . (* 5))
-                    (pure (True, True))
-                    (splitVRatio 5 (text "") (centerText text "Conduit"))
-                    $ localTheme ((`withStyle` reverseVideo) <$>) $ centerText text "A place to share your knowledge."
-                )
-                ( row $
-                    (,)
-                      <$> tile flex (articleList clientEnv Nothing dMTag)
-                      <*> tile (fixed 25) (mkTagCollecton clientEnv)
-                )
+            (eBanner, (eGo, eTag)) <-
+              attachConduitBanner . row $
+                (,)
+                  <$> tile flex (articleList clientEnv Nothing dMTag)
+                  <*> tile (fixed 25) (mkTagCollecton clientEnv)
         pure (never, leftmost [eNavbar, router eGo])
       -- NOTE "sign up page /#/register"
       signUpPage = Workflow $ do
@@ -126,14 +113,6 @@ loggedOutPages clientEnv = mdo
         localTheme (flip withForeColor red <$>) . boxStatic noBorderStyle $
           hold "" (leftmost [show <$> eVErr, show <$> eErr, "" <$ eOk, "" <$ eNavbar])
             >>= text
-      attachBanner bannerEle contentEle =
-        splitVRatio
-          4
-          ( tile flex . localTheme ((`withBackColor` green) <$>) . col $
-              tile flex (box (pure noBorderStyle) bannerEle)
-                <* grout (fixed 1) blank
-          )
-          contentEle
 
   (eNavbar, eRes) <- splitVRatio 8 navBar $ switchDyn <$> workflow homePage
 
