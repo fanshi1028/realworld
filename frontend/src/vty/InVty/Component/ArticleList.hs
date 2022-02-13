@@ -10,16 +10,30 @@ import Control.Monad.Fix (MonadFix)
 import Data.Domain (Domain (User))
 import Data.Domain.Article (ArticleWithAuthorProfile (..))
 import Data.Field.Description (Description (unDescription))
-import Data.Field.Tag (Tag (Tag, unTag), tagsToText)
+import Data.Field.Tag (Tag (Tag), tagsToText)
 import Data.Field.Title (Title (unTitle))
 import Data.Generics.Product (getField)
 import Data.Token.HasToken (TokenOf (UserToken))
 import Data.Util.JSON.To (Out (unOut))
 import InVty.Component.InputBox (PlaceHolderMode (Replace), inputWithPlaceHolder)
 import InVty.Component.Navbar (buttonCfg, tabCfg)
-import InVty.Component.Tab (mkTab)
+import InVty.Component.Tab (Tabable (toTabKey, toTabName), mkTab')
 import InVty.Util (Go (Go), Page (ArticleContentPage), runRequestE)
-import Reflex (Event, PerformEvent, Performable, PostBuild (getPostBuild), Reflex (Behavior), current, holdDyn, leftmost, listHoldWithKey, simpleList, switchDyn, updated, (<@))
+import Reflex
+  ( Event,
+    PerformEvent,
+    Performable,
+    PostBuild (getPostBuild),
+    Reflex (Behavior),
+    current,
+    holdDyn,
+    leftmost,
+    listHoldWithKey,
+    simpleList,
+    switchDyn,
+    updated,
+    (<@),
+  )
 import Reflex.Vty
   ( Adjustable,
     HasDisplayRegion,
@@ -83,8 +97,19 @@ mkArticlePreview bArticle =
       tile flex $ text $ show . getField @"author" <$> a
       tile flex $ text $ tagsToText . getField @"tagList" <$> bArticle
 
+-- | @since 0.4.0.0
 data ArticleListTab = Feeds | Global | ByTag Tag
 
+-- | @since 0.4.0.0
+instance Tabable ArticleListTab where
+  toTabKey Feeds = 1
+  toTabKey Global = 2
+  toTabKey (ByTag (Tag _)) = 3
+  toTabName Feeds = "Your Feed"
+  toTabName Global = "Global Feed"
+  toTabName (ByTag (Tag t)) = "#" <> t
+
+-- | @since 0.4.0.0
 articleList ::
   ( HasDisplayRegion t m,
     HasFocusReader t m,
@@ -107,23 +132,22 @@ articleList ::
 articleList clientenv mDToken dMFilterTag =
   (switchDyn <$>) . (leftmost <<$>>) . col $ do
     dSelectedTab <- tile (fixed 3) . row $ do
-      let yourFeedTab = [(1, ("Your Feed", Feeds))]
-          globalFeedTab = [(2, ("Global Feed", Global))]
-      rec dTabs <- listHoldWithKey
-            (fromList $ maybe globalFeedTab (const $ yourFeedTab <> globalFeedTab) mDToken)
-            ( fromList
+      rec let eFilterTagInput = leftmost [updated dMFilterTag, updated dMFilterTag']
+              iniitSelectTab = maybe Global (const Feeds) mDToken
+          dTabs <- listHoldWithKey
+            (fromList $ (toTabKey &&& id) <$> maybe [Global] (const [Feeds, Global]) mDToken)
+            ( one . first toTabKey
                 . maybe
-                  [(3, Nothing)]
-                  (\t -> [(3, Just ("#" <> unTag t, ByTag t))])
-                <$> leftmost [updated dMFilterTag, updated dMFilterTag']
+                  (ByTag (Tag "no tag"), Nothing)
+                  (ByTag &&& Just . ByTag)
+                <$> eFilterTagInput
             )
             $ \_key v -> pure v
 
           dSelectedTab' <-
             tile flex $
-              mkTab tabCfg (fixed 15) 2 dTabs
-                >>= holdDyn
-                  (maybe Global (const Feeds) mDToken)
+              mkTab' tabCfg (fixed 15) iniitSelectTab dTabs $
+                maybe iniitSelectTab ByTag <$> eFilterTagInput
 
           dMFilterTag' <-
             tile (fixed 25) $
@@ -152,5 +176,3 @@ articleList clientenv mDToken dMFilterTag =
 
     col (simpleList dArticleList $ \dArticle -> tile (fixed 12) . mkArticlePreview $ current dArticle)
       <* grout flex blank
-
--- sortableList

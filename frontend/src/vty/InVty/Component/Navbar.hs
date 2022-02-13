@@ -1,13 +1,11 @@
-{-# LANGUAGE RecursiveDo #-}
-
 -- | @since 0.4.0.0
 module InVty.Component.Navbar where
 
 import Control.Monad.Fix (MonadFix)
 import Graphics.Vty (defAttr, dim, green, withForeColor, withStyle)
-import InVty.Component.Tab (SelectConfig (SelectConfig), TabConfig (TabConfig), mkTab)
+import InVty.Component.Tab (SelectConfig (SelectConfig), TabConfig (TabConfig), Tabable (toTabKey), mkTab)
 import InVty.Util (Go (Go), Page (EditorPage, HomePage, ProfilePage, SettingsPage, SignInPage, SignUpPage), noBorderStyle, splitH3)
-import Reflex (Adjustable, Event, MonadHold, PostBuild, Reflex, leftmost)
+import Reflex (Adjustable, Event, MonadHold, PostBuild, Reflex, leftmost, updated)
 import Reflex.Vty
   ( ButtonConfig (ButtonConfig),
     HasDisplayRegion,
@@ -64,14 +62,15 @@ navBarLoggedInPart ::
   ) =>
   m (Event t Go)
 navBarLoggedInPart =
-  Go <<$>> mdo
-    mkTab tabCfg flex (1 :: Integer) . pure $
-      fromList
-        [ (1, ("Home", HomePage)),
-          (2, ("New article", EditorPage Nothing)),
-          (3, ("Settings", SettingsPage)),
-          (4, ("Who am I", ProfilePage Nothing))
-        ]
+  Go <<$>> do
+    updated <$> do
+      mkTab tabCfg flex HomePage . pure . fromList $
+        (toTabKey &&& id)
+          <$> [ HomePage,
+                EditorPage Nothing,
+                SettingsPage,
+                ProfilePage Nothing
+              ]
 
 -- | @since 0.4.0.0
 navBarLoggedOutPart ::
@@ -89,6 +88,11 @@ navBarLoggedOutPart ::
   ) =>
   m (Event t Go)
 navBarLoggedOutPart =
-  Go <<$>> mdo
-    mkTab tabCfg flex (1 :: Integer) . pure $
-      fromList [(1, ("Home", HomePage)), (2, ("Sign in", SignInPage)), (3, ("Sign up", SignUpPage))]
+  Go <<$>> do
+    updated <$> do
+      mkTab tabCfg flex HomePage . pure . fromList $
+        (toTabKey &&& id)
+          <$> [ HomePage,
+                SignInPage,
+                SignUpPage
+              ]

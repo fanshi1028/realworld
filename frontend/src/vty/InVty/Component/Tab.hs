@@ -14,6 +14,8 @@ import Reflex
     Reflex (Dynamic, current),
     fromUniqDynamic,
     holdDyn,
+    leftmost,
+    never,
     selectViewListWithKey,
     splitE,
     uniqDynamic,
@@ -49,7 +51,15 @@ data TabConfig t = TabConfig
   }
 
 -- | @since 0.4.0.0
-mkTab ::
+class Tabable tab where
+  -- | @since 0.4.0.0
+  toTabKey :: tab -> Integer
+
+  -- | @since 0.4.0.0
+  toTabName :: tab -> Text
+
+-- | @since 0.4.0.0
+mkTab' ::
   ( HasDisplayRegion t m,
     HasFocusReader t m,
     HasTheme t m,
@@ -61,14 +71,15 @@ mkTab ::
     PostBuild t m,
     HasFocus t m,
     HasLayout t m,
-    Ord key
+    Tabable tab
   ) =>
   TabConfig t ->
   Dynamic t Layout.Constraint ->
-  key ->
-  Dynamic t (Map key (Text, tab)) ->
-  m (Event t tab)
-mkTab
+  tab ->
+  Dynamic t (Map Integer tab) ->
+  Event t tab ->
+  m (Dynamic t tab)
+mkTab'
   TabConfig
     { buttonCfg,
       selectCfg =
@@ -78,12 +89,35 @@ mkTab
           }
     }
   dConstraint
-  initSelectKey
-  dTabs = do
-    rec dFocusedTab <- fromUniqDynamic . uniqDynamic <$> holdDyn initSelectKey eKey
-        (splitE -> (eKey, eTab)) <- row $
-          selectViewListWithKey dFocusedTab dTabs $ \_key dTab dSelected ->
+  initSelectTab
+  dTabs
+  eSelectTab = do
+    rec dTab <- holdDyn initSelectTab (leftmost [eSelectTab, eTab])
+        (splitE -> (_, eTab)) <- row $
+          selectViewListWithKey (fromUniqDynamic . uniqDynamic $ toTabKey <$> dTab) dTabs $ \_key dTab' dSelected ->
             tile dConstraint $ do
               let bThemeMdf = bool unselectThemeModifier selectThemeModifier <$> current dSelected
-              ((snd <$> current dTab) <@) <$> localTheme (bThemeMdf <*>) (textButton buttonCfg $ fst <$> current dTab)
-    pure eTab
+              (current dTab' <@) <$> localTheme (bThemeMdf <*>) (textButton buttonCfg (toTabName <$> current dTab'))
+    pure dTab
+
+-- | @since 0.4.0.0
+mkTab ::
+  ( HasDisplayRegion t m,
+    HasFocusReader t m,
+    HasTheme t m,
+    HasImageWriter t m,
+    HasInput t m,
+    Adjustable t m,
+    PostBuild t m,
+    HasFocus t m,
+    HasLayout t m,
+    MonadHold t m,
+    MonadFix m,
+    Tabable tab
+  ) =>
+  TabConfig t ->
+  Dynamic t Layout.Constraint ->
+  tab ->
+  Dynamic t (Map Integer tab) ->
+  m (Dynamic t tab)
+mkTab tabCfg dConstraint initSelectTab dTabs = mkTab' tabCfg dConstraint initSelectTab dTabs never

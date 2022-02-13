@@ -8,6 +8,7 @@ import Data.Domain (Domain (Article, User))
 import Data.Domain.Article (ArticleWithAuthorProfile)
 import Data.Domain.User (UserAuthWithToken, UserProfile)
 import Data.Storage.Map (HasStorage (..))
+import InVty.Component.Tab (Tabable (toTabKey, toTabName))
 import Reflex (Behavior, Event, PerformEvent, Performable, Reflex, current, fanEither, performEvent)
 import Reflex.Vty (BoxStyle (BoxStyle), HasDisplayRegion, HasFocusReader, HasImageWriter, HasInput, HasTheme, displayWidth, splitH, splitV)
 import Servant.Client (ClientEnv, ClientError)
@@ -41,7 +42,34 @@ data Page
     SignInPage
   | -- | @since 0.4.0.0
     SignUpPage
-  deriving (Eq)
+  deriving (Show, Eq)
+
+-- | @since 0.4.0.0
+instance Tabable Page where
+  toTabKey HomePage = 1
+  -- logged out
+  toTabKey SignInPage = 2
+  toTabKey SignUpPage = 3
+  -- logged in
+  toTabKey (EditorPage Nothing) = 2
+  toTabKey SettingsPage = 3
+  toTabKey (ProfilePage Nothing) = 4
+  -- not tabable
+  toTabKey a@(EditorPage (Just _)) = error $ "not tabable, to tab key failed: " <> show a
+  toTabKey a@(ArticleContentPage _) = error $ "not tabable, to tab key failed: " <> show a
+  toTabKey a@(ProfilePage (Just _)) = error $ "not tabable, to tab key failed: " <> show a
+  toTabName HomePage = "Home"
+  -- logged out
+  toTabName SignInPage = "Sign in"
+  toTabName SignUpPage = "Sign up"
+  -- logged in
+  toTabName (EditorPage Nothing) = "New article"
+  toTabName SettingsPage = "Settings"
+  toTabName (ProfilePage Nothing) = "Who am I"
+  -- not tabable
+  toTabName a@(EditorPage (Just _)) = error $ "not tabable, to tab name failed: " <> show a
+  toTabName a@(ArticleContentPage _) = error $ "not tabable, to tab name failed: " <> show a
+  toTabName a@(ProfilePage (Just _)) = error $ "not tabable, to tab name failed: " <> show a
 
 -- | @since 0.4.0.0
 newtype Go = Go Page deriving (Eq)
