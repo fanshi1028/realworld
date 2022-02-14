@@ -8,9 +8,11 @@ module InVty.Scene.LoggedIn where
 
 import Control.Monad.Fix (MonadFix)
 import Data.Domain.User (UserAuthWithToken (UserAuthWithToken))
+import Data.Generics.Product (getField)
+import Data.Storage.Map (IdOf (UserId))
 import Graphics.Vty (red, withForeColor)
 import InVty.Component.ArticleEditBox (articleEditBox)
-import InVty.Component.ArticleList (articleList)
+import InVty.Component.ArticleList (articleList, profileArticleList)
 import InVty.Component.Banner (attachProfileBanner)
 import InVty.Component.Navbar (navBarCommonPartWith, navBarLoggedInPart)
 import InVty.Component.Settings (settingsBox)
@@ -110,14 +112,22 @@ loggedInPages clientEnv (LoggedIn (UserAuthWithToken auth token)) = mdo
         (_, ((eVErr', eErr', eRes'), _)) <- splitH3 errorDisplay (articleEditBox clientEnv mAid dToken) blank
         pure (leftmost [Left . Left <$> eVErr', Left . Right <$> eErr'], eNavbar)
       articlePage slug = tempPage "article page /#/article/:slug" -- TEMP FIXME
-      profilePage mUid = tempPage "article page /#/profile/:name" -- TEMP FIXME
+      -- NOTE: profile page /#/profile/:name
+      profilePage mUidOrProfile = Workflow $ do
+        (eBanner, eGo) <- attachProfileBanner $ do
+          let dUser = case mUidOrProfile of
+                Nothing -> getField @"username" <$> dAuth
+                Just (Left (UserId user)) -> pure user
+                Just (Right prof) -> pure . getField @"username" $ getField @"profile" prof
+          profileArticleList clientEnv dUser
+        pure (never, leftmost [eNavbar, router eGo])
       -- favouriteUserPage username = tempPage "article page /#/profile/:name/favorites" -- TEMP FIXME
       router' (Go p) = case p of
         HomePage -> homePage
         EditorPage mAid -> editorArticlePage mAid
         SettingsPage -> settingsPage
         ArticleContentPage slug -> articlePage slug
-        ProfilePage mUid -> profilePage mUid
+        ProfilePage mUidOrProfie -> profilePage mUidOrProfie
         -- NOTE: Already logged. Just redirect to home page in case it happen? Or 500?
         SignInPage -> homePage
         SignUpPage -> homePage

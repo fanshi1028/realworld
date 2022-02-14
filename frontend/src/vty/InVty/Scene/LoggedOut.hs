@@ -1,3 +1,4 @@
+{-# LANGUAGE DataKinds #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE RecursiveDo #-}
 {-# LANGUAGE ViewPatterns #-}
@@ -6,10 +7,12 @@
 module InVty.Scene.LoggedOut where
 
 import Control.Monad.Fix (MonadFix)
+import Data.Generics.Product (getField)
+import Data.Storage.Map (IdOf (UserId))
 import Data.Util.JSON.To (Out (unOut))
 import Graphics.Vty (red, withForeColor)
-import InVty.Component.ArticleList (articleList)
-import InVty.Component.Banner (attachConduitBanner)
+import InVty.Component.ArticleList (articleList, profileArticleList)
+import InVty.Component.Banner (attachConduitBanner, attachProfileBanner)
 import InVty.Component.Navbar (navBarCommonPartWith, navBarLoggedOutPart)
 import InVty.Component.SignInBox (signInBox)
 import InVty.Component.SignUpBox (signUpBox)
@@ -104,7 +107,15 @@ loggedOutPages clientEnv = mdo
             router eGo
           )
       articlePage slug = tempPage "article page /#/article/:slug" -- TEMP FIXME
-      profilePage uid = tempPage "profile page /#/profile/:name" -- TEMP FIXME
+      -- NOTE: profile page /#/profile/:name
+      profilePage uidOrProfile = Workflow $ do
+        (eBanner, eGo) <- attachProfileBanner $ do
+          let user = case uidOrProfile of
+                Left (UserId uid) -> uid
+                Right prof -> getField @"username" $ getField @"profile" prof
+          profileArticleList clientEnv $ pure user
+        pure (never, leftmost [eNavbar, router eGo])
+
       router' (Go p) = case p of
         HomePage -> homePage
         SignInPage -> signInPage
