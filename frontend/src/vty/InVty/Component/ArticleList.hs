@@ -1,7 +1,6 @@
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE RecursiveDo #-}
-{-# LANGUAGE ViewPatterns #-}
 
 -- |
 module InVty.Component.ArticleList where
@@ -131,9 +130,9 @@ articleList ::
   ) =>
   ClientEnv ->
   Maybe (Dynamic t (TokenOf 'User)) ->
-  Dynamic t (Maybe Tag) ->
+  Event t (Maybe Tag) ->
   m (Event t Go)
-articleList clientenv mDToken (updated -> eMFilterTag) =
+articleList clientenv mDToken eMFilterTag =
   (switchDyn <$>) . (leftmost <<$>>) . col $ do
     dSelectedTab <- tile (fixed 3) . row $ do
       rec let eFilterTagInput = leftmost [eMFilterTag, eMFilterTag']

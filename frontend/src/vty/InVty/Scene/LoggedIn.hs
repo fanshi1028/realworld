@@ -88,12 +88,10 @@ loggedInPages clientEnv (LoggedIn (UserAuthWithToken auth token)) = mdo
         pure (never, eNavbar)
       -- NOTE: home page /#/
       homePage = Workflow $ do
-        rec dMTag <- holdDyn Nothing $ Just <$> eTag
-            (eBanner, (eGo, eTag)) <-
-              attachProfileBanner . row $
-                (,)
-                  <$> tile flex (articleList clientEnv (Just dToken) dMTag)
-                  <*> tile (fixed 25) (mkTagCollecton clientEnv)
+        (eBanner, eGo) <- attachProfileBanner . row $ do
+          rec eGo <- tile flex $ articleList clientEnv (Just dToken) $ Just <$> eTag
+              eTag <- tile (fixed 25) $ mkTagCollecton clientEnv
+          pure eGo
         pure (never, leftmost [eNavbar, router eGo])
       -- NOTE: /#/settings"
       settingsPage = Workflow $ do

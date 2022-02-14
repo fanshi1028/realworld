@@ -32,7 +32,6 @@ import Reflex
     TriggerEvent,
     fanEither,
     hold,
-    holdDyn,
     leftmost,
     never,
     switchDyn,
@@ -84,12 +83,10 @@ loggedOutPages clientEnv = mdo
 
       -- NOTE: "home page /#/"
       homePage = Workflow $ do
-        rec dMTag <- holdDyn Nothing $ Just <$> eTag
-            (eBanner, (eGo, eTag)) <-
-              attachConduitBanner . row $
-                (,)
-                  <$> tile flex (articleList clientEnv Nothing dMTag)
-                  <*> tile (fixed 25) (mkTagCollecton clientEnv)
+        (eBanner, eGo) <- attachConduitBanner . row $ do
+          rec eGo <- tile flex $ articleList clientEnv Nothing $ Just <$> eTag
+              eTag <- tile (fixed 25) $ mkTagCollecton clientEnv
+          pure eGo
         pure (never, leftmost [eNavbar, router eGo])
       -- NOTE "sign up page /#/register"
       signUpPage = Workflow $ do
