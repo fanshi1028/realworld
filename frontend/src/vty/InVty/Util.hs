@@ -9,8 +9,33 @@ import Data.Domain.Article (ArticleWithAuthorProfile)
 import Data.Domain.User (UserAuthWithToken, UserProfile)
 import Data.Storage.Map (HasStorage (..))
 import InVty.Component.Tab (Tabable (toTabKey, toTabName))
-import Reflex (Behavior, Event, PerformEvent, Performable, Reflex, current, fanEither, performEvent)
-import Reflex.Vty (BoxStyle (BoxStyle), HasDisplayRegion, HasFocusReader, HasImageWriter, HasInput, HasTheme, displayWidth, splitH, splitV)
+import Reflex
+  ( Behavior,
+    Dynamic,
+    Event,
+    PerformEvent,
+    Performable,
+    PostBuild,
+    Reflex,
+    current,
+    fanEither,
+    getPostBuild,
+    leftmost,
+    performEvent,
+    updated,
+    (<@),
+  )
+import Reflex.Vty
+  ( BoxStyle (BoxStyle),
+    HasDisplayRegion,
+    HasFocusReader,
+    HasImageWriter,
+    HasInput,
+    HasTheme,
+    displayWidth,
+    splitH,
+    splitV,
+  )
 import Servant.Client (ClientEnv, ClientError)
 import Servant.Client.Streaming (ClientM, withClientM)
 
@@ -121,3 +146,20 @@ runRequestE clientEnv eRequest =
   fanEither
     <$> performEvent
       (liftIO <$> (flip withClientM clientEnv <$> eRequest ?? pure))
+
+-- | @since 0.4.0.0
+runRequestD ::
+  ( PostBuild t m,
+    MonadIO (Performable m),
+    PerformEvent t m
+  ) =>
+  ClientEnv ->
+  Dynamic t (ClientM a) ->
+  m (Event t ClientError, Event t a)
+runRequestD clientenv dRequest =
+  getPostBuild >>= \eNow ->
+    runRequestE clientenv $
+      leftmost
+        [ updated dRequest,
+          current dRequest <@ eNow
+        ]

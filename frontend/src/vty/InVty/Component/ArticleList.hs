@@ -18,12 +18,12 @@ import Data.Util.JSON.To (Out (unOut))
 import InVty.Component.InputBox (PlaceHolderMode (Replace), inputWithPlaceHolder)
 import InVty.Component.Navbar (buttonCfg, tabCfg)
 import InVty.Component.Tab (Tabable (toTabKey, toTabName), mkTab')
-import InVty.Util (Go (Go), Page (ArticleContentPage), runRequestE)
+import InVty.Util (Go (Go), Page (ArticleContentPage), runRequestD)
 import Reflex
   ( Event,
     PerformEvent,
     Performable,
-    PostBuild (getPostBuild),
+    PostBuild,
     Reflex (Behavior),
     TriggerEvent,
     current,
@@ -159,21 +159,14 @@ articleList clientenv mDToken eMFilterTag =
 
       dSelectedTab' <$ grout (fixed 1) blank
 
-    let dToken = fromMaybe (pure $ UserToken "") mDToken
-        dRequest =
-          dSelectedTab >>= \case
-            Feeds -> getFeedsClient <$> dToken ?? Nothing ?? Nothing
-            Global -> getArticlesClient <$> dToken ?? Nothing ?? Nothing ?? Nothing ?? Nothing ?? Nothing
-            -- FIXME tag validation??
-            ByTag t -> getArticlesClient <$> dToken ?? Just (Success t) ?? Nothing ?? Nothing ?? Nothing ?? Nothing
-
-    (eErr, eRes) <-
-      getPostBuild >>= \eNow ->
-        runRequestE clientenv $
-          leftmost
-            [ current dRequest <@ eNow,
-              updated dRequest
-            ]
+    (eErr, eRes) <- do
+      let dToken = fromMaybe (pure $ UserToken "") mDToken
+      runRequestD clientenv $
+        dSelectedTab >>= \case
+          Feeds -> getFeedsClient <$> dToken ?? Nothing ?? Nothing
+          Global -> getArticlesClient <$> dToken ?? Nothing ?? Nothing ?? Nothing ?? Nothing ?? Nothing
+          -- FIXME tag validation??
+          ByTag t -> getArticlesClient <$> dToken ?? Just (Success t) ?? Nothing ?? Nothing ?? Nothing ?? Nothing
 
     dArticleList <- holdDyn [] $ leftmost [[] <$ eErr, unOut <$> eRes]
 
