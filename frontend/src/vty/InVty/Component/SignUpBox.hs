@@ -11,12 +11,13 @@ import Data.Field.Email (Email (Email))
 import Data.Field.Password (mkPassword)
 import Data.Field.Username (Username (Username))
 import Data.Storage.Map (CreateOf (UserCreate))
+import Data.Text (center)
 import Data.Util.JSON.From (In (In))
 import Data.Util.Validation (ValidationErr)
 import Graphics.Vty (bold, green, withBackColor, withForeColor, withStyle)
 import InVty.Component.InputBox (PlaceHolderMode (Replace), inputWithPlaceHolder)
+import InVty.Util (Go (Go), Page (SignInPage), noBorderStyle, padText, runRequestE, splitH3, splitVRatio)
 import Reflex (Adjustable, Event, MonadHold, PerformEvent, Performable, Reflex, current, fanEither, leftmost, (<@))
-import InVty.Util (Go (Go), Page (SignInPage), centerText, noBorderStyle, runRequestE, splitH3, splitVRatio)
 import Reflex.Vty
   ( HasDisplayRegion,
     HasFocus,
@@ -62,7 +63,7 @@ signUpBox ::
 signUpBox clientEnv = do
   let inputBoxWithPlaceHolder = inputWithPlaceHolder textInput singleBoxStyle doubleBoxStyle
 
-      title = localTheme ((`withStyle` bold) <$>) $ centerText text "Sign up"
+      title = localTheme ((`withStyle` bold) <$>) $ padText center text "Sign up"
 
       haveAnAcc = (Go SignInPage <$) <$> localTheme ((`withForeColor` green) <$>) (linkStatic "Have an account?")
 
@@ -79,7 +80,7 @@ signUpBox clientEnv = do
             blank
             ( button def {_buttonConfig_focusStyle = pure noBorderStyle} $
                 localTheme ((`withBackColor` green) <$>) $
-                  boxStatic noBorderStyle $ centerText text "Sign Up"
+                  boxStatic noBorderStyle $ padText center text "Sign Up"
             )
 
   (_, (eGo, (dMNameInput, (dMEmailInput, ((dMPwInput, eSignUp), _))))) <-

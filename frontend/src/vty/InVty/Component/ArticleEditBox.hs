@@ -18,6 +18,7 @@ import Data.Generic.HKD (build, construct)
 import Data.Generics.Product.Fields (getField)
 import qualified Data.Semigroup as SG
 import Data.Storage.Map (CreateOf (ArticleCreate), Patch, UpdateOf, toArticleId)
+import Data.Text (center)
 import Data.Text.Zipper (fromText)
 import Data.Token.HasToken (TokenOf)
 import Data.Util.JSON.From (In (In))
@@ -25,7 +26,7 @@ import Data.Util.JSON.To (Out (unOut))
 import Data.Util.Validation (ValidationErr)
 import Graphics.Vty (bold, green, withBackColor, withStyle)
 import InVty.Component.InputBox (PlaceHolderMode (Edit, Replace), inputWithPlaceHolder)
-import InVty.Util (ArticleIdOrContent, centerText, noBorderStyle, runRequestE, splitH3, splitV3)
+import InVty.Util (ArticleIdOrContent, noBorderStyle, padText, runRequestE, splitH3, splitV3)
 import Reflex
   ( Adjustable,
     Dynamic,
@@ -72,7 +73,7 @@ articleEditBox clientEnv mAid dToken = do
       inputAreaWithPlaceHolder = inputWithPlaceHolder multilineTextInput singleBoxStyle doubleBoxStyle
 
       mkBoxHelper title titleInput descriptionInput bodyInput tagsInput doneTxt =
-        let title' = localTheme ((`withStyle` bold) <$>) $ centerText text title
+        let title' = localTheme ((`withStyle` bold) <$>) $ padText center text title
             firstSection = snd <$> splitV3 title' titleInput descriptionInput
 
             secondSection = bodyInput
@@ -83,7 +84,7 @@ articleEditBox clientEnv mAid dToken = do
                   blank
                   blank
                   ( button def {_buttonConfig_focusStyle = pure noBorderStyle} . localTheme ((`withBackColor` green) <$>) $
-                      boxStatic noBorderStyle $ centerText text doneTxt
+                      boxStatic noBorderStyle $ padText center text doneTxt
                   )
 
             thirdSection = splitV3 tagsInput doneButton blank

@@ -17,6 +17,7 @@ import Data.Field.Password (mkPassword)
 import Data.Field.Username (Username (Username))
 import Data.Generic.HKD (Build (build), Construct (construct))
 import Data.Storage.Map (Patch, UpdateOf)
+import Data.Text (center)
 import Data.Text.Zipper (fromText)
 import Data.Token.HasToken (TokenOf (..))
 import Data.Util.JSON.From (In (In))
@@ -24,7 +25,7 @@ import Data.Util.JSON.To (Out (unOut))
 import GHC.Records (HasField (getField))
 import Graphics.Vty (bold, green, red, withBackColor, withForeColor, withStyle)
 import InVty.Component.InputBox (PlaceHolderMode (Edit, Replace), inputWithPlaceHolder)
-import InVty.Util (LoggedOut (LoggedOut), centerText, noBorderStyle, runRequestE, splitH3, splitV3, splitVRatio)
+import InVty.Util (LoggedOut (LoggedOut), noBorderStyle, padText, runRequestE, splitH3, splitV3, splitVRatio)
 import Reflex
   ( Adjustable,
     Event,
@@ -83,7 +84,7 @@ settingsBox clientEnv dAuth dToken = mdo
   let inputBoxWithPlaceHolder = inputWithPlaceHolder textInput singleBoxStyle doubleBoxStyle
       inputAreaWithPlaceHolder = inputWithPlaceHolder multilineTextInput singleBoxStyle doubleBoxStyle
 
-      title = localTheme ((`withStyle` bold) <$>) $ centerText text "Settings"
+      title = localTheme ((`withStyle` bold) <$>) $ padText center text "Settings"
       avatorInput = fmap Image <<$>> inputBoxWithPlaceHolder Edit "https://api.realworld.io/images/smiley-cyrus.jpeg"
       nameInput =
         fmap Username <<$>> do
@@ -107,7 +108,7 @@ settingsBox clientEnv dAuth dToken = mdo
             blank
             blank
             ( button def {_buttonConfig_focusStyle = pure noBorderStyle} . localTheme ((`withBackColor` green) <$>) $
-                boxStatic noBorderStyle $ centerText text "Update Settings"
+                boxStatic noBorderStyle $ padText center text "Update Settings"
             )
       logoutButton =
         (LoggedOut <$)

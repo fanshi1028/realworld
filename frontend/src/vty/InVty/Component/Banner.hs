@@ -2,9 +2,10 @@
 module InVty.Component.Banner where
 
 import Control.Monad.Fix (MonadFix)
+import Data.Text (center)
 import Graphics.Vty (green, reverseVideo, withBackColor, withStyle)
-import InVty.Util (centerText, noBorderStyle, splitVRatio)
-import Reflex (Event)
+import InVty.Util (noBorderStyle, padText, splitVRatio)
+import Reflex (Behavior, Event)
 import Reflex.Vty
   ( ButtonConfig (ButtonConfig),
     HasDisplayRegion,
@@ -58,14 +59,14 @@ attachBanner bannerEle contentEle =
 
 -- | @since 0.4.0.0
 mkBanner ::
-  (HasInput t m, HasDisplayRegion t m, HasFocusReader t m, HasImageWriter t m, HasTheme t m) => m a -> String -> m a
-mkBanner mainEle caption =
+  (HasInput t m, HasDisplayRegion t m, HasFocusReader t m, HasImageWriter t m, HasTheme t m) => m a -> Behavior t Text -> m a
+mkBanner mainEle bCaption =
   fst
     <$> splitV
       (pure $ (`div` 6) . (* 5))
       (pure (True, True))
       mainEle
-      (localTheme ((`withStyle` reverseVideo) <$>) $ centerText text caption)
+      (localTheme ((`withStyle` reverseVideo) <$>) $ padText center text bCaption)
 
 -- | @since 0.4.0.0
 attachConduitBanner ::
@@ -83,7 +84,7 @@ attachConduitBanner ::
 attachConduitBanner =
   attachBanner $
     mkBanner
-      (snd <$> splitVRatio 5 (text "") (centerText text "Conduit"))
+      (snd <$> splitVRatio 5 (text "") (padText center text "Conduit"))
       "A place to share your knowledge."
 
 -- | @since 0.4.0.0
@@ -103,5 +104,5 @@ attachProfileBanner =
   attachBanner $
     mkBanner
       -- TEMP FIXME
-      (snd <$> splitVRatio 5 (text "") (centerText text "TBE profile"))
+      (snd <$> splitVRatio 5 (text "") (padText center text "TBE profile"))
       "TBE caption"

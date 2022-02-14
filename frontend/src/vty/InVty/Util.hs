@@ -98,15 +98,15 @@ noBorderStyle :: BoxStyle
 noBorderStyle = BoxStyle ' ' ' ' ' ' ' ' ' ' ' ' ' ' ' '
 
 -- | @since 0.4.0.0
--- >>> padding 10 "fjowefew"
-padding :: Int -> String -> String
-padding width str = let pad = replicate ((width - length str) `div` 2) ' ' in pad <> str <> pad
-
--- | @since 0.4.0.0
-centerText :: (Monad m, HasDisplayRegion t m, HasImageWriter t m, HasTheme t m) => (Behavior t Text -> m ()) -> String -> m ()
-centerText txtMaker txt = do
-  w <- displayWidth
-  txtMaker $ fromString <$> (padding <$> current w ?? txt)
+padText ::
+  (Monad m, HasDisplayRegion t m, HasImageWriter t m, HasTheme t m) =>
+  (Int -> Char -> Text -> Text) ->
+  (Behavior t Text -> m ()) ->
+  Behavior t Text ->
+  m ()
+padText padder txtMaker bTxt = do
+  dW <- displayWidth
+  txtMaker $ padder <$> current dW ?? ' ' <*> bTxt
 
 -- | @since 0.4.0.0
 runRequestE ::
