@@ -135,7 +135,7 @@ articleList ::
 articleList clientenv mDToken eMFilterTag =
   (switchDyn <$>) . (leftmost <<$>>) . col $ do
     dSelectedTab <- tile (fixed 3) . row $ do
-      rec let eFilterTagInput = leftmost [eMFilterTag, eMFilterTag']
+      rec let eMFilterTagInput = leftmost [eMFilterTag, eMFilterTag']
               iniitSelectTab = maybe Global (const Feeds) mDToken
           dTabs <- listHoldWithKey
             (fromList $ (toTabKey &&& id) <$> maybe [Global] (const [Feeds, Global]) mDToken)
@@ -143,14 +143,14 @@ articleList clientenv mDToken eMFilterTag =
                 . maybe
                   (ByTag (Tag "no tag"), Nothing)
                   (ByTag &&& Just . ByTag)
-                <$> eFilterTagInput
+                <$> eMFilterTagInput
             )
             $ \_key v -> pure v
 
           dSelectedTab' <-
             tile flex $
               mkTab' tabCfg (fixed 15) iniitSelectTab dTabs $
-                maybe iniitSelectTab ByTag <$> eFilterTagInput
+                maybe iniitSelectTab ByTag <$> eMFilterTagInput
 
           eMFilterTag' <-
             tile (fixed 25) $
