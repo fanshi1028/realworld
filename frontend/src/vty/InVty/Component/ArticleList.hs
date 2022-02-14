@@ -17,8 +17,8 @@ import Data.Token.HasToken (TokenOf (UserToken))
 import Data.Util.JSON.To (Out (unOut))
 import InVty.Component.InputBox (PlaceHolderMode (Replace), inputWithPlaceHolder)
 import InVty.Component.Navbar (buttonCfg, tabCfg)
-import InVty.Component.Tab (Tabable (toTabKey, toTabName), mkTab')
 import InVty.Util (Go (Go), Page (ArticleContentPage), runRequestD)
+import InVty.Component.Tab (Tabable (toTabKey, toTabName), mkTab, mkTab')
 import Reflex
   ( Event,
     PerformEvent,
@@ -167,6 +167,61 @@ articleList clientenv mDToken eMFilterTag =
           Global -> getArticlesClient <$> dToken ?? Nothing ?? Nothing ?? Nothing ?? Nothing ?? Nothing
           -- FIXME tag validation??
           ByTag t -> getArticlesClient <$> dToken ?? Just (Success t) ?? Nothing ?? Nothing ?? Nothing ?? Nothing
+
+    dArticleList <- holdDyn [] $ leftmost [[] <$ eErr, unOut <$> eRes]
+
+    col (simpleList dArticleList $ \dArticle -> tile (fixed 12) $ mkArticlePreview dArticle)
+      <* grout flex blank
+
+-- | @since 0.4.0.0
+data ProfileArticleListTab = MyArticles | FavouritedArticles
+
+-- | @since 0.4.0.0
+instance Tabable ProfileArticleListTab where
+  toTabKey = \case
+    MyArticles -> 1
+    FavouritedArticles -> 2
+  toTabName = \case
+    MyArticles -> "My Articles"
+    FavouritedArticles -> "Favourited Articles"
+
+profileArticleList ::
+  ( HasDisplayRegion t m,
+    HasFocusReader t m,
+    HasTheme t m,
+    HasImageWriter t m,
+    HasInput t m,
+    Adjustable t m,
+    PostBuild t m,
+    HasFocus t m,
+    HasLayout t m,
+    MonadHold t m,
+    MonadFix m,
+    PerformEvent t m,
+    MonadIO (Performable m),
+    TriggerEvent t m
+  ) =>
+  ClientEnv ->
+  Dynamic t Username ->
+  m (Event t Go)
+profileArticleList clientenv dUser =
+  (switchDyn <$>) . (leftmost <<$>>) . col $ do
+    dSelectedTab <-
+      tile (fixed 3) . row $
+        ( tile flex $
+            mkTab tabCfg (fixed 15) MyArticles . pure $
+              fromList ((toTabKey &&& id) <$> [MyArticles, FavouritedArticles])
+        )
+          <* grout (fixed 1) blank
+
+    (eErr, eRes) <- do
+      let token = UserToken ""
+          dMVUser = Just . Success <$> dUser
+      runRequestD clientenv $
+        dSelectedTab >>= \case
+          -- FIXME TEMP
+          MyArticles -> getArticlesClient token Nothing <$> dMVUser ?? Nothing ?? Nothing ?? Nothing
+          FavouritedArticles -> getArticlesClient token Nothing Nothing <$> dMVUser ?? Nothing ?? Nothing
 
     dArticleList <- holdDyn [] $ leftmost [[] <$ eErr, unOut <$> eRes]
 
