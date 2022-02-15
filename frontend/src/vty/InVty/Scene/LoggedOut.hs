@@ -84,18 +84,18 @@ loggedOutPages clientEnv = mdo
         text $ pure $ "under construction: " <> tag
         pure (never, eNavbar)
 
-      -- NOTE: "home page /#/"
+      -- NOTE: home page /#/
       homePage = Workflow $ do
         (eBanner, eGo) <- attachConduitBanner . row $ do
           rec eGo <- tile flex $ articleList clientEnv Nothing $ Just <$> eTag
               eTag <- tile (fixed 25) $ mkTagCollecton clientEnv
           pure eGo
         pure (never, leftmost [eNavbar, router eGo])
-      -- NOTE "sign up page /#/register"
+      -- NOTE sign up page /#/register
       signUpPage = Workflow $ do
         (eErr', eVErr', eGo) <- fst . snd <$> splitH3 errorDisplay (signUpBox clientEnv) blank
         pure (leftmost [Left . Left <$> eVErr', Left . Right <$> eErr'], router eGo)
-      -- NOTE "sign in page /#/login"
+      -- NOTE sign in page /#/login
       signInPage = Workflow $ do
         (eGo, eErr', eVErr', eRes') <- fst . snd <$> splitH3 errorDisplay (signInBox clientEnv) blank
         pure

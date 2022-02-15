@@ -95,7 +95,7 @@ loggedInPages clientEnv (LoggedIn (UserAuthWithToken auth token)) = mdo
               eTag <- tile (fixed 25) $ mkTagCollecton clientEnv
           pure eGo
         pure (never, leftmost [eNavbar, router eGo])
-      -- NOTE: /#/settings"
+      -- NOTE: setting page /#/settings
       settingsPage = Workflow $ do
         (_, ((eLogout', eErr', eRes'), _)) <- splitH3 errorDisplay (settingsBox clientEnv dAuth dToken) blank
         pure
@@ -106,8 +106,8 @@ loggedInPages clientEnv (LoggedIn (UserAuthWithToken auth token)) = mdo
               ],
             eNavbar
           )
-      -- NOTE: new article page /#/editor --
-      -- NOTE: edit article page /#/editor/:slug --
+      -- NOTE: new article page /#/editor
+      -- NOTE: edit article page /#/editor/:slug
       editorArticlePage mAid = Workflow $ do
         (_, ((eVErr', eErr', eRes'), _)) <- splitH3 errorDisplay (articleEditBox clientEnv mAid dToken) blank
         pure (leftmost [Left . Left <$> eVErr', Left . Right <$> eErr'], eNavbar)
@@ -121,7 +121,6 @@ loggedInPages clientEnv (LoggedIn (UserAuthWithToken auth token)) = mdo
                 Just (Right prof) -> pure . getField @"username" $ getField @"profile" prof
           profileArticleList clientEnv dUser
         pure (never, leftmost [eNavbar, router eGo])
-      -- favouriteUserPage username = tempPage "article page /#/profile/:name/favorites" -- TEMP FIXME
       router' (Go p) = case p of
         HomePage -> homePage
         EditorPage mAid -> editorArticlePage mAid
