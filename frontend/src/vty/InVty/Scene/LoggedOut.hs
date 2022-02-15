@@ -109,7 +109,7 @@ loggedOutPages clientEnv = mdo
       articlePage slug = tempPage "article page /#/article/:slug" -- TEMP FIXME
       -- NOTE: profile page /#/profile/:name
       profilePage uidOrProfile = Workflow $ do
-        (eBanner, eGo) <- attachProfileBanner $ do
+        (eBanner, (eGo, eTagTab)) <- attachProfileBanner $ do
           let user = case uidOrProfile of
                 Left (UserId uid) -> uid
                 Right prof -> getField @"username" $ getField @"profile" prof

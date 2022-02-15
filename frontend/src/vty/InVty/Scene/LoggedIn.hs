@@ -114,7 +114,7 @@ loggedInPages clientEnv (LoggedIn (UserAuthWithToken auth token)) = mdo
       articlePage slug = tempPage "article page /#/article/:slug" -- TEMP FIXME
       -- NOTE: profile page /#/profile/:name
       profilePage mUidOrProfile = Workflow $ do
-        (eBanner, eGo) <- attachProfileBanner $ do
+        (eBanner, (eGo, eTagTab)) <- attachProfileBanner $ do
           let dUser = case mUidOrProfile of
                 Nothing -> getField @"username" <$> dAuth
                 Just (Left (UserId user)) -> pure user
