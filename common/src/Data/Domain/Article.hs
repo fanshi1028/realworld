@@ -14,13 +14,13 @@
 module Data.Domain.Article where
 
 import Data.Aeson (ToJSON (toEncoding, toJSON), Value (Object))
-import qualified Data.HashMap.Strict as HM
+import qualified Data.Aeson.KeyMap as KM (insert)
 import Data.Domain (Domain (Article))
 import Data.Domain.User (UserProfile)
 import Data.Field.Tag (Tag)
-import GHC.Records (getField)
 import Data.Storage.Map (ContentOf (..), toArticleId)
 import Data.Util.JSON.To (Out, multiWrappedWithCountToEncoding, multiWrappedWithCountToJSON, wrappedToEncoding, wrappedToJSON)
+import GHC.Records (getField)
 
 -- $setup
 -- >>> import Data.Aeson (encode)
@@ -58,17 +58,17 @@ data ArticleWithAuthorProfile = ArticleWithAuthorProfile
 instance Ord ArticleWithAuthorProfile where
   (<=) = (<=) `on` getField @"article"
 
--- | @since 0.2.0.0
+-- | @since 0.4.0.0
 instance ToJSON ArticleWithAuthorProfile where
   toJSON (ArticleWithAuthorProfile a tags b n ur) = case toJSON a of
-    Object hm ->
+    Object km ->
       Object
-        . HM.insert "slug" (toJSON $ toArticleId a)
-        . HM.insert "tagList" (toJSON tags)
-        . HM.insert "favorited" (toJSON b)
-        . HM.insert "favoritesCount" (toJSON n)
-        . HM.insert "author" (toJSON ur)
-        $ hm
+        . KM.insert "slug" (toJSON $ toArticleId a)
+        . KM.insert "tagList" (toJSON tags)
+        . KM.insert "favorited" (toJSON b)
+        . KM.insert "favoritesCount" (toJSON n)
+        . KM.insert "author" (toJSON ur)
+        $ km
     _ -> error "Impossible in ToJSON ArticleWithAuthorProfile"
 -- ^
 -- >>> encode example

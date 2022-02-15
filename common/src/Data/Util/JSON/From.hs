@@ -21,37 +21,36 @@ module Data.Util.JSON.From
   )
 where
 
-import Data.Aeson (FromJSON, Value, withObject, (.:))
+import Data.Aeson (FromJSON, Key, Value, withObject, (.:))
+import Data.Aeson.KeyMap (insert, keys, member)
 import Data.Aeson.Types (Object, Parser)
-import Data.HashMap.Strict (keys)
-import Relude.Extra (insertWith)
 
 -- | @since 0.1.0.0
 -- Wrapping type for making an In 'FromJSON' instance
 newtype In a = In a deriving (Show, Generic)
 
--- | @since 0.1.0.0
+-- | @since 0.4.0.0
 -- Helper to override and provide default value when writing 'FromJSON' instance
-wrappedParseJSON :: FromJSON a => String -> Text -> Value -> Parser (In a)
+wrappedParseJSON :: FromJSON a => String -> Key -> Value -> Parser (In a)
 wrappedParseJSON info key = withObject info $ \o -> In <$> o .: key
 
--- | @since 0.1.0.0
+-- | @since 0.4.0.0
 -- The value is only inserted when the key is not present in the 'Object'
 insert' ::
   -- | key
-  Text ->
+  Key ->
   -- | value
   Value ->
   -- | original Object
   Object ->
   Object
-insert' = insertWith (\_ old -> old)
+insert' k v km = if member k km then km else insert k v km
 
--- | @since 0.1.0.0
+-- | @since 0.4.0.0
 -- only specified keys are acceptable
 acceptOnlyKeys ::
   -- | list of specified keys
-  [Text] ->
+  [Key] ->
   -- | error message to append when unacceptable key presented
   String ->
   -- | the Object to check

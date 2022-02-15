@@ -14,7 +14,7 @@
 -- @since 0.4.0.0
 module Data.Storage.Map.Internal.HasUpdate where
 
-import Data.Aeson (Object)
+import Data.Aeson (Key, Object)
 import Data.Aeson.Types (Parser)
 import Data.Domain (Domain)
 import Data.Generic.HKD (HKD)
@@ -31,10 +31,10 @@ class HasUpdate (s :: Domain) where
 -- An update patch (using with "Data.Generic.HKD")
 type Patch a = HKD (HKD a SG.Last) Maybe
 
--- | @since 0.3.0.0
+-- | @since 0.4.0.0
 updatableKeys ::
   -- | List of keys that can be updated
-  [Text] ->
+  [Key] ->
   -- | Object containing new values of fields to be updated to
   Object ->
   Parser ()

@@ -14,9 +14,9 @@
 module Data.Domain.User where
 
 import Data.Aeson (ToJSON (toEncoding, toJSON), Value (Object), defaultOptions, genericToJSON)
+import qualified Data.Aeson.KeyMap as KM (insert)
 import Data.Authentication.Internal.HasAuth (AuthOf)
 import Data.Domain (Domain (User))
-import qualified Data.HashMap.Strict as HM (insert)
 import Data.Token.Internal.HasToken (TokenOf)
 import Data.Token.Internal.HasToken.User ()
 import Data.Util.JSON.To (Out, wrappedToEncoding, wrappedToJSON)
@@ -49,7 +49,7 @@ data UserProfile = UserProfile
 -- | @since 0.4.0.0
 instance ToJSON UserProfile where
   toJSON (UserProfile auth following') = case genericToJSON defaultOptions auth of
-    Object hm -> Object $ HM.insert "following" (toJSON following') hm
+    Object km -> Object $ KM.insert "following" (toJSON following') km
     _ -> error "Impossible: in ToJSON UserProfile"
 -- ^
 -- >>> encode exampleProfile
@@ -72,7 +72,7 @@ data UserAuthWithToken = UserAuthWithToken (AuthOf 'User) (TokenOf 'User) derivi
 instance ToJSON UserAuthWithToken where
   toJSON (UserAuthWithToken auth token) =
     case toJSON auth of
-      Object hm -> Object $ HM.insert "token" (toJSON token) hm
+      Object km -> Object $ KM.insert "token" (toJSON token) km
       _ -> error "impossible in ToJSON UserAuthWithToken"
 -- ^
 -- >>> encode exampleAuthWithToken
