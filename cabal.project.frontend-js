@@ -3,6 +3,10 @@ packages: .
 package realworld-haskell
  flags: +frontend-js
 
+-- NOTE: to updagte to aeson 2.*
+allow-newer: reflex-dom-core-0.7.0.1:aeson, jsaddle-0.9.8.1:aeson, jsaddle-wkwebview-0.9.8.0:aeson
+constraints: aeson == 2.0.*
+
 -- NOTE: reflex deps, solver gave us v0.6.0.1, OSX build fine, but on linux we got this:
 -- src/Data/HashMap/Monoidal.hs:74:16: error:
 --     • Could not deduce (Data.Functor.Classes.Eq1 (MonoidalHashMap k))
@@ -24,9 +28,17 @@ package realworld-haskell
 allow-newer: reflex-0.8.2.0:witherable
 constraints: witherable >= 0.3 && < 0.5
 
+-- NOTE: [__9] rejecting: patch:+split-these (conflict: semialign==1.2.0.1, patch +split-these => semialign>=1 && <1.2)
+-- NOTE: [_10] rejecting: monoidal-containers-0.6.2.0, monoidal-containers-0.6.1.0,
+-- monoidal-containers-0.6.0.1, monoidal-containers-0.6 (conflict: patch
+-- -split-these => monoidal-containers==0.4.0.0)
+allow-newer: reflex-0.8.2.0:semialign, reflex-dom-core-0.7.0.1:semialign, patch-0.0.5.2:semialign
+constraints: semialign == 1.2.0.1
+
 -- NOTE: https://github.com/snoyberg/http-client/commit/7e9923cd9bc03c9a64fb504bc528095aa710fa86
 -- too lazy to update the hackage index, let's do it next time, update http-client-tls -> 0.3.6.1
 constraints: http-client >= 0.7.11
 
 -- NOTE: servant-streamly may need a version bump on http-client
 allow-newer: servant-streamly-0.1.0.0:http-client
+

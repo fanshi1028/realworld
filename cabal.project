@@ -16,3 +16,22 @@ constraints: http-client >= 0.7.11
 
 -- NOTE: servant-streamly may need a version bump on http-client
 allow-newer: servant-streamly-0.1.0.0:http-client
+
+-- NOTE: to updagte to aeson 2.*
+allow-newer: reflex-dom-core-0.7.0.1:aeson, jsaddle-0.9.8.1:aeson, jsaddle-wkwebview-0.9.8.0:aeson
+-- constraints: aeson == 2.0.*
+
+-- NOTE: to updagte to aeson 2.*, we also need monoidal-containers >= 0.6.2, since below it, it uses aeson < 2.*.
+-- constraints: monoidal-containers == 0.6.2.0
+
+-- NOTE: but monoidal-containers == 0.6.2.0 can't be satisfied due to reflex-0.8.2.0 has witherable >= 0.3 && < 0.4
+-- https://github.com/reflex-frp/reflex/commit/022999ec4fd38917b2e9819a9288c9ae26361949
+allow-newer: reflex-0.8.2.0:witherable
+constraints: witherable >= 0.3 && < 0.5
+
+-- NOTE: [__9] rejecting: patch:+split-these (conflict: semialign==1.2.0.1, patch +split-these => semialign>=1 && <1.2)
+-- NOTE: [_10] rejecting: monoidal-containers-0.6.2.0, monoidal-containers-0.6.1.0,
+-- monoidal-containers-0.6.0.1, monoidal-containers-0.6 (conflict: patch
+-- -split-these => monoidal-containers==0.4.0.0)
+allow-newer: reflex-0.8.2.0:semialign, reflex-dom-core-0.7.0.1:semialign, patch-0.0.5.2:semialign
+constraints: semialign == 1.2.0.1

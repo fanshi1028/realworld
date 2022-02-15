@@ -11,3 +11,10 @@ package realworld-haskell
  flags: +backend-rel8
  -- https://github.com/haskell/cabal/issues/6343
  -- optimization: 2
+
+-- NOTE: https://github.com/snoyberg/http-client/commit/7e9923cd9bc03c9a64fb504bc528095aa710fa86
+-- too lazy to update the hackage index, let's do it next time, frontend use http-client-tls -> 0.3.6.1
+-- Let's use the same constraints on backend!
+allow-newer: servant-streamly-0.1.0.0:http-client
+constraints: http-client >= 0.7.11
+
