@@ -372,6 +372,7 @@ library frontend-vty-internal
     InVty.Component.InputBox
     InVty.Component.List.Article
     InVty.Component.Navbar
+    InVty.Component.Preview.Article
     InVty.Component.Settings
     InVty.Component.SignInBox
     InVty.Component.SignUpBox
