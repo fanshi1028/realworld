@@ -368,9 +368,9 @@ library frontend-vty-internal
   exposed-modules:
     InVty.App
     InVty.Component.ArticleEditBox
-    InVty.Component.ArticleList
     InVty.Component.Banner
     InVty.Component.InputBox
+    InVty.Component.List.Article
     InVty.Component.Navbar
     InVty.Component.Settings
     InVty.Component.SignInBox

@@ -4,7 +4,7 @@
 {-# LANGUAGE ViewPatterns #-}
 
 -- |
-module InVty.Component.ArticleList where
+module InVty.Component.List.Article where
 
 import Client (getArticlesClient, getFeedsClient)
 import Control.Monad.Fix (MonadFix)
