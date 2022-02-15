@@ -18,8 +18,16 @@ constraints: http-client >= 0.7.11
 allow-newer: servant-streamly-0.1.0.0:http-client
 
 -- NOTE: to updagte to aeson 2.*
-allow-newer: reflex-dom-core-0.7.0.1:aeson, jsaddle-0.9.8.1:aeson, jsaddle-wkwebview-0.9.8.0:aeson
+allow-newer: reflex-dom-core-0.7.0.1:aeson
+           , jsaddle-0.9.8.1:aeson
+           , jsaddle-wkwebview-0.9.8.0:aeson
+           , jsaddle-webkit2gtk-0.9.8.1:aeson
+           , jsaddle-warp-0.9.8.0:aeeson
 -- constraints: aeson == 2.0.*
+
+-- NOTE: to updagte to aeson 2.*, need to bump jose to 0.9 too, and it in turns bump base64-bytestring
+allow-newer: jsaddle-0.9.8.1:base64-bytestring
+-- constraints: base64-bytestring == 1.2.*
 
 -- NOTE: to updagte to aeson 2.*, we also need monoidal-containers >= 0.6.2, since below it, it uses aeson < 2.*.
 -- constraints: monoidal-containers == 0.6.2.0
