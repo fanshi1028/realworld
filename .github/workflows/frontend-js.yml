@@ -21,6 +21,6 @@ jobs:
   frontend-js:
     uses: ./.github/workflows/common.yml
     with:
-      flag: frontend-js
+      flag: js
     secrets:
       CACHIX_AUTH_TOKEN: ${{secrets.CACHIX_AUTH_TOKEN}}
