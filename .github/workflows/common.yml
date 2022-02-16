@@ -23,12 +23,12 @@ jobs:
         # NOTE: won't build on ghc921 yet
         ghcVersion: [8107]
         maxMemory: [10, 20]
+        flag: ['${{inputs.flag}}']
         exclude:
           - os: ubuntu-20.04
             maxMemory: 20
           - os: macos-10.15
             maxMemory: 10
-
 
     runs-on: ${{matrix.os}}
 
@@ -48,12 +48,25 @@ jobs:
         extraPullNames: nix-community
 
     - name: nix build exe (-O2)
+      if: ${{matrix.os != 'ubuntu-20.04' || (matrix.flag != 'backend-in-mem' && matrix.flag != 'frontend-js')}}
       run: |
         nix-build -j4 --argstr nixpkgsPin ${{matrix.nixpkgsPin}} \
         --argstr ghcVersion ${{matrix.ghcVersion}} \
-        --argstr exeFlag ${{inputs.flag}} \
+        --argstr exeFlag ${{matrix.flag}} \
         --argstr RTS "-N -A128m -n2m -M${{matrix.maxMemory}}g" \
         --arg materializedDir null \
         --arg checkMaterialization false \
         -A realworld-haskell
 
+    # fix build (by using less memory)
+    - name: nix build exe (-O1)
+      if: ${{matrix.os == 'ubuntu-20.04' && (matrix.flag == 'backend-in-mem' || matrix.flag == 'frontend-js')}}
+      run: |
+        nix-build -j4 --argstr nixpkgsPin ${{matrix.nixpkgsPin}} \
+        --argstr ghcVersion ${{matrix.ghcVersion}} \
+        --argstr exeFlag ${{matrix.flag}} \
+        --argstr RTS "-N -A128m -n2m -M${{matrix.maxMemory}}g" \
+        --arg optimize 1 \
+        --arg materializedDir null \
+        --arg checkMaterialization false \
+        -A realworld-haskell
