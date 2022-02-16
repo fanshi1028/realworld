@@ -4,7 +4,7 @@ on:
   workflow_call:
     inputs:
       flag:
-        description: flag to choose an executable
+        description: part of flag to choose an executable
         required: true
         type: string
     secrets:
@@ -24,11 +24,20 @@ jobs:
         ghcVersion: [8107]
         maxMemory: [10, 20]
         flag: ['${{inputs.flag}}']
+        exe: [backend, frontend]
         exclude:
           - os: ubuntu-20.04
             maxMemory: 20
           - os: macos-10.15
             maxMemory: 10
+          - flag: in-mem
+            exe: frontend
+          - flag: rel8
+            exe: frontend
+          - flag: vty
+            exe: backend
+          - flag: js
+            exe: backend
 
     runs-on: ${{matrix.os}}
 
@@ -47,26 +56,47 @@ jobs:
         authToken: ${{secrets.CACHIX_AUTH_TOKEN}}
         extraPullNames: nix-community
 
-    - name: nix build exe (-O2)
-      if: ${{matrix.os != 'ubuntu-20.04' || (matrix.flag != 'backend-in-mem' && matrix.flag != 'frontend-js')}}
+    - name: nix build exe with test (-O0)
       run: |
         nix-build -j4 --argstr nixpkgsPin ${{matrix.nixpkgsPin}} \
         --argstr ghcVersion ${{matrix.ghcVersion}} \
-        --argstr exeFlag ${{matrix.flag}} \
+        --argstr exeFlag "${{matrix.exe}}-${{matrix.flag}}" \
         --argstr RTS "-N -A128m -n2m -M${{matrix.maxMemory}}g" \
+        --arg optimize 0 \
         --arg materializedDir null \
         --arg checkMaterialization false \
         -A realworld-haskell
 
-    # fix build (by using less memory)
-    - name: nix build exe (-O1)
-      if: ${{matrix.os == 'ubuntu-20.04' && (matrix.flag == 'backend-in-mem' || matrix.flag == 'frontend-js')}}
+    - name: nix build exe (-O2)
       run: |
         nix-build -j4 --argstr nixpkgsPin ${{matrix.nixpkgsPin}} \
         --argstr ghcVersion ${{matrix.ghcVersion}} \
-        --argstr exeFlag ${{matrix.flag}} \
+        --argstr exeFlag "${{matrix.exe}}-${{matrix.flag}}" \
+        --argstr RTS "-N -A128m -n2m -M${{matrix.maxMemory}}g" \
+        --arg materializedDir null \
+        --arg checkMaterialization false \
+        -A realworld-haskell.components.exes.${{matrix.exe}}
+
+    - name: nix build exe (-O1)
+      if: ${{failure()}}
+      run: |
+        nix-build -j4 --argstr nixpkgsPin ${{matrix.nixpkgsPin}} \
+        --argstr ghcVersion ${{matrix.ghcVersion}} \
+        --argstr exeFlag "${{matrix.exe}}-${{matrix.flag}}" \
         --argstr RTS "-N -A128m -n2m -M${{matrix.maxMemory}}g" \
         --arg optimize 1 \
         --arg materializedDir null \
         --arg checkMaterialization false \
-        -A realworld-haskell
+        -A realworld-haskell.components.exes.${{matrix.exe}}
+
+    - name: nix build exe (-O0)
+      if: ${{failure()}}
+      run: |
+        nix-build -j4 --argstr nixpkgsPin ${{matrix.nixpkgsPin}} \
+        --argstr ghcVersion ${{matrix.ghcVersion}} \
+        --argstr exeFlag "${{matrix.exe}}-${{matrix.flag}}" \
+        --argstr RTS "-N -A128m -n2m -M${{matrix.maxMemory}}g" \
+        --arg optimize 0 \
+        --arg materializedDir null \
+        --arg checkMaterialization false \
+        -A realworld-haskell.components.exes.${{matrix.exe}}
