@@ -14,12 +14,12 @@ on:
       - 'Setup.hs'
       - 'nix/**'
       - 'default.nix'
-      - '.github/workflows/common.yml'
+      - '.github/workflows/nix-build.yml'
       - '.github/workflows/frontend-vty.yml'
 
 jobs:
   frontend-vty:
-    uses: ./.github/workflows/common.yml
+    uses: ./.github/workflows/nix-build.yml
     with:
       flag: vty
     secrets:

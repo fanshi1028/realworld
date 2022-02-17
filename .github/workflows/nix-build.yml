@@ -1,4 +1,4 @@
-name: common
+name: nix-build
 
 on:
   workflow_call:
@@ -54,7 +54,7 @@ jobs:
         extraPullNames: nix-community
 
     - name: nix build exe (-O2)
-      if: ${{matrix.os != 'ubuntu-20.04' || (matrix.flag != 'in-mem' && matrix.flag == 'js')}}
+      if: ${{(matrix.os != 'ubuntu-18.04' && matrix.os != 'ubuntu-20.04') || (matrix.flag != 'in-mem' && matrix.flag == 'js')}}
       run: |
         nix-build -j4 --argstr nixpkgsPin ${{matrix.nixpkgsPin}} \
         --argstr ghcVersion ${{matrix.ghcVersion}} \
@@ -64,7 +64,7 @@ jobs:
         -A realworld-haskell
 
     - name: nix build exe (-O1)
-      if: ${{matrix.os == 'ubuntu-20.04' && matrix.flag == 'in-mem'}}
+      if: ${{(matrix.os == 'ubuntu-18.04' || matrix.os == 'ubuntu-20.04') && matrix.flag == 'in-mem'}}
       run: |
         nix-build -j4 --argstr nixpkgsPin ${{matrix.nixpkgsPin}} \
         --argstr ghcVersion ${{matrix.ghcVersion}} \
@@ -75,7 +75,7 @@ jobs:
         -A realworld-haskell
 
     - name: nix build exe (-O0)
-      if: ${{matrix.os == 'ubuntu-20.04' && matrix.flag == 'js'}}
+      if: ${{(matrix.os == 'ubuntu-18.04' || matrix.os == 'ubuntu-20.04') && matrix.flag == 'js'}}
       run: |
         nix-build -j4 --argstr nixpkgsPin ${{matrix.nixpkgsPin}} \
         --argstr ghcVersion ${{matrix.ghcVersion}} \

@@ -14,12 +14,12 @@ on:
       - 'Setup.hs'
       - 'nix/**'
       - 'default.nix'
-      - '.github/workflows/common.yml'
+      - '.github/workflows/nix-build.yml'
       - '.github/workflows/backend-in-mem.yml'
 
 jobs:
   backend-in-mem:
-    uses: ./.github/workflows/common.yml
+    uses: ./.github/workflows/nix-build.yml
     with:
       flag: in-mem
     secrets:
