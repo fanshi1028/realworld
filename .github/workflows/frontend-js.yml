@@ -9,7 +9,7 @@ on:
       - 'frontend/app/**.hs'
       - 'frontend/src/js/**.hs'
       - 'test/**.hs'
-      - 'cabal.project.frontend-dom'
+      - 'cabal.project.frontend-js'
       - 'realworld-haskell.cabal'
       - 'Setup.hs'
       - 'nix/**'
