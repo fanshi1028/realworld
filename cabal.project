@@ -10,6 +10,9 @@ source-repository-package
 package realworld-haskell
  flags: +frontend-vty +frontend-js +backend-in-mem +backend-rel8
 
+package reflex-dom
+ flags: +use-warp
+
 -- NOTE: https://github.com/snoyberg/http-client/commit/7e9923cd9bc03c9a64fb504bc528095aa710fa86
 -- too lazy to update the hackage index, let's do it next time, update http-client-tls -> 0.3.6.1
 constraints: http-client >= 0.7.11
@@ -22,7 +25,7 @@ allow-newer: reflex-dom-core-0.7.0.1:aeson
            , jsaddle-0.9.8.1:aeson
            , jsaddle-wkwebview-0.9.8.0:aeson
            , jsaddle-webkit2gtk-0.9.8.1:aeson
-           , jsaddle-warp-0.9.8.0:aeeson
+           , jsaddle-warp-0.9.8.0:aeson
 -- constraints: aeson == 2.0.*
 
 -- NOTE: to updagte to aeson 2.*, need to bump jose to 0.9 too, and it in turns bump base64-bytestring
