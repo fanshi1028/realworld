@@ -22,14 +22,9 @@ jobs:
         nixpkgsPin: [unstable]
         # NOTE: won't build on ghc921 yet
         ghcVersion: [8107]
-        maxMemory: [10, 20]
         flag: ['${{inputs.flag}}']
         exe: [backend, frontend]
         exclude:
-          - os: ubuntu-20.04
-            maxMemory: 20
-          - os: macos-10.15
-            maxMemory: 10
           - flag: in-mem
             exe: frontend
           - flag: rel8
@@ -64,7 +59,6 @@ jobs:
         nix-build -j4 --argstr nixpkgsPin ${{matrix.nixpkgsPin}} \
         --argstr ghcVersion ${{matrix.ghcVersion}} \
         --argstr exeFlag "${{matrix.exe}}-${{matrix.flag}}" \
-        --argstr RTS "-N -A128m -n2m -M${{matrix.maxMemory}}g" \
         --arg materializedDir null \
         --arg checkMaterialization false \
         -A realworld-haskell
@@ -75,7 +69,6 @@ jobs:
         nix-build -j4 --argstr nixpkgsPin ${{matrix.nixpkgsPin}} \
         --argstr ghcVersion ${{matrix.ghcVersion}} \
         --argstr exeFlag "${{matrix.exe}}-${{matrix.flag}}" \
-        --argstr RTS "-N -A128m -n2m -M${{matrix.maxMemory}}g" \
         --arg optimize 1 \
         --arg materializedDir null \
         --arg checkMaterialization false \
@@ -87,7 +80,6 @@ jobs:
         nix-build -j4 --argstr nixpkgsPin ${{matrix.nixpkgsPin}} \
         --argstr ghcVersion ${{matrix.ghcVersion}} \
         --argstr exeFlag "${{matrix.exe}}-${{matrix.flag}}" \
-        --argstr RTS "-N -A128m -n2m -M${{matrix.maxMemory}}g" \
         --arg optimize 0 \
         --arg materializedDir null \
         --arg checkMaterialization false \
