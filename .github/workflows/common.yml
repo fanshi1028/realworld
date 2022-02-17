@@ -38,6 +38,8 @@ jobs:
             exe: backend
           - flag: js
             exe: backend
+          - flag: warp
+            exe: backend
 
     runs-on: ${{matrix.os}}
 
