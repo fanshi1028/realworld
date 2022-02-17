@@ -58,27 +58,16 @@ jobs:
         authToken: ${{secrets.CACHIX_AUTH_TOKEN}}
         extraPullNames: nix-community
 
-    - name: nix build exe with test (-O0)
+    - name: nix build exe (-O2)
+      if: ${{matrix.os != 'ubuntu-20.04' || matrix.flag == 'rel8' || matrix.flag == 'vty'}}
       run: |
         nix-build -j4 --argstr nixpkgsPin ${{matrix.nixpkgsPin}} \
         --argstr ghcVersion ${{matrix.ghcVersion}} \
         --argstr exeFlag "${{matrix.exe}}-${{matrix.flag}}" \
         --argstr RTS "-N -A128m -n2m -M${{matrix.maxMemory}}g" \
-        --arg optimize 0 \
         --arg materializedDir null \
         --arg checkMaterialization false \
         -A realworld-haskell
-
-    - name: nix build exe (-O2)
-      if: ${{matrix.os == 'macos-10.15' || matrix.flag == 'rel8' || matrix.flag == 'vty'}}
-      run: |
-        nix-build -j4 --argstr nixpkgsPin ${{matrix.nixpkgsPin}} \
-        --argstr ghcVersion ${{matrix.ghcVersion}} \
-        --argstr exeFlag "${{matrix.exe}}-${{matrix.flag}}" \
-        --argstr RTS "-N -A128m -n2m -M${{matrix.maxMemory}}g" \
-        --arg materializedDir null \
-        --arg checkMaterialization false \
-        -A realworld-haskell.components.exes.${{matrix.exe}}
 
     - name: nix build exe (-O1)
       if: ${{matrix.os == 'ubuntu-20.04' && matrix.flag == 'in-mem'}}
@@ -90,7 +79,7 @@ jobs:
         --arg optimize 1 \
         --arg materializedDir null \
         --arg checkMaterialization false \
-        -A realworld-haskell.components.exes.${{matrix.exe}}
+        -A realworld-haskell
 
     - name: nix build exe (-O0)
       if: ${{matrix.os == 'ubuntu-20.04' && matrix.flag == 'js'}}
@@ -102,4 +91,4 @@ jobs:
         --arg optimize 0 \
         --arg materializedDir null \
         --arg checkMaterialization false \
-        -A realworld-haskell.components.exes.${{matrix.exe}}
+        -A realworld-haskell
