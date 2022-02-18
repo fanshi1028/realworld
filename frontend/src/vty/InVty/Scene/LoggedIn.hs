@@ -13,10 +13,10 @@ import Data.Storage.Map (IdOf (UserId))
 import InVty.Component.ArticleEditBox (articleEditBox)
 import InVty.Component.Banner (attachProfileBanner)
 import InVty.Component.ErrorOrResponseDisplay (errorOrResponseDisplay)
-import InVty.Component.List.Article (articleList, profileArticleList)
+import InVty.Component.List.Article (profileArticleList)
 import InVty.Component.Navbar (navBarCommonPartWith, navBarLoggedInPart)
 import InVty.Component.Settings (settingsBox)
-import InVty.Component.TagsCollection (mkTagCollecton)
+import InVty.Page.Home (homePage)
 import InVty.Page.Temp (tempPage)
 import InVty.Util
   ( Go (Go),
@@ -48,11 +48,6 @@ import Reflex.Vty
     HasLayout,
     HasTheme,
     blank,
-    fixed,
-    flex,
-    row,
-    text,
-    tile,
   )
 import Reflex.Workflow (Workflow (Workflow), workflow)
 import Servant.Client (ClientEnv)
@@ -82,12 +77,7 @@ loggedInPages clientEnv (LoggedIn (UserAuthWithToken auth token)) = mdo
   dToken <- holdDyn token $ eAuth <&> \(UserAuthWithToken _ t) -> t
 
   let -- NOTE: home page /#/
-      homePage = Workflow $ do
-        (eBanner, eGo) <- attachProfileBanner . row $ do
-          rec eGo <- tile flex $ articleList clientEnv (Just dToken) $ Just <$> eTag
-              eTag <- tile (fixed 25) $ mkTagCollecton clientEnv
-          pure eGo
-        pure (never, leftmost [eNavbar, router eGo])
+      homePage' = homePage router clientEnv (Just dToken) eNavbar
       -- NOTE: setting page /#/settings
       settingsPage = Workflow $ do
         rec (eLogout', eErr, eRes) <-
@@ -124,14 +114,14 @@ loggedInPages clientEnv (LoggedIn (UserAuthWithToken auth token)) = mdo
           profileArticleList clientEnv dUser
         pure (never, leftmost [eNavbar, router eGo])
       router' (Go p) = case p of
-        HomePage -> homePage
+        HomePage -> homePage'
         EditorPage mAid -> editorArticlePage mAid
         SettingsPage -> settingsPage
         ArticleContentPage slug -> articlePage slug
         ProfilePage mUidOrProfie -> profilePage mUidOrProfie
         -- NOTE: Already logged. Just redirect to home page in case it happen? Or 500?
-        SignInPage -> homePage
-        SignUpPage -> homePage
+        SignInPage -> homePage'
+        SignUpPage -> homePage'
 
       navBar = router' <<$>> navBarCommonPartWith navBarLoggedInPart
 
@@ -139,5 +129,5 @@ loggedInPages clientEnv (LoggedIn (UserAuthWithToken auth token)) = mdo
 
       err404Page err = tempPage "err404 page" eNavbar -- TEMP FIXME
       err500Page err = tempPage "err500 page" eNavbar -- TEMP FIXME
-  (eNavbar, fanEither -> (eLogout, eAuth)) <- splitVRatio 8 navBar $ switchDyn <$> workflow homePage
+  (eNavbar, fanEither -> (eLogout, eAuth)) <- splitVRatio 8 navBar $ switchDyn <$> workflow homePage'
   pure eLogout

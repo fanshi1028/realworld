@@ -379,6 +379,7 @@ library frontend-vty-internal
     InVty.Component.SignUpBox
     InVty.Component.Tab
     InVty.Component.TagsCollection
+    InVty.Page.Home
     InVty.Page.Temp
     InVty.Scene.LoggedIn
     InVty.Scene.LoggedOut

@@ -9,13 +9,13 @@ import Control.Monad.Fix (MonadFix)
 import Data.Generics.Product (getField)
 import Data.Storage.Map (IdOf (UserId))
 import Data.Util.JSON.To (Out (unOut))
-import InVty.Component.Banner (attachConduitBanner, attachProfileBanner)
+import InVty.Component.Banner (attachProfileBanner)
 import InVty.Component.ErrorOrResponseDisplay (errorOrResponseDisplay)
-import InVty.Component.List.Article (articleList, profileArticleList)
+import InVty.Component.List.Article (profileArticleList)
 import InVty.Component.Navbar (navBarCommonPartWith, navBarLoggedOutPart)
 import InVty.Component.SignInBox (signInBox)
 import InVty.Component.SignUpBox (signUpBox)
-import InVty.Component.TagsCollection (mkTagCollecton)
+import InVty.Page.Home (homePage)
 import InVty.Page.Temp (tempPage)
 import InVty.Util
   ( Go (Go),
@@ -44,10 +44,6 @@ import Reflex.Vty
     HasLayout,
     HasTheme,
     blank,
-    fixed,
-    flex,
-    row,
-    tile,
   )
 import Reflex.Workflow (Workflow (Workflow), workflow)
 import Servant.API (Headers (getResponse))
@@ -74,12 +70,7 @@ loggedOutPages ::
   m (Event t LoggedIn)
 loggedOutPages clientEnv = mdo
   let -- NOTE: home page /#/
-      homePage = Workflow $ do
-        (eBanner, eGo) <- attachConduitBanner . row $ do
-          rec eGo <- tile flex $ articleList clientEnv Nothing $ Just <$> eTag
-              eTag <- tile (fixed 25) $ mkTagCollecton clientEnv
-          pure eGo
-        pure (never, leftmost [eNavbar, router eGo])
+      homePage' = homePage router clientEnv Nothing eNavbar
       -- NOTE sign up page /#/register
       signUpPage = Workflow $ do
         rec (eErr, eVErr, eGo) <-
@@ -112,7 +103,7 @@ loggedOutPages clientEnv = mdo
         pure (never, leftmost [eNavbar, router eGo])
 
       router' (Go p) = case p of
-        HomePage -> homePage
+        HomePage -> homePage'
         SignInPage -> signInPage
         SignUpPage -> signUpPage
         ArticleContentPage slug -> articlePage slug
@@ -127,6 +118,6 @@ loggedOutPages clientEnv = mdo
       router eGo = leftmost [router' <$> eGo, eNavbar]
 
       err401Page = tempPage "err401 page" eNavbar -- TEMP FIXME
-  (eNavbar, eRes) <- splitVRatio 8 navBar $ switchDyn <$> workflow homePage
+  (eNavbar, eRes) <- splitVRatio 8 navBar $ switchDyn <$> workflow homePage'
 
   pure $ LoggedIn . unOut . getResponse <$> eRes
