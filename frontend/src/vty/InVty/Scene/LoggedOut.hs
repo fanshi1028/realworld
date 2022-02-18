@@ -14,8 +14,8 @@ import InVty.Component.ErrorOrResponseDisplay (errorOrResponseDisplay)
 import InVty.Component.List.Article (profileArticleList)
 import InVty.Component.Navbar (navBarCommonPartWith, navBarLoggedOutPart)
 import InVty.Component.SignInBox (signInBox)
-import InVty.Component.SignUpBox (signUpBox)
 import InVty.Page.Home (homePage)
+import InVty.Page.SignUp (signUpPage)
 import InVty.Page.Temp (tempPage)
 import InVty.Util
   ( Go (Go),
@@ -69,17 +69,7 @@ loggedOutPages ::
   ClientEnv ->
   m (Event t LoggedIn)
 loggedOutPages clientEnv = mdo
-  let -- NOTE: home page /#/
-      homePage' = homePage router clientEnv Nothing eNavbar
-      -- NOTE sign up page /#/register
-      signUpPage = Workflow $ do
-        rec (eErr, eVErr, eGo) <-
-              fst . snd
-                <$> splitH3
-                  (errorOrResponseDisplay (leftmost [show <$> eVErr, show <$> eErr]) never)
-                  (signUpBox clientEnv)
-                  blank
-        pure (never, router eGo)
+  let homePage' = homePage router clientEnv Nothing eNavbar
       -- NOTE sign in page /#/login
       signInPage = Workflow $ do
         rec (eGo, eErr, eVErr, eRes) <-
@@ -103,9 +93,9 @@ loggedOutPages clientEnv = mdo
         pure (never, leftmost [eNavbar, router eGo])
 
       router' (Go p) = case p of
-        HomePage -> homePage'
+        HomePage -> homePage' -- NOTE: /#/
         SignInPage -> signInPage
-        SignUpPage -> signUpPage
+        SignUpPage -> signUpPage router clientEnv -- NOTE /#/register
         ArticleContentPage slug -> articlePage slug
         ProfilePage (Just uid) -> profilePage uid
         -- NOTE: below shouldn't be triggered from while logged out.
