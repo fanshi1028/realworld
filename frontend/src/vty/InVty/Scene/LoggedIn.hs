@@ -10,11 +10,10 @@ import Control.Monad.Fix (MonadFix)
 import Data.Domain.User (UserAuthWithToken (UserAuthWithToken))
 import Data.Generics.Product (getField)
 import Data.Storage.Map (IdOf (UserId))
-import InVty.Component.ArticleEditBox (articleEditBox)
 import InVty.Component.Banner (attachProfileBanner)
-import InVty.Component.ErrorOrResponseDisplay (errorOrResponseDisplay)
 import InVty.Component.List.Article (profileArticleList)
 import InVty.Component.Navbar (navBarCommonPartWith, navBarLoggedInPart)
+import InVty.Page.ArticleEditor (articleEditorPage)
 import InVty.Page.Home (homePage)
 import InVty.Page.Settings (settingsPage)
 import InVty.Page.Temp (tempPage)
@@ -24,7 +23,7 @@ import InVty.Util
     LoggedOut,
     Page (ArticleContentPage, EditorPage, HomePage, ProfilePage, SettingsPage, SignInPage, SignUpPage),
   )
-import InVty.Util.Split (splitH3, splitVRatio)
+import InVty.Util.Split (splitVRatio)
 import Reflex
   ( Adjustable,
     Event,
@@ -47,7 +46,6 @@ import Reflex.Vty
     HasInput,
     HasLayout,
     HasTheme,
-    blank,
   )
 import Reflex.Workflow (Workflow (Workflow), workflow)
 import Servant.Client (ClientEnv)
@@ -78,16 +76,6 @@ loggedInPages clientEnv (LoggedIn (UserAuthWithToken auth token)) = mdo
 
   let -- NOTE: home page /#/
       homePage' = homePage router clientEnv (Just dToken)
-      -- NOTE: new article page /#/editor
-      -- NOTE: edit article page /#/editor/:slug
-      editorArticlePage mAid = Workflow $ do
-        rec (eVErr, eErr, eRes) <-
-              fst . snd
-                <$> splitH3
-                  (errorOrResponseDisplay (leftmost [show <$> eVErr, show <$> eErr]) $ show <$> eRes)
-                  (articleEditBox clientEnv mAid dToken)
-                  blank
-        pure (never, eNavbar)
       articlePage slug = tempPage "article page /#/article/:slug" eNavbar -- TEMP FIXME
       -- NOTE: profile page /#/profile/:name
       profilePage mUidOrProfile = Workflow $ do
@@ -100,7 +88,7 @@ loggedInPages clientEnv (LoggedIn (UserAuthWithToken auth token)) = mdo
         pure (never, leftmost [eNavbar, router eGo])
       router' (Go p) = case p of
         HomePage -> homePage'
-        EditorPage mAid -> editorArticlePage mAid
+        EditorPage mAidOrContent -> articleEditorPage router clientEnv dToken mAidOrContent -- NOTE: /#/editor, /#/editor/:slug
         SettingsPage -> settingsPage router clientEnv dAuth dToken -- NOTE: /#/settings
         ArticleContentPage slug -> articlePage slug
         ProfilePage mUidOrProfie -> profilePage mUidOrProfie
