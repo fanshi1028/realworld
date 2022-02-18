@@ -7,6 +7,8 @@ on:
     paths:
       - 'common/**.hs'
       - 'backend/app/**.hs'
+      - 'backend/src/api/**.hs'
+      - 'backend/src/effect/**.hs'
       - 'backend/src/carrier/mem/**.hs'
       - 'test/**.hs'
       - 'cabal.project.backend-in-mem'
