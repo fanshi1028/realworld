@@ -15,8 +15,8 @@ import InVty.Component.Banner (attachProfileBanner)
 import InVty.Component.ErrorOrResponseDisplay (errorOrResponseDisplay)
 import InVty.Component.List.Article (profileArticleList)
 import InVty.Component.Navbar (navBarCommonPartWith, navBarLoggedInPart)
-import InVty.Component.Settings (settingsBox)
 import InVty.Page.Home (homePage)
+import InVty.Page.Settings (settingsPage)
 import InVty.Page.Temp (tempPage)
 import InVty.Util
   ( Go (Go),
@@ -78,21 +78,6 @@ loggedInPages clientEnv (LoggedIn (UserAuthWithToken auth token)) = mdo
 
   let -- NOTE: home page /#/
       homePage' = homePage router clientEnv (Just dToken)
-      -- NOTE: setting page /#/settings
-      settingsPage = Workflow $ do
-        rec (eLogout', eErr, eRes) <-
-              fst . snd
-                <$> splitH3
-                  (errorOrResponseDisplay (show <$> eErr) $ show <$> eRes)
-                  (settingsBox clientEnv dAuth dToken)
-                  blank
-        pure
-          ( leftmost
-              [ Left <$> eLogout',
-                Right <$> eRes
-              ],
-            eNavbar
-          )
       -- NOTE: new article page /#/editor
       -- NOTE: edit article page /#/editor/:slug
       editorArticlePage mAid = Workflow $ do
@@ -116,7 +101,7 @@ loggedInPages clientEnv (LoggedIn (UserAuthWithToken auth token)) = mdo
       router' (Go p) = case p of
         HomePage -> homePage'
         EditorPage mAid -> editorArticlePage mAid
-        SettingsPage -> settingsPage
+        SettingsPage -> settingsPage router clientEnv dAuth dToken -- NOTE: /#/settings
         ArticleContentPage slug -> articlePage slug
         ProfilePage mUidOrProfie -> profilePage mUidOrProfie
         -- NOTE: Already logged. Just redirect to home page in case it happen? Or 500?
