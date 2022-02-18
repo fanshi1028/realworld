@@ -4,7 +4,8 @@ module InVty.Component.Banner where
 import Control.Monad.Fix (MonadFix)
 import Data.Text (center)
 import Graphics.Vty (green, reverseVideo, withBackColor, withStyle)
-import InVty.Util (noBorderStyle, padText, splitVRatio)
+import InVty.Util (noBorderStyle, padText)
+import InVty.Util.Split (splitVRatio)
 import Reflex (Behavior, Event)
 import Reflex.Vty
   ( ButtonConfig (ButtonConfig),

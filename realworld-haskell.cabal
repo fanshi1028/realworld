@@ -381,6 +381,7 @@ library frontend-vty-internal
     InVty.Scene.LoggedIn
     InVty.Scene.LoggedOut
     InVty.Util
+    InVty.Util.Split
 
 library frontend-js-internal
   import:          prelude, frontend-js-deps

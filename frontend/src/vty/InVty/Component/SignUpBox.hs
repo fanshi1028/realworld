@@ -16,7 +16,8 @@ import Data.Util.JSON.From (In (In))
 import Data.Util.Validation (ValidationErr)
 import Graphics.Vty (bold, green, withBackColor, withForeColor, withStyle)
 import InVty.Component.InputBox (PlaceHolderMode (Replace), inputWithPlaceHolder)
-import InVty.Util (Go (Go), Page (SignInPage), noBorderStyle, padText, runRequestE, splitH3, splitVRatio)
+import InVty.Util (Go (Go), Page (SignInPage), noBorderStyle, padText, runRequestE)
+import InVty.Util.Split (splitH3, splitVRatio)
 import Reflex (Adjustable, Event, MonadHold, PerformEvent, Performable, Reflex, current, fanEither, leftmost, (<@))
 import Reflex.Vty
   ( HasDisplayRegion,

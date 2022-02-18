@@ -25,7 +25,8 @@ import Data.Util.JSON.To (Out (unOut))
 import GHC.Records (HasField (getField))
 import Graphics.Vty (bold, green, red, withBackColor, withForeColor, withStyle)
 import InVty.Component.InputBox (PlaceHolderMode (Edit, Replace), inputWithPlaceHolder)
-import InVty.Util (LoggedOut (LoggedOut), noBorderStyle, padText, runRequestE, splitH3, splitV3, splitVRatio)
+import InVty.Util (LoggedOut (LoggedOut), noBorderStyle, padText, runRequestE)
+import InVty.Util.Split (splitH3, splitV3, splitVRatio)
 import Reflex
   ( Adjustable,
     Event,

@@ -22,9 +22,8 @@ import InVty.Util
     LoggedIn (LoggedIn),
     Page (ArticleContentPage, EditorPage, HomePage, ProfilePage, SettingsPage, SignInPage, SignUpPage),
     noBorderStyle,
-    splitH3,
-    splitVRatio,
   )
+import InVty.Util.Split (splitH3, splitVRatio)
 import Reflex
   ( Adjustable,
     Event,

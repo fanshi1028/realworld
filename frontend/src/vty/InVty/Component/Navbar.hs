@@ -4,7 +4,8 @@ module InVty.Component.Navbar where
 import Control.Monad.Fix (MonadFix)
 import Graphics.Vty (defAttr, dim, green, withForeColor, withStyle)
 import InVty.Component.Tab (SelectConfig (SelectConfig), TabConfig (TabConfig), Tabable (toTabKey), mkTab)
-import InVty.Util (Go (Go), Page (EditorPage, HomePage, ProfilePage, SettingsPage, SignInPage, SignUpPage), noBorderStyle, splitH3)
+import InVty.Util (Go (Go), Page (EditorPage, HomePage, ProfilePage, SettingsPage, SignInPage, SignUpPage), noBorderStyle)
+import InVty.Util.Split (splitH3)
 import Reflex (Adjustable, Event, MonadHold, PostBuild, Reflex, leftmost, updated)
 import Reflex.Vty
   ( ButtonConfig (ButtonConfig),

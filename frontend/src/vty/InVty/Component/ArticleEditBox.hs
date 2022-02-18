@@ -26,7 +26,8 @@ import Data.Util.JSON.To (Out (unOut))
 import Data.Util.Validation (ValidationErr)
 import Graphics.Vty (bold, green, withBackColor, withStyle)
 import InVty.Component.InputBox (PlaceHolderMode (Edit, Replace), inputWithPlaceHolder)
-import InVty.Util (ArticleIdOrContent, noBorderStyle, padText, runRequestE, splitH3, splitV3)
+import InVty.Util (ArticleIdOrContent, noBorderStyle, padText, runRequestE)
+import InVty.Util.Split (splitH3, splitV3)
 import Reflex
   ( Adjustable,
     Dynamic,
