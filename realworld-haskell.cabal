@@ -369,6 +369,7 @@ library frontend-vty-internal
     InVty.App
     InVty.Component.ArticleEditBox
     InVty.Component.Banner
+    InVty.Component.ErrorOrResponseDisplay
     InVty.Component.InputBox
     InVty.Component.List.Article
     InVty.Component.Navbar

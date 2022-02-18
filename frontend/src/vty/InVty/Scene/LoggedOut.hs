@@ -1,7 +1,6 @@
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE RecursiveDo #-}
-{-# LANGUAGE ViewPatterns #-}
 
 -- | @since 0.4.0.0
 module InVty.Scene.LoggedOut where
@@ -10,8 +9,8 @@ import Control.Monad.Fix (MonadFix)
 import Data.Generics.Product (getField)
 import Data.Storage.Map (IdOf (UserId))
 import Data.Util.JSON.To (Out (unOut))
-import Graphics.Vty (red, withForeColor)
 import InVty.Component.Banner (attachConduitBanner, attachProfileBanner)
+import InVty.Component.ErrorOrResponseDisplay (errorOrResponseDisplay)
 import InVty.Component.List.Article (articleList, profileArticleList)
 import InVty.Component.Navbar (navBarCommonPartWith, navBarLoggedOutPart)
 import InVty.Component.SignInBox (signInBox)
@@ -21,7 +20,6 @@ import InVty.Util
   ( Go (Go),
     LoggedIn (LoggedIn),
     Page (ArticleContentPage, EditorPage, HomePage, ProfilePage, SettingsPage, SignInPage, SignUpPage),
-    noBorderStyle,
   )
 import InVty.Util.Split (splitH3, splitVRatio)
 import Reflex
@@ -32,8 +30,6 @@ import Reflex
     Performable,
     PostBuild,
     TriggerEvent,
-    fanEither,
-    hold,
     leftmost,
     never,
     switchDyn,
@@ -47,10 +43,8 @@ import Reflex.Vty
     HasLayout,
     HasTheme,
     blank,
-    boxStatic,
     fixed,
     flex,
-    localTheme,
     row,
     text,
     tile,
@@ -92,17 +86,23 @@ loggedOutPages clientEnv = mdo
         pure (never, leftmost [eNavbar, router eGo])
       -- NOTE sign up page /#/register
       signUpPage = Workflow $ do
-        (eErr', eVErr', eGo) <- fst . snd <$> splitH3 errorDisplay (signUpBox clientEnv) blank
-        pure (leftmost [Left . Left <$> eVErr', Left . Right <$> eErr'], router eGo)
+        rec (eErr, eVErr, eGo) <-
+              fst . snd
+                <$> splitH3
+                  (errorOrResponseDisplay (leftmost [show <$> eVErr, show <$> eErr]) never)
+                  (signUpBox clientEnv)
+                  blank
+        pure (never, router eGo)
       -- NOTE sign in page /#/login
       signInPage = Workflow $ do
-        (eGo, eErr', eVErr', eRes') <- fst . snd <$> splitH3 errorDisplay (signInBox clientEnv) blank
+        rec (eGo, eErr, eVErr, eRes) <-
+              fst . snd
+                <$> splitH3
+                  (errorOrResponseDisplay (leftmost [show <$> eVErr, show <$> eErr]) never)
+                  (signInBox clientEnv)
+                  blank
         pure
-          ( leftmost
-              [ Left . Left <$> eVErr',
-                Left . Right <$> eErr',
-                Right . Right <$> eRes'
-              ],
+          ( eRes,
             router eGo
           )
       articlePage slug = tempPage "article page /#/article/:slug" -- TEMP FIXME
@@ -131,16 +131,6 @@ loggedOutPages clientEnv = mdo
       router eGo = leftmost [router' <$> eGo, eNavbar]
 
       err401Page = tempPage "err401 page" -- TEMP FIXME
-      errorDisplay =
-        localTheme (flip withForeColor red <$>) . boxStatic noBorderStyle $
-          hold "" (leftmost [show <$> eVErr, show <$> eErr, "" <$ eOk, "" <$ eNavbar])
-            >>= text
-
   (eNavbar, eRes) <- splitVRatio 8 navBar $ switchDyn <$> workflow homePage
 
-  let ( fanEither ->
-          ( fanEither -> (eVErr, eErr),
-            fanEither -> (_, eOk)
-            )
-        ) = eRes
-  pure $ LoggedIn . unOut . getResponse <$> eOk
+  pure $ LoggedIn . unOut . getResponse <$> eRes

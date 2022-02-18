@@ -10,9 +10,9 @@ import Control.Monad.Fix (MonadFix)
 import Data.Domain.User (UserAuthWithToken (UserAuthWithToken))
 import Data.Generics.Product (getField)
 import Data.Storage.Map (IdOf (UserId))
-import Graphics.Vty (red, withForeColor)
 import InVty.Component.ArticleEditBox (articleEditBox)
 import InVty.Component.Banner (attachProfileBanner)
+import InVty.Component.ErrorOrResponseDisplay (errorOrResponseDisplay)
 import InVty.Component.List.Article (articleList, profileArticleList)
 import InVty.Component.Navbar (navBarCommonPartWith, navBarLoggedInPart)
 import InVty.Component.Settings (settingsBox)
@@ -22,7 +22,6 @@ import InVty.Util
     LoggedIn (LoggedIn),
     LoggedOut,
     Page (ArticleContentPage, EditorPage, HomePage, ProfilePage, SettingsPage, SignInPage, SignUpPage),
-    noBorderStyle,
   )
 import InVty.Util.Split (splitH3, splitVRatio)
 import Reflex
@@ -34,7 +33,6 @@ import Reflex
     PostBuild,
     TriggerEvent,
     fanEither,
-    hold,
     holdDyn,
     leftmost,
     never,
@@ -49,10 +47,8 @@ import Reflex.Vty
     HasLayout,
     HasTheme,
     blank,
-    boxStatic,
     fixed,
     flex,
-    localTheme,
     row,
     text,
     tile,
@@ -96,20 +92,29 @@ loggedInPages clientEnv (LoggedIn (UserAuthWithToken auth token)) = mdo
         pure (never, leftmost [eNavbar, router eGo])
       -- NOTE: setting page /#/settings
       settingsPage = Workflow $ do
-        (_, ((eLogout', eErr', eRes'), _)) <- splitH3 errorDisplay (settingsBox clientEnv dAuth dToken) blank
+        rec (eLogout', eErr, eRes) <-
+              fst . snd
+                <$> splitH3
+                  (errorOrResponseDisplay (show <$> eErr) $ show <$> eRes)
+                  (settingsBox clientEnv dAuth dToken)
+                  blank
         pure
           ( leftmost
-              [ Left . Right <$> eErr',
-                Right . Left <$> eLogout',
-                Right . Right <$> eRes'
+              [ Left <$> eLogout',
+                Right <$> eRes
               ],
             eNavbar
           )
       -- NOTE: new article page /#/editor
       -- NOTE: edit article page /#/editor/:slug
       editorArticlePage mAid = Workflow $ do
-        (_, ((eVErr', eErr', eRes'), _)) <- splitH3 errorDisplay (articleEditBox clientEnv mAid dToken) blank
-        pure (leftmost [Left . Left <$> eVErr', Left . Right <$> eErr'], eNavbar)
+        rec (eVErr, eErr, eRes) <-
+              fst . snd
+                <$> splitH3
+                  (errorOrResponseDisplay (leftmost [show <$> eVErr, show <$> eErr]) $ show <$> eRes)
+                  (articleEditBox clientEnv mAid dToken)
+                  blank
+        pure (never, eNavbar)
       articlePage slug = tempPage "article page /#/article/:slug" -- TEMP FIXME
       -- NOTE: profile page /#/profile/:name
       profilePage mUidOrProfile = Workflow $ do
@@ -136,12 +141,5 @@ loggedInPages clientEnv (LoggedIn (UserAuthWithToken auth token)) = mdo
 
       err404Page err = tempPage "err404 page" -- TEMP FIXME
       err500Page err = tempPage "err500 page" -- TEMP FIXME
-      errorDisplay =
-        localTheme (flip withForeColor red <$>) . boxStatic noBorderStyle $
-          hold "" (leftmost [show <$> eErr, show <$> eVErr, "" <$ eAuth, "" <$ eNavbar])
-            >>= text
-  (eNavbar, eRes) <- splitVRatio 8 navBar $ switchDyn <$> workflow homePage
-  let ( fanEither -> (eVErr, eErr),
-        fanEither -> (eLogout, eAuth)
-        ) = fanEither eRes
+  (eNavbar, fanEither -> (eLogout, eAuth)) <- splitVRatio 8 navBar $ switchDyn <$> workflow homePage
   pure eLogout
