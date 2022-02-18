@@ -65,7 +65,7 @@ loggedOutPages ::
   ClientEnv ->
   m (Event t LoggedIn)
 loggedOutPages clientEnv = mdo
-  let homePage' = homePage router clientEnv Nothing eNavbar
+  let homePage' = homePage router clientEnv Nothing
       articlePage slug = tempPage "article page /#/article/:slug" eNavbar -- TEMP FIXME
       -- NOTE: profile page /#/profile/:name
       profilePage uidOrProfile = Workflow $ do

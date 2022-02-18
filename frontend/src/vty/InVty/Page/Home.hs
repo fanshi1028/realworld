@@ -12,7 +12,7 @@ import InVty.Component.Banner (attachConduitBanner, attachProfileBanner)
 import InVty.Component.List.Article (articleList)
 import InVty.Component.TagsCollection (mkTagCollecton)
 import InVty.Util (Go)
-import Reflex (Adjustable, Dynamic, Event, MonadHold, PerformEvent, Performable, PostBuild, TriggerEvent, leftmost, never)
+import Reflex (Adjustable, Dynamic, Event, MonadHold, PerformEvent, Performable, PostBuild, TriggerEvent, never)
 import Reflex.Vty (HasDisplayRegion, HasFocus, HasFocusReader, HasImageWriter, HasInput, HasLayout, HasTheme, fixed, flex, row, tile)
 import Reflex.Workflow (Workflow (Workflow))
 import Servant.Client (ClientEnv)
@@ -37,12 +37,11 @@ homePage ::
   (Event t Go -> Event t (Workflow t m (Event t a))) ->
   ClientEnv ->
   Maybe (Dynamic t (TokenOf 'User)) ->
-  Event t (Workflow t m (Event t a)) ->
   Workflow t m (Event t a)
-homePage router clientEnv mDToken next = Workflow $ do
+homePage router clientEnv mDToken = Workflow $ do
   let attachBanner = maybe attachConduitBanner (const attachProfileBanner) mDToken
   (eBanner, eGo) <- attachBanner . row $ do
     rec eGo <- tile flex $ articleList clientEnv mDToken $ Just <$> eTag
         eTag <- tile (fixed 25) $ mkTagCollecton clientEnv
     pure eGo
-  pure (never, leftmost [next, router eGo])
+  pure (never, router eGo)

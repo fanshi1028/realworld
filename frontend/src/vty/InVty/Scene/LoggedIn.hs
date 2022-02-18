@@ -77,7 +77,7 @@ loggedInPages clientEnv (LoggedIn (UserAuthWithToken auth token)) = mdo
   dToken <- holdDyn token $ eAuth <&> \(UserAuthWithToken _ t) -> t
 
   let -- NOTE: home page /#/
-      homePage' = homePage router clientEnv (Just dToken) eNavbar
+      homePage' = homePage router clientEnv (Just dToken)
       -- NOTE: setting page /#/settings
       settingsPage = Workflow $ do
         rec (eLogout', eErr, eRes) <-
