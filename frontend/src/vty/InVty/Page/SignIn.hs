@@ -14,7 +14,7 @@ import InVty.Util (Go)
 import InVty.Util.Split (splitH3)
 import Reflex (Adjustable, Event, MonadHold, PerformEvent, Performable, leftmost, never)
 import Reflex.Vty (HasDisplayRegion, HasFocus, HasFocusReader, HasImageWriter, HasInput, HasLayout, HasTheme, blank)
-import Reflex.Workflow (Workflow (Workflow))
+import Reflex.Workflow (Workflow)
 import Servant.API (getResponse)
 import Servant.Client (ClientEnv)
 
@@ -35,8 +35,8 @@ signInPage ::
   ) =>
   (Event t Go -> Event t (Workflow t m (Event t UserAuthWithToken))) ->
   ClientEnv ->
-  Workflow t m (Event t UserAuthWithToken)
-signInPage router clientEnv = Workflow $ do
+  m (Event t UserAuthWithToken, Event t (Workflow t m (Event t UserAuthWithToken)))
+signInPage router clientEnv = do
   rec (eGo, eErr, eVErr, eRes) <-
         fst . snd
           <$> splitH3

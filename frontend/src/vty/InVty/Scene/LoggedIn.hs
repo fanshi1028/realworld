@@ -78,7 +78,7 @@ loggedInPages clientEnv (LoggedIn (UserAuthWithToken auth token)) = mdo
       homePage' = homePage router clientEnv (Just dToken)
       articlePage slug = tempPage "article page /#/article/:slug" eNavbar -- TEMP FIXME
       -- NOTE: profile page /#/profile/:name
-      profilePage mUidOrProfile = Workflow $ do
+      profilePage mUidOrProfile = do
         (eBanner, (eGo, eTagTab)) <- attachProfileBanner $ do
           let dUser = case mUidOrProfile of
                 Nothing -> getField @"username" <$> dAuth
@@ -86,7 +86,7 @@ loggedInPages clientEnv (LoggedIn (UserAuthWithToken auth token)) = mdo
                 Just (Right prof) -> pure . getField @"username" $ getField @"profile" prof
           profileArticleList clientEnv dUser
         pure (never, leftmost [eNavbar, router eGo])
-      router' (Go p) = case p of
+      router' (Go p) = Workflow $ case p of
         HomePage -> homePage'
         EditorPage mAidOrContent -> articleEditorPage router clientEnv dToken mAidOrContent -- NOTE: /#/editor, /#/editor/:slug
         SettingsPage -> settingsPage router clientEnv dAuth dToken -- NOTE: /#/settings
@@ -96,11 +96,11 @@ loggedInPages clientEnv (LoggedIn (UserAuthWithToken auth token)) = mdo
         SignInPage -> homePage'
         SignUpPage -> homePage'
 
-      navBar = router' <<$>> navBarCommonPartWith navBarLoggedInPart
-
       router eGo = leftmost [router' <$> eGo, eNavbar]
 
       err404Page err = tempPage "err404 page" eNavbar -- TEMP FIXME
       err500Page err = tempPage "err500 page" eNavbar -- TEMP FIXME
-  (eNavbar, fanEither -> (eLogout, eAuth)) <- splitVRatio 8 navBar $ switchDyn <$> workflow homePage'
+  (eNavbar, fanEither -> (eLogout, eAuth)) <-
+    splitVRatio 8 (router' <<$>> navBarCommonPartWith navBarLoggedInPart) $
+      switchDyn <$> workflow (Workflow homePage')
   pure eLogout

@@ -14,7 +14,7 @@ import InVty.Util (ArticleIdOrContent, Go)
 import InVty.Util.Split (splitH3)
 import Reflex (Adjustable, Dynamic, Event, MonadHold, PerformEvent, Performable, leftmost, never)
 import Reflex.Vty (HasDisplayRegion, HasFocus, HasFocusReader, HasImageWriter, HasInput, HasLayout, HasTheme, blank)
-import Reflex.Workflow (Workflow (Workflow))
+import Reflex.Workflow (Workflow)
 import Servant.Client (ClientEnv)
 
 -- | @since 0.4.0.0
@@ -38,8 +38,8 @@ articleEditorPage ::
   ClientEnv ->
   Dynamic t (TokenOf 'User) ->
   Maybe ArticleIdOrContent ->
-  Workflow t m (Event t a)
-articleEditorPage router clientEnv dToken mAid = Workflow $ do
+  m (Event t a, Event t (Workflow t m (Event t a)))
+articleEditorPage router clientEnv dToken mAid = do
   rec (eVErr, eErr, eRes) <-
         fst . snd
           <$> splitH3

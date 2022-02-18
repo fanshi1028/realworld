@@ -14,7 +14,7 @@ import InVty.Component.TagsCollection (mkTagCollecton)
 import InVty.Util (Go)
 import Reflex (Adjustable, Dynamic, Event, MonadHold, PerformEvent, Performable, PostBuild, TriggerEvent, never)
 import Reflex.Vty (HasDisplayRegion, HasFocus, HasFocusReader, HasImageWriter, HasInput, HasLayout, HasTheme, fixed, flex, row, tile)
-import Reflex.Workflow (Workflow (Workflow))
+import Reflex.Workflow (Workflow)
 import Servant.Client (ClientEnv)
 
 -- | @since 0.4.0.0
@@ -37,8 +37,8 @@ homePage ::
   (Event t Go -> Event t (Workflow t m (Event t a))) ->
   ClientEnv ->
   Maybe (Dynamic t (TokenOf 'User)) ->
-  Workflow t m (Event t a)
-homePage router clientEnv mDToken = Workflow $ do
+  m (Event t a, Event t (Workflow t m (Event t a)))
+homePage router clientEnv mDToken = do
   let attachBanner = maybe attachConduitBanner (const attachProfileBanner) mDToken
   (eBanner, eGo) <- attachBanner . row $ do
     rec eGo <- tile flex $ articleList clientEnv mDToken $ Just <$> eTag

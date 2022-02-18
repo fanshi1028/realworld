@@ -68,7 +68,7 @@ loggedOutPages clientEnv = mdo
   let homePage' = homePage router clientEnv Nothing
       articlePage slug = tempPage "article page /#/article/:slug" eNavbar -- TEMP FIXME
       -- NOTE: profile page /#/profile/:name
-      profilePage uidOrProfile = Workflow $ do
+      profilePage uidOrProfile = do
         (eBanner, (eGo, eTagTab)) <- attachProfileBanner $ do
           let user = case uidOrProfile of
                 Left (UserId uid) -> uid
@@ -76,7 +76,7 @@ loggedOutPages clientEnv = mdo
           profileArticleList clientEnv $ pure user
         pure (never, leftmost [eNavbar, router eGo])
 
-      router' (Go p) = case p of
+      router' (Go p) = Workflow $ case p of
         HomePage -> homePage' -- NOTE: /#/
         SignInPage -> signInPage router clientEnv -- NOTE /#/login
         SignUpPage -> signUpPage router clientEnv -- NOTE /#/register
@@ -87,11 +87,11 @@ loggedOutPages clientEnv = mdo
         EditorPage _ -> err401Page
         SettingsPage -> err401Page
 
-      navBar = router' <<$>> navBarCommonPartWith navBarLoggedOutPart
-
       router eGo = leftmost [router' <$> eGo, eNavbar]
 
       err401Page = tempPage "err401 page" eNavbar -- TEMP FIXME
-  (eNavbar, eAuth) <- splitVRatio 8 navBar $ switchDyn <$> workflow homePage'
+  (eNavbar, eAuth) <-
+    splitVRatio 8 (router' <<$>> navBarCommonPartWith navBarLoggedOutPart) $
+      switchDyn <$> workflow (Workflow homePage')
 
   pure $ LoggedIn <$> eAuth

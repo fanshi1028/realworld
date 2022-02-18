@@ -16,7 +16,7 @@ import InVty.Util (LoggedOut)
 import InVty.Util.Split (splitH3)
 import Reflex (Adjustable, Dynamic, Event, MonadHold, PerformEvent, Performable, leftmost, never)
 import Reflex.Vty (HasDisplayRegion, HasFocus, HasFocusReader, HasImageWriter, HasInput, HasLayout, HasTheme, blank)
-import Reflex.Workflow (Workflow (Workflow))
+import Reflex.Workflow (Workflow)
 import Servant.Client (ClientEnv)
 
 -- | @since 0.4.0.0
@@ -40,8 +40,11 @@ settingsPage ::
   ClientEnv ->
   Dynamic t (AuthOf 'User) ->
   Dynamic t (TokenOf 'User) ->
-  Workflow t m (Event t (Either LoggedOut UserAuthWithToken))
-settingsPage router clientEnv dAuth dToken = Workflow $ do
+  m
+    ( Event t (Either LoggedOut UserAuthWithToken),
+      Event t (Workflow t m (Event t (Either LoggedOut UserAuthWithToken)))
+    )
+settingsPage router clientEnv dAuth dToken = do
   rec (eLogout, eErr, eRes) <-
         fst . snd
           <$> splitH3

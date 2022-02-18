@@ -11,7 +11,7 @@ import InVty.Util (Go)
 import InVty.Util.Split (splitH3)
 import Reflex (Adjustable, Event, MonadHold, PerformEvent, Performable, leftmost, never)
 import Reflex.Vty (HasDisplayRegion, HasFocus, HasFocusReader, HasImageWriter, HasInput, HasLayout, HasTheme, blank)
-import Reflex.Workflow (Workflow (Workflow))
+import Reflex.Workflow (Workflow)
 import Servant.Client (ClientEnv)
 
 -- | @since 0.4.0.0
@@ -31,8 +31,8 @@ signUpPage ::
   ) =>
   (Event t Go -> Event t (Workflow t m (Event t a))) ->
   ClientEnv ->
-  Workflow t m (Event t a)
-signUpPage router clientEnv = Workflow $ do
+  m (Event t a, Event t (Workflow t m (Event t a)))
+signUpPage router clientEnv = do
   rec (eErr, eVErr, eGo) <-
         fst . snd
           <$> splitH3
