@@ -62,13 +62,13 @@ loggedOutPages ::
   m (Event t LoggedIn)
 loggedOutPages clientEnv = mdo
   let homePage' = homePage router clientEnv Nothing
-      articlePage slug = tempPage "article page /#/article/:slug" eNavbar -- TEMP FIXME
 
+      err401Page = tempPage router "err401 page" -- TEMP FIXME
       router' (Go p) = Workflow $ case p of
         HomePage -> homePage' -- NOTE: /#/
         SignInPage -> signInPage router clientEnv -- NOTE /#/login
         SignUpPage -> signUpPage router clientEnv -- NOTE /#/register
-        ArticleContentPage slug -> articlePage slug
+        ArticleContentPage slug -> tempPage router "article page /#/article/:slug" -- TEMP FIXME
         ProfilePage (Just uidOrProf) -> profilePage router clientEnv Nothing uidOrProf -- NOTE: /#/profile/:name
         -- NOTE: below shouldn't be triggered from while logged out.
         ProfilePage Nothing -> err401Page
@@ -77,7 +77,6 @@ loggedOutPages clientEnv = mdo
 
       router eGo = leftmost [router' <$> eGo, eNavbar]
 
-      err401Page = tempPage "err401 page" eNavbar -- TEMP FIXME
   (eNavbar, eAuth) <-
     splitVRatio 8 (router' <<$>> navBarCommonPartWith navBarLoggedOutPart) $
       switchDyn <$> workflow (Workflow homePage')

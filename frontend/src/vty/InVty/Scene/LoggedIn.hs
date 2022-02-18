@@ -74,28 +74,24 @@ loggedInPages clientEnv (LoggedIn (UserAuthWithToken auth token)) = mdo
   dAuth <- holdDyn auth $ eAuth <&> \(UserAuthWithToken auth' _) -> auth'
   dToken <- holdDyn token $ eAuth <&> \(UserAuthWithToken _ t) -> t
 
-  let -- NOTE: home page /#/
-      homePage' = homePage router clientEnv (Just dToken)
-      articlePage slug = tempPage "article page /#/article/:slug" eNavbar -- TEMP FIXME
+  let homePage' = homePage router clientEnv (Just dToken)
       router' (Go p) = Workflow $ case p of
-        HomePage -> homePage'
+        HomePage -> homePage' -- NOTE: /#/
         EditorPage mAidOrContent -> articleEditorPage router clientEnv dToken mAidOrContent -- NOTE: /#/editor, /#/editor/:slug
         SettingsPage -> settingsPage router clientEnv dAuth dToken -- NOTE: /#/settings
-        ArticleContentPage slug -> articlePage slug
+        ArticleContentPage slug -> tempPage router "article page /#/article/:slug" -- TEMP FIXME
         -- NOTE: who am i FIXME what route?
         ProfilePage Nothing -> do
           uid <- UserId . getField @"username" <$> sample (current dAuth)
           profilePage router clientEnv (Just dAuth) $ Left uid
         -- NOTE: /#/profile/:name
         ProfilePage (Just uidOrProfile) -> profilePage router clientEnv (Just dAuth) uidOrProfile
-        -- NOTE: Already logged. Just redirect to home page in case it happen? Or 500?
+        -- NOTE: FIXME Already logged. Just redirect to home page in case it happen? Or 500?
         SignInPage -> homePage'
         SignUpPage -> homePage'
 
       router eGo = leftmost [router' <$> eGo, eNavbar]
 
-      err404Page err = tempPage "err404 page" eNavbar -- TEMP FIXME
-      err500Page err = tempPage "err500 page" eNavbar -- TEMP FIXME
   (eNavbar, fanEither -> (eLogout, eAuth)) <-
     splitVRatio 8 (router' <<$>> navBarCommonPartWith navBarLoggedInPart) $
       switchDyn <$> workflow (Workflow homePage')
