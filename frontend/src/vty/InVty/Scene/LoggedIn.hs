@@ -17,6 +17,7 @@ import InVty.Component.List.Article (articleList, profileArticleList)
 import InVty.Component.Navbar (navBarCommonPartWith, navBarLoggedInPart)
 import InVty.Component.Settings (settingsBox)
 import InVty.Component.TagsCollection (mkTagCollecton)
+import InVty.Page.Temp (tempPage)
 import InVty.Util
   ( Go (Go),
     LoggedIn (LoggedIn),
@@ -80,10 +81,7 @@ loggedInPages clientEnv (LoggedIn (UserAuthWithToken auth token)) = mdo
   dAuth <- holdDyn auth $ eAuth <&> \(UserAuthWithToken auth' _) -> auth'
   dToken <- holdDyn token $ eAuth <&> \(UserAuthWithToken _ t) -> t
 
-  let tempPage tag = Workflow $ do
-        text $ pure $ "under construction: " <> tag
-        pure (never, eNavbar)
-      -- NOTE: home page /#/
+  let -- NOTE: home page /#/
       homePage = Workflow $ do
         (eBanner, eGo) <- attachProfileBanner . row $ do
           rec eGo <- tile flex $ articleList clientEnv (Just dToken) $ Just <$> eTag
@@ -115,7 +113,7 @@ loggedInPages clientEnv (LoggedIn (UserAuthWithToken auth token)) = mdo
                   (articleEditBox clientEnv mAid dToken)
                   blank
         pure (never, eNavbar)
-      articlePage slug = tempPage "article page /#/article/:slug" -- TEMP FIXME
+      articlePage slug = tempPage "article page /#/article/:slug" eNavbar -- TEMP FIXME
       -- NOTE: profile page /#/profile/:name
       profilePage mUidOrProfile = Workflow $ do
         (eBanner, (eGo, eTagTab)) <- attachProfileBanner $ do
@@ -139,7 +137,7 @@ loggedInPages clientEnv (LoggedIn (UserAuthWithToken auth token)) = mdo
 
       router eGo = leftmost [router' <$> eGo, eNavbar]
 
-      err404Page err = tempPage "err404 page" -- TEMP FIXME
-      err500Page err = tempPage "err500 page" -- TEMP FIXME
+      err404Page err = tempPage "err404 page" eNavbar -- TEMP FIXME
+      err500Page err = tempPage "err500 page" eNavbar -- TEMP FIXME
   (eNavbar, fanEither -> (eLogout, eAuth)) <- splitVRatio 8 navBar $ switchDyn <$> workflow homePage
   pure eLogout

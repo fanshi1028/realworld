@@ -16,6 +16,7 @@ import InVty.Component.Navbar (navBarCommonPartWith, navBarLoggedOutPart)
 import InVty.Component.SignInBox (signInBox)
 import InVty.Component.SignUpBox (signUpBox)
 import InVty.Component.TagsCollection (mkTagCollecton)
+import InVty.Page.Temp (tempPage)
 import InVty.Util
   ( Go (Go),
     LoggedIn (LoggedIn),
@@ -46,7 +47,6 @@ import Reflex.Vty
     fixed,
     flex,
     row,
-    text,
     tile,
   )
 import Reflex.Workflow (Workflow (Workflow), workflow)
@@ -73,11 +73,7 @@ loggedOutPages ::
   ClientEnv ->
   m (Event t LoggedIn)
 loggedOutPages clientEnv = mdo
-  let tempPage tag = Workflow $ do
-        text $ pure $ "under construction: " <> tag
-        pure (never, eNavbar)
-
-      -- NOTE: home page /#/
+  let -- NOTE: home page /#/
       homePage = Workflow $ do
         (eBanner, eGo) <- attachConduitBanner . row $ do
           rec eGo <- tile flex $ articleList clientEnv Nothing $ Just <$> eTag
@@ -105,7 +101,7 @@ loggedOutPages clientEnv = mdo
           ( eRes,
             router eGo
           )
-      articlePage slug = tempPage "article page /#/article/:slug" -- TEMP FIXME
+      articlePage slug = tempPage "article page /#/article/:slug" eNavbar -- TEMP FIXME
       -- NOTE: profile page /#/profile/:name
       profilePage uidOrProfile = Workflow $ do
         (eBanner, (eGo, eTagTab)) <- attachProfileBanner $ do
@@ -130,7 +126,7 @@ loggedOutPages clientEnv = mdo
 
       router eGo = leftmost [router' <$> eGo, eNavbar]
 
-      err401Page = tempPage "err401 page" -- TEMP FIXME
+      err401Page = tempPage "err401 page" eNavbar -- TEMP FIXME
   (eNavbar, eRes) <- splitVRatio 8 navBar $ switchDyn <$> workflow homePage
 
   pure $ LoggedIn . unOut . getResponse <$> eRes
