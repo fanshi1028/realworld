@@ -381,6 +381,7 @@ library frontend-vty-internal
     InVty.Component.TagsCollection
     InVty.Page.ArticleEditor
     InVty.Page.Home
+    InVty.Page.Profile
     InVty.Page.Settings
     InVty.Page.SignIn
     InVty.Page.SignUp

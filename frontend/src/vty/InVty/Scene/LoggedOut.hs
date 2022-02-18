@@ -6,12 +6,9 @@
 module InVty.Scene.LoggedOut where
 
 import Control.Monad.Fix (MonadFix)
-import Data.Generics.Product (getField)
-import Data.Storage.Map (IdOf (UserId))
-import InVty.Component.Banner (attachProfileBanner)
-import InVty.Component.List.Article (profileArticleList)
 import InVty.Component.Navbar (navBarCommonPartWith, navBarLoggedOutPart)
 import InVty.Page.Home (homePage)
+import InVty.Page.Profile (profilePage)
 import InVty.Page.SignIn (signInPage)
 import InVty.Page.SignUp (signUpPage)
 import InVty.Page.Temp (tempPage)
@@ -30,7 +27,6 @@ import Reflex
     PostBuild,
     TriggerEvent,
     leftmost,
-    never,
     switchDyn,
   )
 import Reflex.Vty
@@ -67,21 +63,13 @@ loggedOutPages ::
 loggedOutPages clientEnv = mdo
   let homePage' = homePage router clientEnv Nothing
       articlePage slug = tempPage "article page /#/article/:slug" eNavbar -- TEMP FIXME
-      -- NOTE: profile page /#/profile/:name
-      profilePage uidOrProfile = do
-        (eBanner, (eGo, eTagTab)) <- attachProfileBanner $ do
-          let user = case uidOrProfile of
-                Left (UserId uid) -> uid
-                Right prof -> getField @"username" $ getField @"profile" prof
-          profileArticleList clientEnv $ pure user
-        pure (never, leftmost [eNavbar, router eGo])
 
       router' (Go p) = Workflow $ case p of
         HomePage -> homePage' -- NOTE: /#/
         SignInPage -> signInPage router clientEnv -- NOTE /#/login
         SignUpPage -> signUpPage router clientEnv -- NOTE /#/register
         ArticleContentPage slug -> articlePage slug
-        ProfilePage (Just uid) -> profilePage uid
+        ProfilePage (Just uidOrProf) -> profilePage router clientEnv Nothing uidOrProf -- NOTE: /#/profile/:name
         -- NOTE: below shouldn't be triggered from while logged out.
         ProfilePage Nothing -> err401Page
         EditorPage _ -> err401Page

@@ -10,11 +10,10 @@ import Control.Monad.Fix (MonadFix)
 import Data.Domain.User (UserAuthWithToken (UserAuthWithToken))
 import Data.Generics.Product (getField)
 import Data.Storage.Map (IdOf (UserId))
-import InVty.Component.Banner (attachProfileBanner)
-import InVty.Component.List.Article (profileArticleList)
 import InVty.Component.Navbar (navBarCommonPartWith, navBarLoggedInPart)
 import InVty.Page.ArticleEditor (articleEditorPage)
 import InVty.Page.Home (homePage)
+import InVty.Page.Profile (profilePage)
 import InVty.Page.Settings (settingsPage)
 import InVty.Page.Temp (tempPage)
 import InVty.Util
@@ -32,10 +31,11 @@ import Reflex
     Performable,
     PostBuild,
     TriggerEvent,
+    current,
     fanEither,
     holdDyn,
     leftmost,
-    never,
+    sample,
     switchDyn,
   )
 import Reflex.Vty
@@ -77,21 +77,17 @@ loggedInPages clientEnv (LoggedIn (UserAuthWithToken auth token)) = mdo
   let -- NOTE: home page /#/
       homePage' = homePage router clientEnv (Just dToken)
       articlePage slug = tempPage "article page /#/article/:slug" eNavbar -- TEMP FIXME
-      -- NOTE: profile page /#/profile/:name
-      profilePage mUidOrProfile = do
-        (eBanner, (eGo, eTagTab)) <- attachProfileBanner $ do
-          let dUser = case mUidOrProfile of
-                Nothing -> getField @"username" <$> dAuth
-                Just (Left (UserId user)) -> pure user
-                Just (Right prof) -> pure . getField @"username" $ getField @"profile" prof
-          profileArticleList clientEnv dUser
-        pure (never, leftmost [eNavbar, router eGo])
       router' (Go p) = Workflow $ case p of
         HomePage -> homePage'
         EditorPage mAidOrContent -> articleEditorPage router clientEnv dToken mAidOrContent -- NOTE: /#/editor, /#/editor/:slug
         SettingsPage -> settingsPage router clientEnv dAuth dToken -- NOTE: /#/settings
         ArticleContentPage slug -> articlePage slug
-        ProfilePage mUidOrProfie -> profilePage mUidOrProfie
+        -- NOTE: who am i FIXME what route?
+        ProfilePage Nothing -> do
+          uid <- UserId . getField @"username" <$> sample (current dAuth)
+          profilePage router clientEnv (Just dAuth) $ Left uid
+        -- NOTE: /#/profile/:name
+        ProfilePage (Just uidOrProfile) -> profilePage router clientEnv (Just dAuth) uidOrProfile
         -- NOTE: Already logged. Just redirect to home page in case it happen? Or 500?
         SignInPage -> homePage'
         SignUpPage -> homePage'
