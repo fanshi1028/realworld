@@ -9,7 +9,7 @@
 -- Effect of user's action (many)
 --
 -- @since 0.4.0.0
-module Effect.UserAction.Many where
+module UserAction.Many where
 
 import Data.Domain.Article (ArticleWithAuthorProfile)
 

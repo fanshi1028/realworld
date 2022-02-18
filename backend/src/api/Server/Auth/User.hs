@@ -12,16 +12,20 @@
 -- @since 0.1.0.0
 module Server.Auth.User where
 
-import Effect.Authentication (AuthenticationE (Login, Register))
-import Data.Authentication.HasAuth (HasAuth (AuthOf))
+import API.Auth.User (AuthUserApi)
+import Authentication (AuthenticationE (Login, Register))
 import Control.Algebra (Algebra, send)
 import Control.Effect.Error (Throw, throwError)
 import qualified Control.Effect.Reader as R (Reader, ask)
 import Control.Effect.Sum (Member)
-import Effect.Cookie.Xsrf (CreateXsrfCookieE (CreateXsrfCookie))
+import Cookie.Xsrf (CreateXsrfCookieE (CreateXsrfCookie))
+import Data.Authentication.HasAuth (HasAuth (AuthOf))
 import Data.Domain (Domain (User))
 import Data.Domain.User (UserAuthWithToken (..))
-import API.Auth.User (AuthUserApi)
+import Data.Token.HasToken (TokenOf (UserToken))
+import Data.Util.JSON.From (In (In))
+import Data.Util.JSON.To (Out (Out))
+import Data.Util.Validation (ValidationErr)
 import Relude.Extra (un)
 import Servant
   ( AddHeader,
@@ -31,11 +35,7 @@ import Servant
   )
 import Servant.Auth.Server (CookieSettings, JWTSettings)
 import Servant.Auth.Server.Internal.Cookie (applyCookieSettings, applySessionCookieSettings)
-import Effect.Token.Create (CreateTokenE (CreateToken))
-import Data.Token.HasToken (TokenOf (UserToken))
-import Data.Util.JSON.From (In (In))
-import Data.Util.JSON.To (Out (Out))
-import Data.Util.Validation (ValidationErr)
+import Token.Create (CreateTokenE (CreateToken))
 import Validation (validation)
 import Web.Cookie (SetCookie, def, setCookieValue)
 

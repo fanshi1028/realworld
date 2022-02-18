@@ -17,8 +17,8 @@ module InMem.VisitorAction where
 import Control.Algebra (Algebra (alg), type (:+:) (L, R))
 import Control.Effect.Lift (Lift)
 import Control.Effect.Sum (Member)
-import Effect.VisitorAction (VisitorActionE (GetTags))
 import InMem.Relation (ArticleTaggedByTag, ManyToMany (getAllRightManyToMany), ManyToManyRelationE)
+import VisitorAction (VisitorActionE (GetTags))
 
 -- | @since 0.3.0.0
 newtype VisitorActionInMemC (f :: Type -> Type) m a = VisitorActionInMemC

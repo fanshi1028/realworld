@@ -17,9 +17,9 @@ import API.Public (PublicApi, PublicTagApi)
 import Control.Algebra (Algebra, send)
 import Control.Effect.Sum (Member)
 import Data.Util.JSON.To (Out (Out))
-import Effect.VisitorAction (VisitorActionE (GetTags))
 import Servant (ServerT, type (:<|>) ((:<|>)))
 import Servant.Types.SourceT (source)
+import VisitorAction (VisitorActionE (GetTags))
 
 -- * Server
 

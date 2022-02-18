@@ -1,5 +1,3 @@
-{-# LANGUAGE StandaloneDeriving #-}
-
 -- |
 -- Description : Effect
 -- Copyright   : (c) 2021 fanshi1028
@@ -9,7 +7,7 @@
 -- Effect for invalidating token
 --
 -- @since 0.4.0.0
-module Effect.Token.Invalidate where
+module Token.Invalidate where
 
 import Data.Token.HasToken (TokenOf)
 

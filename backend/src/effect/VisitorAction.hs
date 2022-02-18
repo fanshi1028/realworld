@@ -7,7 +7,7 @@
 -- Effect of visitors' action
 --
 -- @since 0.4.0.0
-module Effect.VisitorAction where
+module VisitorAction where
 
 import Data.Field.Tag (Tag)
 

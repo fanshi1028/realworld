@@ -25,13 +25,13 @@ import Data.Domain.User (UserAuthWithToken (UserAuthWithToken))
 import Data.Field.Time (getCurrentTime)
 import qualified Data.List as List (lookup)
 import Data.Token.HasToken (TokenOf (..))
-import Effect.Token.Decode (DecodeTokenE (DecodeToken), InvalidToken)
-import Effect.Token.Decode.JWT (DecodeTokenJWTC (runDecodeTokenJWT), runDecodeTokenJWT)
 import Network.Wai (Request, requestHeaders)
 import Servant (FromHttpApiData (parseHeader))
 import Servant.Auth.Server (CookieSettings, JWTSettings)
 import qualified Servant.Auth.Server as Auth (AuthCheck (AuthCheck))
 import Servant.Auth.Server.Internal.Class (IsAuth (AuthArgs, runAuth))
+import Token.Decode (DecodeTokenE (DecodeToken), InvalidToken)
+import Token.Decode.JWT (DecodeTokenJWTC (runDecodeTokenJWT), runDecodeTokenJWT)
 
 -- | @since 0.1.0.0
 -- extract token from request

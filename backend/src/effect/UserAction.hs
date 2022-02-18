@@ -9,7 +9,7 @@
 -- Effect of users' action
 --
 -- @since 0.4.0.0
-module Effect.UserAction where
+module UserAction where
 
 import Data.Authentication.HasAuth (AuthOf (..))
 import Data.Domain (Domain (Article, Comment, User))

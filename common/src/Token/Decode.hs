@@ -12,7 +12,7 @@
 -- Effect for decoding token
 --
 -- @since 0.4.0.0
-module Effect.Token.Decode
+module Token.Decode
   ( DecodeTokenE (..),
 
     -- * Error

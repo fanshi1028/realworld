@@ -9,7 +9,7 @@
 -- Effect of optionally authed action (many)
 --
 -- @since 0.4.0.0
-module Effect.OptionalAuthAction.Many where
+module OptionalAuthAction.Many where
 
 import Data.Domain (Domain (Article))
 import Data.Domain.Article (ArticleWithAuthorProfile)

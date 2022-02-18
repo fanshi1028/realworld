@@ -2,7 +2,6 @@
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
-{-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE UndecidableInstances #-}
 {-# LANGUAGE ViewPatterns #-}
@@ -18,6 +17,7 @@
 -- @since 0.3.0.0
 module InMem.UserAction.Many where
 
+import Authentication (AuthenticationE (GetCurrentAuth))
 import Control.Algebra (Algebra, alg, send, type (:+:) (L, R))
 import Control.Carrier.NonDet.Church (runNonDetM)
 import Control.Effect.Error (Catch, Throw, catchError, throwError)
@@ -28,12 +28,11 @@ import Data.Domain (Domain (Article, User))
 import Data.Domain.Article (ArticleWithAuthorProfile (ArticleWithAuthorProfile))
 import Data.Storage.Map (ContentOf (..), IdNotFound, toUserId)
 import Data.Util.Sort (getSorted)
-import Effect.Authentication (AuthenticationE (GetCurrentAuth))
-import Effect.OptionalAuthAction (OptionalAuthActionE (GetProfile))
-import Effect.UserAction.Many (UserActionManyE (FeedArticles))
 import GHC.Records (getField)
 import InMem.Relation (ArticleTaggedByTag, ManyToMany (getRelatedLeftManyToMany), ManyToManyRelationE, ToMany (getRelatedToMany), ToManyRelationE, UserCreateArticle, UserFavoriteArticle, UserFollowUser, getRelatedRightManyToMany, isRelatedManyToMany)
 import InMem.Storage (MapInMemE, getByIdMapInMem)
+import OptionalAuthAction (OptionalAuthActionE (GetProfile))
+import UserAction.Many (UserActionManyE (FeedArticles))
 
 -- | @since 0.3.0.0
 newtype UserActionManyInMemC (f :: Type -> Type) m a = UserActionManyInMemC

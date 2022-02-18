@@ -7,7 +7,7 @@
 -- Effect for creating token
 --
 -- @since 0.4.0.0
-module Effect.Token.Create where
+module Token.Create where
 
 import Data.Authentication.HasAuth (AuthOf)
 import Data.Token.HasToken (TokenOf)

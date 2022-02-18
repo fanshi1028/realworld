@@ -2,7 +2,6 @@
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
-{-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE UndecidableInstances #-}
 {-# LANGUAGE ViewPatterns #-}
@@ -18,12 +17,14 @@
 -- @since 0.3.0.0
 module InMem.UserAction where
 
+import Authentication (AuthenticationE (GetCurrentAuth))
 import Control.Algebra (Algebra (alg), send, type (:+:) (L, R))
 import Control.Effect.Catch (Catch)
 import Control.Effect.Error (catchError)
 import qualified Control.Effect.Reader as R (Reader, ask)
 import Control.Effect.Sum (Member)
 import Control.Effect.Throw (Throw, throwError)
+import CreateSalt (CreateSaltE (CreateSalt))
 import Data.Authentication.HasAuth (AuthOf (..), NotAuthorized)
 import Data.Domain (Domain (Article, Comment, User))
 import Data.Domain.Article (ArticleWithAuthorProfile (ArticleWithAuthorProfile))
@@ -53,10 +54,6 @@ import Data.Storage.Map
   )
 import Data.Token.HasToken (TokenOf)
 import Data.UUID (UUID)
-import Effect.Authentication (AuthenticationE (GetCurrentAuth))
-import Effect.CreateSalt (CreateSaltE (CreateSalt))
-import Effect.OptionalAuthAction (OptionalAuthActionE (GetProfile))
-import Effect.UserAction (UserActionE (AddCommentToArticle, CreateArticle, DeleteArticle, DeleteComment, FavoriteArticle, FollowUser, GetCurrentUser, UnfavoriteArticle, UnfollowUser, UpdateArticle, UpdateUser))
 import InMem.Relation
   ( ArticleHasComment,
     ArticleTaggedByTag,
@@ -82,7 +79,9 @@ import InMem.Relation
     relateToMany,
   )
 import InMem.Storage (MapInMemE, deleteByIdMapInMem, getByIdMapInMem, insertMapInMem, updateByIdMapInMem)
+import OptionalAuthAction (OptionalAuthActionE (GetProfile))
 import Relude.Extra ((.~), (^.))
+import UserAction (UserActionE (AddCommentToArticle, CreateArticle, DeleteArticle, DeleteComment, FavoriteArticle, FollowUser, GetCurrentUser, UnfavoriteArticle, UnfollowUser, UpdateArticle, UpdateUser))
 
 -- | @since 0.3.0.0
 newtype UserActionInMemC m a = UserActionInMemC

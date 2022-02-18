@@ -9,7 +9,7 @@
 -- Effect of authentication
 --
 -- @since 0.4.0.0
-module Effect.Authentication
+module Authentication
   ( AuthenticationE (..),
   )
 where

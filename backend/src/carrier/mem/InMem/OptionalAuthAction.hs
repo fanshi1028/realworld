@@ -16,6 +16,7 @@
 -- @since 0.3.0.0
 module InMem.OptionalAuthAction where
 
+import Authentication (AuthenticationE (GetCurrentAuth))
 import Control.Algebra (Algebra (alg), send, type (:+:) (L, R))
 import Control.Effect.Catch (Catch)
 import Control.Effect.Sum (Member)
@@ -26,8 +27,6 @@ import Data.Domain.Article (ArticleWithAuthorProfile (ArticleWithAuthorProfile))
 import Data.Domain.Transform (transform)
 import Data.Domain.User (UserProfile (UserProfile))
 import Data.Storage.Map (ContentOf (..), IdNotFound, toUserId)
-import Effect.Authentication (AuthenticationE (GetCurrentAuth))
-import Effect.OptionalAuthAction (OptionalAuthActionE (GetArticle, GetProfile))
 import GHC.Records (getField)
 import InMem.Relation
   ( ArticleHasComment,
@@ -41,6 +40,7 @@ import InMem.Relation
     isRelatedManyToMany,
   )
 import InMem.Storage (MapInMemE, getByIdMapInMem)
+import OptionalAuthAction (OptionalAuthActionE (GetArticle, GetProfile))
 import Prelude hiding (id)
 
 -- | @since 0.3.0.0

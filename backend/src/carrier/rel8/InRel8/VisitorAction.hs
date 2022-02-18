@@ -15,10 +15,10 @@ module InRel8.VisitorAction where
 
 import Control.Algebra (Algebra (alg), send, type (:+:) (L, R))
 import Control.Effect.Sum (Member)
-import Effect.VisitorAction (VisitorActionE (GetTags))
 import InRel8.Sql (SqlInRel8E (SqlSelect))
 import InRel8.Storage.Schema.Tag (tag, tagSchema)
 import Rel8 (each, select)
+import VisitorAction (VisitorActionE (GetTags))
 
 -- | @since 0.4.0.0
 newtype VisitorActionInRel8C (f :: Type -> Type) m a = VisitorActionInRel8C

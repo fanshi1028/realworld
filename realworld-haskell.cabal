@@ -149,7 +149,6 @@ common common-deps
   build-depends:
     , aeson                 ^>=2.0.0
     , cookie                ^>=0.4.5
-    , cryptonite            ^>=0.29
     , fused-effects         ^>=1.1.1
     , generic-lens          ^>=2.2.0
     , higgledy              ^>=0.4.1
@@ -179,6 +178,14 @@ common backend-api-deps
     , time                  ^>=1.9.3
     , validation-selective  ^>=0.1.0
     , wai                   ^>=3.2.3
+
+common backend-effect-deps
+  build-depends:
+    , cookie                ^>=0.4.5
+    , cryptonite            ^>=0.29
+    , fused-effects         ^>=1.1.1
+    , jose                  ^>=0.9
+    , servant-auth-server   ^>=0.4.7
 
 common frontend-api-deps
   build-depends:
@@ -232,20 +239,8 @@ library
     Data.Util.JSON.To
     Data.Util.Sort
     Data.Util.Validation
-    Effect.Authentication
-    Effect.Cookie.Xsrf
-    Effect.CreateSalt
-    Effect.OptionalAuthAction
-    Effect.OptionalAuthAction.Many
-    Effect.Token.Create
-    Effect.Token.Create.JWT
-    Effect.Token.Decode
-    Effect.Token.Decode.JWT
-    Effect.Token.Invalidate
-    Effect.Token.Invalidate.JWT
-    Effect.UserAction
-    Effect.UserAction.Many
-    Effect.VisitorAction
+    Token.Decode
+    Token.Decode.JWT
 
   other-modules:
     Data.Authentication.Internal.HasAuth
@@ -264,9 +259,29 @@ library
     Data.Token.Internal.HasToken
     Data.Token.Internal.HasToken.User
 
+library backend-effect-internal
+  import:          prelude, backend-effect-deps
+  build-depends:   realworld-haskell
+  hs-source-dirs:  backend/src/effect
+  exposed-modules:
+    Authentication
+    Cookie.Xsrf
+    CreateSalt
+    OptionalAuthAction
+    OptionalAuthAction.Many
+    Token.Create
+    Token.Create.JWT
+    Token.Invalidate
+    Token.Invalidate.JWT
+    UserAction
+    UserAction.Many
+    VisitorAction
+
 library backend-api-internal
   import:          prelude, backend-api-deps
-  build-depends:   realworld-haskell
+  build-depends:
+    , realworld-haskell
+    , backend-effect-internal
   hs-source-dirs:  backend/src/api
   exposed-modules:
     Server
@@ -284,6 +299,7 @@ library backend-in-mem-internal
   hs-source-dirs:  backend/src/carrier/mem
   build-depends:
     , backend-api-internal
+    , backend-effect-internal
     , realworld-haskell
 
   exposed-modules:
@@ -318,6 +334,7 @@ library backend-rel8-internal
 
   build-depends:
     , backend-api-internal
+    , backend-effect-internal
     , realworld-haskell
 
   hs-source-dirs:  backend/src/carrier/rel8
@@ -411,11 +428,12 @@ executable backend
     import:
       common-deps, backend-api-deps, backend-in-mem-deps, backend-rel8-deps
 
-    hs-source-dirs: common/src backend/src/api
+    hs-source-dirs: common/src backend/src/api backend/src/effect
 
   else
     build-depends:
       , backend-api-internal
+      , backend-effect-internal
       , realworld-haskell
 
   if flag(backend-in-mem)
@@ -488,11 +506,12 @@ test-suite test
     prelude, common-deps, backend-api-deps, frontend-api-deps, backend-in-mem-deps, backend-rel8-deps, frontend-vty-deps, frontend-js-deps
 
   if flag(ghcid)
-    hs-source-dirs: common/src backend/src/api frontend/src/api
+    hs-source-dirs: common/src backend/src/api backend/src/effect frontend/src/api
 
   else
     build-depends:
       , backend-api-internal
+      , backend-effect-internal
       , frontend-api-internal
       , realworld-haskell
 

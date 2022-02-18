@@ -14,7 +14,7 @@
 -- Carrier for creating JWT token
 --
 -- @since 0.4.0.0
-module Effect.Token.Create.JWT (CreateTokenJWTC (runCreateTokenJWT)) where
+module Token.Create.JWT (CreateTokenJWTC (runCreateTokenJWT)) where
 
 import Control.Algebra (Algebra (alg), type (:+:) (L, R))
 import qualified Control.Effect.Reader as R (Reader, ask, asks)
@@ -27,9 +27,9 @@ import Data.Authentication.HasAuth (AuthOf)
 import Data.Domain (Domain)
 import Data.Field.Time (Time (Time))
 import Data.Token.HasToken (TokenOf)
-import Effect.Token.Create (CreateTokenE (CreateToken))
 import Relude.Extra (un, (.~))
 import Servant.Auth.Server (CookieSettings (cookieExpires), JWTSettings, ToJWT, encodeJWT, jwtAlg, signingKey)
+import Token.Create (CreateTokenE (CreateToken))
 
 -- | @since 0.3.0.0
 newtype CreateTokenJWTC (s :: Domain) gen (m :: Type -> Type) a = CreateTokenJWTC

@@ -16,18 +16,18 @@
 -- @since 0.4.0.0
 module InRel8.OptionalAuthAction.Many where
 
+import Authentication (AuthenticationE (GetCurrentAuth))
 import Control.Algebra (Algebra (alg), send, type (:+:) (L, R))
 import Control.Effect.Sum (Member)
 import Data.Domain (Domain (User))
 import Data.Storage.Map (IdOf (..))
-import Effect.Authentication (AuthenticationE (GetCurrentAuth))
-import Effect.OptionalAuthAction.Many (OptionalAuthActionManyE (GetComments, ListArticles))
 import InRel8.Sql (SqlInRel8E (SqlSelect))
 import InRel8.Storage (getArticles, getAuthorForComment, getTagForArticle, getUserFavoritingForArticle, isFollow, mkArticle, mkComment)
 import InRel8.Storage.Schema.Comment (commentSchema)
 import qualified InRel8.Storage.Schema.Comment as CommentRel8 (article)
 import InRel8.Storage.Schema.Tag (tag)
 import InRel8.Storage.Schema.User as UserRel8 (UserRel8 (..))
+import OptionalAuthAction.Many (OptionalAuthActionManyE (GetComments, ListArticles))
 import Rel8 (each, filter, lit, present, select, where_, (==.))
 
 -- | @since 0.4.0.0
