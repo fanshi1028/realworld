@@ -8,13 +8,11 @@ module InVty.Scene.LoggedOut where
 import Control.Monad.Fix (MonadFix)
 import Data.Generics.Product (getField)
 import Data.Storage.Map (IdOf (UserId))
-import Data.Util.JSON.To (Out (unOut))
 import InVty.Component.Banner (attachProfileBanner)
-import InVty.Component.ErrorOrResponseDisplay (errorOrResponseDisplay)
 import InVty.Component.List.Article (profileArticleList)
 import InVty.Component.Navbar (navBarCommonPartWith, navBarLoggedOutPart)
-import InVty.Component.SignInBox (signInBox)
 import InVty.Page.Home (homePage)
+import InVty.Page.SignIn (signInPage)
 import InVty.Page.SignUp (signUpPage)
 import InVty.Page.Temp (tempPage)
 import InVty.Util
@@ -22,7 +20,7 @@ import InVty.Util
     LoggedIn (LoggedIn),
     Page (ArticleContentPage, EditorPage, HomePage, ProfilePage, SettingsPage, SignInPage, SignUpPage),
   )
-import InVty.Util.Split (splitH3, splitVRatio)
+import InVty.Util.Split (splitVRatio)
 import Reflex
   ( Adjustable,
     Event,
@@ -43,10 +41,8 @@ import Reflex.Vty
     HasInput,
     HasLayout,
     HasTheme,
-    blank,
   )
 import Reflex.Workflow (Workflow (Workflow), workflow)
-import Servant.API (Headers (getResponse))
 import Servant.Client (ClientEnv)
 
 -- | @since 0.4.0.0
@@ -70,18 +66,6 @@ loggedOutPages ::
   m (Event t LoggedIn)
 loggedOutPages clientEnv = mdo
   let homePage' = homePage router clientEnv Nothing eNavbar
-      -- NOTE sign in page /#/login
-      signInPage = Workflow $ do
-        rec (eGo, eErr, eVErr, eRes) <-
-              fst . snd
-                <$> splitH3
-                  (errorOrResponseDisplay (leftmost [show <$> eVErr, show <$> eErr]) never)
-                  (signInBox clientEnv)
-                  blank
-        pure
-          ( eRes,
-            router eGo
-          )
       articlePage slug = tempPage "article page /#/article/:slug" eNavbar -- TEMP FIXME
       -- NOTE: profile page /#/profile/:name
       profilePage uidOrProfile = Workflow $ do
@@ -94,7 +78,7 @@ loggedOutPages clientEnv = mdo
 
       router' (Go p) = case p of
         HomePage -> homePage' -- NOTE: /#/
-        SignInPage -> signInPage
+        SignInPage -> signInPage router clientEnv -- NOTE /#/login
         SignUpPage -> signUpPage router clientEnv -- NOTE /#/register
         ArticleContentPage slug -> articlePage slug
         ProfilePage (Just uid) -> profilePage uid
@@ -108,6 +92,6 @@ loggedOutPages clientEnv = mdo
       router eGo = leftmost [router' <$> eGo, eNavbar]
 
       err401Page = tempPage "err401 page" eNavbar -- TEMP FIXME
-  (eNavbar, eRes) <- splitVRatio 8 navBar $ switchDyn <$> workflow homePage'
+  (eNavbar, eAuth) <- splitVRatio 8 navBar $ switchDyn <$> workflow homePage'
 
-  pure $ LoggedIn . unOut . getResponse <$> eRes
+  pure $ LoggedIn <$> eAuth

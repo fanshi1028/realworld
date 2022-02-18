@@ -380,6 +380,7 @@ library frontend-vty-internal
     InVty.Component.Tab
     InVty.Component.TagsCollection
     InVty.Page.Home
+    InVty.Page.SignIn
     InVty.Page.SignUp
     InVty.Page.Temp
     InVty.Scene.LoggedIn
