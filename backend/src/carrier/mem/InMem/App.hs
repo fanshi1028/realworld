@@ -55,7 +55,6 @@ import qualified StmContainers.Map as STM (Map)
 import StmContainers.Multimap (Multimap)
 import qualified StmContainers.Multimap as STM.Multimap (newIO)
 import Token.Create.JWT (runCreateTokenJWT)
-import Token.Decode (InvalidToken)
 
 -- | @since 0.4.0.0
 -- Error runner to throw in memory as 'ServerError' with HTTP status code
@@ -70,7 +69,6 @@ runErrors =
         >>> runErrorInMem (asStatus @(Forbidden 'D 'Comment) err403)
         >>> runErrorInMem (asStatus @(NotAuthorized 'User) err403)
         >>> runErrorInMem (asStatus @(NotLogin 'User) err401)
-        >>> runErrorInMem (asStatus @(InvalidToken 'User) err401)
         >>> runErrorInMem (asStatus @(IdNotFound 'Article) err404)
         >>> runErrorInMem (asStatus @(IdNotFound 'Comment) err404)
         >>> runErrorInMem (asStatus @(IdNotFound 'User) err404)

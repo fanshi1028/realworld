@@ -19,7 +19,6 @@ import API.Protected (ProtectedApi)
 import Authentication (AuthenticationE)
 import Control.Algebra (Algebra)
 import qualified Control.Carrier.Reader as R (Reader, local)
-import Control.Effect.Catch (Catch)
 import Control.Effect.Sum (Member)
 import Control.Effect.Throw (Throw, throwError)
 import Cookie.Xsrf (CreateXsrfCookieE)
@@ -40,7 +39,6 @@ import Server.OptionalAuth (optionallyAuthedServer)
 import Server.Protected (authedServer)
 import Server.Public (publicServer)
 import Token.Create (CreateTokenE)
-import Token.Decode (InvalidToken)
 import UserAction (UserActionE)
 import UserAction.Many (UserActionManyE)
 import VisitorAction (VisitorActionE)
@@ -67,7 +65,6 @@ server ::
     Member (Throw ValidationErr) sig,
     Member (Throw (NotLogin 'User)) sig,
     Member (Throw (AuthErr.NotAuthorized 'User)) sig,
-    Member (Catch (InvalidToken 'User)) sig,
     Member (R.Reader (Maybe (TokenOf 'User))) sig,
     Member (R.Reader (Maybe (AuthOf 'User))) sig
   ) =>

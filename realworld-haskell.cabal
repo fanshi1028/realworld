@@ -149,10 +149,8 @@ common common-deps
   build-depends:
     , aeson                 ^>=2.0.0
     , cookie                ^>=0.4.5
-    , fused-effects         ^>=1.1.1
     , generic-lens          ^>=2.2.0
     , higgledy              ^>=0.4.1
-    , jose                  ^>=0.9
     , password              ^>=3.0.0
     , servant               ^>=0.19
     , servant-auth-server   ^>=0.4.7
@@ -239,8 +237,6 @@ library
     Data.Util.JSON.To
     Data.Util.Sort
     Data.Util.Validation
-    Token.Decode
-    Token.Decode.JWT
 
   other-modules:
     Data.Authentication.Internal.HasAuth
