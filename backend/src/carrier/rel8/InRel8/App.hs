@@ -68,7 +68,6 @@ import Servant.Auth.Server (CookieSettings, JWTSettings, defaultCookieSettings, 
 import Servant.Server (errBody)
 import Server (server)
 import Token.Create.JWT (runCreateTokenJWT)
-import Token.Decode (InvalidToken)
 
 -- | @since 0.4.0.0
 asStatus :: Show e => (ServerError -> e -> ServerError)
@@ -88,7 +87,6 @@ runErrors =
         >>> runErrorInRel8 (asStatus @(Forbidden 'D 'Comment) err403)
         >>> runErrorInRel8 (asStatus @(NotAuthorized 'User) err403)
         >>> runErrorInRel8 (asStatus @(NotLogin 'User) err401)
-        >>> runErrorInRel8 (asStatus @(InvalidToken 'User) err401)
         >>> runErrorInRel8 (asStatus @(IdNotFound 'Article) err404)
         >>> runErrorInRel8 (asStatus @(IdNotFound 'Comment) err404)
         >>> runErrorInRel8 (asStatus @(IdNotFound 'User) err404)
