@@ -54,7 +54,7 @@ jobs:
         extraPullNames: nix-community
 
     - name: nix build exe (-O2)
-      if: ${{(matrix.os != 'ubuntu-18.04' && matrix.os != 'ubuntu-20.04') || (matrix.flag != 'in-mem' && matrix.flag == 'js')}}
+      if: ${{(matrix.os != 'ubuntu-18.04' && matrix.os != 'ubuntu-20.04') || (matrix.flag != 'in-mem' && matrix.flag != 'js')}}
       run: |
         nix-build -j4 --argstr nixpkgsPin ${{matrix.nixpkgsPin}} \
         --argstr ghcVersion ${{matrix.ghcVersion}} \
