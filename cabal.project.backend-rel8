@@ -18,3 +18,10 @@ package realworld-haskell
 allow-newer: servant-streamly-0.1.0.0:http-client
 constraints: http-client >= 0.7.11
 
+-- NOTE: for ghc 9.x
+allow-newer: servant-streamly-0.1.0.0:bytestring
+allow-newer: password-3.0.1.0:bytestring
+-- [__8] rejecting: streamly-bytestring-0.1.4 (conflict:
+-- bytestring==0.11.3.1/installed-0.11.3.1, streamly-bytestring =>
+-- bytestring>=0.10.0 && <=0.11.3.0)
+constraints: bytestring == 0.11.3.0

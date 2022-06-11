@@ -68,7 +68,16 @@
                   tools = {
                     cabal = { };
                     hlint = { };
-                    haskell-language-server = { };
+                    # TEMP FIXME https://github.com/haskell/haskell-language-server/issues/2179
+                    # TEMP FIXME https://github.com/input-output-hk/haskell.nix/issues/1272
+                    haskell-language-server = {
+                      version = "latest";
+                      cabalProject = ''
+                        packages: .
+                        package haskell-language-server
+                        flags: -haddockComments
+                      '';
+                    };
                   };
                   # Non-Haskell shell tools go here
                   buildInputs = with pkgs; [ nixpkgs-fmt ];
@@ -112,9 +121,11 @@
           inherit (haskellNix) config;
         };
         flakes = with pkgs; {
-          default = (realworld-haskell-helper "ghc8107" null).flake { };
+          # default = (realworld-haskell-helper "ghc923" null).flake { };
+          # TEMP FIXME https://github.com/haskell/haskell-language-server/issues/2985
+          default = (realworld-haskell-helper "ghc922" null).flake { };
           backend-rel8 =
-            (realworld-haskell-helper "ghc8107" "backend-rel8").flake { };
+            (realworld-haskell-helper "ghc922" "backend-rel8").flake { };
           frontend-js =
             (realworld-haskell-helper "ghc8107" "frontend-js").flake {
               # This adds support for `nix build .#js-unknown-ghcjs-cabal:hello:exe:hello`

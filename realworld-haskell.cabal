@@ -61,8 +61,13 @@ flag frontend-js
 
 common backend-in-mem-deps
   if flag(backend-in-mem)
+    if impl(ghc >= 9.0)
+       build-depends:
+        , cryptonite           ^>=0.30
+    else
+       build-depends:
+        , cryptonite           ^>=0.29
     build-depends:
-      , cryptonite           ^>=0.29
       , focus                ^>=1.0.3
       , fused-effects        ^>=1.1.1
       , generic-lens         ^>=2.2.0
@@ -81,8 +86,13 @@ common backend-in-mem-deps
 
 common backend-rel8-deps
   if flag(backend-rel8)
+    if impl(ghc >= 9.0)
+       build-depends:
+        , cryptonite           ^>=0.30
+    else
+       build-depends:
+        , cryptonite           ^>=0.29
     build-depends:
-      , cryptonite           ^>=0.29
       , fused-effects        ^>=1.1.1
       , generic-lens         ^>=2.2.0
       , hasql                ^>=1.5.0
@@ -96,7 +106,7 @@ common backend-rel8-deps
       , uuid                 ^>=1.3.15
 
 common frontend-vty-deps
-  if flag(frontend-vty)
+  if flag(frontend-vty) && !impl(ghc >= 9.0)
     build-depends:
       , cookie                ^>=0.4.5
       , generic-lens          ^>=2.2.0
@@ -110,7 +120,7 @@ common frontend-vty-deps
       , vty                   ^>=5.28.2
 
 common frontend-js-deps
-  if flag(frontend-js)
+  if flag(frontend-js) && !impl(ghc >= 9.0)
     build-depends:
       , reflex                ^>=0.8.2
       , reflex-dom            ^>=0.6.1.1
@@ -137,9 +147,14 @@ common prelude
   if flag(stan)
     ghc-options: -fwrite-ide-info -hiedir=.hie
 
-  build-depends:
-    , base    ^>=4.14.0
-    , relude  ^>=1.0.0
+  if impl(ghc >= 9.0)
+    build-depends:
+      , base    ^>=4.16.0
+      , relude  ^>=1.1.0
+  else
+    build-depends:
+      , base    ^>=4.14.0
+      , relude  ^>=1.0.0
 
   mixins:
     base hiding (Prelude),
@@ -178,9 +193,14 @@ common backend-api-deps
     , wai                   ^>=3.2.3
 
 common backend-effect-deps
+  if impl(ghc >= 9.0)
+     build-depends:
+      , cryptonite           ^>=0.30
+  else
+     build-depends:
+      , cryptonite           ^>=0.29
   build-depends:
     , cookie                ^>=0.4.5
-    , cryptonite            ^>=0.29
     , fused-effects         ^>=1.1.1
     , jose                  ^>=0.9
     , servant-auth-server   ^>=0.4.7
@@ -370,7 +390,7 @@ library frontend-api-internal
 library frontend-vty-internal
   import:          prelude, frontend-vty-deps
 
-  if !flag(frontend-vty)
+  if !flag(frontend-vty) || impl(ghc >= 9.0)
     buildable: False
 
   build-depends:
@@ -407,7 +427,7 @@ library frontend-vty-internal
 library frontend-js-internal
   import:          prelude, frontend-js-deps
 
-  if !flag(frontend-js)
+  if !flag(frontend-js) || impl(ghc >= 9.0)
     buildable: False
 
   build-depends:
@@ -470,7 +490,8 @@ executable frontend
       , frontend-api-internal
       , realworld-haskell
 
-  if flag(frontend-vty)
+  if flag(frontend-vty) && !impl(ghc >= 9.0)
+-- conflict: reflex-vty => base>=4.10.0 && <4.15
     cpp-options: -DfrontendVty
     if flag(ghcid)
       hs-source-dirs: frontend/src/vty
@@ -478,7 +499,8 @@ executable frontend
     else
       build-depends: frontend-vty-internal
 
-  elif flag(frontend-js)
+  elif flag(frontend-js) && !impl(ghc >= 9.0)
+-- conflict: reflex-dom => base>=4.7 && <4.15
     cpp-options: -DfrontendJs
     if flag(ghcid)
       hs-source-dirs: frontend/src/js
@@ -538,7 +560,7 @@ test-suite test
     else
       build-depends: backend-rel8-internal
 
-  if flag(frontend-vty)
+  if flag(frontend-vty) && !impl(ghc >= 9.0)
     cpp-options: -DfrontendVty
     if flag(ghcid)
       hs-source-dirs: frontend/src/vty
@@ -546,7 +568,7 @@ test-suite test
     else
       build-depends: frontend-vty-internal
 
-  if flag(frontend-js)
+  if flag(frontend-js) && !impl(ghc >= 9.0)
     cpp-options: -DfrontendJs
     if flag(ghcid)
       hs-source-dirs: frontend/src/js
