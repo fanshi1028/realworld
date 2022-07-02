@@ -49,81 +49,78 @@
       let
         overlays = [
           haskellNix.overlay
-          (final: prev:
-            let
-              helper = compiler-nix-name: flag:
-                final.haskell-nix.project' {
-                  src = prev.haskell-nix.haskellLib.cleanGit {
-                    name = "realworld-haskell";
-                    src = ./.;
-                  };
-                  inherit compiler-nix-name;
-
-                  cabalProjectFileName = pkgs.lib.mkForce ("cabal.project"
-                    + pkgs.lib.optionalString (flag != null) ".${flag}");
-                  # This is used by `nix develop .`
-                  shell = {
-                    # to open a shell for use with
-                    # `cabal`, `hlint` and `haskell-language-server`
-                    tools = {
-                      cabal = { };
-                      hlint = { };
-                      haskell-language-server = { };
-                    };
-                    # Non-Haskell shell tools go here
-                    buildInputs = with pkgs; [ nixpkgs-fmt ];
-                    # This adds `js-unknown-ghcjs-cabal` to the shell.
-                    # FIXME
-                    # crossPlatforms = p:
-                    #   # [ p.ghcjs ];
-                    #   pkgs.lib.optionals (flag == "frontend-js") [ p.ghcjs ];
-                  };
-                  modules = [{
-                    # https://github.com/composewell/streamly/issues/1132
-                    # https://github.com/NixOS/cabal2nix/issues/470
-                    # https://github.com/input-output-hk/haskell.nix/issues/1164
-                    # TEMP FIXME
-                    packages.streamly.components.library.libs =
-                      nixpkgs.lib.optionals (system == "x86_64-darwin")
-                      [ pkgs.darwin.apple_sdk.frameworks.Cocoa ];
-
-                    packages.realworld-haskell = {
-                      # NOTE: https://github.com/input-output-hk/haskell.nix/issues/1165
-                      # flags = lib.genAttrs cabalFlags (flag: lib.mkOverride 10 true);
-                      ghcOptions = [
-                        # "-j${builtins.toString threads}"
-                        "-j"
-                        # "-O${builtins.toString optimize}"
-                        "-O2"
-                        # "+RTS ${RTS} -RTS"
-                        "+RTS -N -A128m -n2m -RTS"
-                      ];
-                      components.exes =
-                        # pkgs.lib.genAttrs [ "frontend" "backend" ]
-                        pkgs.lib.genAttrs [ "frontend" ]
-                        (_: { dontStrip = false; });
-                    };
-                  }];
+          (final: prev: {
+            # This overlay adds our project to pkgs
+            realworld-haskell-helper = compiler-nix-name: flag:
+              final.haskell-nix.project' {
+                src = prev.haskell-nix.haskellLib.cleanGit {
+                  name = "realworld-haskell";
+                  src = ./.;
                 };
-            in {
-              # This overlay adds our project to pkgs
-              realworld-haskell = helper "ghc8107" null;
-              realworld-haskell-frontend-js = helper "ghc8107" "frontend-js";
-              realworld-haskell-backend-rel8 = helper "ghc8107" "backend-rel8";
-            })
+                inherit compiler-nix-name;
+
+                cabalProjectFileName = pkgs.lib.mkForce ("cabal.project"
+                  + pkgs.lib.optionalString (flag != null) ".${flag}");
+                # This is used by `nix develop .`
+                shell = {
+                  # to open a shell for use with
+                  # `cabal`, `hlint` and `haskell-language-server`
+                  tools = {
+                    cabal = { };
+                    hlint = { };
+                    haskell-language-server = { };
+                  };
+                  # Non-Haskell shell tools go here
+                  buildInputs = with pkgs; [ nixpkgs-fmt ];
+                  # This adds `js-unknown-ghcjs-cabal` to the shell.
+                  # FIXME
+                  # crossPlatforms = p:
+                  #   # [ p.ghcjs ];
+                  #   pkgs.lib.optionals (flag == "frontend-js") [ p.ghcjs ];
+                };
+                modules = [{
+                  # https://github.com/composewell/streamly/issues/1132
+                  # https://github.com/NixOS/cabal2nix/issues/470
+                  # https://github.com/input-output-hk/haskell.nix/issues/1164
+                  # TEMP FIXME
+                  packages.streamly.components.library.libs =
+                    nixpkgs.lib.optionals (system == "x86_64-darwin")
+                    [ pkgs.darwin.apple_sdk.frameworks.Cocoa ];
+
+                  packages.realworld-haskell = {
+                    # NOTE: https://github.com/input-output-hk/haskell.nix/issues/1165
+                    # flags = lib.genAttrs cabalFlags (flag: lib.mkOverride 10 true);
+                    ghcOptions = [
+                      # "-j${builtins.toString threads}"
+                      "-j"
+                      # "-O${builtins.toString optimize}"
+                      "-O2"
+                      # "+RTS ${RTS} -RTS"
+                      "+RTS -N -A128m -n2m -RTS"
+                    ];
+                    components.exes =
+                      # pkgs.lib.genAttrs [ "frontend" "backend" ]
+                      pkgs.lib.genAttrs [ "frontend" ]
+                      (_: { dontStrip = false; });
+                  };
+                }];
+              };
+          })
         ];
         pkgs = import nixpkgs {
           inherit system overlays;
           inherit (haskellNix) config;
         };
-        flakes = {
-          default = pkgs.realworld-haskell.flake { };
-          backend-rel8 = pkgs.realworld-haskell-backend-rel8.flake { };
-          frontend-js = pkgs.realworld-haskell-frontend-js.flake {
-            # This adds support for `nix build .#js-unknown-ghcjs-cabal:hello:exe:hello`
-            # FIXME
-            crossPlatforms = p: [ p.ghcjs ];
-          };
+        flakes = with pkgs; {
+          default = (realworld-haskell-helper "ghc8107" null).flake { };
+          backend-rel8 =
+            (realworld-haskell-helper "ghc8107" "backend-rel8").flake { };
+          frontend-js =
+            (realworld-haskell-helper "ghc8107" "frontend-js").flake {
+              # This adds support for `nix build .#js-unknown-ghcjs-cabal:hello:exe:hello`
+              # FIXME
+              crossPlatforms = p: [ p.ghcjs ];
+            };
         };
       in flakes.default // rec {
         # Built by `nix build .`
