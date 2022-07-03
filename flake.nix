@@ -19,7 +19,7 @@
           # TEMP FIXME https://github.com/haskell/haskell-language-server/issues/2985
           "ghc923"
         ];
-        exes = [ "default" "frontend-js" "backend-js" ];
+        exes = [ "default" "frontend-js" "backend-rel8" ];
         name = "realworld-haskell";
         overlays = [
           haskellNix.overlay
