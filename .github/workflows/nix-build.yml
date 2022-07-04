@@ -3,7 +3,7 @@ name: nix-build
 on:
   workflow_call:
     inputs:
-      flag:
+      exe:
         description: part of flag to choose an executable
         required: true
         type: string
@@ -18,33 +18,24 @@ jobs:
       matrix:
         # https://docs.github.com/en/actions/using-github-hosted-runners/about-github-hosted-runners
         os: [ubuntu-18.04, ubuntu-20.04, macos-10.15, macos-11]
-        # https://github.com/input-output-hk/haskell.nix/blob/85755332c0698ab90d061c079f3c25710675bb85/docs/reference/supported-ghc-versions.md
-        nixpkgsPin: [unstable]
-        # NOTE: won't build on ghc921 yet
-        ghcVersion: [8107]
-        flag: ['${{inputs.flag}}']
-        exe: [backend, frontend]
+        ghcVersion: [8107, 922, 923]
+        exe: ['${{inputs.exe}}']
         exclude:
-          - flag: in-mem
-            exe: frontend
-          - flag: rel8
-            exe: frontend
-          - flag: vty
-            exe: backend
-          - flag: js
-            exe: backend
-          - flag: warp
-            exe: backend
+          - ghcVersion: 922
+            exe: frontend-js
+          - ghcVersion: 923
+            exe: frontend-js
 
     runs-on: ${{matrix.os}}
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3.0.2
 
-    - uses: cachix/install-nix-action@v16
+    - uses: cachix/install-nix-action@v17
       with:
         extra_nix_config: |
-          substituters = https://cache.nixos.org https://hydra.iohk.io
+          # access-tokens = github.com=${{ secrets.GITHUB_TOKEN }}
+          substituters = https://cache.nixos.org https://cache.iog.io
           trusted-public-keys = cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY= hydra.iohk.io:f/Ea+s+dFdN+3Y/G+FDgSq+a5NEWhJGzdjvKNGv0/EQ=
 
     - uses: cachix/cachix-action@v10
@@ -54,33 +45,28 @@ jobs:
         extraPullNames: nix-community
 
     - name: nix build exe (-O2)
-      if: ${{(matrix.os != 'ubuntu-18.04' && matrix.os != 'ubuntu-20.04') || (matrix.flag != 'in-mem' && matrix.flag != 'js')}}
+      # if: ${{(matrix.os != 'ubuntu-18.04' && matrix.os != 'ubuntu-20.04') || (matrix.flag != 'in-mem' && matrix.flag != 'js')}}
       run: |
-        nix-build -j4 --argstr nixpkgsPin ${{matrix.nixpkgsPin}} \
-        --argstr ghcVersion ${{matrix.ghcVersion}} \
-        --argstr exeFlag "${{matrix.exe}}-${{matrix.flag}}" \
-        --arg materializedDir null \
-        --arg checkMaterialization false \
-        -A realworld-haskell
+        nix build -j4 .#ghc${{martrix.ghcVersion}}.${{matrix.exe}}
 
-    - name: nix build exe (-O1)
-      if: ${{(matrix.os == 'ubuntu-18.04' || matrix.os == 'ubuntu-20.04') && matrix.flag == 'in-mem'}}
-      run: |
-        nix-build -j4 --argstr nixpkgsPin ${{matrix.nixpkgsPin}} \
-        --argstr ghcVersion ${{matrix.ghcVersion}} \
-        --argstr exeFlag "${{matrix.exe}}-${{matrix.flag}}" \
-        --arg optimize 1 \
-        --arg materializedDir null \
-        --arg checkMaterialization false \
-        -A realworld-haskell
+    # - name: nix build exe (-O1)
+    #   if: ${{(matrix.os == 'ubuntu-18.04' || matrix.os == 'ubuntu-20.04') && matrix.flag == 'in-mem'}}
+    #   run: |
+    #     nix-build -j4 --argstr nixpkgsPin ${{matrix.nixpkgsPin}} \
+    #     --argstr ghcVersion ${{matrix.ghcVersion}} \
+    #     --argstr exeFlag "${{matrix.exe}}-${{matrix.flag}}" \
+    #     --arg optimize 1 \
+    #     --arg materializedDir null \
+    #     --arg checkMaterialization false \
+    #     -A realworld-haskell
 
-    - name: nix build exe (-O0)
-      if: ${{(matrix.os == 'ubuntu-18.04' || matrix.os == 'ubuntu-20.04') && matrix.flag == 'js'}}
-      run: |
-        nix-build -j4 --argstr nixpkgsPin ${{matrix.nixpkgsPin}} \
-        --argstr ghcVersion ${{matrix.ghcVersion}} \
-        --argstr exeFlag "${{matrix.exe}}-${{matrix.flag}}" \
-        --arg optimize 0 \
-        --arg materializedDir null \
-        --arg checkMaterialization false \
-        -A realworld-haskell
+    # - name: nix build exe (-O0)
+    #   if: ${{(matrix.os == 'ubuntu-18.04' || matrix.os == 'ubuntu-20.04') && matrix.flag == 'js'}}
+    #   run: |
+    #     nix-build -j4 --argstr nixpkgsPin ${{matrix.nixpkgsPin}} \
+    #     --argstr ghcVersion ${{matrix.ghcVersion}} \
+    #     --argstr exeFlag "${{matrix.exe}}-${{matrix.flag}}" \
+    #     --arg optimize 0 \
+    #     --arg materializedDir null \
+    #     --arg checkMaterialization false \
+    #     -A realworld-haskell
