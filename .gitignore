@@ -40,3 +40,4 @@ node_modules/
 /result
 /backend/.postgres/data/
 /backend/.postgres/.tmp-postgres/
+/shells/
