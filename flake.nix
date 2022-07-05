@@ -19,7 +19,9 @@
           # TEMP FIXME https://github.com/haskell/haskell-language-server/issues/2985
           "ghc923"
         ];
-        exes = [ "default" "frontend-js" "backend-rel8" ];
+        backend-exes = [ "in-mem" "rel8" ];
+        frontend-exes = [ "js" "vty" ];
+        exes = backend-exes ++ frontend-exes;
         name = "realworld-haskell";
         overlays = [
           haskellNix.overlay
@@ -36,8 +38,12 @@
                 };
                 inherit compiler-nix-name;
 
-                cabalProjectFileName = pkgs.lib.mkForce ("cabal.project"
-                  + pkgs.lib.optionalString (exe != "default") ".${exe}");
+                cabalProjectFileName = pkgs.lib.mkForce "cabal.project.${
+                    if builtins.elem exe backend-exes then
+                      "backend"
+                    else
+                      "frontend"
+                  }-${exe}";
                 # This is used by `nix develop .`
                 shell = {
                   # to open a shell for use with
@@ -48,10 +54,7 @@
                     # TEMP FIXME https://github.com/haskell/haskell-language-server/issues/2179
                     # TEMP FIXME https://github.com/input-output-hk/haskell.nix/issues/1272
                     haskell-language-server = pkgs.lib.optionalAttrs
-                      (builtins.any (compiler: compiler-nix-name == compiler) [
-                        "ghc922"
-                        "ghc923"
-                      ]) {
+                      (builtins.elem compiler-nix-name [ "ghc922" "ghc923" ]) {
                         version = "latest";
                         cabalProject = ''
                           packages: .
@@ -89,7 +92,10 @@
                       "+RTS -N -A128m -n2m -RTS"
                     ];
                     components.exes = pkgs.lib.genAttrs [
-                      (if exe == "frontend-js" then "frontend" else "backend")
+                      (if builtins.elem exe frontend-exes then
+                        "frontend"
+                      else
+                        "backend")
                     ] (_: { dontStrip = false; });
                   };
                 }];
@@ -102,30 +108,28 @@
         };
         flakes = pkgs.lib.genAttrs supported-compilers (compiler:
           let helper = exe: (pkgs.realworld-haskell-helper compiler exe).flake;
-          in {
-            default = helper "default" { };
-            backend-rel8 = helper "backend-rel8" { };
-            frontend-js = helper "frontend-js" {
+          in pkgs.lib.genAttrs [ "in-mem" "rel8" "vty" ] (exe: helper exe { })
+          // {
+            js = helper "js" {
               # This adds support for `nix build .#js-unknown-ghcjs-cabal:hello:exe:hello`
               # FIXME
               crossPlatforms = p: [ p.ghcjs ];
             };
-          }
-
-        );
+          });
         backend-exe = "${name}:exe:backend";
         frontend-exe = "${name}:exe:frontend";
-        packagesAndApps = pkgs.lib.genAttrs [ "apps" "packages" ] (key:
-          flakes.ghc922.default."${key}" // {
-            backend-rel8 = flakes.ghc922.backend-rel8."${key}"."${backend-exe}";
-            frontend-js = flakes.ghc8107.frontend-js."${key}"."${frontend-exe}";
-            default = flakes.ghc922.default."${key}"."${backend-exe}";
-          });
+        packagesAndApps = pkgs.lib.genAttrs [ "apps" "packages" ] (key: rec {
+          in-mem = flakes.ghc922.in-mem."${key}"."${backend-exe}";
+          rel8 = flakes.ghc922.rel8."${key}"."${backend-exe}";
+          js = flakes.ghc8107.js."${key}"."${frontend-exe}";
+          vty = flakes.ghc8107.vty."${key}"."${frontend-exe}";
+          default = in-mem;
+        });
         devShells = pkgs.lib.genAttrs supported-compilers (compiler:
-          pkgs.lib.genAttrs exes (exe: flakes."${compiler}"."${exe}".devShell));
-      in flakes.ghc922.default // packagesAndApps // {
-        inherit devShells;
-        devShell = devShells.ghc922.default;
+          pkgs.lib.genAttrs exes
+          (exe: flakes."${compiler}"."${exe}".devShells.default));
+      in flakes.ghc922.in-mem // packagesAndApps // {
+        devShells = devShells // { default = devShells.ghc922.in-mem; };
       });
 
 }
