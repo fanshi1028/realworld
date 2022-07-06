@@ -116,15 +116,21 @@
               crossPlatforms = p: [ p.ghcjs ];
             };
           });
-        backend-exe = "${name}:exe:backend";
-        frontend-exe = "${name}:exe:frontend";
-        packagesAndApps = pkgs.lib.genAttrs [ "apps" "packages" ] (key: rec {
-          in-mem = flakes.ghc922.in-mem."${key}"."${backend-exe}";
-          rel8 = flakes.ghc922.rel8."${key}"."${backend-exe}";
-          js = flakes.ghc8107.js."${key}"."${frontend-exe}";
-          vty = flakes.ghc8107.vty."${key}"."${frontend-exe}";
-          default = in-mem;
-        });
+        packagesAndApps = pkgs.lib.genAttrs [ "apps" "packages" ] (key:
+          let
+            value = pkgs.lib.genAttrs supported-compilers (compiler:
+              pkgs.lib.genAttrs exes (exe:
+                flakes."${compiler}"."${exe}"."${key}"."${name}:exe:${
+                  if builtins.elem exe frontend-exes then
+                    "frontend"
+                  else
+                    "backend"
+                }"));
+            value2 = pkgs.lib.genAttrs exes (exe:
+              value."ghc${
+                if builtins.elem exe frontend-exes then "8107" else "922"
+              }"."${exe}");
+          in value // value2 // { default = value2.in-mem; });
         devShells = pkgs.lib.genAttrs supported-compilers (compiler:
           pkgs.lib.genAttrs exes
           (exe: flakes."${compiler}"."${exe}".devShells.default));

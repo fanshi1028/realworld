@@ -23,6 +23,6 @@ jobs:
   backend-rel8:
     uses: ./.github/workflows/nix-build.yml
     with:
-      flag: backend-rel8
+      exe: rel8
     secrets:
       CACHIX_AUTH_TOKEN: ${{secrets.CACHIX_AUTH_TOKEN}}
