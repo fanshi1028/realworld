@@ -3,7 +3,7 @@ name: backend-rel8
 on:
   push:
     branches:
-      - github-action
+      - github-action-nix-flake
     paths:
       - 'common/**.hs'
       - 'backend/app/**.hs'
