@@ -25,6 +25,14 @@ jobs:
             exe: js
           - ghcVersion: 923
             exe: js
+          - ghcVersion: 922
+            exe: vty
+          - ghcVersion: 923
+            exe: vty
+          - ghcVersion: 922
+            exe: warp
+          - ghcVersion: 923
+            exe: warp
 
     runs-on: ${{matrix.os}}
 
