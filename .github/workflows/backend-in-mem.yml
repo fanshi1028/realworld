@@ -14,8 +14,8 @@ on:
       - 'cabal.project.backend-in-mem'
       - 'realworld-haskell.cabal'
       - 'Setup.hs'
-      - 'nix/**'
-      - 'default.nix'
+      - 'flake.nix'
+      - 'flake.lock'
       - '.github/workflows/nix-build.yml'
       - '.github/workflows/backend-in-mem.yml'
 

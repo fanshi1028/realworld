@@ -14,8 +14,8 @@ on:
       - 'cabal.project.backend-rel8'
       - 'realworld-haskell.cabal'
       - 'Setup.hs'
-      - 'nix/**'
-      - 'default.nix'
+      - 'flake.nix'
+      - 'flake.lock'
       - '.github/workflows/nix-build.yml'
       - '.github/workflows/backend-rel8.yml'
 

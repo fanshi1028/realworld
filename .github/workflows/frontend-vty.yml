@@ -13,8 +13,8 @@ on:
       - 'cabal.project.frontend-vty'
       - 'realworld-haskell.cabal'
       - 'Setup.hs'
-      - 'nix/**'
-      - 'default.nix'
+      - 'flake.nix'
+      - 'flake.lock'
       - '.github/workflows/nix-build.yml'
       - '.github/workflows/frontend-vty.yml'
 
