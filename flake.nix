@@ -20,7 +20,7 @@
           "ghc923"
         ];
         backend-exes = [ "in-mem" "rel8" ];
-        frontend-exes = [ "js" "vty" ];
+        frontend-exes = [ "js" "vty" "warp" ];
         exes = backend-exes ++ frontend-exes;
         name = "realworld-haskell";
         overlays = [
