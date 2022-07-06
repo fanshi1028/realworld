@@ -22,9 +22,9 @@ jobs:
         exe: ['${{inputs.exe}}']
         exclude:
           - ghcVersion: 922
-            exe: frontend-js
+            exe: js
           - ghcVersion: 923
-            exe: frontend-js
+            exe: js
 
     runs-on: ${{matrix.os}}
 
