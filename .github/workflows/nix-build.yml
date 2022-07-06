@@ -57,6 +57,11 @@ jobs:
       run: |
         nix build -j4 .#ghc${{matrix.ghcVersion}}.${{matrix.exe}}
 
+    - name: nix log if failed to build
+      if: ${{failure()}}
+      run: |
+        nix log .#ghc${{matrix.ghcVersion}}.${{matrix.exe}}
+
     # - name: nix build exe (-O1)
     #   if: ${{(matrix.os == 'ubuntu-18.04' || matrix.os == 'ubuntu-20.04') && matrix.flag == 'in-mem'}}
     #   run: |
