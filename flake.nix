@@ -108,8 +108,8 @@
         };
         flakes = pkgs.lib.genAttrs supported-compilers (compiler:
           let helper = exe: (pkgs.realworld-haskell-helper compiler exe).flake;
-          in pkgs.lib.genAttrs [ "in-mem" "rel8" "vty" ] (exe: helper exe { })
-          // {
+          in pkgs.lib.genAttrs [ "in-mem" "rel8" "vty" "warp" ]
+          (exe: helper exe { }) // {
             js = helper "js" {
               # This adds support for `nix build .#js-unknown-ghcjs-cabal:hello:exe:hello`
               # FIXME
