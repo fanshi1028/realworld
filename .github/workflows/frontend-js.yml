@@ -3,7 +3,7 @@ name: frontend-js
 on:
   push:
     branches:
-      - github-action-nix-flake
+      - use-nix-flake
     paths:
       - 'common/**.hs'
       - 'frontend/app/**.hs'

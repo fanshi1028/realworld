@@ -3,7 +3,7 @@ name: backend-in-mem
 on:
   push:
     branches:
-      - github-action-nix-flake
+      - use-nix-flake
     paths:
       - 'common/**.hs'
       - 'backend/app/**.hs'
