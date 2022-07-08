@@ -108,28 +108,28 @@
         };
         flakes = pkgs.lib.genAttrs supported-compilers (compiler:
           let helper = exe: (pkgs.realworld-haskell-helper compiler exe).flake;
-          in pkgs.lib.genAttrs [ "in-mem" "rel8" "vty" ] (exe: helper exe { })
-          // {
+          in pkgs.lib.genAttrs [ "in-mem" "rel8" "vty" "warp" ]
+          (exe: helper exe { }) // {
             js = helper "js" {
               # This adds support for `nix build .#js-unknown-ghcjs-cabal:hello:exe:hello`
               # FIXME
               crossPlatforms = p: [ p.ghcjs ];
             };
           });
-        backend-exe = "${name}:exe:backend";
-        frontend-exe = "${name}:exe:frontend";
-        packagesAndApps = pkgs.lib.genAttrs [ "apps" "packages" ] (key: rec {
-          in-mem = flakes.ghc922.in-mem."${key}"."${backend-exe}";
-          rel8 = flakes.ghc922.rel8."${key}"."${backend-exe}";
-          js = flakes.ghc8107.js."${key}"."${frontend-exe}";
-          vty = flakes.ghc8107.vty."${key}"."${frontend-exe}";
-          default = in-mem;
-        });
-        devShells = pkgs.lib.genAttrs supported-compilers (compiler:
-          pkgs.lib.genAttrs exes
-          (exe: flakes."${compiler}"."${exe}".devShells.default));
-      in flakes.ghc922.in-mem // packagesAndApps // {
-        devShells = devShells // { default = devShells.ghc922.in-mem; };
-      });
-
+      in pkgs.lib.genAttrs [ "apps" "packages" ] (key:
+        let
+          appsAndPackages = pkgs.lib.genAttrs supported-compilers (compiler:
+            pkgs.lib.genAttrs exes (exe:
+              flakes."${compiler}"."${exe}"."${key}"."${name}:exe:${
+                if builtins.elem exe frontend-exes then
+                  "frontend"
+                else
+                  "backend"
+              }"));
+        in appsAndPackages //
+        # to make shortcuts
+        pkgs.lib.genAttrs exes (exe:
+          appsAndPackages."ghc${
+            if builtins.elem exe frontend-exes then "8107" else "922"
+          }"."${exe}")));
 }
