@@ -1,0 +1,85 @@
+name: nix-build
+
+on:
+  workflow_call:
+    inputs:
+      exe:
+        description: part of flag to choose an executable
+        required: true
+        type: string
+    secrets:
+      CACHIX_AUTH_TOKEN:
+        description: cachix token
+
+jobs:
+  nix-build:
+    strategy:
+      fail-fast: false
+      matrix:
+        # https://docs.github.com/en/actions/using-github-hosted-runners/about-github-hosted-runners
+        os: [ubuntu-18.04, ubuntu-20.04, macos-10.15, macos-11]
+        ghcVersion: [8107, 922, 923]
+        exe: ['${{inputs.exe}}']
+        exclude:
+          - ghcVersion: 922
+            exe: js
+          - ghcVersion: 923
+            exe: js
+          - ghcVersion: 922
+            exe: vty
+          - ghcVersion: 923
+            exe: vty
+          - ghcVersion: 922
+            exe: warp
+          - ghcVersion: 923
+            exe: warp
+
+    runs-on: ${{matrix.os}}
+
+    steps:
+    - uses: actions/checkout@v3.0.2
+
+    - uses: cachix/install-nix-action@v17
+      with:
+        extra_nix_config: |
+          # access-tokens = github.com=${{ secrets.GITHUB_TOKEN }}
+          substituters = https://cache.nixos.org https://cache.iog.io
+          trusted-public-keys = cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY= hydra.iohk.io:f/Ea+s+dFdN+3Y/G+FDgSq+a5NEWhJGzdjvKNGv0/EQ=
+
+    - uses: cachix/cachix-action@v10
+      with:
+        name: fanshi1028-realworld-haskell
+        authToken: ${{secrets.CACHIX_AUTH_TOKEN}}
+        extraPullNames: nix-community
+
+    - name: nix build exe (-O2)
+      # if: ${{(matrix.os != 'ubuntu-18.04' && matrix.os != 'ubuntu-20.04') || (matrix.flag != 'in-mem' && matrix.flag != 'js')}}
+      run: |
+        nix build -j4 .#ghc${{matrix.ghcVersion}}.${{matrix.exe}}
+
+    - name: nix log if failed to build
+      if: ${{failure()}}
+      run: |
+        nix log .#ghc${{matrix.ghcVersion}}.${{matrix.exe}}
+
+    # - name: nix build exe (-O1)
+    #   if: ${{(matrix.os == 'ubuntu-18.04' || matrix.os == 'ubuntu-20.04') && matrix.flag == 'in-mem'}}
+    #   run: |
+    #     nix-build -j4 --argstr nixpkgsPin ${{matrix.nixpkgsPin}} \
+    #     --argstr ghcVersion ${{matrix.ghcVersion}} \
+    #     --argstr exeFlag "${{matrix.exe}}-${{matrix.flag}}" \
+    #     --arg optimize 1 \
+    #     --arg materializedDir null \
+    #     --arg checkMaterialization false \
+    #     -A realworld-haskell
+
+    # - name: nix build exe (-O0)
+    #   if: ${{(matrix.os == 'ubuntu-18.04' || matrix.os == 'ubuntu-20.04') && matrix.flag == 'js'}}
+    #   run: |
+    #     nix-build -j4 --argstr nixpkgsPin ${{matrix.nixpkgsPin}} \
+    #     --argstr ghcVersion ${{matrix.ghcVersion}} \
+    #     --argstr exeFlag "${{matrix.exe}}-${{matrix.flag}}" \
+    #     --arg optimize 0 \
+    #     --arg materializedDir null \
+    #     --arg checkMaterialization false \
+    #     -A realworld-haskell

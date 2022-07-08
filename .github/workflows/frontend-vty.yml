@@ -1,0 +1,27 @@
+name: frontend-vty
+
+on:
+  push:
+    branches:
+      - github-action-nix-flake
+    paths:
+      - 'common/**.hs'
+      - 'frontend/app/**.hs'
+      - 'frontend/src/api/**.hs'
+      - 'frontend/src/vty/**.hs'
+      - 'test/**.hs'
+      - 'cabal.project.frontend-vty'
+      - 'realworld-haskell.cabal'
+      - 'Setup.hs'
+      - 'flake.nix'
+      - 'flake.lock'
+      - '.github/workflows/nix-build.yml'
+      - '.github/workflows/frontend-vty.yml'
+
+jobs:
+  frontend-vty:
+    uses: ./.github/workflows/nix-build.yml
+    with:
+      exe: vty
+    secrets:
+      CACHIX_AUTH_TOKEN: ${{secrets.CACHIX_AUTH_TOKEN}}
