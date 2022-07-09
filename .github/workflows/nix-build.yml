@@ -33,6 +33,28 @@ jobs:
             exe: warp
           - ghcVersion: 923
             exe: warp
+          # oom cases
+          # # in-mem
+          - ghcVersion: 8107
+            exe: in-mem
+            os: ubuntu-18.04
+          - ghcVersion: 8107
+            exe: in-mem
+            os: ubuntu-20.04
+          # # js
+          - ghcVersion: 8107
+            exe: js
+            os: ubuntu-18.04
+          - ghcVersion: 8107
+            exe: js
+            os: ubuntu-20.04
+          # # warp
+          - ghcVersion: 8107
+            exe: warp
+            os: ubuntu-18.04
+          - ghcVersion: 8107
+            exe: warp
+            os: ubuntu-20.04
 
     runs-on: ${{matrix.os}}
 
