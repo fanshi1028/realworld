@@ -20,7 +20,7 @@
           "ghc923"
         ];
         backend-exes = [ "in-mem" "rel8" ];
-        frontend-exes = [ "js" "vty" "warp" ];
+        frontend-exes = [ "js" "vty" "warp" "native" ];
         exes = backend-exes ++ frontend-exes;
         name = "realworld-haskell";
         overlays = [
@@ -67,9 +67,8 @@
                   buildInputs = with pkgs; [ nixpkgs-fmt ];
                   # This adds `js-unknown-ghcjs-cabal` to the shell.
                   # FIXME
-                  # crossPlatforms = p:
-                  #   # [ p.ghcjs ];
-                  #   pkgs.lib.optionals (exe == "frontend-js") [ p.ghcjs ];
+                  crossPlatforms = p:
+                    pkgs.lib.optionals (exe == "js") [ p.ghcjs ];
                 };
                 modules = [{
                   # https://github.com/composewell/streamly/issues/1132
@@ -120,7 +119,12 @@
         let
           appsAndPackages = pkgs.lib.genAttrs supported-compilers (compiler:
             pkgs.lib.genAttrs exes (exe:
-              flakes."${compiler}"."${exe}"."${key}"."${name}:exe:${
+              flakes."${compiler}"."${if exe == "native" then
+                "js"
+              else
+                exe}"."${key}"."${
+                if exe == "js" then "js-unknown-ghcjs:" else ""
+              }${name}:exe:${
                 if builtins.elem exe frontend-exes then
                   "frontend"
                 else

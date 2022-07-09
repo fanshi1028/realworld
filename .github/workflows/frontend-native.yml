@@ -1,0 +1,27 @@
+name: frontend-native
+
+on:
+  push:
+    branches:
+      - use-nix-flake
+    paths:
+      - 'common/**.hs'
+      - 'frontend/app/**.hs'
+      - 'frontend/src/api/**.hs'
+      - 'frontend/src/js/**.hs'
+      - 'test/**.hs'
+      - 'cabal.project.frontend-js'
+      - 'realworld-haskell.cabal'
+      - 'Setup.hs'
+      - 'flake.nix'
+      - 'flake.lock'
+      - '.github/workflows/nix-build.yml'
+      - '.github/workflows/frontend-native.yml'
+
+jobs:
+  frontend-native:
+    uses: ./.github/workflows/nix-build.yml
+    with:
+      exe: native
+    secrets:
+      CACHIX_AUTH_TOKEN: ${{secrets.CACHIX_AUTH_TOKEN}}

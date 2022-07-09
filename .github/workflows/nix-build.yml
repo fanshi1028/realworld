@@ -42,12 +42,12 @@ jobs:
           - ghcVersion: 8107
             exe: in-mem
             os: ubuntu-20.04
-          # # js
+          # # dom
           - ghcVersion: 8107
-            exe: js
+            exe: dom
             os: ubuntu-18.04
           - ghcVersion: 8107
-            exe: js
+            exe: dom
             os: ubuntu-20.04
           # # warp
           - ghcVersion: 8107
