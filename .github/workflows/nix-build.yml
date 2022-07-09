@@ -34,6 +34,10 @@ jobs:
             exe: warp
           - ghcVersion: 923
             exe: warp
+          - ghcVersion: 922
+            exe: native
+          - ghcVersion: 923
+            exe: native
           # oom cases
           # # in-mem
           - ghcVersion: 8107
