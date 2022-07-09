@@ -21,6 +21,7 @@ jobs:
         ghcVersion: [8107, 922, 923]
         exe: ['${{inputs.exe}}']
         exclude:
+          # frontend dependencies not yet work with ghc92x
           - ghcVersion: 922
             exe: js
           - ghcVersion: 923
