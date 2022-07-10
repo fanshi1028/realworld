@@ -2,8 +2,6 @@ name: frontend-vty
 
 on:
   push:
-    branches:
-      - use-nix-flake
     paths:
       - 'common/**.hs'
       - 'frontend/app/**.hs'
