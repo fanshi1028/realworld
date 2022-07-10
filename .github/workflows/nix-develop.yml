@@ -1,0 +1,41 @@
+name: nix-develop
+
+on:
+  push:
+    paths:
+      - 'cabal.project.**'
+      - 'realworld-haskell.cabal'
+      - 'Setup.hs'
+      - 'flake.nix'
+      - 'flake.lock'
+      - '.github/workflows/nix-develop.yml'
+
+jobs:
+  nix-build:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-10.15]
+        exe: ['in-mem', 'rel8', 'vty', 'js', 'warp', 'native']
+
+    runs-on: ${{matrix.os}}
+
+    steps:
+    - uses: actions/checkout@v3.0.2
+
+    - uses: cachix/install-nix-action@v17
+      with:
+        extra_nix_config: |
+          # access-tokens = github.com=${{ secrets.GITHUB_TOKEN }}
+          substituters = https://cache.nixos.org https://cache.iog.io
+          trusted-public-keys = cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY= hydra.iohk.io:f/Ea+s+dFdN+3Y/G+FDgSq+a5NEWhJGzdjvKNGv0/EQ=
+
+    - uses: cachix/cachix-action@v10
+      with:
+        name: fanshi1028-realworld-haskell
+        authToken: ${{secrets.CACHIX_AUTH_TOKEN}}
+        extraPullNames: nix-community
+
+    - name: nix develop exe (-O2)
+      run: |
+        nix develop .#${{matrix.exe}}
