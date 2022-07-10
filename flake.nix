@@ -21,6 +21,8 @@
         ];
         backend-exes = [ "in-mem" "rel8" ];
         frontend-exes = [ "js" "vty" "warp" "native" ];
+        frontOrBack = exe:
+          if builtins.elem exe backend-exes then "backend" else "frontend";
         exes = backend-exes ++ frontend-exes;
         name = "realworld-haskell";
         overlays = [
@@ -38,12 +40,8 @@
                 };
                 inherit compiler-nix-name;
 
-                cabalProjectFileName = pkgs.lib.mkForce "cabal.project.${
-                    if builtins.elem exe backend-exes then
-                      "backend"
-                    else
-                      "frontend"
-                  }-${exe}";
+                cabalProjectFileName =
+                  pkgs.lib.mkForce "cabal.project.${frontOrBack exe}-${exe}";
                 # This is used by `nix develop .`
                 shell = {
                   # to open a shell for use with
@@ -51,6 +49,7 @@
                   tools = {
                     cabal = { };
                     hlint = { };
+                    ormolu = { };
                     # TEMP FIXME https://github.com/haskell/haskell-language-server/issues/2179
                     # TEMP FIXME https://github.com/input-output-hk/haskell.nix/issues/1272
                     haskell-language-server = pkgs.lib.optionalAttrs
@@ -90,12 +89,8 @@
                       # "+RTS ${RTS} -RTS"
                       "+RTS -N -A128m -n2m -RTS"
                     ];
-                    components.exes = pkgs.lib.genAttrs [
-                      (if builtins.elem exe frontend-exes then
-                        "frontend"
-                      else
-                        "backend")
-                    ] (_: { dontStrip = false; });
+                    components.exes = pkgs.lib.genAttrs [ (frontOrBack exe) ]
+                      (_: { dontStrip = false; });
                   };
                 }];
               };
@@ -115,25 +110,26 @@
               crossPlatforms = p: [ p.ghcjs ];
             };
           });
-      in pkgs.lib.genAttrs [ "apps" "packages" ] (key:
+      in pkgs.lib.genAttrs [ "apps" "packages" "devShells" ] (key:
         let
-          appsAndPackages = pkgs.lib.genAttrs supported-compilers (compiler:
-            pkgs.lib.genAttrs exes (exe:
-              flakes."${compiler}"."${if exe == "native" then
-                "js"
-              else
-                exe}"."${key}"."${
-                if exe == "js" then "js-unknown-ghcjs:" else ""
-              }${name}:exe:${
-                if builtins.elem exe frontend-exes then
-                  "frontend"
+          appsPackagesAndShells = pkgs.lib.genAttrs supported-compilers
+            (compiler:
+              pkgs.lib.genAttrs exes (exe:
+                flakes."${compiler}"."${if exe == "native" then
+                  "js"
                 else
-                  "backend"
-              }"));
-        in appsAndPackages //
+                  exe}"."${if key == "devShells" then
+                    "devShell"
+                  else
+                    "${key}"."${
+                      pkgs.lib.optionalString (exe == "js") "js-unknown-ghcjs:"
+                    }${name}:exe:${frontOrBack exe}"}"
+
+              ));
+        in appsPackagesAndShells //
         # to make shortcuts
-        pkgs.lib.genAttrs exes (exe:
-          appsAndPackages."ghc${
+        (pkgs.lib.genAttrs exes (exe:
+          appsPackagesAndShells."ghc${
             if builtins.elem exe frontend-exes then "8107" else "922"
-          }"."${exe}")));
+          }"."${exe}"))));
 }
