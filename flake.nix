@@ -118,12 +118,9 @@
                 flakes."${compiler}"."${if exe == "native" then
                   "js"
                 else
-                  exe}"."${if key == "devShells" then
-                    "devShell"
-                  else
-                    "${key}"."${
-                      pkgs.lib.optionalString (exe == "js") "js-unknown-ghcjs:"
-                    }${name}:exe:${frontOrBack exe}"}"
+                  exe}"."${key}"."${
+                  pkgs.lib.optionalString (exe == "js") "js-unknown-ghcjs:"
+                }${name}:exe:${frontOrBack exe}"
 
               ));
         in appsPackagesAndShells //
@@ -131,5 +128,15 @@
         (pkgs.lib.genAttrs exes (exe:
           appsPackagesAndShells."ghc${
             if builtins.elem exe frontend-exes then "8107" else "922"
-          }"."${exe}"))));
+          }"."${exe}"))) // {
+            devShells = pkgs.lib.genAttrs supported-compilers (compiler:
+              pkgs.lib.genAttrs exes (exe:
+                flakes."${compiler}"."${if exe == "native" then
+                  "js"
+                else
+                  exe}".devShell));
+
+          }
+
+    );
 }
