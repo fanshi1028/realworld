@@ -13,17 +13,20 @@
   outputs = { self, nixpkgs, flake-utils, haskellNix }:
     flake-utils.lib.eachSystem [ "x86_64-linux" "x86_64-darwin" ] (system:
       let
-        supported-compilers = [
-          "ghc8107"
+        supported-ghc9s = [
           "ghc922"
           # TEMP FIXME https://github.com/haskell/haskell-language-server/issues/2985
           "ghc923"
         ];
+        supported-ghc8s = [ "ghc8107" ];
+        supported-ghcs = supported-ghc8s ++ supported-ghc9s;
         backend-exes = [ "in-mem" "rel8" ];
         frontend-exes = [ "js" "vty" "warp" "native" ];
         exes = backend-exes ++ frontend-exes;
         frontOrBack = exe:
           if builtins.elem exe backend-exes then "backend" else "frontend";
+        isGhc8 = compiler: builtins.elem compiler supported-ghc8s;
+        isGhc9 = compiler: builtins.elem compiler supported-ghc9s;
         name = "realworld-haskell";
         overlays = [
           haskellNix.overlay
@@ -32,7 +35,7 @@
             realworld-haskell-helper = compiler-nix-name: exe:
               assert pkgs.lib.assertOneOf "exe" exe exes
                 && pkgs.lib.assertOneOf "compiler-nix-name" compiler-nix-name
-                supported-compilers;
+                supported-ghcs;
               final.haskell-nix.project' {
                 src = prev.haskell-nix.haskellLib.cleanGit {
                   inherit name;
@@ -50,10 +53,16 @@
                     cabal = { };
                     hlint = { };
                     ormolu = { };
+                    cabal-fmt = { };
+                    ghcid = { };
+                  } // pkgs.lib.optionalAttrs (isGhc8 compiler-nix-name) {
+                    stan = { };
+                    haskell-language-server = { };
+                  } // pkgs.lib.optionalAttrs (isGhc9 compiler-nix-name) {
                     # TEMP FIXME https://github.com/haskell/haskell-language-server/issues/2179
                     # TEMP FIXME https://github.com/input-output-hk/haskell.nix/issues/1272
-                    haskell-language-server = pkgs.lib.optionalAttrs
-                      (builtins.elem compiler-nix-name [ "ghc922" "ghc923" ]) {
+                    haskell-language-server =
+                      pkgs.lib.optionalAttrs (isGhc9 compiler-nix-name) {
                         version = "latest";
                         cabalProject = ''
                           packages: .
@@ -63,7 +72,7 @@
                       };
                   };
                   # Non-Haskell shell tools go here
-                  buildInputs = with pkgs; [ nixpkgs-fmt ];
+                  buildInputs = with pkgs; [ nixpkgs-fmt sqls ];
                   # This adds `js-unknown-ghcjs-cabal` to the shell.
                   # FIXME
                   crossPlatforms = p:
@@ -100,7 +109,7 @@
           inherit system overlays;
           inherit (haskellNix) config;
         };
-        flakes = pkgs.lib.genAttrs supported-compilers (compiler:
+        flakes = pkgs.lib.genAttrs supported-ghcs (compiler:
           let helper = exe: (pkgs.realworld-haskell-helper compiler exe).flake;
           in pkgs.lib.genAttrs [ "in-mem" "rel8" "vty" "warp" ]
           (exe: helper exe { }) // {
@@ -116,7 +125,7 @@
               if builtins.elem exe frontend-exes then "8107" else "922"
             }"."${exe}");
         appsAndPackages = pkgs.lib.genAttrs [ "apps" "packages" ] (key:
-          addShortcuts (pkgs.lib.genAttrs supported-compilers (compiler:
+          addShortcuts (pkgs.lib.genAttrs supported-ghcs (compiler:
             pkgs.lib.genAttrs exes (exe:
               flakes."${compiler}"."${if exe == "native" then
                 "js"
@@ -125,13 +134,12 @@
                 pkgs.lib.optionalString (exe == "js") "js-unknown-ghcjs:"
               }${name}:exe:${frontOrBack exe}"))));
         shells = {
-          devShells = addShortcuts (pkgs.lib.genAttrs supported-compilers
-            (compiler:
-              pkgs.lib.genAttrs exes (exe:
-                flakes."${compiler}"."${if exe == "native" then
-                  "js"
-                else
-                  exe}".devShell)));
+          devShells = addShortcuts (pkgs.lib.genAttrs supported-ghcs (compiler:
+            pkgs.lib.genAttrs exes (exe:
+              flakes."${compiler}"."${if exe == "native" then
+                "js"
+              else
+                exe}".devShell)));
         };
       in appsAndPackages // shells);
 }
