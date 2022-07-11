@@ -21,9 +21,9 @@
         ];
         backend-exes = [ "in-mem" "rel8" ];
         frontend-exes = [ "js" "vty" "warp" "native" ];
+        exes = backend-exes ++ frontend-exes;
         frontOrBack = exe:
           if builtins.elem exe backend-exes then "backend" else "frontend";
-        exes = backend-exes ++ frontend-exes;
         name = "realworld-haskell";
         overlays = [
           haskellNix.overlay
@@ -110,35 +110,28 @@
               crossPlatforms = p: [ p.ghcjs ];
             };
           });
-        toDefaultCompiler = exe:
-          if builtins.elem exe frontend-exes then "8107" else "922";
+        addShortcuts = result:
+          result // pkgs.lib.genAttrs exes (exe:
+            result."ghc${
+              if builtins.elem exe frontend-exes then "8107" else "922"
+            }"."${exe}");
         appsAndPackages = pkgs.lib.genAttrs [ "apps" "packages" ] (key:
-          let
-            appsAndPackages' = pkgs.lib.genAttrs supported-compilers (compiler:
-              pkgs.lib.genAttrs exes (exe:
-                flakes."${compiler}"."${if exe == "native" then
-                  "js"
-                else
-                  exe}"."${key}"."${
-                  pkgs.lib.optionalString (exe == "js") "js-unknown-ghcjs:"
-                }${name}:exe:${frontOrBack exe}"
-
-              ));
-          in appsAndPackages' //
-          # to make shortcuts
-          (pkgs.lib.genAttrs exes
-            (exe: appsAndPackages'."ghc${toDefaultCompiler exe}"."${exe}")));
-        shells = let
-          devShells = pkgs.lib.genAttrs supported-compilers (compiler:
+          addShortcuts (pkgs.lib.genAttrs supported-compilers (compiler:
             pkgs.lib.genAttrs exes (exe:
               flakes."${compiler}"."${if exe == "native" then
                 "js"
               else
-                exe}".devShell));
-        in {
-          inherit devShells;
-        } // # to make shortcuts
-        (pkgs.lib.genAttrs exes
-          (exe: devShells."ghc${toDefaultCompiler exe}"."${exe}"));
+                exe}"."${key}"."${
+                pkgs.lib.optionalString (exe == "js") "js-unknown-ghcjs:"
+              }${name}:exe:${frontOrBack exe}"))));
+        shells = {
+          devShells = addShortcuts (pkgs.lib.genAttrs supported-compilers
+            (compiler:
+              pkgs.lib.genAttrs exes (exe:
+                flakes."${compiler}"."${if exe == "native" then
+                  "js"
+                else
+                  exe}".devShell)));
+        };
       in appsAndPackages // shells);
 }
