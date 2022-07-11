@@ -110,10 +110,11 @@
               crossPlatforms = p: [ p.ghcjs ];
             };
           });
-      in pkgs.lib.genAttrs [ "apps" "packages" "devShells" ] (key:
-        let
-          appsPackagesAndShells = pkgs.lib.genAttrs supported-compilers
-            (compiler:
+        toDefaultCompiler = exe:
+          if builtins.elem exe frontend-exes then "8107" else "922";
+        appsAndPackages = pkgs.lib.genAttrs [ "apps" "packages" ] (key:
+          let
+            appsAndPackages' = pkgs.lib.genAttrs supported-compilers (compiler:
               pkgs.lib.genAttrs exes (exe:
                 flakes."${compiler}"."${if exe == "native" then
                   "js"
@@ -123,20 +124,21 @@
                 }${name}:exe:${frontOrBack exe}"
 
               ));
-        in appsPackagesAndShells //
-        # to make shortcuts
-        (pkgs.lib.genAttrs exes (exe:
-          appsPackagesAndShells."ghc${
-            if builtins.elem exe frontend-exes then "8107" else "922"
-          }"."${exe}"))) // {
-            devShells = pkgs.lib.genAttrs supported-compilers (compiler:
-              pkgs.lib.genAttrs exes (exe:
-                flakes."${compiler}"."${if exe == "native" then
-                  "js"
-                else
-                  exe}".devShell));
-
-          }
-
-    );
+          in appsAndPackages' //
+          # to make shortcuts
+          (pkgs.lib.genAttrs exes
+            (exe: appsAndPackages'."ghc${toDefaultCompiler exe}"."${exe}")));
+        shells = let
+          devShells = pkgs.lib.genAttrs supported-compilers (compiler:
+            pkgs.lib.genAttrs exes (exe:
+              flakes."${compiler}"."${if exe == "native" then
+                "js"
+              else
+                exe}".devShell));
+        in {
+          inherit devShells;
+        } // # to make shortcuts
+        (pkgs.lib.genAttrs exes
+          (exe: devShells."ghc${toDefaultCompiler exe}"."${exe}"));
+      in appsAndPackages // shells);
 }
