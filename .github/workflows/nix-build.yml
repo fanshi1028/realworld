@@ -81,4 +81,4 @@ jobs:
 
     - name: nix build exe (-O2)
       run: |
-        nix build -j4 .#ghc${{matrix.ghcVersion}}.${{matrix.exe}}
+        nix build -j4 .#${{matrix.ghcVersion}}.${{matrix.exe}}

@@ -14,11 +14,11 @@
     flake-utils.lib.eachSystem [ "x86_64-linux" "x86_64-darwin" ] (system:
       let
         supported-ghc9s = [
-          "ghc922"
+          "922"
           # TEMP FIXME https://github.com/haskell/haskell-language-server/issues/2985
-          "ghc923"
+          "923"
         ];
-        supported-ghc8s = [ "ghc8107" ];
+        supported-ghc8s = [ "8107" ];
         supported-ghcs = supported-ghc8s ++ supported-ghc9s;
         backend-exes = [ "in-mem" "rel8" ];
         frontend-exes = [ "js" "vty" "warp" "native" ];
@@ -32,16 +32,15 @@
           haskellNix.overlay
           (final: prev: {
             # This overlay adds our project to pkgs
-            realworld-haskell-helper = compiler-nix-name: exe:
+            realworld-haskell-helper = ghcVersion: exe:
               assert pkgs.lib.assertOneOf "exe" exe exes
-                && pkgs.lib.assertOneOf "compiler-nix-name" compiler-nix-name
-                supported-ghcs;
+                && pkgs.lib.assertOneOf "ghcVersion" ghcVersion supported-ghcs;
               final.haskell-nix.project' {
                 src = prev.haskell-nix.haskellLib.cleanGit {
                   inherit name;
                   src = ./.;
                 };
-                inherit compiler-nix-name;
+                compiler-nix-name = "ghc${ghcVersion}";
 
                 cabalProjectFileName =
                   pkgs.lib.mkForce "cabal.project.${frontOrBack exe}-${exe}";
@@ -55,14 +54,10 @@
                     ormolu = { };
                     cabal-fmt = { };
                     ghcid = { };
-                  } // pkgs.lib.optionalAttrs (isGhc8 compiler-nix-name) {
-                    stan = { };
-                    haskell-language-server = { };
-                  } // pkgs.lib.optionalAttrs (isGhc9 compiler-nix-name) {
                     # TEMP FIXME https://github.com/haskell/haskell-language-server/issues/2179
                     # TEMP FIXME https://github.com/input-output-hk/haskell.nix/issues/1272
                     haskell-language-server =
-                      pkgs.lib.optionalAttrs (isGhc9 compiler-nix-name) {
+                      pkgs.lib.optionalAttrs (isGhc9 ghcVersion) {
                         version = "latest";
                         cabalProject = ''
                           packages: .
@@ -70,6 +65,8 @@
                           flags: -haddockComments
                         '';
                       };
+                  } // pkgs.lib.optionalAttrs (isGhc8 ghcVersion) {
+                    stan = { };
                   };
                   # Non-Haskell shell tools go here
                   buildInputs = with pkgs; [ nixpkgs-fmt sqls ];
@@ -121,9 +118,10 @@
           });
         addShortcuts = result:
           result // pkgs.lib.genAttrs exes (exe:
-            result."ghc${
-              if builtins.elem exe frontend-exes then "8107" else "922"
-            }"."${exe}");
+            result."${if builtins.elem exe frontend-exes then
+              "8107"
+            else
+              "922"}"."${exe}");
         appsAndPackages = pkgs.lib.genAttrs [ "apps" "packages" ] (key:
           addShortcuts (pkgs.lib.genAttrs supported-ghcs (compiler:
             pkgs.lib.genAttrs exes (exe:
