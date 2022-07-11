@@ -55,12 +55,10 @@
                     # TEMP FIXME https://github.com/phadej/cabal-fmt/issues/44
                     cabal-fmt = pkgs.lib.optionalAttrs (isGhc9 ghcVersion) {
                       version = "latest";
-                      # TEMP FIXME I released Cabal bound too?
                       cabalProject = ''
                         packages: .
                         allow-newer: cabal-fmt-0.1.5.1:base
                         allow-newer: cabal-fmt-0.1.5.1:bytestring
-                        allow-newer: cabal-fmt-0.1.5.1:Cabal
                       '';
                     };
                     ghcid = { };
