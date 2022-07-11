@@ -54,7 +54,7 @@
                     ormolu = { };
                     # TEMP FIXME https://github.com/phadej/cabal-fmt/issues/44
                     cabal-fmt = pkgs.lib.optionalAttrs (isGhc9 ghcVersion) {
-                      version = "latest";
+                      version = "0.1.6";
                       cabalProject = ''
                         packages: .
                         source-repository-package
