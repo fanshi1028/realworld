@@ -57,6 +57,11 @@
                       version = "latest";
                       cabalProject = ''
                         packages: .
+                        source-repository-package
+                            type: git
+                            location: https://github.com/phadej/cabal-fmt.git
+                            tag: 6651ffdccdfce71330f2b5cde9f8f23b616abf82
+                            --sha256: 19zyq6ailzhfcqy2zfqdd64sv0jlbcz8bbs1ag769m6v55dlrq59
                         allow-newer: cabal-fmt-0.1.5.1:base
                         allow-newer: cabal-fmt-0.1.5.1:bytestring
                       '';
