@@ -53,19 +53,27 @@
                     hlint = { };
                     ormolu = { };
                     # TEMP FIXME https://github.com/phadej/cabal-fmt/issues/44
-                    cabal-fmt = pkgs.lib.optionalAttrs (isGhc9 ghcVersion) {
-                      version = "0.1.6";
-                      cabalProject = ''
-                        packages: .
-                        source-repository-package
-                            type: git
-                            location: https://github.com/phadej/cabal-fmt.git
-                            tag: 6651ffdccdfce71330f2b5cde9f8f23b616abf82
-                            --sha256: 19zyq6ailzhfcqy2zfqdd64sv0jlbcz8bbs1ag769m6v55dlrq59
-                        allow-newer: cabal-fmt-0.1.5.1:base
-                        allow-newer: cabal-fmt-0.1.5.1:bytestring
-                      '';
-                    };
+                    cabal-fmt = { compiler-nix-name = "ghc8107"; };
+                    # cabal-fmt = pkgs.lib.optionalAttrs (isGhc9 ghcVersion) {
+                    #   version = "0.1.6";
+                    #   src = final.fetchFromGitHub {
+                    #     "url" = "https://github.com/phadej/cabal-fmt";
+                    #     "rev" = "6651ffdccdfce71330f2b5cde9f8f23b616abf82";
+                    #     "sha256" =
+                    #       "19zyq6ailzhfcqy2zfqdd64sv0jlbcz8bbs1ag769m6v55dlrq59";
+                    #     "fetchSubmodules" = false;
+                    #   };
+                    #   cabalProject = ''
+                    #     packages: .
+                    #     source-repository-package
+                    #         type: git
+                    #         location: https://github.com/phadej/cabal-fmt.git
+                    #         tag: 6651ffdccdfce71330f2b5cde9f8f23b616abf82
+                    #         --sha256: 19zyq6ailzhfcqy2zfqdd64sv0jlbcz8bbs1ag769m6v55dlrq59
+                    #     allow-newer: cabal-fmt-0.1.5.1:base
+                    #     allow-newer: cabal-fmt-0.1.5.1:bytestring
+                    #   '';
+                    # };
                     ghcid = { };
                     # TEMP FIXME https://github.com/haskell/haskell-language-server/issues/2179
                     # TEMP FIXME https://github.com/input-output-hk/haskell.nix/issues/1272
