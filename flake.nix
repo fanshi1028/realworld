@@ -52,7 +52,15 @@
                     cabal = { };
                     hlint = { };
                     ormolu = { };
-                    cabal-fmt = { };
+                    # TEMP FIXME https://github.com/phadej/cabal-fmt/issues/44
+                    cabal-fmt = pkgs.lib.optionalAttrs (isGhc9 ghcVersion) {
+                      version = "latest";
+                      cabalProject = ''
+                        packages: .
+                        allow-newer: cabal-fmt-0.1.5.1:base
+                        allow-newer: cabal-fmt-0.1.5.1:bytestring
+                      '';
+                    };
                     ghcid = { };
                     # TEMP FIXME https://github.com/haskell/haskell-language-server/issues/2179
                     # TEMP FIXME https://github.com/input-output-hk/haskell.nix/issues/1272
