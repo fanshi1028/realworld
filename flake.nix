@@ -152,6 +152,16 @@
                 exe}"."${key}"."${
                 pkgs.lib.optionalString (exe == "js") "js-unknown-ghcjs:"
               }${name}:exe:${frontOrBack exe}"))));
+        checks = {
+          checks = addShortcuts (pkgs.lib.genAttrs supported-ghcs (compiler:
+            pkgs.lib.genAttrs exes (exe:
+              flakes."${compiler}"."${if exe == "native" then
+                "js"
+              else
+                exe}".checks."${
+                pkgs.lib.optionalString (exe == "js") "js-unknown-ghcjs:"
+              }${name}:test:test")));
+        };
         shells = {
           devShells = addShortcuts (pkgs.lib.genAttrs supported-ghcs (compiler:
             pkgs.lib.genAttrs exes (exe:
@@ -160,5 +170,5 @@
               else
                 exe}".devShell)));
         };
-      in appsAndPackages // shells);
+      in appsAndPackages // shells // checks);
 }
