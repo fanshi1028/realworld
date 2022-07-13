@@ -18,17 +18,9 @@ jobs:
       matrix:
         # https://docs.github.com/en/actions/using-github-hosted-runners/about-github-hosted-runners
         os: [ubuntu-18.04, ubuntu-20.04, macos-10.15, macos-11]
+        system: [x86_64-linux, x86_64-darwin]
         ghcVersion: [8107, 922, 923]
         exe: ['${{inputs.exe}}']
-        include:
-          - os: ubuntu-20.04
-            system: x86_64-linux
-          - os: ubuntu-18.04
-            system: x86_64-linux
-          - os: macos-10.15
-            system: x86_64-darwin
-          - os: macos-11
-            system: x86_64-darwin
         exclude:
           # frontend dependencies not yet work with ghc92x
           - ghcVersion: 922
@@ -69,6 +61,15 @@ jobs:
           - ghcVersion: 8107
             exe: warp
             os: ubuntu-20.04
+          # os system unmatch
+          - os: ubuntu-20.04
+            system: x86_64-darwin
+          - os: ubuntu-18.04
+            system: x86_64-darwin
+          - os: macos-10.15
+            system: x86_64-linux
+          - os: macos-11
+            system: x86_64-linux
 
     runs-on: ${{matrix.os}}
 
