@@ -94,4 +94,4 @@ jobs:
 
     - name: run test
       run: |
-        nix run -j4 .#checks.${{system}}.${{matrix.exe}}
+        nix run -j4 .#checks.${{matrix.system}}.${{matrix.exe}}
