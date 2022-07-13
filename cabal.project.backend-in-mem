@@ -1,5 +1,12 @@
 packages: .
 
+-- NOTE: https://github.com/stevana/quickcheck-state-machine/issues/6
+source-repository-package
+    type: git
+    location: https://github.com/stevana/quickcheck-state-machine.git
+    tag: 1fce865f1c7b74cc7684c944657ac4fa75d50530
+    --sha256: 0sdkqik1i3l4vii3b26yj2m93inqw0pl3840fb24zf73b456mxbb
+
 package realworld-haskell
  flags: +backend-in-mem
  -- https://github.com/haskell/cabal/issues/6343
