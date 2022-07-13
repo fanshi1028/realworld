@@ -94,4 +94,5 @@ jobs:
 
     - name: run test
       run: |
-        nix run -j4 .#checks.${{matrix.system}}.${{matrix.exe}}
+        nix build -j4 .#checks.${{matrix.system}}.${{matrix.exe}}
+        cat ./result/test-stdout
