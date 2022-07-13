@@ -604,7 +604,7 @@ test-suite test
     , QuickCheck
     , quickcheck-arbitrary-adt
     , quickcheck-instances
-    , quickcheck-state-machine
+    , quickcheck-state-machine ^>=0.7.0
     , servant-client
     , servant-client-core
     , tasty
