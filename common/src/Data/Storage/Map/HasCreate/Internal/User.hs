@@ -13,8 +13,8 @@
 --
 -- Create 'User' in storage
 --
--- @since 0.4.0.0
-module Data.Storage.Map.Internal.HasCreate.User where
+-- @since 0.5.0.0
+module Data.Storage.Map.HasCreate.Internal.User where
 
 import Data.Aeson (FromJSON (parseJSON), defaultOptions, genericParseJSON)
 import Data.Domain (Domain (User))
@@ -22,7 +22,7 @@ import Data.Field.Email (Email)
 import Data.Field.Password (Password)
 import Data.Field.Username (Username)
 import Data.Generic.HKD (construct)
-import Data.Storage.Map.Internal.HasCreate (HasCreate (CreateOf))
+import Data.Storage.Map.HasCreate.Internal (HasCreate (CreateOf))
 import Data.Util.JSON.From (In, wrappedParseJSON)
 import Data.Util.Validation (WithValidation)
 

@@ -9,8 +9,8 @@
 --
 -- Type family for creating in storage
 --
--- @since 0.4.0.0
-module Data.Storage.Map.Internal.HasCreate where
+-- @since 0.5.0.0
+module Data.Storage.Map.HasCreate.Internal where
 
 import Data.Domain (Domain)
 

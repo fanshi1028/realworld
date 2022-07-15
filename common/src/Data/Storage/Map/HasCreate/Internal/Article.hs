@@ -13,8 +13,8 @@
 --
 -- Create 'Article' in storage
 --
--- @since 0.4.0.0
-module Data.Storage.Map.Internal.HasCreate.Article where
+-- @since 0.5.0.0
+module Data.Storage.Map.HasCreate.Internal.Article where
 
 import Data.Aeson (FromJSON (parseJSON), Value (Array, Object), defaultOptions, genericParseJSON, withObject)
 import Data.Domain (Domain (Article))
@@ -23,7 +23,7 @@ import Data.Field.Description (Description)
 import Data.Field.Tag (Tag)
 import Data.Field.Title (Title)
 import Data.Generic.HKD (construct)
-import Data.Storage.Map.Internal.HasCreate (HasCreate (CreateOf))
+import Data.Storage.Map.HasCreate.Internal (HasCreate (CreateOf))
 import Data.Util.JSON.From (In, insert', wrappedParseJSON)
 import Data.Util.Validation (WithValidation)
 

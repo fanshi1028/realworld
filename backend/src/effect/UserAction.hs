@@ -16,7 +16,8 @@ import Data.Domain (Domain (Article, Comment, User))
 import Data.Domain.Article (ArticleWithAuthorProfile)
 import Data.Domain.Comment (CommentWithAuthorProfile)
 import Data.Domain.User (UserAuthWithToken, UserProfile)
-import Data.Storage.Map (CreateOf, IdOf, Patch, UpdateOf)
+import Data.Storage.Map (IdOf, Patch, UpdateOf)
+import Data.Storage.Map.HasCreate (CreateOf)
 
 -- | @since 0.3.0.0
 -- Actions that can only be carried out by __authenticated__ users.

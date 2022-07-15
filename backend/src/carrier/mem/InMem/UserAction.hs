@@ -42,7 +42,6 @@ import Data.Storage.Error (AlreadyExists (AlreadyExists), NotFound (NotFound))
 import Data.Storage.Map
   ( CRUD (D, U),
     ContentOf (..),
-    CreateOf (ArticleCreate, CommentCreate),
     Forbidden (Forbidden),
     HasStorage (ContentOf),
     IdAlreadyExists,
@@ -52,6 +51,7 @@ import Data.Storage.Map
     toArticlePatch,
     toUserId,
   )
+import Data.Storage.Map.HasCreate (CreateOf (ArticleCreate, CommentCreate))
 import Data.Token.HasToken (TokenOf)
 import Data.UUID (UUID)
 import InMem.Relation

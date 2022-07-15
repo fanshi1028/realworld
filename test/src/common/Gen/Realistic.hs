@@ -24,7 +24,8 @@ import Data.Generic.HKD (build, construct)
 import Data.Password.Argon2 (mkPassword)
 import Data.Password.Validate (ValidationResult (ValidPassword), defaultPasswordPolicy_, validatePassword)
 import qualified Data.Semigroup as SG
-import Data.Storage.Map (CreateOf (ArticleCreate, CommentCreate, UserCreate), IdOf (UserId), Patch, UpdateOf)
+import Data.Storage.Map (IdOf (UserId), Patch, UpdateOf)
+import Data.Storage.Map.HasCreate (CreateOf (..))
 import Data.Util.JSON.From (In (In))
 import Faker (Fake)
 import qualified Faker.Book as Book

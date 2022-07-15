@@ -26,9 +26,6 @@ module Data.Storage.Map
 
     -- * Typeclass
 
-    -- ** HasCreate
-    module X,
-
     -- ** HasStorage
     module Y,
 
@@ -39,10 +36,6 @@ where
 
 import Data.Domain (Domain)
 import Data.Storage.Error (AlreadyExists, NotFound)
-import Data.Storage.Map.Internal.HasCreate as X
-import Data.Storage.Map.Internal.HasCreate.Article as X
-import Data.Storage.Map.Internal.HasCreate.Comment as X
-import Data.Storage.Map.Internal.HasCreate.User as X
 import Data.Storage.Map.Internal.HasStorage as Y
 import Data.Storage.Map.Internal.HasStorage.Article as Y
 import Data.Storage.Map.Internal.HasStorage.Comment as Y

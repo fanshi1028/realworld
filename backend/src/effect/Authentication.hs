@@ -16,7 +16,7 @@ where
 
 import Data.Authentication.HasAuth (HasAuth (AuthOf, LoginOf))
 import Data.Domain (Domain)
-import Data.Storage.Map (CreateOf)
+import Data.Storage.Map.HasCreate (CreateOf)
 
 -- | @since 0.3.0.0
 data AuthenticationE (s :: Domain) (m :: Type -> Type) a where

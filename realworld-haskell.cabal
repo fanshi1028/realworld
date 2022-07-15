@@ -251,6 +251,7 @@ library
     Data.Paging
     Data.Storage.Error
     Data.Storage.Map
+    Data.Storage.Map.HasCreate
     Data.Token.HasToken
     Data.Util.Impossible
     Data.Util.JSON.From
@@ -261,10 +262,10 @@ library
   other-modules:
     Data.Authentication.Internal.HasAuth
     Data.Authentication.Internal.HasAuth.User
-    Data.Storage.Map.Internal.HasCreate
-    Data.Storage.Map.Internal.HasCreate.Article
-    Data.Storage.Map.Internal.HasCreate.Comment
-    Data.Storage.Map.Internal.HasCreate.User
+    Data.Storage.Map.HasCreate.Internal
+    Data.Storage.Map.HasCreate.Internal.Article
+    Data.Storage.Map.HasCreate.Internal.Comment
+    Data.Storage.Map.HasCreate.Internal.User
     Data.Storage.Map.Internal.HasStorage
     Data.Storage.Map.Internal.HasStorage.Article
     Data.Storage.Map.Internal.HasStorage.Comment
