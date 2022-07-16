@@ -1,8 +1,6 @@
--- |
 module StateMachine.Gen where
 
 import Gen.Realistic (arbitraryRealistic, shrinkRealistic)
-import Orphans ()
 import StateMachine.Types
   ( AuthCommand (..),
     Command (..),

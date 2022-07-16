@@ -2,7 +2,6 @@
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 
--- |
 module Roundtrip (aesonRoundtripTests) where
 
 import Client ()
@@ -23,7 +22,8 @@ import Data.Util.JSON.To (Out)
 import Data.Util.Validation (WithValidation)
 import Gen.Naive ()
 import Gen.Realistic (Realistic (Realistic))
-import Orphans ()
+import Orphans.Internal.Data.Authentication.HasAuth.Eq ()
+import Orphans.Internal.Data.Storage.Map.HasCreate.Eq ()
 import Test.Aeson.GenericSpecs (defaultSettings, roundtripAndGoldenSpecsWithSettings, roundtripSpecs, sampleSize)
 import Test.Aeson.Internal.Utils (addBrackets)
 import Test.Hspec (Spec, describe)

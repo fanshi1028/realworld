@@ -3,7 +3,6 @@
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE StandaloneDeriving #-}
 
--- |
 module StateMachine.Types where
 
 import Data.Domain (Domain (Article, Comment, User))
@@ -15,7 +14,10 @@ import Data.Storage.Map (IdOf (..), Patch, UpdateOf (..))
 import Data.Storage.Map.HasCreate (CreateOf)
 import Data.Token.HasToken (TokenOf (..))
 import GHC.Generics (Generic1)
-import Orphans ()
+import Orphans.Internal.Data.Storage.Map.HasId.ToExpr ()
+import Orphans.Internal.Data.Token.HasToken.ToExpr ()
+import Orphans.Internal.Data.Storage.Map.HasCreate.Eq ()
+import Orphans.Internal.Data.Storage.Map.HasCreate.ToExpr ()
 import Test.QuickCheck (Arbitrary, arbitrary, arbitraryBoundedEnum)
 import Test.StateMachine (CommandNames, Concrete, Reference, ToExpr, cmdName, cmdNames)
 import qualified Test.StateMachine.Types.Rank2 as R2 (Foldable, Functor, Traversable)

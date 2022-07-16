@@ -583,7 +583,28 @@ test-suite test
   other-modules:
     Gen.Naive
     Gen.Realistic
-    Orphans
+    Orphans.Internal.Data.Field.Password.Eq
+    Orphans.Internal.Data.Field.Password.ToExpr
+    Orphans.Internal.Data.Field.Username.ToExpr
+    Orphans.Internal.Data.Storage.Map.HasUpdate.Eq
+    Orphans.Internal.Data.Field.Bio.ToExpr
+    Orphans.Internal.Data.Field.Body.ToExpr
+    Orphans.Internal.Data.Field.Slug.ToExpr
+    Orphans.Internal.Data.Field.Title.ToExpr
+    Orphans.Internal.Data.Field.Email.ToExpr
+    Orphans.Internal.Data.Field.Image.ToExpr
+    Orphans.Internal.Data.Storage.Map.HasId.ToExpr
+    Orphans.Internal.Data.Field.Description.ToExpr
+    Orphans.Internal.Data.Field.Tag.ToExpr
+    Orphans.Internal.Data.Authentication.HasAuth.Eq
+    Orphans.Internal.Data.Authentication.HasAuth.ToExpr
+    Orphans.Internal.Data.Storage.Map.HasCreate.ToExpr
+    Orphans.Internal.Data.Storage.Map.HasCreate.Eq
+    Orphans.Internal.Data.Token.HasToken.ToExpr
+    Orphans.Internal.Data.Field.Username.Ord
+    Orphans.Internal.Data.Field.Slug.Ord
+    Orphans.Internal.Data.Field.Tag.Ord
+    Orphans.Internal.Data.Storage.Map.HasId.Ord
     Roundtrip
     StateMachine
     StateMachine.Gen
