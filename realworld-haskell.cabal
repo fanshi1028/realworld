@@ -600,6 +600,22 @@ test-suite test
     Gen.Naive.Data.Token.HasToken
     Gen.Naive.Util.JSON.To
     Gen.Realistic
+    Gen.Realistic.Util
+    Gen.Realistic.Data.Field.Email
+    Gen.Realistic.Data.Field.Username
+    Gen.Realistic.Data.Field.Bio
+    Gen.Realistic.Data.Field.Image
+    Gen.Realistic.Data.Field.Title
+    Gen.Realistic.Data.Field.Description
+    Gen.Realistic.Data.Field.Body
+    Gen.Realistic.Data.Field.Tag
+    Gen.Realistic.Data.Field.Time
+    Gen.Realistic.Data.Field.Password
+    Gen.Realistic.Data.Authentication.HasAuth
+    Gen.Realistic.Data.Field.Password
+    Gen.Realistic.Util.JSON.From
+    Gen.Realistic.Data.Storage.Map.HasCreate
+    Gen.Realistic.Data.Storage.Map.HasId
     Orphans.Internal.Data.Field.Password.Eq
     Orphans.Internal.Data.Field.Password.ToExpr
     Orphans.Internal.Data.Field.Username.ToExpr
