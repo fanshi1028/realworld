@@ -582,6 +582,23 @@ test-suite test
   main-is:        Main.hs
   other-modules:
     Gen.Naive
+    Gen.Naive.Data.Field.Email
+    Gen.Naive.Data.Field.Username
+    Gen.Naive.Data.Field.Bio
+    Gen.Naive.Data.Field.Image
+    Gen.Naive.Data.Field.Title
+    Gen.Naive.Data.Field.Time
+    Gen.Naive.Data.Field.Description
+    Gen.Naive.Data.Field.Body
+    Gen.Naive.Data.Field.Tag
+    Gen.Naive.Data.Authentication.HasAuth
+    Gen.Naive.Data.Domain.Article
+    Gen.Naive.Data.Domain.Comment
+    Gen.Naive.Data.Domain.User
+    Gen.Naive.Data.Storage.Map.HasId
+    Gen.Naive.Data.Storage.Map.HasStorage
+    Gen.Naive.Data.Token.HasToken
+    Gen.Naive.Util.JSON.To
     Gen.Realistic
     Orphans.Internal.Data.Field.Password.Eq
     Orphans.Internal.Data.Field.Password.ToExpr
