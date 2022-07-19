@@ -23,20 +23,12 @@ module Data.Storage.Map
 
     -- ** Id not found
     IdNotFound,
-
-    -- * Typeclass
-
-    -- ** HasUpdate
-    module Z,
   )
 where
 
 import Data.Domain (Domain)
 import Data.Storage.Error (AlreadyExists, NotFound)
 import Data.Storage.Map.HasStorage (HasStorage (..))
-import Data.Storage.Map.Internal.HasUpdate as Z
-import Data.Storage.Map.Internal.HasUpdate.Article as Z
-import Data.Storage.Map.Internal.HasUpdate.User as Z
 
 -- | @since 0.3.0.0
 -- see 'Forbidden'

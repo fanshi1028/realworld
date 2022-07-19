@@ -253,6 +253,7 @@ library
     Data.Storage.Map
     Data.Storage.Map.HasCreate
     Data.Storage.Map.HasStorage
+    Data.Storage.Map.HasUpdate
     Data.Token.HasToken
     Data.Util.Impossible
     Data.Util.JSON.From
@@ -271,9 +272,9 @@ library
     Data.Storage.Map.HasStorage.Internal.Article
     Data.Storage.Map.HasStorage.Internal.Comment
     Data.Storage.Map.HasStorage.Internal.User
-    Data.Storage.Map.Internal.HasUpdate
-    Data.Storage.Map.Internal.HasUpdate.Article
-    Data.Storage.Map.Internal.HasUpdate.User
+    Data.Storage.Map.HasUpdate.Internal
+    Data.Storage.Map.HasUpdate.Internal.Article
+    Data.Storage.Map.HasUpdate.Internal.User
     Data.Token.Internal.HasToken
     Data.Token.Internal.HasToken.User
 

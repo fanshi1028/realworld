@@ -44,10 +44,10 @@ import Data.Storage.Map
     Forbidden (Forbidden),
     IdAlreadyExists,
     IdNotFound,
-    toArticlePatch,
   )
 import Data.Storage.Map.HasCreate (CreateOf (ArticleCreate, CommentCreate))
 import Data.Storage.Map.HasStorage (ContentOf (..), IdOf (..), toArticleId, toUserId)
+import Data.Storage.Map.HasUpdate (toArticlePatch)
 import Data.Token.HasToken (TokenOf)
 import Data.UUID (UUID)
 import InMem.Relation

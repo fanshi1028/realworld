@@ -14,7 +14,7 @@
 -- Updating in storage for 'Article'
 --
 -- @since 0.4.0.0
-module Data.Storage.Map.Internal.HasUpdate.Article where
+module Data.Storage.Map.HasUpdate.Internal.Article where
 
 import Data.Aeson (FromJSON (parseJSON), withObject, (.!=), (.:?))
 import Data.Domain (Domain (Article))
@@ -27,7 +27,7 @@ import Data.Generics.Product.Fields (getField)
 import qualified Data.Semigroup as SG
 import Data.Storage.Map.HasStorage.Internal (ContentOf)
 import Data.Storage.Map.HasStorage.Internal.Article ()
-import Data.Storage.Map.Internal.HasUpdate (HasUpdate (UpdateOf), Patch, updatableKeys)
+import Data.Storage.Map.HasUpdate.Internal (HasUpdate (UpdateOf), Patch, updatableKeys)
 import Data.Util.JSON.From (In, wrappedParseJSON)
 import Data.Util.Validation (WithValidation)
 import Relude.Extra ((.~))

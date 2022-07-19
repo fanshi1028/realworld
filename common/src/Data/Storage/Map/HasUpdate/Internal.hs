@@ -12,7 +12,7 @@
 -- Type family for updating in storage
 --
 -- @since 0.4.0.0
-module Data.Storage.Map.Internal.HasUpdate where
+module Data.Storage.Map.HasUpdate.Internal where
 
 import Data.Aeson (Key, Object)
 import Data.Aeson.Types (Parser)
