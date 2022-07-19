@@ -15,7 +15,7 @@ module InMem.Relation.Internal.ToOne.EmailOfUser where
 
 import Data.Domain (Domain (User))
 import Data.Field.Email (Email)
-import Data.Storage.Map (IdOf)
+import Data.Storage.Map.HasStorage (IdOf)
 import InMem.Relation.Internal.ToOne (ToOne (..))
 
 -- | @since 0.3.0.0

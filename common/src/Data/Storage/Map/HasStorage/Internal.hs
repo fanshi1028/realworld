@@ -10,7 +10,7 @@
 -- Type family for storage
 --
 -- @since 0.4.0.0
-module Data.Storage.Map.Internal.HasStorage where
+module Data.Storage.Map.HasStorage.Internal where
 
 import Data.Domain (Domain)
 

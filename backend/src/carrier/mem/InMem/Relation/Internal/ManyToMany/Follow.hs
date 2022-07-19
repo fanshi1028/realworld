@@ -14,7 +14,7 @@
 module InMem.Relation.Internal.ManyToMany.Follow where
 
 import Data.Domain (Domain (User))
-import Data.Storage.Map (IdOf)
+import Data.Storage.Map.HasStorage (IdOf)
 import InMem.Relation.Internal.ManyToMany (ManyToMany (..))
 import InMem.Relation.Internal.ToMany (ToMany (..))
 

@@ -15,7 +15,7 @@ module InMem.Relation.Internal.ManyToMany.Tag where
 
 import Data.Domain (Domain (Article))
 import Data.Field.Tag (Tag)
-import Data.Storage.Map (IdOf)
+import Data.Storage.Map.HasStorage (IdOf)
 import InMem.Relation.Internal.ManyToMany (ManyToMany (..))
 import InMem.Relation.Internal.ToMany (ToMany (..))
 

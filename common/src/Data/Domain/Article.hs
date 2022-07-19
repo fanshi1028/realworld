@@ -18,7 +18,7 @@ import qualified Data.Aeson.KeyMap as KM (insert)
 import Data.Domain (Domain (Article))
 import Data.Domain.User (UserProfile)
 import Data.Field.Tag (Tag)
-import Data.Storage.Map (ContentOf (..), toArticleId)
+import Data.Storage.Map.HasStorage (ContentOf (..), toArticleId)
 import Data.Util.JSON.To (Out, multiWrappedWithCountToEncoding, multiWrappedWithCountToJSON, wrappedToEncoding, wrappedToJSON)
 import GHC.Records (getField)
 

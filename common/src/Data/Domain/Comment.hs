@@ -17,7 +17,7 @@ import Data.Aeson (ToJSON (toEncoding, toJSON))
 import Data.Domain (Domain (Comment))
 import Data.Domain.User (UserProfile)
 import Data.Field.Time (Time)
-import Data.Storage.Map (IdOf)
+import Data.Storage.Map.HasStorage (IdOf)
 import Data.Util.JSON.To (Out, wrappedToEncoding, wrappedToJSON)
 
 -- $setup

@@ -14,7 +14,7 @@ module OptionalAuthAction where
 import Data.Domain (Domain (Article, User))
 import Data.Domain.Article (ArticleWithAuthorProfile)
 import Data.Domain.User (UserProfile)
-import Data.Storage.Map (IdOf)
+import Data.Storage.Map.HasStorage (HasStorage (IdOf))
 
 -- | @since 0.3.0.0
 -- Optionally authed actions that can be carried out by visitors or users with different behaviours.

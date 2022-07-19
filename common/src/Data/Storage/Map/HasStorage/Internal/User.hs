@@ -17,7 +17,7 @@
 -- Storage for 'User'
 --
 -- @since 0.4.0.0
-module Data.Storage.Map.Internal.HasStorage.User where
+module Data.Storage.Map.HasStorage.Internal.User where
 
 import Data.Aeson (ToJSON)
 import Data.Domain (Domain (User))
@@ -26,7 +26,7 @@ import Data.Field.Email (Email)
 import Data.Field.Image (Image)
 import Data.Field.Password (PasswordHash)
 import Data.Field.Username (Username)
-import Data.Storage.Map.Internal.HasStorage (HasStorage (..))
+import Data.Storage.Map.HasStorage.Internal (HasStorage (..))
 import Data.Util.Validation (WithValidation)
 import GHC.Records (HasField, getField)
 import Servant (FromHttpApiData)

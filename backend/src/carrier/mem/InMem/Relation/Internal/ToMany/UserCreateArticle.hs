@@ -14,7 +14,7 @@
 module InMem.Relation.Internal.ToMany.UserCreateArticle where
 
 import Data.Domain (Domain (Article, User))
-import Data.Storage.Map (IdOf)
+import Data.Storage.Map.HasStorage (IdOf)
 import InMem.Relation.Internal.ToMany (ToMany (..))
 
 -- | @since 0.3.0.0

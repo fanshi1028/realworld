@@ -28,7 +28,7 @@ import Data.Field.Time (Time (Time))
 import Data.Field.Title (Title (Title))
 import Data.Field.Username (Username (Username))
 import qualified Data.Password.Argon2 as Argon2 (Argon2, PasswordHash (..))
-import Data.Storage.Map (IdOf (..))
+import Data.Storage.Map.HasStorage (IdOf (..))
 import Rel8 (DBEq, DBOrd, DBType)
 
 -- | @since 0.4.0.0

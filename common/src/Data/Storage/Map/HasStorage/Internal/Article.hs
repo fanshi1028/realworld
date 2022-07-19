@@ -17,7 +17,7 @@
 -- Storage for 'Article'
 --
 -- @since 0.4.0.0
-module Data.Storage.Map.Internal.HasStorage.Article where
+module Data.Storage.Map.HasStorage.Internal.Article where
 
 import Data.Aeson (ToJSON)
 import Data.Domain (Domain (Article, User))
@@ -27,8 +27,8 @@ import Data.Field.Slug (Slug, titleToSlug)
 import Data.Field.Time (Time)
 import Data.Field.Title (Title)
 import Data.Generics.Product (HasField', getField)
-import Data.Storage.Map.Internal.HasStorage (HasStorage (..))
-import Data.Storage.Map.Internal.HasStorage.User ()
+import Data.Storage.Map.HasStorage.Internal (HasStorage (..))
+import Data.Storage.Map.HasStorage.Internal.User ()
 import Data.Util.Validation (WithValidation)
 import Servant (FromHttpApiData)
 

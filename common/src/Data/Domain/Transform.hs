@@ -15,7 +15,7 @@ module Data.Domain.Transform (Transform (transform)) where
 
 import Data.Authentication.HasAuth (AuthOf (UserAuth))
 import Data.Domain (Domain (Article, Comment, User))
-import Data.Storage.Map (ContentOf (..), IdOf, toArticleId, toUserId)
+import Data.Storage.Map.HasStorage (ContentOf (..), IdOf, toArticleId, toUserId)
 import GHC.Records (getField)
 
 -- | @since 0.2.0.0

@@ -18,7 +18,7 @@ import Data.Domain (Domain (Article, User))
 import Data.Domain.Article (ArticleWithAuthorProfile)
 import Data.Domain.Comment (CommentWithAuthorProfile)
 import Data.Domain.User (UserProfile)
-import Data.Storage.Map (IdOf)
+import Data.Storage.Map.HasStorage (IdOf)
 import Servant (type (:<|>), type (:>))
 
 -- * API

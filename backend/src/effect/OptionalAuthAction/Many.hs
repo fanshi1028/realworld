@@ -16,7 +16,7 @@ import Data.Domain.Article (ArticleWithAuthorProfile)
 import Data.Domain.Comment (CommentWithAuthorProfile)
 import Data.Field.Tag (Tag)
 import Data.Field.Username (Username)
-import Data.Storage.Map (HasStorage (IdOf))
+import Data.Storage.Map.HasStorage (HasStorage (IdOf))
 
 -- | @since 0.3.0.0
 -- Optionally authed actions that can be carried out by visitors or users with different behaviours.

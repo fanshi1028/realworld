@@ -40,10 +40,9 @@ import Data.Storage.Map
     Forbidden (Forbidden),
     IdAlreadyExists,
     IdNotFound,
-    IdOf (ArticleId, CommentId, UserId),
-    toUserId,
   )
 import Data.Storage.Map.HasCreate (CreateOf (ArticleCreate, CommentCreate))
+import Data.Storage.Map.HasStorage (IdOf (ArticleId, CommentId, UserId), toUserId)
 import Data.Token.HasToken (TokenOf)
 import Data.UUID (UUID)
 import Data.Util.Impossible (Impossible (Impossible))

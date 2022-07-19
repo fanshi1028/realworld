@@ -41,17 +41,13 @@ import qualified Data.Semigroup as SG (Last (Last, getLast))
 import Data.Storage.Error (AlreadyExists (AlreadyExists), NotFound (NotFound))
 import Data.Storage.Map
   ( CRUD (D, U),
-    ContentOf (..),
     Forbidden (Forbidden),
-    HasStorage (ContentOf),
     IdAlreadyExists,
     IdNotFound,
-    IdOf (ArticleId, CommentId, UserId),
-    toArticleId,
     toArticlePatch,
-    toUserId,
   )
 import Data.Storage.Map.HasCreate (CreateOf (ArticleCreate, CommentCreate))
+import Data.Storage.Map.HasStorage (ContentOf (..), IdOf (..), toArticleId, toUserId)
 import Data.Token.HasToken (TokenOf)
 import Data.UUID (UUID)
 import InMem.Relation

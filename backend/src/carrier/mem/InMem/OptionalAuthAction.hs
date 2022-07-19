@@ -26,7 +26,8 @@ import Data.Domain (Domain (Article, Comment, User))
 import Data.Domain.Article (ArticleWithAuthorProfile (ArticleWithAuthorProfile))
 import Data.Domain.Transform (transform)
 import Data.Domain.User (UserProfile (UserProfile))
-import Data.Storage.Map (ContentOf (..), IdNotFound, toUserId)
+import Data.Storage.Map (IdNotFound)
+import Data.Storage.Map.HasStorage (ContentOf (..), toUserId)
 import GHC.Records (getField)
 import InMem.Relation
   ( ArticleHasComment,
