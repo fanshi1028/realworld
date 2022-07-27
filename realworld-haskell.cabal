@@ -220,6 +220,60 @@ common frontend-api-deps
     , unordered-containers  ^>=0.2.16
     , validation-selective  ^>=0.1.0
 
+common statemachine-test
+  hs-source-dirs: test/src/statemachine
+  if flag(ghcid)
+    hs-source-dirs:
+      , backend/src/effect
+      , backend/src/api
+      , backend/src/carrier/mem
+  else
+    build-depends:
+      , backend-effect-internal
+      , backend-api-internal
+      , backend-effect-internal
+  build-depends:
+    , containers
+    , lens
+    , http-client
+    , quickcheck-state-machine ^>=0.7.0
+    , servant-client
+    , servant-client-core
+    , warp
+  other-modules:
+    StateMachine
+    StateMachine
+    StateMachine.Gen
+    StateMachine.Orphans.Data.Field.Password
+    StateMachine.Orphans.Data.Field.Username
+    StateMachine.Orphans.Data.Field.Bio
+    StateMachine.Orphans.Data.Field.Body
+    StateMachine.Orphans.Data.Field.Slug
+    StateMachine.Orphans.Data.Field.Title
+    StateMachine.Orphans.Data.Field.Email
+    StateMachine.Orphans.Data.Field.Image
+    StateMachine.Orphans.Data.Storage.Map.HasStorage
+    StateMachine.Orphans.Data.Field.Description
+    StateMachine.Orphans.Data.Field.Tag
+    StateMachine.Orphans.Data.Authentication.HasAuth
+    StateMachine.Orphans.Data.Authentication.HasToken
+    StateMachine.Orphans.Data.Storage.Map.HasCreate
+    StateMachine.Types
+    StateMachine.Util
+
+common roundtrip-test
+  hs-source-dirs: test/src/roundtrip
+  if flag(ghcid)
+    hs-source-dirs:  frontend/src/api
+  else
+    build-depends:
+      , frontend-api-internal
+  build-depends:
+    , http-types
+    , servant-flatten
+  other-modules:
+    Roundtrip
+
 library
   import:          prelude, common-deps
   hs-source-dirs:  common/src
@@ -232,6 +286,7 @@ library
     API.Public
     API.Util
     Data.Authentication.HasAuth
+    Data.Authentication.HasToken
     Data.Domain
     Data.Domain.Article
     Data.Domain.Comment
@@ -254,7 +309,6 @@ library
     Data.Storage.Map.HasCreate
     Data.Storage.Map.HasStorage
     Data.Storage.Map.HasUpdate
-    Data.Token.HasToken
     Data.Util.Impossible
     Data.Util.JSON.From
     Data.Util.JSON.To
@@ -262,8 +316,10 @@ library
     Data.Util.Validation
 
   other-modules:
-    Data.Authentication.Internal.HasAuth
-    Data.Authentication.Internal.HasAuth.User
+    Data.Authentication.HasAuth.Internal
+    Data.Authentication.HasAuth.Internal.User
+    Data.Authentication.HasToken.Internal
+    Data.Authentication.HasToken.Internal.User
     Data.Storage.Map.HasCreate.Internal
     Data.Storage.Map.HasCreate.Internal.Article
     Data.Storage.Map.HasCreate.Internal.Comment
@@ -275,8 +331,6 @@ library
     Data.Storage.Map.HasUpdate.Internal
     Data.Storage.Map.HasUpdate.Internal.Article
     Data.Storage.Map.HasUpdate.Internal.User
-    Data.Token.Internal.HasToken
-    Data.Token.Internal.HasToken.User
 
 library backend-effect-internal
   import:          prelude, backend-effect-deps
@@ -524,33 +578,32 @@ executable frontend
 
 test-suite test
   import:
-    prelude, common-deps, backend-api-deps, frontend-api-deps, backend-in-mem-deps, backend-rel8-deps, frontend-vty-deps, frontend-js-deps
-
-  if flag(ghcid)
-    hs-source-dirs: common/src backend/src/api backend/src/effect frontend/src/api
-
-  else
-    build-depends:
-      , backend-api-internal
-      , backend-effect-internal
-      , frontend-api-internal
-      , realworld-haskell
+    prelude, common-deps, roundtrip-test
 
   if flag(backend-in-mem)
+    import: backend-api-deps, backend-in-mem-deps, statemachine-test
     cpp-options:    -DbackendInMem
-    hs-source-dirs: test/src/carrier/mem
+    hs-source-dirs: test/src/backend/mem
     other-modules:  InMem.StateMachine
 
+
     if flag(ghcid)
-      hs-source-dirs: backend/src/carrier/mem
+      hs-source-dirs:
+        , backend/src/carrier/mem
 
     else
-      build-depends: backend-in-mem-internal
+      build-depends:
+        , backend-in-mem-internal
 
   if flag(backend-rel8)
+    import: backend-api-deps, backend-rel8-deps, statemachine-test
     cpp-options:    -DbackendRel8
-    hs-source-dirs: test/src/carrier/rel8
+    hs-source-dirs: test/src/backend/rel8
     other-modules:  InRel8.StateMachine
+    build-depends:
+      , postgresql-migration
+      , postgresql-simple
+      , tmp-postgres
     -- https://github.com/haskellari/postgresql-libpq/blob/7441ca8628e19218ac1d8b82ea038636615aead4/postgresql-libpq.cabal#L82
     if os(windows)
       extra-libraries: libpq
@@ -558,26 +611,39 @@ test-suite test
       extra-libraries: pq
 
     if flag(ghcid)
-      hs-source-dirs: backend/src/carrier/rel8
+      hs-source-dirs:
+        , backend/src/carrier/rel8
 
     else
-      build-depends: backend-rel8-internal
+      build-depends:
+        , backend-rel8-internal
 
   if flag(frontend-vty) && !impl(ghc >= 9.0)
+    import: frontend-api-deps, frontend-vty-deps
     cpp-options: -DfrontendVty
     if flag(ghcid)
-      hs-source-dirs: frontend/src/vty
+      hs-source-dirs:  frontend/src/vty
 
     else
-      build-depends: frontend-vty-internal
+      build-depends:
+        , frontend-vty-internal
 
   if flag(frontend-js) && !impl(ghc >= 9.0)
+    import: frontend-js-deps
     cpp-options: -DfrontendJs
     if flag(ghcid)
       hs-source-dirs: frontend/src/js
 
     else
-      build-depends: frontend-js-internal
+      build-depends:
+        , frontend-js-internal
+
+  if flag(ghcid)
+    hs-source-dirs: common/src
+
+  else
+    build-depends:
+      , realworld-haskell
 
   type:           exitcode-stdio-1.0
   hs-source-dirs: test/app test/src/common
@@ -594,12 +660,11 @@ test-suite test
     Gen.Naive.Data.Field.Body
     Gen.Naive.Data.Field.Tag
     Gen.Naive.Data.Authentication.HasAuth
+    Gen.Naive.Data.Authentication.HasToken
     Gen.Naive.Data.Domain.Article
     Gen.Naive.Data.Domain.Comment
     Gen.Naive.Data.Domain.User
-    Gen.Naive.Data.Storage.Map.HasId
     Gen.Naive.Data.Storage.Map.HasStorage
-    Gen.Naive.Data.Token.HasToken
     Gen.Naive.Util.JSON.To
     Gen.Realistic
     Gen.Realistic.Util
@@ -614,59 +679,31 @@ test-suite test
     Gen.Realistic.Data.Field.Time
     Gen.Realistic.Data.Field.Password
     Gen.Realistic.Data.Authentication.HasAuth
+    -- Gen.Realistic.Data.Authentication.HasToken
     Gen.Realistic.Data.Field.Password
     Gen.Realistic.Util.JSON.From
     Gen.Realistic.Data.Storage.Map.HasCreate
-    Gen.Realistic.Data.Storage.Map.HasId
-    Orphans.Internal.Data.Field.Password.Eq
-    Orphans.Internal.Data.Field.Password.ToExpr
-    Orphans.Internal.Data.Field.Username.ToExpr
-    Orphans.Internal.Data.Storage.Map.HasUpdate.Eq
-    Orphans.Internal.Data.Field.Bio.ToExpr
-    Orphans.Internal.Data.Field.Body.ToExpr
-    Orphans.Internal.Data.Field.Slug.ToExpr
-    Orphans.Internal.Data.Field.Title.ToExpr
-    Orphans.Internal.Data.Field.Email.ToExpr
-    Orphans.Internal.Data.Field.Image.ToExpr
-    Orphans.Internal.Data.Storage.Map.HasId.ToExpr
-    Orphans.Internal.Data.Field.Description.ToExpr
-    Orphans.Internal.Data.Field.Tag.ToExpr
-    Orphans.Internal.Data.Authentication.HasAuth.Eq
-    Orphans.Internal.Data.Authentication.HasAuth.ToExpr
-    Orphans.Internal.Data.Storage.Map.HasCreate.ToExpr
-    Orphans.Internal.Data.Storage.Map.HasCreate.Eq
-    Orphans.Internal.Data.Token.HasToken.ToExpr
-    Orphans.Internal.Data.Field.Username.Ord
-    Orphans.Internal.Data.Field.Slug.Ord
-    Orphans.Internal.Data.Field.Tag.Ord
-    Orphans.Internal.Data.Storage.Map.HasId.Ord
-    Roundtrip
-    StateMachine
-    StateMachine.Gen
-    StateMachine.Types
-    StateMachine.Util
+    Gen.Realistic.Data.Storage.Map.HasStorage
+    Orphans.Eq.Data.Field.Password
+    Orphans.Eq.Data.Authentication.HasAuth
+    Orphans.Eq.Data.Storage.Map.HasCreate
+    Orphans.Eq.Data.Storage.Map.HasUpdate
+    Orphans.Ord.Data.Field.Username
+    Orphans.Ord.Data.Field.Slug
+    Orphans.Ord.Data.Field.Tag
+    Orphans.Ord.Data.Storage.Map.HasStorage
 
   ghc-options:    -threaded -rtsopts -with-rtsopts=-N
+
   build-depends:
-    , containers
     , fakedata
     , fakedata-quickcheck
     , hspec
     , hspec-golden-aeson
-    , http-client
-    , http-types
-    , lens
-    , postgresql-migration
-    , postgresql-simple
     , QuickCheck
     , quickcheck-arbitrary-adt
     , quickcheck-instances
-    , quickcheck-state-machine ^>=0.7.0
-    , servant-client
-    , servant-client-core
     , tasty
     , tasty-hspec
     , tasty-quickcheck
     , tasty-rerun
-    , tmp-postgres
-    , warp

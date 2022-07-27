@@ -48,7 +48,7 @@ import Data.Storage.Map
 import Data.Storage.Map.HasCreate (CreateOf (ArticleCreate, CommentCreate))
 import Data.Storage.Map.HasStorage (ContentOf (..), IdOf (..), toArticleId, toUserId)
 import Data.Storage.Map.HasUpdate (toArticlePatch)
-import Data.Token.HasToken (TokenOf)
+import Data.Authentication.HasToken (TokenOf)
 import Data.UUID (UUID)
 import InMem.Relation
   ( ArticleHasComment,
@@ -230,53 +230,53 @@ instance
             orig
               | getField @"author" orig /= authUserId -> throwError $ Forbidden @'U articleId
               | otherwise -> do
-                let m_new_aid = ArticleId . titleToSlug . SG.getLast <$> getField @"title" update
-                tags <- getRelatedLeftManyToMany @ArticleTaggedByTag articleId
-                fus <- getRelatedRightManyToMany @UserFavoriteArticle articleId
-                case m_new_aid of
-                  Just new_aid
-                    | new_aid /= articleId -> do
-                      catchError @(IdNotFound 'Article)
-                        (getByIdMapInMem new_aid >> throwError (AlreadyExists new_aid))
-                        $ const $ pure ()
-                      unrelateToMany @UserCreateArticle authUserId articleId
-                      relateToMany @UserCreateArticle authUserId new_aid
-                      getRelatedToMany @ArticleHasComment articleId
-                        >>= traverse_
-                          ( \cid -> do
-                              relateToMany @ArticleHasComment new_aid cid
-                              updateByIdMapInMem cid $ \c -> c {article = new_aid}
-                          )
-                      unrelateByKeyToMany @ArticleHasComment articleId
-                      traverse_ (\u -> relateManyToMany @UserFavoriteArticle u new_aid) fus
-                      unrelateByKeyRightManyToMany @UserFavoriteArticle articleId
-                      traverse_ (relateManyToMany @ArticleTaggedByTag new_aid) tags
-                      unrelateByKeyLeftManyToMany @ArticleTaggedByTag articleId
-                      void $ deleteByIdMapInMem articleId
-                    | otherwise -> pure ()
-                  Nothing -> pure ()
-                a <- case construct $ deconstruct (deconstruct orig) <> toArticlePatch update of
-                  Nothing -> error "Impossible: Missing field when update"
-                  Just (construct -> SG.Last r) -> insertMapInMem (toArticleId r) r $> r
-                ArticleWithAuthorProfile a tags (authUserId `elem` fus) (genericLength fus)
-                  <$> send (GetProfile $ getField @"author" orig)
+                  let m_new_aid = ArticleId . titleToSlug . SG.getLast <$> getField @"title" update
+                  tags <- getRelatedLeftManyToMany @ArticleTaggedByTag articleId
+                  fus <- getRelatedRightManyToMany @UserFavoriteArticle articleId
+                  case m_new_aid of
+                    Just new_aid
+                      | new_aid /= articleId -> do
+                          catchError @(IdNotFound 'Article)
+                            (getByIdMapInMem new_aid >> throwError (AlreadyExists new_aid))
+                            $ const $ pure ()
+                          unrelateToMany @UserCreateArticle authUserId articleId
+                          relateToMany @UserCreateArticle authUserId new_aid
+                          getRelatedToMany @ArticleHasComment articleId
+                            >>= traverse_
+                              ( \cid -> do
+                                  relateToMany @ArticleHasComment new_aid cid
+                                  updateByIdMapInMem cid $ \c -> c {article = new_aid}
+                              )
+                          unrelateByKeyToMany @ArticleHasComment articleId
+                          traverse_ (\u -> relateManyToMany @UserFavoriteArticle u new_aid) fus
+                          unrelateByKeyRightManyToMany @UserFavoriteArticle articleId
+                          traverse_ (relateManyToMany @ArticleTaggedByTag new_aid) tags
+                          unrelateByKeyLeftManyToMany @ArticleTaggedByTag articleId
+                          void $ deleteByIdMapInMem articleId
+                      | otherwise -> pure ()
+                    Nothing -> pure ()
+                  a <- case construct $ deconstruct (deconstruct orig) <> toArticlePatch update of
+                    Nothing -> error "Impossible: Missing field when update"
+                    Just (construct -> SG.Last r) -> insertMapInMem (toArticleId r) r $> r
+                  ArticleWithAuthorProfile a tags (authUserId `elem` fus) (genericLength fus)
+                    <$> send (GetProfile $ getField @"author" orig)
         DeleteArticle articleId ->
           getByIdMapInMem articleId >>= \case
             (getField @"author" -> auid)
               | (auid == authUserId) -> do
-                void $ deleteByIdMapInMem articleId
-                unrelateToMany @UserCreateArticle authUserId articleId
+                  void $ deleteByIdMapInMem articleId
+                  unrelateToMany @UserCreateArticle authUserId articleId
 
-                getRelatedToMany @ArticleHasComment articleId
-                  >>= traverse_
-                    ( \cid -> do
-                        uid <- (^. field' @"author") <$> getByIdMapInMem cid
-                        unrelateToMany @UserCreateComment uid cid
-                        deleteByIdMapInMem cid
-                    )
-                unrelateByKeyToMany @ArticleHasComment articleId
+                  getRelatedToMany @ArticleHasComment articleId
+                    >>= traverse_
+                      ( \cid -> do
+                          uid <- (^. field' @"author") <$> getByIdMapInMem cid
+                          unrelateToMany @UserCreateComment uid cid
+                          deleteByIdMapInMem cid
+                      )
+                  unrelateByKeyToMany @ArticleHasComment articleId
 
-                unrelateByKeyRightManyToMany @UserFavoriteArticle articleId
+                  unrelateByKeyRightManyToMany @UserFavoriteArticle articleId
               | otherwise -> throwError $ Forbidden @'D articleId
         AddCommentToArticle articleId (CommentCreate txt) -> do
           t <- R.ask @Time
@@ -297,9 +297,9 @@ instance
               getByIdMapInMem commentId >>= \case
                 (getField @"author" -> auid)
                   | auid == authUserId -> do
-                    void $ deleteByIdMapInMem commentId
-                    unrelateToMany @ArticleHasComment articleId commentId
-                    unrelateToMany @UserCreateComment authUserId commentId
+                      void $ deleteByIdMapInMem commentId
+                      unrelateToMany @ArticleHasComment articleId commentId
+                      unrelateToMany @UserCreateComment authUserId commentId
                   | otherwise -> throwError $ Forbidden @'D commentId
         FavoriteArticle articleId -> do
           a@(getField @"author" -> authorId) <- getByIdMapInMem articleId

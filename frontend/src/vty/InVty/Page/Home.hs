@@ -6,8 +6,8 @@
 module InVty.Page.Home where
 
 import Control.Monad.Fix (MonadFix)
+import Data.Authentication.HasToken (TokenOf)
 import Data.Domain (Domain (User))
-import Data.Token.HasToken (TokenOf)
 import InVty.Component.Banner (attachConduitBanner, attachProfileBanner)
 import InVty.Component.List.Article (articleList)
 import InVty.Component.TagsCollection (mkTagCollecton)

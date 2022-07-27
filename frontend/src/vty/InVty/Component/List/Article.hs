@@ -7,10 +7,10 @@ module InVty.Component.List.Article where
 
 import Client (getArticlesClient, getFeedsClient)
 import Control.Monad.Fix (MonadFix)
+import Data.Authentication.HasToken (TokenOf (UserToken))
 import Data.Domain (Domain (User))
 import Data.Field.Tag (Tag (Tag))
 import Data.Field.Username (Username)
-import Data.Token.HasToken (TokenOf (UserToken))
 import Data.Util.JSON.To (Out (unOut))
 import InVty.Component.InputBox (PlaceHolderMode (Replace), inputWithPlaceHolder)
 import InVty.Component.Navbar (tabCfg)

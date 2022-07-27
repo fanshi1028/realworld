@@ -6,7 +6,7 @@ module Gen.Realistic.Data.Storage.Map.HasUpdate where
 
 import Data.Domain (Domain (Article, User))
 import Data.Generic.HKD (build, construct)
-import Data.Storage.Map (Patch, UpdateOf)
+import Data.Storage.Map.HasUpdate (Patch, UpdateOf)
 import Gen.Realistic.Data.Field.Bio ()
 import Gen.Realistic.Data.Field.Body ()
 import Gen.Realistic.Data.Field.Description ()

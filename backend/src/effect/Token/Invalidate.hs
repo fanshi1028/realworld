@@ -9,7 +9,7 @@
 -- @since 0.4.0.0
 module Token.Invalidate where
 
-import Data.Token.HasToken (TokenOf)
+import Data.Authentication.HasToken (TokenOf)
 
 -- | @since 0.3.0.0
 data InvalidateTokenE s (m :: Type -> Type) a where

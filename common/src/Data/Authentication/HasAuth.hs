@@ -32,8 +32,8 @@ module Data.Authentication.HasAuth
   )
 where
 
-import Data.Authentication.Internal.HasAuth as X
-import Data.Authentication.Internal.HasAuth.User as X
+import Data.Authentication.HasAuth.Internal as X
+import Data.Authentication.HasAuth.Internal.User as X
 import Data.Domain (Domain)
 
 -- | @since 0.3.0.0

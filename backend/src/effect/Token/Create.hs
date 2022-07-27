@@ -10,7 +10,7 @@
 module Token.Create where
 
 import Data.Authentication.HasAuth (AuthOf)
-import Data.Token.HasToken (TokenOf)
+import Data.Authentication.HasToken (TokenOf)
 
 -- | @since 0.3.0.0
 data CreateTokenE s (m :: Type -> Type) a where

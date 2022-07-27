@@ -1,6 +1,7 @@
 module Gen.Naive where
 
 import Gen.Naive.Data.Authentication.HasAuth ()
+import Gen.Naive.Data.Authentication.HasToken ()
 import Gen.Naive.Data.Domain.Article ()
 import Gen.Naive.Data.Domain.Comment ()
 import Gen.Naive.Data.Field.Bio ()
@@ -12,7 +13,5 @@ import Gen.Naive.Data.Field.Tag ()
 import Gen.Naive.Data.Field.Time ()
 import Gen.Naive.Data.Field.Title ()
 import Gen.Naive.Data.Field.Username ()
-import Gen.Naive.Data.Storage.Map.HasId ()
 import Gen.Naive.Data.Storage.Map.HasStorage ()
-import Gen.Naive.Data.Token.HasToken ()
 import Gen.Naive.Util.JSON.To ()

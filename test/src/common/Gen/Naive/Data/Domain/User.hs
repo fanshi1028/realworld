@@ -4,7 +4,7 @@ module Gen.Naive.Data.Domain.User where
 
 import Data.Domain.User (UserAuthWithToken (..), UserProfile (..))
 import Gen.Naive.Data.Authentication.HasAuth ()
-import Gen.Naive.Data.Token.HasToken ()
+import Gen.Naive.Data.Authentication.HasToken ()
 import Test.QuickCheck (Arbitrary (arbitrary, shrink), genericShrink)
 import Test.QuickCheck.Arbitrary.ADT (genericArbitrary)
 

@@ -21,11 +21,11 @@ module InMem.Authorization
 where
 
 import API.Authorization (pattern RequestToken)
+import Data.Authentication.HasToken (TokenOf (..))
 import Data.Domain (Domain (User))
 import Data.Domain.Transform (Transform (transform))
 import Data.Domain.User (UserAuthWithToken (UserAuthWithToken))
 import Data.Storage.Map.HasStorage (IdOf)
-import Data.Token.HasToken (TokenOf (..))
 import InMem.Storage (TableInMem)
 import qualified Servant.Auth.Server as Auth (AuthCheck (AuthCheck))
 import Servant.Auth.Server.Internal.Class (IsAuth (AuthArgs, runAuth))

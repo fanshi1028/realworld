@@ -6,8 +6,8 @@
 module InVty.Page.ArticleEditor where
 
 import Control.Monad.Fix (MonadFix)
+import Data.Authentication.HasToken (TokenOf)
 import Data.Domain (Domain (User))
-import Data.Token.HasToken (TokenOf)
 import InVty.Component.ArticleEditBox (articleEditBox)
 import InVty.Component.ErrorOrResponseDisplay (errorOrResponseDisplay)
 import InVty.Util (ArticleIdOrContent, Go)

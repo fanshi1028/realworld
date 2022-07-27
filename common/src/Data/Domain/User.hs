@@ -15,10 +15,10 @@ module Data.Domain.User where
 
 import Data.Aeson (ToJSON (toEncoding, toJSON), Value (Object), defaultOptions, genericToJSON)
 import qualified Data.Aeson.KeyMap as KM (insert)
-import Data.Authentication.Internal.HasAuth (AuthOf)
+import Data.Authentication.HasAuth.Internal (AuthOf)
+import Data.Authentication.HasToken.Internal (TokenOf)
+import Data.Authentication.HasToken.Internal.User ()
 import Data.Domain (Domain (User))
-import Data.Token.Internal.HasToken (TokenOf)
-import Data.Token.Internal.HasToken.User ()
 import Data.Util.JSON.To (Out, wrappedToEncoding, wrappedToJSON)
 import Servant.Auth.Server (ToJWT (encodeJWT))
 

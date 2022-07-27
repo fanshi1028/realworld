@@ -3,19 +3,19 @@
 -- |
 module Main where
 
-import Network.HTTP.Client (defaultManagerSettings, newManager)
 import Roundtrip (aesonRoundtripTests)
-import Servant.Client (BaseUrl (BaseUrl), Scheme (Http))
 import Test.Tasty (localOption, testGroup)
 import Test.Tasty.Ingredients.Rerun (defaultMainWithRerun)
 import Test.Tasty.QuickCheck (QuickCheckReplay (QuickCheckReplay))
 
+#if backendInMem || backendRel8
+import Network.HTTP.Client (defaultManagerSettings, newManager)
+import Servant.Client (BaseUrl (BaseUrl), Scheme (Http))
 #if backendInMem
 import InMem.StateMachine (inMemAppStateMachinePropTest)
-#endif
-
-#if backendRel8
+#elif backendRel8
 import InRel8.StateMachine (inRel8AppStateMachinePropTest)
+#endif
 #endif
 
 -- * Main
@@ -24,20 +24,20 @@ import InRel8.StateMachine (inRel8AppStateMachinePropTest)
 main :: IO ()
 main = do
   aesonPropsTest <- aesonRoundtripTests
+#if backendInMem || backendRel8
   mgr <- newManager defaultManagerSettings
   let mkUrl port = BaseUrl Http "localhost" port ""
-  defaultMainWithRerun . testGroup "tests" $
-    [ aesonPropsTest,
-      localOption (QuickCheckReplay Nothing) . testGroup "state machine:" $
-        (\mkTest -> mkTest mgr mkUrl)
-          <$> (
-#if backendInMem && backendRel8
-                inMemAppStateMachinePropTest : inRel8AppStateMachinePropTest :
-#elif backendInMem
-                inMemAppStateMachinePropTest :
-#elif backendRel8
-                inRel8AppStateMachinePropTest :
 #endif
-                []
-              )
+  defaultMainWithRerun . testGroup "tests" $
+    [ aesonPropsTest
+#if backendInMem || backendRel8
+      , localOption (QuickCheckReplay Nothing) . testGroup "state machine:" $
+        (\mkTest -> mkTest mgr mkUrl)
+          <$>
+#if backendInMem
+                [ inMemAppStateMachinePropTest ]
+#elif backendRel8
+                [ inRel8AppStateMachinePropTest ]
+#endif
+#endif
     ]

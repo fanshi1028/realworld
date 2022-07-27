@@ -19,7 +19,7 @@ module API.Authorization where
 import Data.Domain (Domain (User))
 import Data.Domain.User (UserAuthWithToken (UserAuthWithToken))
 import qualified Data.List as List (lookup)
-import Data.Token.HasToken (TokenOf (..))
+import Data.Authentication.HasToken (TokenOf (..))
 import Network.Wai (Request, requestHeaders)
 import Servant (FromHttpApiData (parseHeader))
 import Servant.Auth.Server (CookieSettings, JWTSettings, verifyJWT)

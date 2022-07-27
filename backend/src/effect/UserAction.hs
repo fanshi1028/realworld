@@ -16,8 +16,8 @@ import Data.Domain (Domain (Article, Comment, User))
 import Data.Domain.Article (ArticleWithAuthorProfile)
 import Data.Domain.Comment (CommentWithAuthorProfile)
 import Data.Domain.User (UserAuthWithToken, UserProfile)
-import Data.Storage.Map.HasStorage (IdOf)
 import Data.Storage.Map.HasCreate (CreateOf)
+import Data.Storage.Map.HasStorage (IdOf)
 import Data.Storage.Map.HasUpdate (Patch, UpdateOf)
 
 -- | @since 0.3.0.0

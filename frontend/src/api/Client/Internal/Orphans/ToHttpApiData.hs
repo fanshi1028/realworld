@@ -4,7 +4,6 @@
 {-# LANGUAGE StandaloneDeriving #-}
 {-# OPTIONS_GHC -Wno-orphans #-}
 
--- |
 module Client.Internal.Orphans.ToHttpApiData where
 
 import Data.Domain (Domain (Article, Comment, User))
@@ -12,7 +11,7 @@ import Data.Field.Slug (Slug (Slug))
 import Data.Field.Tag (Tag (Tag))
 import Data.Field.Username (Username (Username))
 import Data.Paging (Limit (Limit), Offset (Offset))
-import Data.Storage.Map (IdOf (..))
+import Data.Storage.Map.HasStorage (IdOf (..))
 import Data.Util.Validation (WithValidation)
 import Servant.API (ToHttpApiData (toUrlPiece))
 import Validation (Validation (Failure, Success))

@@ -8,6 +8,7 @@ module InVty.Component.ArticleEditBox where
 
 import Client (createArticleClient, getArticleClient, updateArticleClient)
 import Control.Monad.Fix (MonadFix)
+import Data.Authentication.HasToken (TokenOf)
 import Data.Domain (Domain (Article, User))
 import Data.Domain.Article (ArticleWithAuthorProfile (..))
 import Data.Field.Body (Body (Body, unBody))
@@ -20,7 +21,6 @@ import qualified Data.Semigroup as SG
 import Data.Storage.Map (CreateOf (ArticleCreate), Patch, UpdateOf, toArticleId)
 import Data.Text (center)
 import Data.Text.Zipper (fromText)
-import Data.Token.HasToken (TokenOf)
 import Data.Util.JSON.From (In (In))
 import Data.Util.JSON.To (Out (unOut))
 import Data.Util.Validation (ValidationErr)

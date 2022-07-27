@@ -7,9 +7,9 @@ module InVty.Page.Settings where
 
 import Control.Monad.Fix (MonadFix)
 import Data.Authentication.HasAuth (AuthOf)
+import Data.Authentication.HasToken (TokenOf)
 import Data.Domain (Domain (User))
 import Data.Domain.User (UserAuthWithToken)
-import Data.Token.HasToken (TokenOf)
 import InVty.Component.ErrorOrResponseDisplay (errorOrResponseDisplay)
 import InVty.Component.Settings (settingsBox)
 import InVty.Util (LoggedOut)

@@ -26,7 +26,7 @@ import Crypto.JWT (DRG, NumericDate (NumericDate), bestJWSAlg, claimExp, encodeC
 import Data.Authentication.HasAuth (AuthOf)
 import Data.Domain (Domain)
 import Data.Field.Time (Time (Time))
-import Data.Token.HasToken (TokenOf)
+import Data.Authentication.HasToken (TokenOf)
 import Relude.Extra (un, (.~))
 import Servant.Auth.Server (CookieSettings (cookieExpires), JWTSettings, ToJWT, encodeJWT, jwtAlg, signingKey)
 import Token.Create (CreateTokenE (CreateToken))

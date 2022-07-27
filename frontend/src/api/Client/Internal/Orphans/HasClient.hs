@@ -6,13 +6,12 @@
 {-# LANGUAGE UndecidableInstances #-}
 {-# OPTIONS_GHC -Wno-orphans #-}
 
--- |
 module Client.Internal.Orphans.HasClient where
 
 import API.Authorization (TokenAuth)
+import Data.Authentication.HasToken (TokenOf (UserToken))
 import Data.Domain (Domain (User))
 import Data.Sequence ((<|))
-import Data.Token.HasToken (TokenOf (UserToken))
 import Network.HTTP.Types (hAuthorization)
 import Servant.API (type (:>))
 import Servant.Auth.Server (Auth)
